@@ -359,7 +359,7 @@ fn wrap_workflow_node_icon_body(body: &str, width: u32, height: u32) -> String {
 }
 
 fn repo_root() -> PathBuf {
-    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("G:/Dx/code"))
+    std::env::current_dir().unwrap_or_default()
 }
 
 fn sanitize_file_component(value: &str) -> String {

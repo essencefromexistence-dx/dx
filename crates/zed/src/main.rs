@@ -1,6 +1,7 @@
 // Keep local `just run` launches from opening a transient console window on Windows.
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
+mod dx_config;
 mod reliability;
 mod zed;
 
@@ -216,6 +217,10 @@ fn should_open_untitled_for_empty_workspace(cx: &App) -> bool {
 static STARTUP_TIME: OnceLock<Instant> = OnceLock::new();
 
 fn main() {
+    let _dx = dx_config::CodeDxConfig::load();
+    let _ = std::fs::create_dir_all(&_dx.sr_dir);
+    let _ = std::fs::create_dir_all(&_dx.receipts_dir);
+
     STARTUP_TIME.get_or_init(|| Instant::now());
 
     #[cfg(unix)]

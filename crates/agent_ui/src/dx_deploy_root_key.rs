@@ -54,7 +54,7 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn windows_key_folds_case_slashes_and_trailing_separators() {
-        let key = deploy_root_key(Path::new("G:/Dx/.dx/receipts/check///"));
+        let key = deploy_root_key(Path::new("C:/project/.dx/receipts/check///"));
 
         assert_eq!(key, r"g:\dx\.dx\receipts\check");
     }

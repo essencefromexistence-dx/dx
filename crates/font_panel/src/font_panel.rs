@@ -1854,7 +1854,7 @@ fn system_font_css_snippet(font_name: &str) -> String {
 }
 
 fn repo_root() -> PathBuf {
-    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("G:/Dx/code"))
+    std::env::current_dir().unwrap_or_default()
 }
 
 fn escape_html(text: &str) -> String {
