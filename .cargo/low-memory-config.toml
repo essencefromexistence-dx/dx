@@ -11,7 +11,7 @@ rustflags = [
     "-C", "opt-level=0",           # No optimization to save memory
     "-C", "incremental=true",      # Enable incremental compilation
 ]
-
+
 [term]
 verbose = true  # Show what's being compiled
 
