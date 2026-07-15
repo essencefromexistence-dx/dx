@@ -62,17 +62,21 @@ pub fn init(cx: &mut App) {
         web_preview_view::WebPreviewView::register(workspace, window, cx);
         
         workspace.register_action(move |workspace, action: &OpenWebPreview, window, cx| {
-            let mut should_close = false;
-            if let Some(active_pane) = workspace.active_pane(window, cx) {
-                if let Some(active_item) = active_pane.read(cx).active_item() {
-                    if active_item.downcast::<web_preview_view::WebPreviewView>().is_none() {
-                        should_close = true;
-                    }
-                }
-            }
+            let should_close = workspace
+                .active_pane()
+                .read(cx)
+                .active_item()
+                .is_some_and(|active_item| {
+                    active_item
+                        .downcast::<web_preview_view::WebPreviewView>()
+                        .is_none()
+                });
             if should_close {
                 window.dispatch_action(
-                    Box::new(workspace::CloseActiveItem { save_intent: None }),
+                    Box::new(workspace::CloseActiveItem {
+                        save_intent: None,
+                        close_pinned: false,
+                    }),
                     cx,
                 );
             }
