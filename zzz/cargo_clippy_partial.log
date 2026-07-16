@@ -1,0 +1,61 @@
+    Checking futures-lite v2.6.1
+    Checking futures-util v0.3.32
+    Checking async-channel v2.5.0
+   Compiling windows-sys v0.61.2
+    Checking semver v1.0.27
+    Checking async-compression v0.4.32
+    Checking wasmparser v0.236.1
+   Compiling regex-syntax v0.8.8
+    Checking futures-executor v0.3.32
+    Checking futures v0.3.32
+   Compiling winapi-util v0.1.11
+   Compiling same-file v1.0.6
+   Compiling regex-automata v0.4.14
+    Checking windows v0.61.3
+    Checking wasmprinter v0.236.1
+    Checking parking_lot v0.12.5
+    Checking blocking v1.6.2
+   Compiling globset v0.4.17
+    Checking async-io v2.6.0
+    Checking kurbo v0.13.1
+    Checking wasmtime-environ v36.0.12
+   Compiling walkdir v2.5.0
+    Checking svgtypes v0.16.1
+   Compiling rust-embed-utils v8.11.0
+    Checking usvg v0.46.0
+   Compiling rust-embed-impl v8.11.0
+    Checking wasmtime-internal-cranelift v36.0.12
+    Checking ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking async-fs v2.2.0
+    Checking async-net v2.0.0
+    Checking async-process v2.5.0 (https://github.com/zed-industries/async-process.git?rev=0b6d6713570af61806e1e5cb40e0f757cb93fd9d#0b6d6713)
+    Checking async-executor v1.13.3
+    Checking foldhash v0.2.0
+    Checking scheduler v0.1.0 (G:\Dx\code\crates\scheduler)
+    Checking hashbrown v0.16.1
+    Checking futures-lite v1.13.0
+    Checking postage v0.5.0
+    Checking futures-concurrency v7.7.1
+    Checking image v0.25.10
+    Checking wasmtime v36.0.12
+    Checking resvg v0.46.0
+    Checking smol v2.0.2
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking rust-embed v8.11.0
+    Checking async_zip v0.0.18
+    Checking windows v0.62.2
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking accesskit_consumer v0.37.0
+    Checking cloud_llm_client v0.1.0 (G:\Dx\code\crates\cloud_llm_client)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking wasmtime-c-api-impl v36.0.9
+    Checking tree-sitter v0.26.9
+    Checking accesskit_windows v0.33.1
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking webview2-com-sys v0.38.2
+    Checking webview2-com v0.38.2
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 22s

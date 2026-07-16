@@ -1,0 +1,5 @@
+   Compiling gpui_macos v0.1.0 (G:\Dx\code\crates\gpui_macos)
+    Checking web_preview_linux v0.1.0 (G:\Dx\code\crates\web_preview_linux)
+    Checking web_preview_macos v0.1.0 (G:\Dx\code\crates\web_preview_macos)
+    Checking gpui_linux v0.1.0 (G:\Dx\code\crates\gpui_linux)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 40.89s

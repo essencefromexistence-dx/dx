@@ -1,6 +1,5 @@
-use gpui::{Action, Entity, OwnedMenu, OwnedMenuItem, Subscription, actions};
-use settings::{Settings, SettingsStore};
-use workspace::AccessibleMode;
+use gpui::{Action, Entity, OwnedMenu, OwnedMenuItem, actions};
+use settings::Settings;
 
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -46,15 +45,11 @@ struct MenuEntry {
 pub struct ApplicationMenu {
     entries: SmallVec<[MenuEntry; 8]>,
     pending_menu_open: Option<String>,
-    _settings_subscription: Subscription,
 }
 
 impl ApplicationMenu {
     pub fn new(_: &mut Window, cx: &mut Context<Self>) -> Self {
         let menus = cx.get_menus().unwrap_or_default();
-        // Re-render when settings change so toggling "accessible mode" expands or
-        // collapses the menu bar (see `all_menus_shown`).
-        let settings_subscription = cx.observe_global::<SettingsStore>(|_, cx| cx.notify());
         Self {
             entries: menus
                 .into_iter()
@@ -64,7 +59,6 @@ impl ApplicationMenu {
                 })
                 .collect(),
             pending_menu_open: None,
-            _settings_subscription: settings_subscription,
         }
     }
 
@@ -152,6 +146,7 @@ impl ApplicationMenu {
         })
     }
 
+    #[allow(dead_code)]
     fn render_application_menu(&self, entry: &MenuEntry) -> impl IntoElement {
         let handle = entry.handle.clone();
 
@@ -173,9 +168,7 @@ impl ApplicationMenu {
                             ui::IconName::Menu,
                         )
                         .style(ButtonStyle::Subtle)
-                        .icon_size(IconSize::Small)
-                        .tab_index(0isize)
-                        .aria_label("Application menu"),
+                        .icon_size(IconSize::Small),
                         Tooltip::text("Open Application Menu"),
                     )
                     .with_handle(handle),
@@ -208,8 +201,7 @@ impl ApplicationMenu {
                             menu_name,
                         )
                         .style(ButtonStyle::Subtle)
-                        .label_size(LabelSize::Small)
-                        .tab_index(0isize),
+                        .label_size(LabelSize::Small),
                     )
                     .with_handle(current_handle.clone()),
             )
@@ -220,8 +212,35 @@ impl ApplicationMenu {
                     // We need to defer this so that this menu handle can take focus from the previous menu
                     let handle = current_handle.clone();
                     window.defer(cx, move |window, cx| handle.show(window, cx));
+                } else if !*hover_enter {
+                    Self::schedule_hover_away_close(all_handles.clone(), window, cx);
                 }
             })
+    }
+
+    fn schedule_hover_away_close(
+        handles: Vec<PopoverMenuHandle<ContextMenu>>,
+        window: &mut Window,
+        _cx: &mut App,
+    ) {
+        window.on_next_frame(move |window, cx| {
+            if !handles.iter().any(|handle| handle.is_deployed()) {
+                return;
+            }
+
+            if handles
+                .iter()
+                .any(|handle| handle.is_deployed() && handle.is_pointer_near(window, px(18.0)))
+            {
+                Self::schedule_hover_away_close(handles, window, cx);
+            } else {
+                for handle in &handles {
+                    if handle.is_deployed() {
+                        handle.hide(cx);
+                    }
+                }
+            }
+        });
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -246,12 +265,6 @@ impl ApplicationMenu {
             .iter()
             .position(|entry| entry.handle.is_deployed());
         let Some(current_index) = current_index else {
-            // No menu is open, so there is nothing to switch between. Let the
-            // arrow key continue to the title bar's toolbar navigation so it
-            // can move focus between title bar controls. Without this, the
-            // `left`/`right` bindings in the `ApplicationMenu` context would
-            // silently swallow the key as a no-op.
-            cx.propagate();
             return;
         };
 
@@ -272,23 +285,29 @@ impl ApplicationMenu {
             }
         };
 
-        self.entries[current_index].handle.hide(cx);
+        let Some(current_entry) = self.entries.get(current_index) else {
+            return;
+        };
+        let Some(next_entry) = self.entries.get(next_index) else {
+            return;
+        };
+
+        current_entry.handle.hide(cx);
 
         // We need to defer this so that this menu handle can take focus from the previous menu
-        let next_handle = self.entries[next_index].handle.clone();
+        let next_handle = next_entry.handle.clone();
         cx.defer_in(window, move |_, window, cx| next_handle.show(window, cx));
     }
 
+    #[allow(dead_code)]
     pub fn all_menus_shown(&self, cx: &mut Context<Self>) -> bool {
         show_menus(cx)
             || self.entries.iter().any(|entry| entry.handle.is_deployed())
             || self.pending_menu_open.is_some()
-            // In accessible mode, keep the full menu bar expanded so every menu
-            // is individually reachable and labeled for assistive technology.
-            || cx.accessible_mode()
     }
 }
 
+#[allow(dead_code)]
 pub(crate) fn show_menus(cx: &mut App) -> bool {
     TitleBarSettings::get_global(cx).show_menus
         && (cfg!(not(target_os = "macos")) || option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some())
@@ -296,8 +315,6 @@ pub(crate) fn show_menus(cx: &mut App) -> bool {
 
 impl Render for ApplicationMenu {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let all_menus_shown = self.all_menus_shown(cx);
-
         if let Some(pending_menu_open) = self.pending_menu_open.take()
             && let Some(entry) = self
                 .entries
@@ -331,15 +348,10 @@ impl Render for ApplicationMenu {
             .flex()
             .flex_row()
             .gap_x_1()
-            .when(!all_menus_shown && !self.entries.is_empty(), |this| {
-                this.child(self.render_application_menu(&self.entries[0]))
-            })
-            .when(all_menus_shown, |this| {
-                this.children(
-                    self.entries
-                        .iter()
-                        .map(|entry| self.render_standard_menu(entry)),
-                )
-            })
+            .children(
+                self.entries
+                    .iter()
+                    .map(|entry| self.render_standard_menu(entry)),
+            )
     }
 }

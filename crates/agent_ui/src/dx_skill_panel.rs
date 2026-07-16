@@ -259,7 +259,8 @@ impl Panel for DxSkillPanel {
     }
 
     fn activation_priority(&self) -> u32 {
-        1
+        // Must be unique across all dock panels (ProjectPanel is 1).
+        13
     }
 }
 

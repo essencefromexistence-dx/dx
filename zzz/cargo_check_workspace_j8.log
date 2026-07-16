@@ -1,0 +1,737 @@
+ Downloading crates ...
+  Downloaded wgpu-core v29.0.4
+  Downloaded wgpu-hal v29.0.4
+  Downloaded naga v29.0.4
+   Compiling serde_core v1.0.228
+   Compiling serde_json v1.0.145
+    Checking subtle v2.6.1
+    Checking windows-sys v0.59.0
+   Compiling windows-sys v0.61.2
+   Compiling bytemuck_derive v1.10.2
+    Checking getrandom v0.2.16
+    Checking digest v0.10.7
+    Checking sha2 v0.10.9
+   Compiling winapi v0.3.9
+    Checking half v2.7.1
+    Checking unicode-properties v0.1.3
+    Checking web-time v1.1.0
+   Compiling ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+   Compiling ztracing_macro v0.1.0 (G:\Dx\code\crates\ztracing_macro)
+   Compiling zerocopy v0.8.27
+    Checking bytemuck v1.24.0
+    Checking ctrlc v3.5.0
+    Checking tiny-skia-path v0.11.4
+    Checking rgb v0.8.52
+    Checking qoi v0.4.1
+    Checking tiff v0.11.3
+   Compiling rand_core v0.6.4
+   Compiling derive_refineable v0.1.0 (G:\Dx\code\crates\refineable\derive_refineable)
+    Checking serde v1.0.228
+    Checking erased-serde v0.4.9
+    Checking serde_fmt v1.0.3
+    Checking smallvec v1.15.1
+    Checking value-bag-serde1 v1.12.0
+    Checking value-bag v1.12.0
+    Checking hashbrown v0.17.1
+    Checking parking_lot_core v0.9.12
+    Checking bitflags v2.10.0
+    Checking parking_lot v0.12.5
+    Checking log v0.4.29
+    Checking either v1.15.0
+   Compiling indexmap v2.14.0
+    Checking tokio v1.52.1
+    Checking tracing v0.1.43
+   Compiling semver v1.0.27
+    Checking icu_normalizer v2.0.0
+    Checking idna_adapter v1.2.1
+    Checking idna v1.1.0
+    Checking uuid v1.18.1
+    Checking url v2.5.7
+   Compiling winapi-util v0.1.11
+    Checking itertools v0.14.0
+   Compiling same-file v1.0.6
+    Checking rustix v1.1.2
+   Compiling walkdir v2.5.0
+    Checking home v0.5.11
+   Compiling globset v0.4.17
+    Checking schemars v1.0.4
+    Checking which v6.0.3
+   Compiling rust-embed-utils v8.11.0
+    Checking async-io v2.6.0
+    Checking gpui_util v0.1.0 (G:\Dx\code\crates\gpui_util)
+    Checking rayon v1.11.0
+    Checking chrono v0.4.42
+    Checking async-process v2.5.0 (https://github.com/zed-industries/async-process.git?rev=0b6d6713570af61806e1e5cb40e0f757cb93fd9d#0b6d6713)
+    Checking collections v0.1.0 (G:\Dx\code\crates\collections)
+    Checking serde_urlencoded v0.7.1
+    Checking path v0.1.0 (G:\Dx\code\crates\path)
+    Checking async-net v2.0.0
+   Compiling rustc_version v0.4.1
+    Checking smol v2.0.2
+    Checking gimli v0.32.3
+    Checking serde_json_lenient v0.2.4
+    Checking async-global-executor v2.4.1
+    Checking kv-log-macro v1.0.7
+    Checking object v0.37.3
+    Checking async-std v1.13.2
+   Compiling serde_spanned v1.0.3
+   Compiling toml_datetime v0.7.3
+    Checking gpui_shared_string v0.1.0 (G:\Dx\code\crates\gpui_shared_string)
+   Compiling toml v0.9.8
+    Checking async-compression v0.4.32
+    Checking tracing-log v0.2.0
+    Checking tracing-serde v0.2.0
+    Checking tracing-subscriber v0.3.22
+    Checking async_zip v0.0.18
+   Compiling embed-resource v3.0.6
+    Checking zlog v0.1.0 (G:\Dx\code\crates\zlog)
+    Checking addr2line v0.25.1
+    Checking fontdb v0.23.0
+    Checking ntapi v0.4.1
+    Checking kurbo v0.13.1
+    Checking accesskit v0.24.1
+    Checking simplecss v0.2.2
+    Checking rustybuzz v0.20.1
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking deranged v0.5.4
+    Checking async-tar v0.6.1
+   Compiling gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking svgtypes v0.16.1
+    Checking backtrace v0.3.76
+   Compiling perf v0.1.0 (G:\Dx\code\tooling\perf)
+    Checking windows-capture v1.4.3 (https://github.com/zed-industries/windows-capture.git?rev=f0d6c1b6691db75461b732f6d5ff56eed002eeb9#f0d6c1b6)
+    Checking sysinfo v0.31.4
+    Checking stacker v0.1.23
+    Checking time v0.3.47
+    Checking tiny-skia v0.11.4
+    Checking postage v0.5.0
+    Checking png v0.18.0
+    Checking exr v1.74.0
+    Checking futures-concurrency v7.7.1
+   Compiling ppv-lite86 v0.2.21
+    Checking usvg v0.46.0
+    Checking zed-scap v0.0.8-zed (https://github.com/zed-industries/scap?rev=4afea48c3b002197176fb19cd0f9b180dd36eaac#4afea48c)
+   Compiling rand_chacha v0.3.1
+   Compiling util_macros v0.1.0 (G:\Dx\code\crates\util_macros)
+    Checking stacksafe v0.1.4
+    Checking scheduler v0.1.0 (G:\Dx\code\crates\scheduler)
+    Checking refineable v0.1.0 (G:\Dx\code\crates\refineable)
+   Compiling gpui_macros v0.1.0 (G:\Dx\code\crates\gpui_macros)
+   Compiling rand v0.8.6
+    Checking resvg v0.46.0
+    Checking ring v0.17.14
+   Compiling phf_generator v0.11.3
+    Checking image v0.25.10
+    Checking tokio-util v0.7.18
+   Compiling errno v0.3.14
+   Compiling bytes v1.11.1
+   Compiling phf_macros v0.11.3
+   Compiling petgraph v0.6.5
+    Checking cranelift-bitset v0.123.12
+   Compiling pulley-interpreter v36.0.12
+    Checking rustls-webpki v0.103.13
+    Checking cranelift-entity v0.123.12
+   Compiling tempfile v3.23.0
+    Checking rustls v0.23.40
+   Compiling itertools v0.10.5
+    Checking postcard v1.1.3
+    Checking regalloc2 v0.12.2
+    Checking zeta_prompt v0.1.0 (G:\Dx\code\crates\zeta_prompt)
+   Compiling cranelift-codegen-meta v0.123.12
+   Compiling prost-derive v0.9.0
+   Compiling rustix v0.38.44
+    Checking cranelift-bforest v0.123.12
+   Compiling which v4.4.2
+    Checking phf v0.11.3
+   Compiling wasmparser v0.236.1
+   Compiling prost v0.9.0
+    Checking tokio-rustls v0.26.4
+    Checking cloud_llm_client v0.1.0 (G:\Dx\code\crates\cloud_llm_client)
+   Compiling prost-types v0.9.0
+   Compiling cranelift-codegen v0.123.12
+    Checking ignore v0.4.24
+   Compiling tree-sitter v0.26.9
+    Checking serde_path_to_error v0.1.20
+    Checking telemetry_events v0.1.0 (G:\Dx\code\crates\telemetry_events)
+    Checking clock v0.1.0 (G:\Dx\code\crates\clock)
+    Checking h2 v0.4.12
+    Checking net v0.1.0 (G:\Dx\code\crates\net)
+    Checking telemetry v0.1.0 (G:\Dx\code\crates\telemetry)
+    Checking notify-types v2.1.0 (https://github.com/zed-industries/notify?rev=faecbc33db4f59313e5225ef766bfd9e54a54cfd#faecbc33)
+    Checking sha1 v0.10.6
+    Checking notify v9.0.0-rc.4 (https://github.com/zed-industries/notify?rev=faecbc33db4f59313e5225ef766bfd9e54a54cfd#faecbc33)
+    Checking trash v5.2.5 (https://github.com/zed-industries/trash-rs?rev=47761739192828a66b11a94ba5420b82d63c03c5#47761739)
+   Compiling settings_macros v0.1.0 (G:\Dx\code\crates\settings_macros)
+   Compiling crossbeam-utils v0.8.21
+    Checking wasmprinter v0.236.1
+    Checking palette v0.7.6
+   Compiling wit-parser v0.236.1
+    Checking wasmtime-environ v36.0.12
+    Checking hyper v1.7.0
+   Compiling rust-embed-impl v8.11.0
+   Compiling prost-build v0.9.0
+    Checking rust-embed v8.11.0
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+   Compiling wasmtime-internal-wit-bindgen v36.0.12
+   Compiling proto v0.1.0 (G:\Dx\code\crates\proto)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking hyper-util v0.1.17
+   Compiling wasmtime-internal-component-macro v36.0.12
+    Checking signature v2.2.0
+    Checking serde_spanned v0.6.9
+    Checking toml_datetime v0.6.11
+    Checking num-bigint v0.4.6
+    Checking toml_edit v0.22.27
+    Checking tungstenite v0.27.0
+    Checking async-tungstenite v0.31.0
+    Checking num-bigint-dig v0.8.6
+    Checking toml v0.8.23
+   Compiling phf_codegen v0.11.3
+    Checking tokio-native-tls v0.3.1
+   Compiling string_cache_codegen v0.5.4
+    Checking rsa v0.9.10
+    Checking nucleo v0.5.0
+    Checking lsp-types v0.95.1 (https://github.com/zed-industries/lsp-types?rev=f4dfa89a21ca35cd929b70354b1583fabae325f8#f4dfa89a)
+    Checking watch v0.1.0 (G:\Dx\code\crates\watch)
+   Compiling futures-core v0.3.32
+   Compiling language v0.1.0 (G:\Dx\code\crates\language)
+    Checking tokio-socks v0.5.2
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking string_cache v0.8.9
+   Compiling concurrent-queue v2.5.0
+    Checking cloud_api_types v0.1.0 (G:\Dx\code\crates\cloud_api_types)
+    Checking rustls-platform-verifier v0.5.3
+    Checking tiny_http v0.12.0
+    Checking http_client_tls v0.1.0 (G:\Dx\code\crates\http_client_tls)
+    Checking yawc v0.2.5
+    Checking num-rational v0.4.2
+   Compiling feature_flags_macros v0.1.0 (G:\Dx\code\crates\feature_flags_macros)
+   Compiling itertools v0.11.0
+   Compiling event-listener v5.4.1
+    Checking icons v0.1.0 (G:\Dx\code\crates\icons)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+   Compiling ena v0.14.4
+    Checking safe_arch v0.7.4
+   Compiling lalrpop v0.20.2
+   Compiling htmlize v1.1.0
+    Checking wide v0.7.33
+    Checking windows v0.62.2
+    Checking cssparser v0.36.0
+    Checking serde_yaml v0.9.34+deprecated
+   Compiling markup5ever v0.12.1
+    Checking dap-types v0.0.1 (https://github.com/zed-industries/dap-types?rev=1b461b310481d01e02b2603c16d7144b926339f8#1b461b31)
+   Compiling futures-channel v0.3.32
+   Compiling documented-macros v0.9.2
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking simba v0.9.1
+    Checking selectors v0.35.0
+   Compiling ui v0.1.0 (G:\Dx\code\crates\ui)
+   Compiling futures-util v0.3.32
+    Checking lol_html v2.8.1
+    Checking cranelift-frontend v0.123.12
+    Checking cranelift-native v0.123.12
+    Checking wasmtime-internal-cranelift v36.0.12
+    Checking wasmtime-internal-unwinder v36.0.12
+    Checking documented v0.9.2
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking json5 v0.4.1
+    Checking wasmparser v0.252.0
+   Compiling ui_macros v0.1.0 (G:\Dx\code\crates\ui_macros)
+    Checking nalgebra v0.34.2
+    Checking wasmtime v36.0.12
+    Checking pulldown-cmark v0.12.2
+    Checking roughr-merman v0.12.0 (https://github.com/zed-industries/merman?tag=v0.6.2-with-patches#9acc3960)
+   Compiling merman-core v0.6.2 (https://github.com/zed-industries/merman?tag=v0.6.2-with-patches#9acc3960)
+    Checking dugong v0.6.2 (https://github.com/zed-industries/merman?tag=v0.6.2-with-patches#9acc3960)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking html5ever v0.27.0
+    Checking manatee v0.6.2 (https://github.com/zed-industries/merman?tag=v0.6.2-with-patches#9acc3960)
+    Checking xml5ever v0.18.1
+    Checking sysinfo v0.37.2
+    Checking vte v0.15.0
+    Checking markup5ever_rcdom v0.3.0
+    Checking snippet v0.1.0 (G:\Dx\code\crates\snippet)
+    Checking pulldown-cmark v0.13.0
+    Checking oauth_callback_server v0.1.0 (G:\Dx\code\crates\oauth_callback_server)
+   Compiling futures-lite v2.6.1
+    Checking symphonia-core v0.5.5
+    Checking alacritty_terminal v0.26.1-dev (https://github.com/zed-industries/alacritty?rev=4c129667ce56611becdc82de6e28218c80e2e88f#4c129667)
+    Checking wax v0.7.0
+    Checking wasmtime-c-api-impl v36.0.9
+   Compiling event-listener-strategy v0.5.4
+    Checking env_var v0.1.0 (G:\Dx\code\crates\env_var)
+   Compiling async-channel v2.5.0
+   Compiling blocking v1.6.2
+    Checking symphonia-metadata v0.5.5
+   Compiling polling v3.11.0
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking symphonia-utils-xiph v0.5.5
+   Compiling async-lock v3.4.2
+   Compiling dirs-sys v0.5.0
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking language_core v0.1.0 (G:\Dx\code\crates\language_core)
+   Compiling async-fs v2.2.0
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+   Compiling async-executor v1.13.3
+   Compiling futures-executor v0.3.32
+   Compiling futures-lite v1.13.0
+   Compiling futures v0.3.32
+   Compiling dirs v6.0.0
+    Checking symphonia-format-riff v0.5.5
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking symphonia-format-ogg v0.5.5
+    Checking symphonia-codec-vorbis v0.5.5
+    Checking symphonia-format-isomp4 v0.5.5
+    Checking symphonia-bundle-flac v0.5.5
+    Checking symphonia-bundle-mp3 v0.5.5
+    Checking symphonia-codec-pcm v0.5.5
+    Checking symphonia-codec-aac v0.5.5
+    Checking zed_env_vars v0.1.0 (G:\Dx\code\crates\zed_env_vars)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking merman-render v0.6.2 (https://github.com/zed-industries/merman?tag=v0.6.2-with-patches#9acc3960)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking tower v0.5.2
+    Checking hyper-rustls v0.27.9
+    Checking symphonia v0.5.5
+    Checking emojis v0.6.4
+    Checking bytes-utils v0.1.4
+    Checking windows-sys v0.52.0
+    Checking aws-smithy-types v1.4.7
+    Checking cpal v0.17.1
+    Checking ahash v0.8.12
+    Checking socket2 v0.5.10
+    Checking rodio v0.21.1 (https://github.com/RustAudio/rodio?rev=e50e726ddd0292f6ef9de0dda6b90af4ed1fb66a#e50e726d)
+    Checking h2 v0.3.27
+   Compiling mime_guess v2.0.5
+    Checking aws-smithy-async v1.2.14
+    Checking aws-smithy-runtime-api v1.11.4
+    Checking hmac v0.12.1
+   Compiling sqlez_macros v0.1.0 (G:\Dx\code\crates\sqlez_macros)
+    Checking der v0.6.1
+   Compiling prettyplease v0.2.37
+    Checking sct v0.7.1
+    Checking rustls-webpki v0.101.7
+    Checking hyper v0.14.32
+    Checking crypto-bigint v0.4.9
+    Checking spki v0.6.0
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking pkcs8 v0.9.0
+    Checking ff v0.12.1
+    Checking base16ct v0.1.1
+    Checking group v0.12.1
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking sec1 v0.3.0
+    Checking rustls v0.21.12
+    Checking zed-reqwest v0.12.15-zed (https://github.com/zed-industries/reqwest.git?rev=c15662463bda39148ba154100dd44d3fba5873a4#c1566246)
+    Checking aws-smithy-eventstream v0.60.20
+    Checking aws-smithy-http v0.63.4
+    Checking rfc6979 v0.3.1
+    Checking elliptic-curve v0.12.3
+    Checking signature v1.6.4
+    Checking io-extras v0.18.4
+    Checking ecdsa v0.14.8
+    Checking fs-set-times v0.20.3
+    Checking aws-credential-types v1.2.12
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking tokio-rustls v0.24.1
+    Checking hyper-rustls v0.24.2
+   Compiling aws-types v1.3.12
+    Checking winx v0.36.4
+    Checking bincode v1.3.3
+    Checking cap-primitives v3.4.4
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking aws-smithy-http-client v1.1.10
+   Compiling doxygen-rs v0.4.2
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking p256 v0.11.1
+    Checking aws-smithy-observability v0.2.5
+    Checking simple_asn1 v0.6.3
+    Checking crypto-bigint v0.5.5
+    Checking aws-smithy-runtime v1.10.1
+    Checking jsonwebtoken v10.3.0
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+   Compiling lmdb-master-sys v0.2.5
+    Checking pet-fs v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking aws-sigv4 v1.4.0
+    Checking is-terminal v0.4.16
+   Compiling witx v0.9.1
+    Checking env_logger v0.10.2
+    Checking pet-core v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking cap-std v3.4.4
+    Checking aws-smithy-json v0.62.5
+    Checking heed-types v0.21.0
+    Checking aws-runtime v1.7.0
+    Checking serde_yaml_ng v0.10.0
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking merman v0.6.2 (https://github.com/zed-industries/merman?tag=v0.6.2-with-patches#9acc3960)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+   Compiling wiggle-generate v36.0.12
+   Compiling livekit_api v0.1.0 (G:\Dx\code\crates\livekit_api)
+    Checking page_size v0.6.0
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking heed v0.21.0
+    Checking cap-fs-ext v3.4.4
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking handlebars v4.5.0
+    Checking fd-lock v4.0.4
+    Checking system-interface v0.27.3
+    Checking cap-time-ext v3.4.4
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+   Compiling wiggle-macro v36.0.12
+    Checking cap-net-ext v3.4.4
+    Checking pet-python-utils v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking cap-rand v3.4.4
+    Checking wasmtime-wasi-io v36.0.12
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking nanoid v0.4.0
+   Compiling extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking wiggle v36.0.12
+    Checking moka v0.12.11
+    Checking wasmtime-wasi v36.0.12
+   Compiling allocator-api2 v0.2.21
+   Compiling foldhash v0.1.5
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+   Compiling hashbrown v0.15.5
+    Checking hashbrown v0.14.5
+    Checking aws-smithy-query v0.60.15
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking aws-sdk-sts v1.98.0
+    Checking livekit_client v0.1.0 (G:\Dx\code\crates\livekit_client)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking aws-sdk-sso v1.94.0
+    Checking aws-sdk-ssooidc v1.96.0
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking accesskit_consumer v0.37.0
+    Checking edit_prediction_metrics v0.1.0 (G:\Dx\code\crates\edit_prediction_metrics)
+    Checking serde_with v3.20.0
+    Checking accesskit_windows v0.33.1
+    Checking windows-sys v0.48.0
+    Checking aws-config v1.8.14
+    Checking time_format v0.1.0 (G:\Dx\code\crates\time_format)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+    Checking tower-http v0.6.6
+    Checking http_proxy v0.1.0 (G:\Dx\code\crates\http_proxy)
+    Checking agent-client-protocol-schema v1.4.0
+    Checking nix v0.28.0
+    Checking winreg v0.10.1
+    Checking pet-virtualenv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking serial2 v0.2.33
+    Checking filedescriptor v0.8.3
+    Checking portable-pty v0.9.0
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking sandbox v0.1.0 (G:\Dx\code\crates\sandbox)
+    Checking hashlink v0.8.4
+    Checking aws-sdk-bedrockruntime v1.125.0
+    Checking yaml-rust2 v0.8.1
+    Checking ahash v0.7.8
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+   Compiling bon-macros v3.8.2
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking x_ai v0.1.0 (G:\Dx\code\crates\x_ai)
+    Checking cached v0.56.0
+    Checking hashbrown v0.12.3
+    Checking hyper-tls v0.6.0
+   Compiling num-traits v0.2.19
+    Checking fluent-uri v0.4.1
+    Checking rkyv v0.7.45
+    Checking reqwest v0.12.24
+    Checking agent-client-protocol v1.1.0
+    Checking headers-core v0.2.0
+    Checking html_to_markdown v0.1.0 (G:\Dx\code\crates\html_to_markdown)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking num v0.4.3
+   Compiling spdx v0.10.9
+    Checking unicode-ident v1.0.19
+    Checking dx_catalog v0.1.0 (G:\Dx\code\crates\dx_catalog)
+    Checking bon v3.8.2
+    Checking fraction v0.15.3
+    Checking brush-parser v0.3.0
+    Checking headers v0.3.9
+    Checking referencing v0.37.4
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking pet-jsonrpc v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking shell_command_parser v0.1.0 (G:\Dx\code\crates\shell_command_parser)
+    Checking email_address v0.2.9
+    Checking stable_deref_trait v1.2.1
+    Checking jsonschema v0.37.4
+    Checking yoke v0.8.0
+    Checking pet-reporter v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+   Compiling wasmparser v0.227.1
+   Compiling cfg_aliases v0.2.1
+    Checking tungstenite v0.20.1
+   Compiling axum v0.6.20
+   Compiling zeroize v1.8.2
+    Checking fastrand v2.3.0
+    Checking tokio-tungstenite v0.20.1
+   Compiling rustls-pki-types v1.12.0
+    Checking pet-conda v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking zerovec v0.11.4
+    Checking tower v0.4.13
+   Compiling heck v0.4.1
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+   Compiling untrusted v0.9.0
+    Checking tower-http v0.4.4
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking cookie v0.18.1
+   Compiling num-integer v0.1.46
+    Checking gpui_platform v0.1.0 (G:\Dx\code\crates\gpui_platform)
+   Compiling windows_x86_64_gnu v0.48.5
+   Compiling mio v1.2.0
+   Compiling socket2 v0.6.3
+   Compiling bigdecimal v0.4.8
+   Compiling tinyvec_macros v0.1.1
+   Compiling rust_decimal v1.39.0
+   Compiling wasm-encoder v0.227.1
+    Checking crc-catalog v2.4.0
+   Compiling powerfmt v0.2.0
+    Checking wry v0.53.5
+    Checking crc v3.3.0
+   Compiling tinyvec v1.10.0
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking call v0.1.0 (G:\Dx\code\crates\call)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+   Compiling windows-targets v0.48.5
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+   Compiling tracing-core v0.1.35
+    Checking ordered-float v4.6.0
+   Compiling libm v0.2.15
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+   Compiling khronos_api v3.1.0
+   Compiling arrayvec v0.7.6
+   Compiling leb128fmt v0.1.0
+   Compiling topological-sort v0.2.2
+   Compiling auditable-serde v0.8.0
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+   Compiling tokio-stream v0.1.17
+   Compiling unicode-normalization v0.1.24
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+   Compiling wit-parser v0.227.1
+    Checking tinystr v0.8.1
+   Compiling winresource v0.1.23
+   Compiling webpki-roots v0.26.8
+   Compiling hashlink v0.10.0
+   Compiling crossbeam-queue v0.3.12
+   Compiling futures-intrusive v0.5.0
+   Compiling windows_resources v0.1.0 (G:\Dx\code\crates\windows_resources)
+    Checking winreg v0.55.0
+    Checking env_filter v0.1.4
+   Compiling base64 v0.22.1
+   Compiling camino v1.2.1
+   Compiling unicode-bidi v0.3.18
+   Compiling sqlx-core v0.8.6
+    Checking env_logger v0.11.8
+   Compiling stringprep v0.1.5
+   Compiling hkdf v0.12.4
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking pet-windows-store v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+   Compiling pet v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking icu_locale_core v2.0.0
+   Compiling wasm-metadata v0.227.1
+   Compiling etcetera v0.8.0
+    Checking potential_utf v0.1.3
+    Checking zerotrie v0.2.2
+   Compiling atoi v2.0.0
+    Checking proc-macro2 v1.0.101
+   Compiling markup5ever v0.14.1
+   Compiling wasmparser v0.201.0
+    Checking md-5 v0.10.6
+   Compiling hex v0.4.3
+   Compiling byteorder v1.5.0
+   Compiling xml-rs v0.8.28
+   Compiling dotenvy v0.15.7
+   Compiling whoami v1.6.1
+   Compiling wit-bindgen-rust v0.41.0
+   Compiling gl_generator v0.14.0
+   Compiling sqlx-postgres v0.8.6
+    Checking quote v1.0.41
+    Checking icu_provider v2.0.0
+    Checking icu_collections v2.0.0
+   Compiling wit-component v0.227.1
+    Checking pet-windows-registry v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+   Compiling wit-bindgen-core v0.41.0
+    Checking pet-uv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-pixi v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-env-var-path v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-pyenv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-global-virtualenvs v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking json_schema_store v0.1.0 (G:\Dx\code\crates\json_schema_store)
+    Checking piper v0.2.4
+    Checking pet-poetry v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+   Compiling naga v29.0.4
+    Checking pet-pipenv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-winpython v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-mac-xcode v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-mac-python-org v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-mac-commandlinetools v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-virtualenvwrapper v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-linux-global-python v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-venv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-telemetry v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking reqwest_client v0.1.0 (G:\Dx\code\crates\reqwest_client)
+   Compiling selectors v0.26.0
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking markdown_preview v0.1.0 (G:\Dx\code\crates\markdown_preview)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+   Compiling proc-macro2-diagnostics v0.10.1
+    Checking libloading v0.8.9
+    Checking bit-vec v0.9.1
+    Checking simd-adler32 v0.3.7
+   Compiling glob v0.3.3
+   Compiling wit-bindgen-rust-macro v0.41.0
+   Compiling ash v0.38.0+1.3.281
+   Compiling wit-bindgen-rt v0.41.0
+    Checking miniz_oxide v0.8.9
+    Checking bit-set v0.9.1
+   Compiling sqlx-macros-core v0.8.6
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+   Compiling clang-sys v1.8.1
+   Compiling wit-parser v0.201.0
+    Checking grammars v0.1.0 (G:\Dx\code\crates\grammars)
+   Compiling glutin_wgl_sys v0.6.1
+    Checking syn v2.0.117
+    Checking dirs-sys v0.4.1
+   Compiling wasm-encoder v0.201.0
+    Checking cssparser v0.34.0
+   Compiling web_atoms v0.1.3
+    Checking codespan-reporting v0.13.0
+    Checking debugid v0.8.0
+    Checking spirv v0.4.0+sdk-1.4.341.0
+    Checking windows-core v0.61.2
+    Checking regex-automata v0.4.14
+   Compiling proc-macro-error-attr v1.0.4
+    Checking rustc-hash v1.1.0
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+    Checking project_panel v0.1.0 (G:\Dx\code\crates\project_panel)
+   Compiling libc v0.2.186
+    Checking hexf-parse v0.2.1
+   Compiling yansi v1.0.1
+   Compiling khronos-egl v6.0.0
+    Checking futures-sink v0.3.32
+    Checking languages v0.1.0 (G:\Dx\code\crates\languages)
+    Checking html5ever v0.29.1
+    Checking minidump-common v0.26.1
+   Compiling wasm-metadata v0.201.0
+    Checking open_path_prompt v0.1.0 (G:\Dx\code\crates\open_path_prompt)
+   Compiling sqlx-macros v0.8.6
+    Checking flate2 v1.1.8
+    Checking icu_properties v2.0.1
+    Checking language_extension v0.1.0 (G:\Dx\code\crates\language_extension)
+   Compiling wgpu-hal v29.0.4
+    Checking debug_adapter_extension v0.1.0 (G:\Dx\code\crates\debug_adapter_extension)
+    Checking wgpu-types v29.0.4
+    Checking gpu-descriptor-types v0.2.0
+    Checking error-graph v0.1.1
+   Compiling cargo-platform v0.3.2
+   Compiling inherent v1.0.13
+   Compiling proc-macro-error v1.0.4
+   Compiling protobuf v3.7.2
+   Compiling wit-bindgen-rust v0.22.0
+   Compiling objc2 v0.6.3
+    Checking presser v0.3.1
+    Checking core-foundation-sys v0.8.7
+    Checking minidump-writer v0.11.0
+    Checking scraper v0.22.0
+    Checking wgpu-naga-bridge v29.0.4
+   Compiling cargo_metadata v0.23.1
+    Checking system_specs v0.1.0 (G:\Dx\code\crates\system_specs)
+    Checking gpu-descriptor v0.3.2
+    Checking sqlx v0.8.6
+    Checking wit-bindgen v0.41.0
+    Checking compression-codecs v0.4.31
+    Checking core-foundation v0.10.0
+   Compiling wit-component v0.201.0
+   Compiling ouroboros_macro v0.18.5
+    Checking sea-query v0.32.7
+error[E0433]: cannot find `unix` in `os`
+  --> G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\core-foundation-0.10.0\src\filedescriptor.rs:19:14
+   |
+19 | use std::os::unix::io::{AsRawFd, RawFd};
+   |              ^^^^ could not find `unix` in `os`
+   |
+note: found an item that was configured out
+  --> G:\Dev\Caches\rustup\toolchains\1.95.0-x86_64-pc-windows-gnu\lib/rustlib/src/rust\library\std\src\os\mod.rs:36:9
+   |
+29 |     doc,
+   |     --- the item is gated here
+...
+36 | pub mod unix {}
+   |         ^^^^
+note: found an item that was configured out
+  --> G:\Dev\Caches\rustup\toolchains\1.95.0-x86_64-pc-windows-gnu\lib/rustlib/src/rust\library\std\src\os\mod.rs:85:9
+   |
+84 | #[cfg(all(not(target_os = "hermit"), any(unix, doc)))]
+   |                                         ----------- the item is gated here
+85 | pub mod unix;
+   |         ^^^^
+
+error[E0432]: unresolved import `libc::PATH_MAX`
+  --> G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\core-foundation-0.10.0\src\url.rs:22:28
+   |
+22 | use libc::{c_char, strlen, PATH_MAX};
+   |                            ^^^^^^^^ no `PATH_MAX` in the root
+
+Some errors have detailed explanations: E0432, E0433.
+For more information about an error, try `rustc --explain E0432`.
+error: could not compile `core-foundation` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...

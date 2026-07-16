@@ -1,0 +1,670 @@
+crates\workspace\src\workspace_settings.rs:152:11: warning: trait `AccessibleMode` is never used
+crates\workspace\src\workspace_settings.rs:168:8: warning: function `observe_accessible_mode` is never used
+warning: `workspace` (lib) generated 2 warnings
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+error[E0425]: cannot find value `options` in this scope
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:10359:29
+      |
+10226 |                 ToolCallStatus::WaitingForConfirmation { .. } => {
+      |                 --------------------------------------------- this pattern doesn't include `options`, which is available in `WaitingForConfirmation`
+...
+10359 |                             options,
+      |                             ^^^^^^^ not found in this scope
+
+warning: unused import: `borrow::Cow`
+ --> crates\agent_ui\src\agent_panel.rs:2:5
+  |
+2 |     borrow::Cow,
+  |     ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `AddContextServer`
+  --> crates\agent_ui\src\agent_panel.rs:91:5
+   |
+91 |     AddContextServer, AgentDiffPane, AutomationScreen, ConnectionsScreen, ConversationView,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `ClientUserMessageId`
+ --> crates\agent_ui\src\conversation_view.rs:3:19
+  |
+3 |     AuthRequired, ClientUserMessageId, ElicitationEntryId, ElicitationStatus, ElicitationStore,
+  |                   ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ContentBlock`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:20:43
+   |
+20 |     ClientUserMessageId as UserMessageId, ContentBlock, Elicitation, PlanEntry,
+   |                                           ^^^^^^^^^^^^
+
+warning: unused import: `NativeAgentSessionList`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:24:5
+   |
+24 |     NativeAgentSessionList, SandboxStatusKey, SandboxStatusRefresh, SkillLoadingIssue,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `TerminalToolHeader`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:37:5
+   |
+37 |     TerminalToolHeader,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `Button` and `TintColor`
+ --> crates\agent_ui\src\dx_skill_panel.rs:9:22
+  |
+9 | ...ude::*, Button, ButtonStyle, Color, IconButton, IconName, IconSize, Label, LabelSize, ListItem, ListItemSpacing, TintColor, Toolti...
+  |            ^^^^^^                                                                                                   ^^^^^^^^^
+
+warning: unused imports: `DxUiIcon` and `dx_icon`
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:12:10
+   |
+12 | use ui::{DxUiIcon, IconName, dx_icon};
+   |          ^^^^^^^^            ^^^^^^^
+
+error[E0382]: use of moved value
+    --> crates\agent_ui\src\agent_panel.rs:7143:42
+     |
+6683 |         let (selected_agent_custom_icon, selected_agent_label) = if showing_terminal {
+     |              -------------------------- move occurs because `selected_agent_custom_icon` has type `std::option::Option<gpui::SharedString>`, which does not implement the `Copy` trait
+...
+6985 |             .when_some(selected_agent_custom_icon, |this, icon_path| {
+     |                        -------------------------- value moved here
+...
+7143 |             let agent_icon = if let Some(icon_path) = selected_agent_custom_icon {
+     |                                          ^^^^^^^^^ value used here after move
+
+error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:12883:31
+      |
+12883 |                 subagent_view.render_entry(actual_ix, total_entries, entry, window, cx)
+      |                               ^^^^^^^^^^^^                           ----- argument #3 of type `bool` is missing
+      |
+note: method defined here
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:7577:8
+      |
+ 7577 |     fn render_entry(
+      |        ^^^^^^^^^^^^
+...
+ 7581 |         render_trailing_safe_area: bool,
+      |         -------------------------------
+help: provide the argument
+      |
+12883 |                 subagent_view.render_entry(actual_ix, total_entries, /* bool */, entry, window, cx)
+      |                                                                      +++++++++++
+
+error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+    --> crates\agent_ui\src\conversation_view.rs:3667:29
+     |
+3667 |                 .child(self.render_auth_required_state(
+     |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+3670 |                     pending_auth_method.as_ref(),
+     |                     ---------------------------- argument #3 of type `std::option::Option<&AnyView>` is missing
+     |
+note: method defined here
+    --> crates\agent_ui\src\conversation_view.rs:2345:8
+     |
+2345 |     fn render_auth_required_state(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2349 |         configuration_view: Option<&AnyView>,
+     |         ------------------------------------
+help: provide the argument
+     |
+3667 |                 .child(self.render_auth_required_state(
+3668 |                     connection,
+3669 |                     description.as_ref(),
+3670 ~                     /* std::option::Option<&AnyView> */,
+3671 ~                     pending_auth_method.as_ref(),
+     |
+
+error[E0599]: no method named `set_active_pane_item` found for mutable reference `&mut BufferSearchBar` in the current scope
+    --> crates\agent_ui\src\agent_panel.rs:4757:24
+     |
+4757 |             search_bar.set_active_pane_item(Some(terminal_item), window, cx);
+     |                        ^^^^^^^^^^^^^^^^^^^^ method not found in `&mut BufferSearchBar`
+     |
+     = help: items from traits can only be used if the trait is in scope
+help: trait `ToolbarItemView` which provides `set_active_pane_item` is implemented but not in scope; perhaps you want to import it
+     |
+   1 + use workspace::ToolbarItemView;
+     |
+
+error[E0308]: mismatched types
+    --> crates\agent_ui\src\agent_panel.rs:8506:56
+     |
+8506 |             Self::show_deferred_toast(&self.workspace, reason.to_string(), cx);
+     |             -------------------------                  ^^^^^^^^^^^^^^^^^^ expected `&str`, found `String`
+     |             |
+     |             arguments to this function are incorrect
+     |
+note: associated function defined here
+    --> crates\agent_ui\src\agent_panel.rs:4389:8
+     |
+4389 |     fn show_deferred_toast(
+     |        ^^^^^^^^^^^^^^^^^^^
+4390 |         workspace: &WeakEntity<workspace::Workspace>,
+4391 |         message: &'static str,
+     |         ---------------------
+help: consider borrowing here
+     |
+8506 |             Self::show_deferred_toast(&self.workspace, &reason.to_string(), cx);
+     |                                                        +
+
+error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\agent_panel.rs:9320:34
+     |
+9320 |         let queued = thread_view.local_queued_messages.len();
+     |                                  ^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 56 others
+
+error[E0599]: no function or associated item named `dx_builtin_metadata_for_id` found for struct `AgentProfile` in the current scope
+   --> crates\agent_ui\src\conversation_view\composer_profile_options.rs:652:38
+    |
+652 |         let metadata = AgentProfile::dx_builtin_metadata_for_id(profile_id)?;
+    |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^ function or associated item not found in `AgentProfile`
+    |
+note: if you're trying to build a new `AgentProfile`, consider using `AgentProfile::new` which returns `AgentProfile`
+   --> crates\agent_settings\src\agent_profile.rs:36:5
+    |
+ 36 |     pub fn new(id: AgentProfileId) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `editor` found for reference `&message_editor::MessageEditor` in the current scope
+   --> crates\agent_ui\src\conversation_view\thread_search_bar.rs:337:71
+    |
+337 |                         .map(|message_editor| message_editor.read(cx).editor().clone());
+    |                                                                       ^^^^^^ private field, not a method
+
+error[E0599]: no method named `modes` found for reference `&mode_selector::ModeSelector` in the current scope
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:5250:44
+     |
+5250 |         let modes = mode_selector.read(cx).modes();
+     |                                            ^^^^^
+     |
+help: there is a method `mode` with a similar name
+     |
+5250 -         let modes = mode_selector.read(cx).modes();
+5250 +         let modes = mode_selector.read(cx).mode();
+     |
+
+error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9398:38
+     |
+9398 | ...                   this.toggle_thinking_block_expansion(key, window, cx);
+     |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      ------ unexpected argument #2 of type `&mut gpui::Window`
+     |
+note: method defined here
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9267:8
+     |
+9267 |     fn toggle_thinking_block_expansion(&mut self, key: (usize, usize), cx: &mut Context<Self>) {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: remove the extra argument
+     |
+9398 -                                 this.toggle_thinking_block_expansion(key, window, cx);
+9398 +                                 this.toggle_thinking_block_expansion(key, cx);
+     |
+
+error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9402:30
+     |
+9402 |                         this.toggle_thinking_block_expansion(key, window, cx);
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^      ------ unexpected argument #2 of type `&mut gpui::Window`
+     |
+note: method defined here
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9267:8
+     |
+9267 |     fn toggle_thinking_block_expansion(&mut self, key: (usize, usize), cx: &mut Context<Self>) {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: remove the extra argument
+     |
+9402 -                         this.toggle_thinking_block_expansion(key, window, cx);
+9402 +                         this.toggle_thinking_block_expansion(key, cx);
+     |
+
+error[E0061]: this method takes 8 arguments but 7 arguments were supplied
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:10356:37
+      |
+10356 |                         .child(self.render_permission_buttons(
+      |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+10363 |                             cx,
+      |                             -- argument #7 of type `bool` is missing
+      |
+note: method defined here
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:11283:8
+      |
+11283 |     fn render_permission_buttons(
+      |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+11293 |         allow_disabled: bool,
+      |         --------------------
+help: provide the argument
+      |
+10356 |                         .child(self.render_permission_buttons(
+  ...
+10362 |                             focus_handle,
+10363 ~                             /* bool */,
+10364 ~                             cx,
+      |
+
+error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:12141:26
+      |
+12141 |                     self.render_image_output(entry_ix, image.clone(), location, card_layout, cx)
+      |                          ^^^^^^^^^^^^^^^^^^^                          -------- argument #3 of type `std::option::Option<gpui::Size<u32>>` is missing
+      |
+note: method defined here
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:12405:8
+      |
+12405 |     fn render_image_output(
+      |        ^^^^^^^^^^^^^^^^^^^
+...
+12409 |         dimensions: Option<gpui::Size<u32>>,
+      |         -----------------------------------
+help: provide the argument
+      |
+12141 |                     self.render_image_output(entry_ix, image.clone(), /* std::option::Option<gpui::Size<u32>> */, location, card_layout, cx)
+      |                                                                       +++++++++++++++++++++++++++++++++++++++++++
+
+error[E0599]: no method named `with_rotate_animation` found for struct `ui::Icon` in the current scope
+   --> crates\agent_ui\src\conversation_view\voice_controls.rs:457:14
+    |
+456 |           | ComposerVoicePhase::Speaking => dx_loading_icon(IconSize::XSmall, tone)
+    |  ___________________________________________-
+457 | |             .with_rotate_animation(1)
+    | |_____________-^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: crates\ui\src\traits\animation_ext.rs:15:8
+    |
+ 15 |       fn with_rotate_animation(self, duration: u64) -> AnimationElement<Self>
+    |          --------------------- the method is available for `ui::Icon` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: there is a method `with_keyed_rotate_animation` with a similar name, but with different arguments
+   --> crates\ui\src\traits\animation_ext.rs:26:5
+    |
+ 26 | /     fn with_keyed_rotate_animation(
+ 27 | |         self,
+ 28 | |         id: impl Into<ElementId>,
+ 29 | |         duration: u64,
+ 30 | |     ) -> AnimationElement<Self>
+ 31 | |     where
+ 32 | |         Self: Transformable + Sized,
+    | |____________________________________^
+help: trait `CommonAnimationExt` which provides `with_rotate_animation` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use ui::CommonAnimationExt;
+    |
+
+error[E0063]: missing field `transparent_header_height` in initializer of `conversation_view::ConversationView`
+   --> crates\agent_ui\src\conversation_view.rs:873:9
+    |
+873 |         Self {
+    |         ^^^^ missing `transparent_header_height`
+
+error[E0061]: this function takes 6 arguments but 5 arguments were supplied
+    --> crates\agent_ui\src\conversation_view.rs:1189:29
+     |
+1189 | ...                   Self::handle_auth_required(this, err, connection, window, cx)
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^            ---------- argument #3 of type `project::AgentId` is missing
+     |
+note: associated function defined here
+    --> crates\agent_ui\src\conversation_view.rs:1469:8
+     |
+1469 |     fn handle_auth_required(
+     |        ^^^^^^^^^^^^^^^^^^^^
+...
+1472 |         agent_id: AgentId,
+     |         -----------------
+help: provide the argument
+     |
+1189 |                             Self::handle_auth_required(this, err, /* project::AgentId */, connection, window, cx)
+     |                                                                   +++++++++++++++++++++++
+
+error[E0609]: no field `provider_id` on type `acp_thread::AuthRequired`
+    --> crates\agent_ui\src\conversation_view.rs:1477:82
+     |
+1477 |         let (configuration_view, subscription) = if let Some(provider_id) = &err.provider_id {
+     |                                                                                  ^^^^^^^^^^^ unknown field
+     |
+     = note: available field is: `description`
+
+error[E0599]: no method named `send_queued_message_at_index` found for mutable reference `&mut thread_view::ThreadView` in the current scope
+    --> crates\agent_ui\src\conversation_view.rs:1650:24
+     |
+1650 |                 active.send_queued_message_at_index(index, is_send_now, window, cx);
+     |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: there is a method `send_queued_message_now` with a similar name, but with different arguments
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:2455:5
+     |
+2455 | /     pub fn send_queued_message_now(
+2456 | |         &mut self,
+2457 | |         id: QueueEntryId,
+2458 | |         window: &mut Window,
+2459 | |         cx: &mut Context<Self>,
+2460 | |     ) {
+     | |_____^
+
+error[E0308]: mismatched types
+    --> crates\agent_ui\src\conversation_view.rs:1666:21
+     |
+1665 |                 active.move_queued_message_to_main_editor(
+     |                        ---------------------------------- arguments to this method are incorrect
+1666 |                     index,
+     |                     ^^^^^ expected `QueueEntryId`, found `usize`
+     |
+note: method defined here
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:2532:12
+     |
+2532 |     pub fn move_queued_message_to_main_editor(
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2533 |         &mut self,
+2534 |         id: QueueEntryId,
+     |         ----------------
+help: try wrapping the expression in `conversation_view::message_queue::QueueEntryId` (its field is private, but it's local to this crate and its privacy can be changed)
+     |
+1666 |                     conversation_view::message_queue::QueueEntryId(index),
+     |                     +++++++++++++++++++++++++++++++++++++++++++++++     +
+
+error[E0061]: this method takes 0 arguments but 1 argument was supplied
+    --> crates\agent_ui\src\conversation_view.rs:1775:36
+     |
+1775 | ...                   active.clear_auto_expand_tracking(cx);
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^ -- unexpected argument of type `&mut gpui::Context<'_, thread_view::ThreadView>`
+     |
+note: method defined here
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9263:19
+     |
+9263 |     pub(crate) fn clear_auto_expand_tracking(&mut self) {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: remove the extra argument
+     |
+1775 -                             active.clear_auto_expand_tracking(cx);
+1775 +                             active.clear_auto_expand_tracking();
+     |
+
+error[E0061]: this method takes 4 arguments but 3 arguments were supplied
+    --> crates\agent_ui\src\conversation_view.rs:1803:36
+     |
+1803 | ...                   active.dispatch_queued_entry(entry, window, cx);
+     |                              ^^^^^^^^^^^^^^^^^^^^^        ------ argument #2 of type `bool` is missing
+     |
+note: method defined here
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:2470:12
+     |
+2470 |     pub fn dispatch_queued_entry(
+     |            ^^^^^^^^^^^^^^^^^^^^^
+...
+2473 |         is_send_now: bool,
+     |         -----------------
+help: provide the argument
+     |
+1803 |                             active.dispatch_queued_entry(entry, /* bool */, window, cx);
+     |                                                                 +++++++++++
+
+error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2864:43
+     |
+2864 |             .map(|thread| thread.read(cx).local_queued_messages.len())
+     |                                           ^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `local_queued_messages` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2877:35
+     |
+2877 |                 if index < thread.local_queued_messages.len() {
+     |                                   ^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `local_queued_messages` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2878:28
+     |
+2878 |                     thread.local_queued_messages[index] = QueuedMessage {
+     |                            ^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2896:18
+     |
+2896 |                 .local_queued_messages
+     |                  ^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2905:45
+     |
+2905 |             Some(thread) => thread.read(cx).queued_message_editors.get(index).cloned(),
+     |                                             ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2944:45
+     |
+2944 |         let current_count = thread.read(cx).queued_message_editors.len();
+     |                                             ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `last_synced_queue_length` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2945:43
+     |
+2945 |         let last_synced = thread.read(cx).last_synced_queue_length;
+     |                                           ^^^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2953:24
+     |
+2953 |                 thread.queued_message_editors.truncate(needed_count);
+     |                        ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editor_subscriptions` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2955:22
+     |
+2955 |                     .queued_message_editor_subscriptions
+     |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2959:43
+     |
+2959 |             let editors = thread.read(cx).queued_message_editors.clone();
+     |                                           ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2970:31
+     |
+2970 |         while thread.read(cx).queued_message_editors.len() < needed_count {
+     |                               ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:2971:41
+     |
+2971 |             let index = thread.read(cx).queued_message_editors.len();
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editors` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:3027:24
+     |
+3027 |                 thread.queued_message_editors.push(editor);
+     |                        ^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `queued_message_editor_subscriptions` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:3029:22
+     |
+3029 |                     .queued_message_editor_subscriptions
+     |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0609]: no field `last_synced_queue_length` on type `&mut thread_view::ThreadView`
+    --> crates\agent_ui\src\conversation_view.rs:3036:24
+     |
+3036 |                 active.last_synced_queue_length = needed_count;
+     |                        ^^^^^^^^^^^^^^^^^^^^^^^^ unknown field
+     |
+     = note: available fields are: `root_thread_id`, `session_id`, `parent_session_id`, `thread`, `conversation` ... and 57 others
+
+error[E0061]: this function takes 6 arguments but 5 arguments were supplied
+    --> crates\agent_ui\src\conversation_view.rs:3485:13
+     |
+3485 |             Self::handle_auth_required(this, AuthRequired::new(), connection, window, cx);
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^                            ---------- argument #3 of type `project::AgentId` is missing
+     |
+note: associated function defined here
+    --> crates\agent_ui\src\conversation_view.rs:1469:8
+     |
+1469 |     fn handle_auth_required(
+     |        ^^^^^^^^^^^^^^^^^^^^
+...
+1472 |         agent_id: AgentId,
+     |         -----------------
+help: provide the argument
+     |
+3485 |             Self::handle_auth_required(this, AuthRequired::new(), /* project::AgentId */, connection, window, cx);
+     |                                                                   +++++++++++++++++++++++
+
+error[E0599]: no method named `anchor_scroll` found for struct `ui::ListItem` in the current scope
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:137:6
+    |
+133 | /     ListItem::new(SharedString::from(format!(
+134 | |         "dx-forge-provider-group-{}",
+135 | |         group.key()
+136 | |     )))
+137 | |     .anchor_scroll(scroll_anchor)
+    | |     -^^^^^^^^^^^^^ method not found in `ui::ListItem`
+    | |_____|
+    |
+
+error[E0599]: no method named `anchor_scroll` found for struct `ui::ListItem` in the current scope
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:151:10
+    |
+150 | /     ListItem::new(id)
+151 | |         .anchor_scroll(scroll_anchor)
+    | |         -^^^^^^^^^^^^^ method not found in `ui::ListItem`
+    | |_________|
+    |
+
+warning: unused import: `itertools::Itertools`
+  --> crates\agent_ui\src\agent_panel.rs:22:5
+   |
+22 | use itertools::Itertools;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+error[E0004]: non-exhaustive patterns: `VisibleSurface::Configuration(_)` not covered
+    --> crates\agent_ui\src\agent_panel.rs:6216:29
+     |
+6216 |         let content = match self.visible_surface() {
+     |                             ^^^^^^^^^^^^^^^^^^^^^^ pattern `VisibleSurface::Configuration(_)` not covered
+     |
+note: `VisibleSurface<'_>` defined here
+    --> crates\agent_ui\src\agent_panel.rs:1250:6
+     |
+1250 | enum VisibleSurface<'a> {
+     |      ^^^^^^^^^^^^^^
+...
+1254 |     Configuration(Option<&'a Entity<AgentConfiguration>>),
+     |     ------------- not covered
+     = note: the matched value is of type `VisibleSurface<'_>`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+     |
+6347 ~             VisibleSurface::Uninitialized => Label::new("Agent").truncate().into_any_element(),
+6348 ~             VisibleSurface::Configuration(_) => todo!(),
+     |
+
+warning: unused variable: `editor_bg_color`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:4650:13
+     |
+4650 |         let editor_bg_color = cx.theme().colors().editor_background;
+     |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_editor_bg_color`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:5127:13
+     |
+5127 |         let mut rendered = slots
+     |             ----^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `is_voice_busy`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:6633:13
+     |
+6633 |         let is_voice_busy = self.composer_voice_state.is_busy();
+     |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_voice_busy`
+
+warning: unused variable: `render_trailing_safe_area`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:7581:9
+     |
+7581 |         render_trailing_safe_area: bool,
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_render_trailing_safe_area`
+
+warning: unused variable: `copy_response_button`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:8176:13
+     |
+8176 |         let copy_response_button = last_response_index.map(|response_index| {
+     |             ^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_copy_response_button`
+
+warning: unused variable: `feedback_buttons`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:8247:13
+     |
+8247 |         let feedback_buttons = (self.is_subagent() && self.is_thread_feedback_enabled(cx)).then(
+     |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feedback_buttons`
+
+warning: unused variable: `header_bg`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9787:13
+     |
+9787 |         let header_bg = cx
+     |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_header_bg`
+
+warning: unused variable: `command_element`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9799:13
+     |
+9799 |         let command_element = self.render_collapsible_command(
+     |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_command_element`
+
+warning: unused variable: `summary`
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:10847:17
+      |
+10847 |             let summary = if details.allow_fs_write_all {
+      |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_summary`
+
+warning: unused variable: `dimensions_label`
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:12425:13
+      |
+12425 |         let dimensions_label = if let Some(size) = dimensions {
+      |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dimensions_label`
+
+warning: unused variable: `configuration_view`
+    --> crates\agent_ui\src\conversation_view.rs:2349:9
+     |
+2349 |         configuration_view: Option<&AnyView>,
+     |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_configuration_view`
+
+Some errors have detailed explanations: E0004, E0061, E0063, E0308, E0382, E0425, E0599, E0609.
+For more information about an error, try `rustc --explain E0004`.
+warning: `agent_ui` (lib) generated 20 warnings
+error: could not compile `agent_ui` (lib) due to 41 previous errors; 20 warnings emitted

@@ -1,0 +1,63 @@
+    Checking media_panel v0.1.0 (G:\Dx\code\crates\media_panel)
+    Checking font_panel v0.1.0 (G:\Dx\code\crates\font_panel)
+    Checking shadcn_ui_panel v0.1.0 (G:\Dx\code\crates\shadcn_ui_panel)
+    Checking pet-pyenv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-global-virtualenvs v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-env-var-path v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-pixi v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-poetry v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-virtualenvwrapper v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-mac-commandlinetools v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-linux-global-python v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-pipenv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-mac-python-org v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+error[E0507]: cannot move out of `url`, a captured variable in an `Fn` closure
+    --> crates\media_panel\src\media_panel.rs:1636:45
+     |
+1544 |         let url = asset.url.into_owned();
+     |             ---   ---------------------- move occurs because `url` has type `std::string::String`, which does not implement the `Copy` trait
+     |             |
+     |             captured outer variable
+...
+1635 |                 move |panel, _, window, cx| {
+     |                 --------------------------- captured by this `Fn` closure
+1636 |                     panel.preview_media_url(url, kind, label, window, cx);
+     |                                             ^^^ `url` is moved here
+     |
+     = help: `Fn` and `FnMut` closures require captured values to be able to be consumed multiple times, but `FnOnce` closures may consume them only once
+
+error[E0507]: cannot move out of `label`, a captured variable in an `Fn` closure
+    --> crates\media_panel\src\media_panel.rs:1636:56
+     |
+1634 |                 let label = label.clone();
+     |                     -----   ------------- move occurs because `label` has type `std::string::String`, which does not implement the `Copy` trait
+     |                     |
+     |                     captured outer variable
+1635 |                 move |panel, _, window, cx| {
+     |                 --------------------------- captured by this `Fn` closure
+1636 |                     panel.preview_media_url(url, kind, label, window, cx);
+     |                                                        ^^^^^ `label` is moved here
+     |
+     = help: `Fn` and `FnMut` closures require captured values to be able to be consumed multiple times, but `FnOnce` closures may consume them only once
+
+    Checking pet-mac-xcode v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking pet-winpython v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+error: redundant clone
+   --> crates\font_panel\src\font_panel.rs:823:53
+    |
+823 | ...                   Label::new(font.name.clone())
+    |                                           ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\font_panel\src\font_panel.rs:823:44
+    |
+823 | ...                   Label::new(font.name.clone())
+    |                                  ^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+    = note: requested on the command line with `-D clippy::redundant-clone`
+
+    Checking pet-venv v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+error: could not compile `font_panel` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+For more information about this error, try `rustc --explain E0507`.
+error: could not compile `media_panel` (lib) due to 2 previous errors

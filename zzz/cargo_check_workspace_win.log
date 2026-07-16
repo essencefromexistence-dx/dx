@@ -1,0 +1,258 @@
+warning: excluded package(s) `gpui_wayland, gpui_x11` not found in workspace `G:\Dx\code`
+    Blocking waiting for file lock on package cache
+    Checking web_preview v0.1.0 (G:\Dx\code\crates\web_preview)
+    Checking gpu-allocator v0.28.0
+    Checking futures-util v0.3.32
+    Checking directories v5.0.1
+    Checking dirs v5.0.1
+   Compiling wit-bindgen-core v0.22.0
+    Checking async-lock v3.4.2
+    Checking crc-fast v1.9.0
+   Compiling sea-bae v0.2.1
+    Checking dev_container v0.1.0 (G:\Dx\code\crates\dev_container)
+   Compiling darling_core v0.21.3
+   Compiling windows-bindgen v0.61.1
+    Checking jupyter-protocol v1.4.0
+    Checking rand v0.4.6
+    Checking protobuf-support v3.7.2
+    Checking font-types v0.10.0
+    Checking font-types v0.11.0
+   Compiling libloading v0.8.9
+   Compiling async-stream-impl v0.3.6
+    Checking renderdoc-sys v1.1.0
+   Compiling bindgen v0.71.1
+    Checking glow v0.17.0
+   Compiling wit-bindgen-rt v0.22.0
+    Checking aliasable v0.1.3
+   Compiling wit-bindgen-rust-macro v0.22.0
+    Checking range-alloc v0.1.4
+   Compiling prometheus v0.14.0
+    Checking async-stream v0.3.6
+    Checking ouroboros v0.18.5
+    Checking recent_projects v0.1.0 (G:\Dx\code\crates\recent_projects)
+    Checking read-fonts v0.37.0
+   Compiling clang-sys v1.8.1
+    Checking aws-smithy-checksums v0.64.4
+    Checking wgpu-hal v29.0.4
+    Checking dx-media v1.0.0 (https://github.com/essence-dx/media?rev=caacb6134a455bea4e0eb6b58d522e96af230e4a#caacb613)
+   Compiling darling_macro v0.21.3
+    Checking read-fonts v0.35.0
+   Compiling wprcontrol v0.1.0 (https://github.com/zed-industries/wprcontrol?rev=cd811f7#cd811f7d)
+    Checking futures-executor v0.3.32
+    Checking protobuf v3.7.2
+    Checking rand v0.3.23
+   Compiling sea-orm-macros v1.1.10
+    Checking async-fs v2.2.0
+   Compiling wit-bindgen-rust v0.22.0
+    Checking rust-embed-utils v8.11.0
+   Compiling proc-macro-error v1.0.4
+    Checking async-compression v0.4.32
+    Checking markup5ever v0.35.0
+    Checking idna v1.1.0
+    Checking sea-query-binder v0.7.0
+   Compiling octocrab v0.49.7
+    Checking minidumper v0.9.0
+    Checking async-net v2.0.0
+    Checking async-process v2.5.0 (https://github.com/zed-industries/async-process.git?rev=0b6d6713570af61806e1e5cb40e0f757cb93fd9d#0b6d6713)
+    Checking crash-handler v0.7.0
+    Checking windows-collections v0.2.0
+    Checking windows-numerics v0.2.0
+    Checking windows-future v0.2.1
+   Compiling cli v0.1.0 (G:\Dx\code\crates\cli)
+    Checking async-executor v1.13.3
+   Compiling cargo_toml v0.21.0
+   Compiling wgpu-core v29.0.4
+    Checking dirs-sys v0.5.0
+    Checking winreg v0.50.0
+    Checking hyper-tls v0.5.0
+    Checking command_palette v0.1.0 (G:\Dx\code\crates\command_palette)
+   Compiling cexpr v0.6.0
+    Checking tungstenite v0.21.0
+    Checking rustls-pemfile v1.0.4
+    Checking json_dotpath v1.1.0
+    Checking form_urlencoded v1.2.2
+   Compiling snafu-derive v0.8.9
+   Compiling match_token v0.35.0
+    Checking scopeguard v1.2.0
+   Compiling litrs v1.0.0
+   Compiling zed_extension_api v0.7.0
+   Compiling pulldown-cmark v0.10.3
+    Checking html5ever v0.35.0
+    Checking tokio-tungstenite v0.21.0
+   Compiling document-features v0.2.12
+    Checking lock_api v0.4.14
+    Checking dap_adapters v0.1.0 (G:\Dx\code\crates\dap_adapters)
+    Checking url v2.5.7
+    Checking zeromq v0.5.0
+    Checking reqwest v0.11.27
+    Checking skrifa v0.37.0
+    Checking dirs v6.0.0
+    Checking snafu v0.8.9
+    Checking smol v2.0.2
+    Checking windows v0.61.3
+    Checking sea-orm v1.1.10
+    Checking crashes v0.1.0 (G:\Dx\code\crates\crashes)
+    Checking font_panel v0.1.0 (G:\Dx\code\crates\font_panel)
+   Compiling remote_server v0.1.0 (G:\Dx\code\crates\remote_server)
+    Checking shadcn_ui_panel v0.1.0 (G:\Dx\code\crates\shadcn_ui_panel)
+    Checking ipc-channel v0.19.0
+    Checking async_zip v0.0.18
+   Compiling merge_derive v0.1.0
+    Checking rust-embed v8.11.0
+    Checking wgpu-core-deps-windows-linux-android v29.0.4
+    Checking random_choice v0.3.2
+    Checking futures v0.3.32
+   Compiling darling v0.21.3
+    Checking aws-sdk-s3 v1.123.0
+    Checking schemars v1.0.4
+    Checking regex v1.12.3
+    Checking parking_lot_core v0.9.12
+    Checking serde_json_lenient v0.2.4
+    Checking tempfile v3.23.0
+   Compiling wgpu v29.0.4
+    Checking notify v6.1.1
+    Checking dashmap v6.1.0
+    Checking aws-sdk-kinesis v1.100.0
+    Checking icon_picker v0.1.0 (G:\Dx\code\crates\icon_picker)
+    Checking cssparser v0.35.0
+    Checking arc-swap v1.9.0
+    Checking hyper-timeout v0.5.2
+    Checking rand_pcg v0.3.1
+    Checking secrecy v0.10.3
+    Checking triomphe v0.1.15
+    Checking sha-1 v0.10.1
+    Checking itertools v0.10.5
+    Checking envy v0.4.2
+    Checking media_panel v0.1.0 (G:\Dx\code\crates\media_panel)
+    Checking normpath v1.5.0
+   Compiling zed_extension_api v0.1.0
+    Checking maplit v1.0.2
+    Checking scoped-tls v1.0.1
+   Compiling edit_prediction_cli v0.1.0 (G:\Dx\code\crates\edit_prediction_cli)
+   Compiling inspector_ui v0.1.0 (G:\Dx\code\crates\inspector_ui)
+    Checking zeno v0.3.3
+    Checking yazi v0.2.1
+   Compiling zed_extension_api v0.8.0 (G:\Dx\code\crates\extension_api)
+    Checking pulldown-cmark-escape v0.10.1
+    Checking shingles v0.1.1
+    Checking gaoya v0.2.0
+    Checking swash v0.2.6
+    Checking warp v0.3.7
+    Checking ammonia v4.1.2
+    Checking opener v0.7.2
+   Compiling media v0.1.0 (G:\Dx\code\crates\media)
+    Checking notify-debouncer-mini v0.4.1
+    Checking title_bar v0.1.0 (G:\Dx\code\crates\title_bar)
+    Checking parking_lot v0.12.5
+    Checking wit-bindgen v0.22.0
+    Checking merge v0.1.0
+   Compiling derive_setters v0.1.9
+    Checking runtimelib v1.4.0
+    Checking skrifa v0.40.0
+    Checking harfrust v0.5.0
+    Checking nbformat v1.2.0
+    Checking jupyter-websocket-client v1.1.0
+    Checking camino v1.2.1
+   Compiling auto_update_helper v0.1.0 (G:\Dx\code\crates\auto_update_helper)
+   Compiling zed v1.13.0 (G:\Dx\code\crates\zed)
+    Checking debugger_tools v0.1.0 (G:\Dx\code\crates\debugger_tools)
+    Checking outline v0.1.0 (G:\Dx\code\crates\outline)
+    Checking tasks_ui v0.1.0 (G:\Dx\code\crates\tasks_ui)
+    Checking rtoolbox v0.0.3
+    Checking handlebars v5.1.2
+    Checking simplelog v0.12.2
+    Checking rustc_version v0.4.1
+    Checking elasticlunr-rs v3.0.2
+   Compiling gh-workflow-macros v0.8.0 (https://github.com/zed-industries/gh-workflow?rev=37f3c0575d379c218a9c455ee67585184e40d43f#37f3c057)
+    Checking toml v0.5.11
+    Checking cargo-platform v0.1.9
+    Checking self_cell v1.2.2
+    Checking linebender_resource_handle v0.1.1
+   Compiling eval_cli v0.1.0 (G:\Dx\code\crates\eval_cli)
+    Checking rangemap v1.7.1
+    Checking topological-sort v0.2.2
+    Checking unicode-linebreak v0.1.5
+    Checking gh-workflow v0.8.0 (https://github.com/zed-industries/gh-workflow?rev=37f3c0575d379c218a9c455ee67585184e40d43f#37f3c057)
+    Checking debugger_ui v0.1.0 (G:\Dx\code\crates\debugger_ui)
+    Checking cosmic-text v0.19.0
+    Checking mdbook v0.4.40
+    Checking cargo_metadata v0.19.2
+    Checking embed-resource v3.0.6
+    Checking outline_panel v0.1.0 (G:\Dx\code\crates\outline_panel)
+    Checking rpassword v7.5.2
+    Checking repl v0.1.0 (G:\Dx\code\crates\repl)
+    Checking collab_ui v0.1.0 (G:\Dx\code\crates\collab_ui)
+    Checking etw_tracing v0.1.0 (G:\Dx\code\crates\etw_tracing)
+    Checking vim v0.1.0 (G:\Dx\code\crates\vim)
+    Checking keymap_editor v0.1.0 (G:\Dx\code\crates\keymap_editor)
+    Checking which_key v0.1.0 (G:\Dx\code\crates\which_key)
+    Checking onboarding v0.1.0 (G:\Dx\code\crates\onboarding)
+    Checking sidebar v0.1.0 (G:\Dx\code\crates\sidebar)
+    Checking perf v0.1.0 (G:\Dx\code\tooling\perf)
+    Checking feedback v0.1.0 (G:\Dx\code\crates\feedback)
+    Checking component_preview v0.1.0 (G:\Dx\code\crates\component_preview)
+    Checking snippets_ui v0.1.0 (G:\Dx\code\crates\snippets_ui)
+    Checking toolchain_selector v0.1.0 (G:\Dx\code\crates\toolchain_selector)
+    Checking language_selector v0.1.0 (G:\Dx\code\crates\language_selector)
+    Checking file_finder v0.1.0 (G:\Dx\code\crates\file_finder)
+    Checking acp_tools v0.1.0 (G:\Dx\code\crates\acp_tools)
+    Checking auto_update_ui v0.1.0 (G:\Dx\code\crates\auto_update_ui)
+    Checking web_search_providers v0.1.0 (G:\Dx\code\crates\web_search_providers)
+    Checking compliance v0.1.0 (G:\Dx\code\tooling\compliance)
+    Checking language_tools v0.1.0 (G:\Dx\code\crates\language_tools)
+    Checking activity_indicator v0.1.0 (G:\Dx\code\crates\activity_indicator)
+    Checking extensions_ui v0.1.0 (G:\Dx\code\crates\extensions_ui)
+    Checking project_symbols v0.1.0 (G:\Dx\code\crates\project_symbols)
+    Checking lsp_locations v0.1.0 (G:\Dx\code\crates\lsp_locations)
+    Checking diagnostics v0.1.0 (G:\Dx\code\crates\diagnostics)
+    Checking go_to_line v0.1.0 (G:\Dx\code\crates\go_to_line)
+    Checking miniprofiler_ui v0.1.0 (G:\Dx\code\crates\miniprofiler_ui)
+    Checking language_onboarding v0.1.0 (G:\Dx\code\crates\language_onboarding)
+    Checking collab v0.44.0 (G:\Dx\code\crates\collab)
+    Checking tab_switcher v0.1.0 (G:\Dx\code\crates\tab_switcher)
+    Checking csv_preview v0.1.0 (G:\Dx\code\crates\csv_preview)
+    Checking encoding_selector v0.1.0 (G:\Dx\code\crates\encoding_selector)
+    Checking journal v0.1.0 (G:\Dx\code\crates\journal)
+    Checking line_ending_selector v0.1.0 (G:\Dx\code\crates\line_ending_selector)
+    Checking image_viewer v0.1.0 (G:\Dx\code\crates\image_viewer)
+    Checking settings_profile_selector v0.1.0 (G:\Dx\code\crates\settings_profile_selector)
+    Checking theme_selector v0.1.0 (G:\Dx\code\crates\theme_selector)
+    Checking ui_prompt v0.1.0 (G:\Dx\code\crates\ui_prompt)
+    Checking svg_preview v0.1.0 (G:\Dx\code\crates\svg_preview)
+    Checking install_cli v0.1.0 (G:\Dx\code\crates\install_cli)
+    Checking theme_extension v0.1.0 (G:\Dx\code\crates\theme_extension)
+    Checking annotate-snippets v0.12.12
+    Checking zlog_settings v0.1.0 (G:\Dx\code\crates\zlog_settings)
+    Checking input_latency_ui v0.1.0 (G:\Dx\code\crates\input_latency_ui)
+    Checking vscode_theme v0.2.0
+    Checking util_macros v0.1.0 (G:\Dx\code\crates\util_macros)
+    Checking zed_test_extension v0.1.0 (G:\Dx\code\extensions\test-extension)
+    Checking xtask v0.1.0 (G:\Dx\code\tooling\xtask)
+    Checking zed_glsl v0.2.4 (G:\Dx\code\extensions\glsl)
+    Checking gpui_wgpu v0.1.0 (G:\Dx\code\crates\gpui_wgpu)
+    Checking docs_preprocessor v0.1.0 (G:\Dx\code\crates\docs_preprocessor)
+    Checking project_benchmarks v0.1.0 (G:\Dx\code\crates\project_benchmarks)
+    Checking windows_resources v0.1.0 (G:\Dx\code\crates\windows_resources)
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking zed_proto v0.3.2 (G:\Dx\code\extensions\proto)
+    Checking zed_html v0.3.1 (G:\Dx\code\extensions\html)
+    Checking ui_macros v0.1.0 (G:\Dx\code\crates\ui_macros)
+    Checking theme_importer v0.1.0 (G:\Dx\code\crates\theme_importer)
+    Checking feature_flags_macros v0.1.0 (G:\Dx\code\crates\feature_flags_macros)
+    Checking settings_macros v0.1.0 (G:\Dx\code\crates\settings_macros)
+    Checking derive_refineable v0.1.0 (G:\Dx\code\crates\refineable\derive_refineable)
+    Checking gpui_macros v0.1.0 (G:\Dx\code\crates\gpui_macros)
+    Checking extension_cli v0.1.0 (G:\Dx\code\crates\extension_cli)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking schema_generator v0.1.0 (G:\Dx\code\crates\schema_generator)
+    Checking fs_benchmarks v0.1.0 (G:\Dx\code\crates\fs_benchmarks)
+    Checking worktree_benchmarks v0.1.0 (G:\Dx\code\crates\worktree_benchmarks)
+    Checking eval_utils v0.1.0 (G:\Dx\code\crates\eval_utils)
+    Checking editor_benchmarks v0.1.0 (G:\Dx\code\crates\editor_benchmarks)
+    Checking sqlez_macros v0.1.0 (G:\Dx\code\crates\sqlez_macros)
+    Checking edit_prediction_metrics v0.1.0 (G:\Dx\code\crates\edit_prediction_metrics)
+    Checking explorer_command_injector v0.1.0 (G:\Dx\code\crates\explorer_command_injector)
+    Checking benchmarks v0.1.0 (G:\Dx\code\crates\benchmarks)
+    Checking ztracing_macro v0.1.0 (G:\Dx\code\crates\ztracing_macro)
+    Checking gpui_web v0.1.0 (G:\Dx\code\crates\gpui_web)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 41s

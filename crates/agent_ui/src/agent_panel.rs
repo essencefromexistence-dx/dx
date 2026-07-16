@@ -7040,48 +7040,50 @@ impl AgentPanel {
 
         let is_full_screen = self.should_render_dx_launch_chrome(cx);
         let rails_available = is_full_screen;
-        let _sources_rail_open = self.fullscreen_sources_rail_open && rails_available;
-        let _progress_rail_open = self.fullscreen_progress_rail_open && rails_available;
+        let sources_rail_open = self.fullscreen_sources_rail_open && rails_available;
+        let progress_rail_open = self.fullscreen_progress_rail_open && rails_available;
         let toolbar_bg = if is_full_screen {
             gpui::transparent_black()
         } else {
             cx.theme().colors().tab_bar_background
         };
-        // commented only the icon buttons (left/right floating rail toggles in AI topbar); logic/state kept
-        // let agent_sources_rail_button = IconButton::new(
-        //     "agent-toolbar-toggle-sources-rail",
-        //     IconName::ThreadsSidebarLeftClosed,
-        // )
-        // .icon_size(IconSize::Small)
-        // .tab_index(0_isize)
-        // .toggle_state(sources_rail_open)
-        // .tooltip(Tooltip::text(if sources_rail_open {
-        //     "Hide sources rail"
-        // } else {
-        //     "Show sources rail"
-        // }))
-        // .on_click(cx.listener(|this, _, _window, cx| {
-        //     this.fullscreen_sources_rail_open = !this.fullscreen_sources_rail_open;
-        //     cx.notify();
-        // }));
-        let _agent_sources_rail_button = div().into_any_element(); // placeholder to keep compile surface (button commented)
-        // let agent_progress_rail_button = IconButton::new(
-        //     "agent-toolbar-toggle-progress-rail",
-        //     IconName::ThreadsSidebarRightClosed,
-        // )
-        // .icon_size(IconSize::Small)
-        // .tab_index(0_isize)
-        // .toggle_state(progress_rail_open)
-        // .tooltip(Tooltip::text(if progress_rail_open {
-        //     "Hide progress rail"
-        // } else {
-        //     "Show progress rail"
-        // }))
-        // .on_click(cx.listener(|this, _, _window, cx| {
-        //     this.fullscreen_progress_rail_open = !this.fullscreen_progress_rail_open;
-        //     cx.notify();
-        // }));
-        let _agent_progress_rail_button = div().into_any_element(); // placeholder (button commented)
+        // Dx AI-screen rail toggles (sources left / progress right).
+        let make_sources_rail_button = |cx: &mut Context<Self>| {
+            IconButton::new(
+                "agent-toolbar-toggle-sources-rail",
+                IconName::ThreadsSidebarLeftClosed,
+            )
+            .icon_size(IconSize::Small)
+            .tab_index(0_isize)
+            .toggle_state(sources_rail_open)
+            .tooltip(Tooltip::text(if sources_rail_open {
+                "Hide sources rail"
+            } else {
+                "Show sources rail"
+            }))
+            .on_click(cx.listener(|this, _, _window, cx| {
+                this.fullscreen_sources_rail_open = !this.fullscreen_sources_rail_open;
+                cx.notify();
+            }))
+        };
+        let make_progress_rail_button = |cx: &mut Context<Self>| {
+            IconButton::new(
+                "agent-toolbar-toggle-progress-rail",
+                IconName::ThreadsSidebarRightClosed,
+            )
+            .icon_size(IconSize::Small)
+            .tab_index(0_isize)
+            .toggle_state(progress_rail_open)
+            .tooltip(Tooltip::text(if progress_rail_open {
+                "Hide progress rail"
+            } else {
+                "Show progress rail"
+            }))
+            .on_click(cx.listener(|this, _, _window, cx| {
+                this.fullscreen_progress_rail_open = !this.fullscreen_progress_rail_open;
+                cx.notify();
+            }))
+        };
         let panel_id = cx.entity().entity_id();
         let workspace = self.workspace.clone();
         let close_panel_button = IconButton::new("agent-panel-close-side-panel", IconName::Close)
@@ -7202,10 +7204,8 @@ impl AgentPanel {
                         .pl_1()
                         .pr_1()
                         .when(is_full_screen, |this| {
-                            // commented only the floating rail icon buttons (left + right) insertion
-                            // this.child(agent_sources_rail_button)
-                            //     .child(agent_progress_rail_button)
-                            this
+                            this.child(make_sources_rail_button(cx))
+                                .child(make_progress_rail_button(cx))
                         })
                         .child(self.render_panel_options_menu(window, cx))
                         .when(!is_full_screen, |this| this.child(close_panel_button)),
@@ -7262,7 +7262,11 @@ impl AgentPanel {
                         .gap_1()
                         .children(sandbox_status)
                         .when(can_create_entries, |this| this.child(new_thread_menu))
-                        .child(full_screen_button)
+                        .when(is_full_screen, |this| {
+                            this.child(make_sources_rail_button(cx))
+                                .child(make_progress_rail_button(cx))
+                        })
+                        .when(!is_full_screen, |this| this.child(full_screen_button))
                         .child(self.render_panel_options_menu(window, cx)),
                 )
                 .into_any_element()

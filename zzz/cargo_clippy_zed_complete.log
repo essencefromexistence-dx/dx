@@ -1,0 +1,474 @@
+    Checking media_panel v0.1.0 (G:\Dx\code\crates\media_panel)
+    Checking font_panel v0.1.0 (G:\Dx\code\crates\font_panel)
+    Checking pet-telemetry v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking icon_picker v0.1.0 (G:\Dx\code\crates\icon_picker)
+    Checking json_schema_store v0.1.0 (G:\Dx\code\crates\json_schema_store)
+    Checking clap_complete v4.5.59
+    Checking env_filter v0.1.4
+    Checking jiff v0.2.15
+   Compiling inspector_ui v0.1.0 (G:\Dx\code\crates\inspector_ui)
+    Checking clap_complete_nushell v4.6.0
+    Checking pet v0.1.0 (https://github.com/microsoft/python-environment-tools.git?rev=9e61a22af989fe54937bf07c9f9cff1bc53d9056#9e61a22a)
+    Checking ipc-channel v0.19.0
+   Compiling cli v0.1.0 (G:\Dx\code\crates\cli)
+    Checking title_bar v0.1.0 (G:\Dx\code\crates\title_bar)
+    Checking grammars v0.1.0 (G:\Dx\code\crates\grammars)
+    Checking wprcontrol v0.1.0 (https://github.com/zed-industries/wprcontrol?rev=cd811f7#cd811f7d)
+    Checking minidumper v0.9.0
+    Checking dialoguer v0.12.0
+    Checking runtimelib v1.4.0
+    Checking crash-handler v0.7.0
+    Checking nbformat v1.2.0
+    Checking jupyter-websocket-client v1.1.0
+    Checking env_logger v0.11.8
+   Compiling zed v1.13.0 (G:\Dx\code\crates\zed)
+    Checking reqwest_client v0.1.0 (G:\Dx\code\crates\reqwest_client)
+    Checking outline v0.1.0 (G:\Dx\code\crates\outline)
+    Checking tasks_ui v0.1.0 (G:\Dx\code\crates\tasks_ui)
+    Checking debugger_tools v0.1.0 (G:\Dx\code\crates\debugger_tools)
+    Checking json_dotpath v1.1.0
+    Checking parse_int v0.9.0
+    Checking dap_adapters v0.1.0 (G:\Dx\code\crates\dap_adapters)
+    Checking outline_panel v0.1.0 (G:\Dx\code\crates\outline_panel)
+    Checking debugger_ui v0.1.0 (G:\Dx\code\crates\debugger_ui)
+    Checking component_preview v0.1.0 (G:\Dx\code\crates\component_preview)
+    Checking collab_ui v0.1.0 (G:\Dx\code\crates\collab_ui)
+    Checking repl v0.1.0 (G:\Dx\code\crates\repl)
+    Checking vim v0.1.0 (G:\Dx\code\crates\vim)
+    Checking crashes v0.1.0 (G:\Dx\code\crates\crashes)
+    Checking languages v0.1.0 (G:\Dx\code\crates\languages)
+    Checking etw_tracing v0.1.0 (G:\Dx\code\crates\etw_tracing)
+    Checking keymap_editor v0.1.0 (G:\Dx\code\crates\keymap_editor)
+    Checking feedback v0.1.0 (G:\Dx\code\crates\feedback)
+    Checking which_key v0.1.0 (G:\Dx\code\crates\which_key)
+    Checking sidebar v0.1.0 (G:\Dx\code\crates\sidebar)
+    Checking onboarding v0.1.0 (G:\Dx\code\crates\onboarding)
+    Checking file_finder v0.1.0 (G:\Dx\code\crates\file_finder)
+    Checking toolchain_selector v0.1.0 (G:\Dx\code\crates\toolchain_selector)
+    Checking snippets_ui v0.1.0 (G:\Dx\code\crates\snippets_ui)
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:3099:52
+     |
+3099 | ...                   .visible_on_hover(group.clone())
+     |                                              ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:3099:47
+     |
+3099 | ...                   .visible_on_hover(group.clone())
+     |                                         ^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+     = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:3046:42
+     |
+3046 |                     let sidebar = sidebar.clone();
+     |                                          ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:3046:35
+     |
+3046 |                     let sidebar = sidebar.clone();
+     |                                   ^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:7580:63
+     |
+7580 |                 let more_menu_handle = thread_more_menu_handle.clone();
+     |                                                               ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:7580:40
+     |
+7580 |                 let more_menu_handle = thread_more_menu_handle.clone();
+     |                                        ^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:7740:56
+     |
+7740 |                 let thread_workspace = thread_workspace.clone();
+     |                                                        ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:7740:40
+     |
+7740 |                 let thread_workspace = thread_workspace.clone();
+     |                                        ^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:7797:34
+     |
+7797 |                 let title = title.clone();
+     |                                  ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:7797:29
+     |
+7797 |                 let title = title.clone();
+     |                             ^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:7798:60
+     |
+7798 |                 let dragged_thread = thread_context_dragged.clone();
+     |                                                            ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:7798:38
+     |
+7798 |                 let dragged_thread = thread_context_dragged.clone();
+     |                                      ^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:7799:55
+     |
+7799 |                 let session_id = session_id_for_delete.clone();
+     |                                                       ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:7799:34
+     |
+7799 |                 let session_id = session_id_for_delete.clone();
+     |                                  ^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: unnecessarily eager cloning of iterator items
+    --> crates\sidebar\src\sidebar.rs:8711:32
+     |
+8711 |                 .and_then(|mw| mw.read(cx).workspaces().cloned().next())
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^----------------
+     |                                                        |
+     |                                                        help: try: `.next().cloned()`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#iter_overeager_cloned
+     = note: `-D clippy::iter-overeager-cloned` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::iter_overeager_cloned)]`
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:8846:60
+     |
+8846 | ...                   .child(Icon::from_path(path.clone()).size(IconSize::Small).color(Color::Muted))
+     |                                                  ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:8846:56
+     |
+8846 | ...                   .child(Icon::from_path(path.clone()).size(IconSize::Small).color(Color::Muted))
+     |                                              ^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\sidebar\src\sidebar.rs:9344:50
+     |
+9344 |                     let tooltip_str = tooltip_str.clone();
+     |                                                  ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\sidebar\src\sidebar.rs:9344:39
+     |
+9344 |                     let tooltip_str = tooltip_str.clone();
+     |                                       ^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+     --> crates\sidebar\src\sidebar.rs:10141:64
+      |
+10141 |                         project.create_terminal_shell(Some(path.clone()), cx)
+      |                                                                ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\sidebar\src\sidebar.rs:10141:60
+      |
+10141 |                         project.create_terminal_shell(Some(path.clone()), cx)
+      |                                                            ^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: unneeded cloning of iterator items
+     --> crates\sidebar\src\sidebar.rs:10272:35
+      |
+10272 |                           .children(row.iter().cloned().map(|entry| {
+      |  ___________________________________^
+10273 | |                             let sidebar_view = sidebar_view.clone();
+10274 | |                             let action_for_entry = entry.action.clone();
+10275 | |                             let subtitle = if matches!(action_for_entry, SidebarGridAction::OpenThread(_)) {
+...     |
+10465 | |                                 })
+10466 | |                         }))
+      | |__________________________^
+      |
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_iter_cloned
+      = note: `-D clippy::redundant-iter-cloned` implied by `-D warnings`
+      = help: to override `-D warnings` add `#[allow(clippy::redundant_iter_cloned)]`
+help: try
+      |
+10272 ~                         .children(row.iter().map(|entry| {
+10273 +                             let sidebar_view = sidebar_view.clone();
+10274 +                             let action_for_entry = entry.action.clone();
+10275 +                             let subtitle = if matches!(action_for_entry, SidebarGridAction::OpenThread(_)) {
+10276 +                                 None
+10277 +                             } else {
+10278 +                                 entry.subtitle.clone()
+10279 +                             };
+10280 +                             let tooltip_label =
+10281 +                                 subtitle.clone().unwrap_or_else(|| entry.label.clone());
+10282 +                             let action_for_menu = action_for_entry.clone();
+10283 +                             let open_entry = cx.listener(move |this, _, window, cx| {
+10284 +                                 this.open_grid_entry(action_for_entry.clone(), window, cx);
+10285 +                             });
+10286 +                             let entry_id = entry.id.clone();
+10287 +                             let entry_label = entry.label.clone();
+10288 +                             let entry_subtitle = subtitle.clone();
+10289 +                             let is_dx_web_tool = entry.id.starts_with("dx-web-tool-");
+10290 +                             let dx_web_tool_id = if is_dx_web_tool {
+10291 +                                 entry.id.trim_start_matches("dx-web-tool-").to_string()
+10292 +                             } else {
+10293 +                                 String::new()
+10294 +                             };
+10295 +                             let entry_icon = entry.icon;
+10296 + 
+10297 +                             let is_light_theme = cx.theme().appearance.is_light();
+10298 +                             let renaming_grid_shortcut_id = self.renaming_grid_shortcut_id.clone();
+10299 +                             let thread_rename_editor = self.thread_rename_editor.clone();
+10300 +                             let menu_entry_id = entry_id.clone();
+10301 +                             right_click_menu::<ContextMenu>(format!("grid-context-{}", entry_id))
+10302 +                                 .trigger({
+10303 +                                     let entry_label = entry_label.clone();
+10304 +                                     let entry_id = entry_id.clone();
+10305 +                                     move |_is_menu_active, _window, _cx| {
+10306 +                                     let icon_element: AnyElement = if is_dx_web_tool {
+10307 +                                         let path = if is_light_theme {
+10308 +                                             format!("icons/dx_web_tools/{}-light-transparent.svg", dx_web_tool_id)
+10309 +                                         } else {
+10310 +                                             format!("icons/dx_web_tools/{}-dark-transparent.svg", dx_web_tool_id)
+10311 +                                         };
+10312 +                                         Icon::from_path(path).size(IconSize::Medium).color(Color::Muted).into_any_element()
+10313 +                                     } else {
+10314 +                                         Icon::new(entry_icon)
+10315 +                                             .size(IconSize::Medium)
+10316 +                                             .color(Color::Muted)
+10317 +                                             .into_any_element()
+10318 +                                     };
+10319 +                                     div()
+10320 +                                         .id(entry_id.clone())
+10321 +                                         .relative()
+10322 +                                         .w(px(item_width))
+10323 +                                         .h(px(52.0))
+10324 +                                         .flex_shrink_0()
+10325 +                                         .rounded_md()
+10326 +                                         .border_1()
+10327 +                                         .border_color(item_border)
+10328 +                                         .bg(item_bg)
+10329 +                                         .flex()
+10330 +                                         .flex_col()
+10331 +                                         .px_1p5()
+10332 +                                         .gap_1()
+10333 +                                         .items_center()
+10334 +                                         .justify_center()
+10335 +                                         .cursor_pointer()
+10336 +                                         .tooltip(Tooltip::text(tooltip_label))
+10337 +                                         .hover(|style| style.bg(hover_bg).border_color(hover_border))
+10338 +                                         .on_click(open_entry)
+10339 +                                         .child(icon_element)
+10340 +                                         .child(
+10341 +                                             if renaming_grid_shortcut_id.as_ref() == Some(&entry_id.to_string()) {
+10342 +                                                 thread_rename_editor.clone().into_any_element()
+10343 +                                             } else {
+10344 +                                                 div().w_full().text_center().child(
+10345 +                                                     Label::new(entry_label.clone()).size(LabelSize::Small).truncate(),
+10346 +                                                 ).into_any_element()
+10347 +                                             }
+10348 +                                         )
+10349 +                                         .when_some(entry_subtitle, |this, subtitle| {
+10350 +                                             if renaming_grid_shortcut_id.as_ref() == Some(&entry_id.to_string()) {
+10351 +                                                 this
+10352 +                                             } else {
+10353 +                                                 this.child(
+10354 +                                                     div().w_full().text_center().child(
+10355 +                                                         Label::new(subtitle)
+10356 +                                                             .size(LabelSize::XSmall)
+10357 +                                                             .color(Color::Muted)
+10358 +                                                             .truncate(),
+10359 +                                                     ),
+10360 +                                                 )
+10361 +                                             }
+10362 +                                         })
+10363 +                                     }
+10364 +                                 })
+10365 +                                 .menu({
+10366 +                                     let sidebar_view = sidebar_view.clone();
+10367 +                                     move |window, cx| {
+10368 +                                     let entry_id = menu_entry_id.clone();
+10369 +                                     let sidebar_view = sidebar_view.clone();
+10370 +                                     let entry_label_for_rename = entry_label.to_string();
+10371 +                                     let open_action = action_for_menu.clone();
+10372 +                                     // Only user-pinned shortcuts (sidebar-grid-pinned-*) can be
+10373 ~                                     // renamed/deleted ΓÇö they live in `grid_shortcuts`. Generated
+10374 +                                     // entries (files/folders/sites) and built-in web tools are not
+10375 +                                     // persisted shortcuts, so rename/delete would silently no-op.
+10376 +                                     let is_pinned_shortcut = entry_id.starts_with("sidebar-grid-pinned-");
+10377 +                                     ContextMenu::build(window, cx, move |menu, _window, cx| {
+10378 +                                         let sidebar_view = sidebar_view.clone();
+10379 +                                         let header_label = if is_pinned_shortcut {
+10380 +                                             "Pinned Shortcut"
+10381 +                                         } else {
+10382 +                                             "Cell Options"
+10383 +                                         };
+10384 +                                         let mut menu = menu.header(header_label);
+10385 + 
+10386 +                                         // "Open" always works: it dispatches the entry's real action
+10387 +                                         // (open file / folder / website / thread / web tool).
+10388 +                                         menu = menu.item(
+10389 +                                             ContextMenuEntry::new("Open")
+10390 +                                                 .icon(IconName::ArrowUpRight)
+10391 +                                                 .handler({
+10392 +                                                     let open_action = open_action.clone();
+10393 +                                                     let sidebar_view = sidebar_view.clone();
+10394 +                                                     move |window, cx| {
+10395 +                                                         let open_action = open_action.clone();
+10396 +                                                         let sidebar_view = sidebar_view.clone();
+10397 +                                                         window.defer(cx, move |_window, cx| {
+10398 +                                                             if let Some(sidebar) = sidebar_view.upgrade() {
+10399 +                                                                 sidebar.update(cx, |sidebar, cx| {
+10400 +                                                                     sidebar.open_grid_entry(open_action, _window, cx);
+10401 +                                                                 });
+10402 +                                                             }
+10403 +                                                         });
+10404 +                                                     }
+10405 +                                                 }),
+10406 +                                         );
+10407 + 
+10408 +                                         // Rename: only for user-pinned shortcuts (actually persisted +
+10409 +                                         // editable). For other entries this would silently no-op, so we
+10410 +                                         // hide it and instead surface a clear note below.
+10411 +                                         if is_pinned_shortcut {
+10412 +                                             menu = menu.item(
+10413 +                                                 ContextMenuEntry::new("Rename")
+10414 +                                                     .icon(IconName::Pencil)
+10415 +                                                     .handler({
+10416 +                                                         let entry_id = entry_id.clone();
+10417 +                                                         let sidebar_view = sidebar_view.clone();
+10418 +                                                         let entry_label = entry_label_for_rename.clone();
+10419 +                                                         move |window, cx| {
+10420 +                                                             let entry_id = entry_id.clone();
+10421 +                                                             let entry_label = entry_label.clone();
+10422 +                                                             let sidebar_view = sidebar_view.clone();
+10423 +                                                             window.defer(cx, move |window, cx| {
+10424 +                                                                 if let Some(sidebar) = sidebar_view.upgrade() {
+10425 +                                                                     sidebar.update(cx, |sidebar, cx| {
+10426 +                                                                         sidebar.start_renaming_grid_shortcut(entry_id.to_string(), entry_label.to_string(), window, cx);
+10427 +                                                                     });
+10428 +                                                                 }
+10429 +                                                             });
+10430 +                                                         }
+10431 +                                                     }),
+10432 +                                             );
+10433 +                                             // Delete: removes the pinned shortcut from grid_shortcuts.
+10434 +                                             menu = menu.item(
+10435 +                                                 ContextMenuEntry::new("Remove Pin")
+10436 +                                                     .icon(IconName::Trash)
+10437 +                                                     .handler({
+10438 +                                                         let entry_id = entry_id.clone();
+10439 +                                                         let sidebar_view = sidebar_view.clone();
+10440 +                                                         move |window, cx| {
+10441 +                                                             let value = entry_id.clone();
+10442 +                                                             let sidebar_view = sidebar_view.clone();
+10443 +                                                             window.defer(cx, move |_window, cx| {
+10444 +                                                                 if let Some(sidebar) = sidebar_view.upgrade() {
+10445 +                                                                     sidebar.update(cx, |sidebar, cx| {
+10446 +                                                                         sidebar.delete_grid_shortcut(&value, cx);
+10447 +                                                                     });
+10448 +                                                                 }
+10449 +                                                             });
+10450 +                                                         }
+10451 +                                                     }),
+10452 +                                             );
+10453 +                                         } else {
+10454 +                                             // Non-pinned entries: explain that only pinned shortcuts
+10455 +                                             // are customizable, instead of offering dead actions.
+10456 +                                             menu = menu.separator().item(
+10457 +                                                 ContextMenuEntry::new("Only pinned shortcuts can be renamed or removed.")
+10458 +                                                     .disabled(true),
+10459 +                                             );
+10460 +                                         }
+10461 + 
+10462 +                                         menu
+10463 +                                     })
+10464 +                                     }
+10465 +                                 })
+10466 ~                         }))
+      |
+
+error: redundant clone
+     --> crates\sidebar\src\sidebar.rs:10288:58
+      |
+10288 | ...                   let entry_subtitle = subtitle.clone();
+      |                                                    ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\sidebar\src\sidebar.rs:10288:50
+      |
+10288 | ...                   let entry_subtitle = subtitle.clone();
+      |                                            ^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+     --> crates\sidebar\src\sidebar.rs:10304:60
+      |
+10304 | ...                   let entry_id = entry_id.clone();
+      |                                              ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\sidebar\src\sidebar.rs:10304:52
+      |
+10304 | ...                   let entry_id = entry_id.clone();
+      |                                      ^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+     --> crates\sidebar\src\sidebar.rs:10366:68
+      |
+10366 | ...                   let sidebar_view = sidebar_view.clone();
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\sidebar\src\sidebar.rs:10366:56
+      |
+10366 | ...                   let sidebar_view = sidebar_view.clone();
+      |                                          ^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+     --> crates\sidebar\src\sidebar.rs:10438:80
+      |
+10438 | ...                   let entry_id = entry_id.clone();
+      |                                              ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\sidebar\src\sidebar.rs:10438:72
+      |
+10438 | ...                   let entry_id = entry_id.clone();
+      |                                      ^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+     --> crates\sidebar\src\sidebar.rs:10439:88
+      |
+10439 | ...                   let sidebar_view = sidebar_view.clone();
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\sidebar\src\sidebar.rs:10439:76
+      |
+10439 | ...                   let sidebar_view = sidebar_view.clone();
+      |                                          ^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+    Checking language_selector v0.1.0 (G:\Dx\code\crates\language_selector)
+error: could not compile `sidebar` (lib) due to 17 previous errors
+warning: build failed, waiting for other jobs to finish...

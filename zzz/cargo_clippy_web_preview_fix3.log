@@ -1,0 +1,4953 @@
+    Checking gpui_util v0.1.0 (G:\Dx\code\crates\gpui_util)
+    Checking path v0.1.0 (G:\Dx\code\crates\path)
+    Checking gpui_shared_string v0.1.0 (G:\Dx\code\crates\gpui_shared_string)
+   Compiling ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+   Compiling ztracing_macro v0.1.0 (G:\Dx\code\crates\ztracing_macro)
+   Compiling derive_refineable v0.1.0 (G:\Dx\code\crates\refineable\derive_refineable)
+   Compiling gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking scheduler v0.1.0 (G:\Dx\code\crates\scheduler)
+   Compiling gpui_macros v0.1.0 (G:\Dx\code\crates\gpui_macros)
+    Checking zeta_prompt v0.1.0 (G:\Dx\code\crates\zeta_prompt)
+   Compiling proto v0.1.0 (G:\Dx\code\crates\proto)
+    Checking collections v0.1.0 (G:\Dx\code\crates\collections)
+    Checking net v0.1.0 (G:\Dx\code\crates\net)
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking zlog v0.1.0 (G:\Dx\code\crates\zlog)
+    Checking cloud_llm_client v0.1.0 (G:\Dx\code\crates\cloud_llm_client)
+    Checking clock v0.1.0 (G:\Dx\code\crates\clock)
+    Checking telemetry_events v0.1.0 (G:\Dx\code\crates\telemetry_events)
+   Compiling settings_macros v0.1.0 (G:\Dx\code\crates\settings_macros)
+    Checking watch v0.1.0 (G:\Dx\code\crates\watch)
+   Compiling language v0.1.0 (G:\Dx\code\crates\language)
+    Checking telemetry v0.1.0 (G:\Dx\code\crates\telemetry)
+    Checking language_core v0.1.0 (G:\Dx\code\crates\language_core)
+    Checking cloud_api_types v0.1.0 (G:\Dx\code\crates\cloud_api_types)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+   Compiling perf v0.1.0 (G:\Dx\code\tooling\perf)
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+   Compiling util_macros v0.1.0 (G:\Dx\code\crates\util_macros)
+   Compiling feature_flags_macros v0.1.0 (G:\Dx\code\crates\feature_flags_macros)
+    Checking http_client_tls v0.1.0 (G:\Dx\code\crates\http_client_tls)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking icons v0.1.0 (G:\Dx\code\crates\icons)
+   Compiling ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+   Compiling ui_macros v0.1.0 (G:\Dx\code\crates\ui_macros)
+    Checking env_var v0.1.0 (G:\Dx\code\crates\env_var)
+    Checking oauth_callback_server v0.1.0 (G:\Dx\code\crates\oauth_callback_server)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking snippet v0.1.0 (G:\Dx\code\crates\snippet)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking zed_env_vars v0.1.0 (G:\Dx\code\crates\zed_env_vars)
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+    Checking http_proxy v0.1.0 (G:\Dx\code\crates\http_proxy)
+   Compiling extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking edit_prediction_metrics v0.1.0 (G:\Dx\code\crates\edit_prediction_metrics)
+    Checking sandbox v0.1.0 (G:\Dx\code\crates\sandbox)
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking refineable v0.1.0 (G:\Dx\code\crates\refineable)
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking x_ai v0.1.0 (G:\Dx\code\crates\x_ai)
+    Checking dx_catalog v0.1.0 (G:\Dx\code\crates\dx_catalog)
+    Checking shell_command_parser v0.1.0 (G:\Dx\code\crates\shell_command_parser)
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking html_to_markdown v0.1.0 (G:\Dx\code\crates\html_to_markdown)
+    Checking time_format v0.1.0 (G:\Dx\code\crates\time_format)
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+   Compiling sqlez_macros v0.1.0 (G:\Dx\code\crates\sqlez_macros)
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+error: only metadata stub found for `rlib` dependency `core` please provide path to the corresponding .rmeta file with full metadata
+
+error: only metadata stub found for `rlib` dependency `std` please provide path to the corresponding .rmeta file with full metadata
+ --> crates\command_palette_hooks\src\command_palette_hooks.rs:5:5
+  |
+5 | use std::{any::TypeId, rc::Rc};
+  |     ^^^
+
+error[E0786]: found invalid metadata files for crate `gpui`
+ --> crates\breadcrumbs\src\breadcrumbs.rs:1:5
+  |
+1 | use gpui::{
+  |     ^^^^
+  |
+  = note: failed to mmap rmeta metadata: '\\?\G:\Dx\code\target\debug\deps\libgpui-3b8080b630b1d343.rmeta'
+
+error[E0463]: can't find crate for `workspace`
+ --> crates\notifications\src\status_toast.rs:5:5
+  |
+5 | use workspace::{ToastAction, ToastView};
+  |     ^^^^^^^^^ can't find crate
+
+error: cannot resolve a prelude import
+
+error[E0463]: can't find crate for `ui`
+ --> crates\picker\src\footer.rs:4:5
+  |
+4 | use ui::{ContextMenu, Divider, FluentBuilder, KeyBinding, PopoverMenu, Tooltip, prelude::*};
+  |     ^^ can't find crate
+
+error[E0463]: can't find crate for `anyhow`
+ --> crates\picker\src\persistence.rs:1:5
+  |
+1 | use anyhow::{Context, anyhow};
+  |     ^^^^^^ can't find crate
+
+warning: unused import: `settings::Settings`
+  --> crates\platform_title_bar\src\platform_title_bar.rs:10:5
+   |
+10 | use settings::Settings;
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0463]: can't find crate for `db`
+ --> crates\picker\src\persistence.rs:2:5
+  |
+2 | use db::kvp::KeyValueStore;
+  |     ^^ can't find crate
+
+error[E0463]: can't find crate for `gpui`
+ --> crates\picker\src\persistence.rs:3:5
+  |
+3 | use gpui::App;
+  |     ^^^^ can't find crate
+
+error[E0463]: can't find crate for `std`
+ --> crates\picker\src\preview.rs:1:5
+  |
+1 | use std::ops::Range;
+  |     ^^^ can't find crate
+  |
+  = note: the `x86_64-pc-windows-gnu` target may not support the standard library
+
+error[E0463]: can't find crate for `language`
+ --> crates\picker\src\preview.rs:6:5
+  |
+6 | use language::{Anchor, Buffer, HighlightedText};
+  |     ^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `project`
+ --> crates\picker\src\preview.rs:7:5
+  |
+7 | use project::Symbol;
+  |     ^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `schemars`
+ --> crates\picker\src\picker.rs:9:5
+  |
+9 | use schemars::JsonSchema;
+  |     ^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `serde`
+  --> crates\picker\src\picker.rs:10:5
+   |
+10 | use serde::Deserialize;
+   |     ^^^^^ can't find crate
+
+error[E0463]: can't find crate for `ui_input`
+  --> crates\picker\src\picker.rs:18:5
+   |
+18 | use ui_input::ErasedEditorEvent;
+   |     ^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `util`
+  --> crates\picker\src\picker.rs:19:5
+   |
+19 | use util::ResultExt;
+   |     ^^^^ can't find crate
+
+error[E0463]: can't find crate for `workspace`
+  --> crates\picker\src\picker.rs:20:5
+   |
+20 | use workspace::ModalView;
+   |     ^^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `zed_actions`
+  --> crates\picker\src\picker.rs:21:5
+   |
+21 | use zed_actions::editor::{MoveDown, MoveUp};
+   |     ^^^^^^^^^^^ can't find crate
+
+For more information about this error, try `rustc --explain E0786`.
+error: could not compile `breadcrumbs` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error[E0432]: unresolved import `crate::SetPreviewBelow`
+ --> crates\picker\src\footer.rs:8:5
+  |
+8 | use crate::SetPreviewBelow;
+  |     ^^^^^^^^^^^^^^^^^^^^^^ no `SetPreviewBelow` in the root
+
+error[E0432]: unresolved import `crate::SetPreviewRight`
+ --> crates\picker\src\footer.rs:9:5
+  |
+9 | use crate::SetPreviewRight;
+  |     ^^^^^^^^^^^^^^^^^^^^^^ no `SetPreviewRight` in the root
+
+error[E0432]: unresolved import `crate::ToggleActionsMenu`
+  --> crates\picker\src\footer.rs:10:5
+   |
+10 | use crate::ToggleActionsMenu;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^ no `ToggleActionsMenu` in the root
+
+error[E0463]: can't find crate for `settings`
+ --> crates\picker\src\render.rs:2:5
+  |
+2 | use settings::Settings;
+  |     ^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `theme_settings`
+ --> crates\picker\src\render.rs:3:5
+  |
+3 | use theme_settings::ThemeSettings;
+  |     ^^^^^^^^^^^^^^ can't find crate
+
+error[E0432]: unresolved import `crate::TogglePreview`
+  --> crates\picker\src\footer.rs:11:5
+   |
+11 | use crate::TogglePreview;
+   |     ^^^^^^^^^^^^^^^^^^^^ no `TogglePreview` in the root
+
+error[E0432]: unresolved import `crate::ToggleMultiSelect`
+  --> crates\picker\src\render.rs:13:78
+   |
+13 |     ElementContainer, Picker, PickerDelegate, PickerEditorPosition, Preview, ToggleMultiSelect,
+   |                                                                              ^^^^^^^^^^^^^^^^^ no `ToggleMultiSelect` in the root
+
+error: cannot find attribute `derive` in this scope
+ --> crates\picker\src\highlighted_match_with_paths.rs:3:3
+  |
+3 | #[derive(Clone)]
+  |   ^^^^^^
+  |
+help: consider importing this attribute macro
+  |
+1 + use core::prelude::rust_2024::derive;
+  |
+
+error: cannot find attribute `derive` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:11:3
+   |
+11 | #[derive(Debug, Clone, IntoElement)]
+   |   ^^^^^^
+   |
+help: consider importing this attribute macro
+   |
+ 1 + use core::prelude::rust_2024::derive;
+   |
+
+error: cannot find macro `format` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:85:47
+   |
+85 |                         this.child(Label::new(format!("({})", prefix)).color(Color::Muted))
+   |                                               ^^^^^^
+
+error: cannot find macro `format` in this scope
+  --> crates\picker\src\persistence.rs:94:5
+   |
+94 |     format!("{picker_delegate}/{}", layout_as_str(preview_layout))
+   |     ^^^^^^
+
+error: cannot find macro `format` in this scope
+  --> crates\picker\src\persistence.rs:98:5
+   |
+98 |     format!("{picker_delegate}/LAST_PREVIEW_LAYOUT")
+   |     ^^^^^^
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\persistence.rs:122:3
+    |
+122 | #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find macro `vec` in this scope
+  --> crates\picker\src\popover_menu.rs:41:29
+   |
+41 |             _subscriptions: vec![cx.subscribe(&picker, |picker, &DismissEvent, cx| {
+   |                             ^^^
+
+error: cannot find attribute `derive` in this scope
+  --> crates\picker\src\preview.rs:26:3
+   |
+26 | #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+   |   ^^^^^^
+   |
+help: consider importing this attribute macro
+   |
+ 1 + use core::prelude::rust_2024::derive;
+   |
+
+error: cannot find attribute `default` in this scope
+  --> crates\picker\src\preview.rs:28:7
+   |
+28 |     #[default]
+   |       ^^^^^^^
+   |
+help: consider adding a derive
+   |
+27 + #[derive(Default)]
+28 | pub enum Layout {
+   |
+
+error: cannot find attribute `derive` in this scope
+  --> crates\picker\src\render\window_controls.rs:75:3
+   |
+75 | #[derive(Clone, Copy)]
+   |   ^^^^^^
+   |
+help: consider importing this attribute macro
+   |
+59 + use core::prelude::rust_2024::derive;
+   |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\render\window_controls.rs:124:3
+    |
+124 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+ 59 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\render\window_controls.rs:163:3
+    |
+163 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+ 59 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\render\window_controls.rs:206:3
+    |
+206 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+ 59 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find macro `unreachable` in this scope
+   --> crates\picker\src\render\window_controls.rs:212:17
+    |
+212 |                 unreachable!("This resize handle is not drawn when the preview is hidden")
+    |                 ^^^^^^^^^^^
+    |
+help: consider importing this macro
+    |
+ 59 + use core::unreachable;
+    |
+
+error: cannot find macro `unreachable` in this scope
+   --> crates\picker\src\render\window_controls.rs:227:17
+    |
+227 |                 unreachable!("This resize handle is not drawn when the preview is hidden")
+    |                 ^^^^^^^^^^^
+    |
+help: consider importing this macro
+    |
+ 59 + use core::unreachable;
+    |
+
+error: cannot find macro `unreachable` in this scope
+   --> crates\picker\src\render\window_controls.rs:249:17
+    |
+249 |                 unreachable!("This resize handle is not drawn when the preview is hidden")
+    |                 ^^^^^^^^^^^
+    |
+help: consider importing this macro
+    |
+ 59 + use core::unreachable;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\render\window_controls.rs:271:3
+    |
+271 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+ 59 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\render\window_controls.rs:313:3
+    |
+313 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+ 59 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\render\window_controls.rs:360:3
+    |
+360 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+ 59 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+ --> crates\picker\src\shape.rs:7:3
+  |
+7 | #[derive(Debug, Clone, Copy)]
+  |   ^^^^^^
+  |
+help: consider importing this attribute macro
+  |
+1 + use core::prelude::rust_2024::derive;
+  |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\shape.rs:35:11
+    |
+ 35 |         #[derive(Debug, Clone, Copy, PartialEq)]
+    |           ^^^^^^
+...
+151 | relative_size!(RelativeHeight, height);
+    | -------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find macro `debug_assert` in this scope
+   --> crates\picker\src\shape.rs:54:17
+    |
+ 54 |                 debug_assert!(fraction <= 1.0);
+    |                 ^^^^^^^^^^^^
+...
+151 | relative_size!(RelativeHeight, height);
+    | -------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this macro
+    |
+  1 + use core::debug_assert;
+    |
+
+error: cannot find macro `debug_assert` in this scope
+   --> crates\picker\src\shape.rs:55:17
+    |
+ 55 |                 debug_assert!(fraction >= 0.0);
+    |                 ^^^^^^^^^^^^
+...
+151 | relative_size!(RelativeHeight, height);
+    | -------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this macro
+    |
+  1 + use core::debug_assert;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\shape.rs:35:11
+    |
+ 35 |         #[derive(Debug, Clone, Copy, PartialEq)]
+    |           ^^^^^^
+...
+152 | relative_size!(RelativeWidth, width);
+    | ------------------------------------ in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find macro `debug_assert` in this scope
+   --> crates\picker\src\shape.rs:54:17
+    |
+ 54 |                 debug_assert!(fraction <= 1.0);
+    |                 ^^^^^^^^^^^^
+...
+152 | relative_size!(RelativeWidth, width);
+    | ------------------------------------ in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this macro
+    |
+  1 + use core::debug_assert;
+    |
+
+error: cannot find macro `debug_assert` in this scope
+   --> crates\picker\src\shape.rs:55:17
+    |
+ 55 |                 debug_assert!(fraction >= 0.0);
+    |                 ^^^^^^^^^^^^
+...
+152 | relative_size!(RelativeWidth, width);
+    | ------------------------------------ in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this macro
+    |
+  1 + use core::debug_assert;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\shape.rs:154:3
+    |
+154 | #[derive(Debug, Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find macro `debug_assert` in this scope
+   --> crates\picker\src\shape.rs:160:9
+    |
+160 |         debug_assert!(
+    |         ^^^^^^^^^^^^
+    |
+help: consider importing this macro
+    |
+  1 + use core::debug_assert;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\shape.rs:197:3
+    |
+197 | #[derive(Debug, Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\shape.rs:217:3
+    |
+217 | #[derive(Debug, Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\shape.rs:227:3
+    |
+227 | #[derive(Debug)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+  --> crates\picker\src\picker.rs:58:3
+   |
+58 | #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+   |   ^^^^^^
+   |
+help: consider importing this attribute macro
+   |
+ 1 + use core::prelude::rust_2024::derive;
+   |
+
+error: cannot find attribute `derive` in this scope
+  --> crates\picker\src\picker.rs:91:3
+   |
+91 | #[derive(Clone, PartialEq, Deserialize, JsonSchema, Default, Action)]
+   |   ^^^^^^
+   |
+help: consider importing this attribute macro
+   |
+ 1 + use core::prelude::rust_2024::derive;
+   |
+
+error: cannot find attribute `action` in this scope
+  --> crates\picker\src\picker.rs:92:3
+   |
+92 | #[action(namespace = picker)]
+   |   ^^^^^^
+
+error: cannot find attribute `serde` in this scope
+  --> crates\picker\src\picker.rs:93:3
+   |
+93 | #[serde(deny_unknown_fields)]
+   |   ^^^^^
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\picker.rs:103:3
+    |
+103 | #[derive(Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\picker.rs:155:3
+    |
+155 | #[derive(Debug, Default, Clone, Copy, PartialEq)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find attribute `default` in this scope
+   --> crates\picker\src\picker.rs:157:7
+    |
+157 |     #[default]
+    |       ^^^^^^^
+    |
+help: consider adding a derive
+    |
+156 + #[derive(Default)]
+157 | pub enum PickerEditorPosition {
+    |
+
+error: cannot find attribute `derive` in this scope
+   --> crates\picker\src\picker.rs:421:3
+    |
+421 | #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+    |   ^^^^^^
+    |
+help: consider importing this attribute macro
+    |
+  1 + use core::prelude::rust_2024::derive;
+    |
+
+error: cannot find macro `matches` in this scope
+   --> crates\picker\src\picker.rs:595:37
+    |
+595 |             .preview_layout_changed(matches!(initial_layout, preview::Layout::Right));
+    |                                     ^^^^^^^
+    |
+help: consider importing this macro
+    |
+  1 + use core::matches;
+    |
+
+error: cannot find macro `matches` in this scope
+   --> crates\picker\src\picker.rs:728:9
+    |
+728 |         matches!(
+    |         ^^^^^^^
+    |
+help: consider importing this macro
+    |
+  1 + use core::matches;
+    |
+
+error: cannot find macro `matches` in this scope
+   --> crates\picker\src\picker.rs:736:9
+    |
+736 |         matches!(self.presentation, Presentation::Modal { resizable: true })
+    |         ^^^^^^^
+    |
+help: consider importing this macro
+    |
+  1 + use core::matches;
+    |
+
+error: cannot find macro `panic` in this scope
+    --> crates\picker\src\picker.rs:1083:13
+     |
+1083 |             panic!("unexpected call");
+     |             ^^^^^
+     |
+help: consider importing this macro
+     |
+   1 + use core::panic;
+     |
+
+error: cannot find macro `panic` in this scope
+    --> crates\picker\src\picker.rs:1105:13
+     |
+1105 |             panic!("unexpected call");
+     |             ^^^^^
+     |
+help: consider importing this macro
+     |
+   1 + use core::panic;
+     |
+
+error: cannot find macro `matches` in this scope
+    --> crates\picker\src\picker.rs:1474:27
+     |
+1474 |         let would_clamp = matches!(
+     |                           ^^^^^^^
+     |
+help: consider importing this macro
+     |
+   1 + use core::matches;
+     |
+
+error: cannot find macro `matches` in this scope
+    --> crates\picker\src\picker.rs:1535:37
+     |
+1535 |             .preview_layout_changed(matches!(layout, preview::Layout::Right));
+     |                                     ^^^^^^^
+     |
+help: consider importing this macro
+     |
+   1 + use core::matches;
+     |
+
+error: could not compile `command_palette_hooks` (lib) due to 1 previous error
+error[E0463]: can't find crate for `serde_json`
+  --> crates\picker\src\persistence.rs:25:17
+   |
+25 |                 serde_json::to_string(&shape).context("Could not serialize size of picker")?,
+   |                 ^^^^^^^^^^ can't find crate
+
+error[E0408]: variable `None` is not bound in all patterns
+  --> crates\picker\src\render.rs:59:13
+   |
+59 | /             Some(Preview {
+60 | |                 layout: Layout::Hidden,
+61 | |                 ..
+62 | |             })
+   | |______________^ pattern doesn't bind `None`
+63 |               | None => self.render_results(window, cx).into_any_element(),
+   |                 ---- variable not in all patterns
+   |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+   |
+63 |             | core::option::Option::None => self.render_results(window, cx).into_any_element(),
+   |               ++++++++++++++++++++++
+
+error[E0408]: variable `None` is not bound in all patterns
+   --> crates\picker\src\shape.rs:267:13
+    |
+267 |             Some(Layout::Hidden) | None => results,
+    |             ^^^^^^^^^^^^^^^^^^^^   ---- variable not in all patterns
+    |             |
+    |             pattern doesn't bind `None`
+    |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+    |
+267 |             Some(Layout::Hidden) | core::option::Option::None => results,
+    |                                    ++++++++++++++++++++++
+
+error[E0408]: variable `None` is not bound in all patterns
+   --> crates\picker\src\shape.rs:279:13
+    |
+279 |             Some(Layout::Hidden) | None => results,
+    |             ^^^^^^^^^^^^^^^^^^^^   ---- variable not in all patterns
+    |             |
+    |             pattern doesn't bind `None`
+    |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+    |
+279 |             Some(Layout::Hidden) | core::option::Option::None => results,
+    |                                    ++++++++++++++++++++++
+
+error[E0408]: variable `None` is not bound in all patterns
+   --> crates\picker\src\shape.rs:382:13
+    |
+382 |             Some(Layout::Hidden) | None => return,
+    |             ^^^^^^^^^^^^^^^^^^^^   ---- variable not in all patterns
+    |             |
+    |             pattern doesn't bind `None`
+    |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+    |
+382 |             Some(Layout::Hidden) | core::option::Option::None => return,
+    |                                    ++++++++++++++++++++++
+
+error[E0408]: variable `None` is not bound in all patterns
+   --> crates\picker\src\shape.rs:445:21
+    |
+445 |                     Some(Layout::Hidden) | None => Pixels::ZERO,
+    |                     ^^^^^^^^^^^^^^^^^^^^   ---- variable not in all patterns
+    |                     |
+    |                     pattern doesn't bind `None`
+    |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+    |
+445 |                     Some(Layout::Hidden) | core::option::Option::None => Pixels::ZERO,
+    |                                            ++++++++++++++++++++++
+
+error[E0408]: variable `None` is not bound in all patterns
+   --> crates\picker\src\shape.rs:613:13
+    |
+613 |             Some(Pl::Hidden) | None => ViewportFraction::ZERO,
+    |             ^^^^^^^^^^^^^^^^   ---- variable not in all patterns
+    |             |
+    |             pattern doesn't bind `None`
+    |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+    |
+613 |             Some(Pl::Hidden) | core::option::Option::None => ViewportFraction::ZERO,
+    |                                ++++++++++++++++++++++
+
+error[E0463]: can't find crate for `menu`
+   --> crates\picker\src\picker.rs:827:13
+    |
+827 |         _: &menu::SelectNext,
+    |             ^^^^ can't find crate
+
+error[E0408]: variable `None` is not bound in all patterns
+    --> crates\picker\src\picker.rs:1505:13
+     |
+1505 |             Some(preview::Layout::Hidden) | None => preview::Layout::Right,
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   ---- variable not in all patterns
+     |             |
+     |             pattern doesn't bind `None`
+     |
+help: if you meant to match on unit variant `core::option::Option::None`, use the full path in the pattern
+     |
+1505 |             Some(preview::Layout::Hidden) | core::option::Option::None => preview::Layout::Right,
+     |                                             ++++++++++++++++++++++
+
+error[E0425]: cannot find type `SharedString` in this scope
+  --> crates\picker\src\footer.rs:16:12
+   |
+16 |     Header(SharedString),
+   |            ^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `SharedString` in this scope
+  --> crates\picker\src\footer.rs:19:16
+   |
+19 |         label: SharedString,
+   |                ^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Box` in this scope
+  --> crates\picker\src\footer.rs:20:17
+   |
+20 |         action: Box<dyn Action>,
+   |                 ^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\footer.rs:21:18
+   |
+21 |         toggled: Option<bool>,
+   |                  ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0405]: cannot find trait `Into` in this scope
+  --> crates\picker\src\footer.rs:26:31
+   |
+26 |     pub fn button(label: impl Into<SharedString>, action: Box<dyn Action>) -> Self {
+   |                               ^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::convert::Into;
+   |
+
+error[E0425]: cannot find type `SharedString` in this scope
+  --> crates\picker\src\footer.rs:26:36
+   |
+26 |     pub fn button(label: impl Into<SharedString>, action: Box<dyn Action>) -> Self {
+   |                                    ^^^^^^^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+25 | impl<SharedString> PickerAction {
+   |     ++++++++++++++
+
+error[E0425]: cannot find type `Box` in this scope
+  --> crates\picker\src\footer.rs:26:59
+   |
+26 |     pub fn button(label: impl Into<SharedString>, action: Box<dyn Action>) -> Self {
+   |                                                           ^^^ not found in this scope
+
+error[E0425]: cannot find value `None` in this scope
+  --> crates\picker\src\footer.rs:30:22
+   |
+30 |             toggled: None,
+   |                      ^^^^ not found in this scope
+   |
+help: consider importing this unit variant
+   |
+ 1 + use core::option::Option::None;
+   |
+
+error[E0405]: cannot find trait `Into` in this scope
+  --> crates\picker\src\footer.rs:35:31
+   |
+35 |     pub fn header(label: impl Into<SharedString>) -> Self {
+   |                               ^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::convert::Into;
+   |
+
+error[E0425]: cannot find type `SharedString` in this scope
+  --> crates\picker\src\footer.rs:35:36
+   |
+35 |     pub fn header(label: impl Into<SharedString>) -> Self {
+   |                                    ^^^^^^^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+25 | impl<SharedString> PickerAction {
+   |     ++++++++++++++
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\footer.rs:47:18
+   |
+47 |             *t = Some(toggled);
+   |                  ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\footer.rs:59:26
+   |
+59 |                 toggled: Some(toggled),
+   |                          ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\footer.rs:67:21
+   |
+67 |                     Some(action.boxed_clone()),
+   |                     ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\footer.rs:86:22
+   |
+86 |         window: &mut Window,
+   |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\footer.rs:87:18
+   |
+87 |         cx: &mut Context<Self>,
+   |                  ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\footer.rs:88:10
+   |
+88 |     ) -> Option<AnyElement> {
+   |          ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `AnyElement` in this scope
+  --> crates\picker\src\footer.rs:88:17
+   |
+88 |     ) -> Option<AnyElement> {
+   |                 ^^^^^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+83 | impl<D: PickerDelegate, AnyElement> Picker<D> {
+   |                       ++++++++++++
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\footer.rs:89:16
+   |
+89 |         if let Some(footer) = self.delegate.render_footer(window, cx) {
+   |                ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\footer.rs:90:20
+   |
+90 |             return Some(footer);
+   |                    ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\footer.rs:97:22
+   |
+97 |         window: &mut Window,
+   |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\footer.rs:98:18
+   |
+98 |         cx: &mut Context<Self>,
+   |                  ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\footer.rs:99:10
+   |
+99 |     ) -> Option<AnyElement> {
+   |          ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `AnyElement` in this scope
+  --> crates\picker\src\footer.rs:99:17
+   |
+99 |     ) -> Option<AnyElement> {
+   |                 ^^^^^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+83 | impl<D: PickerDelegate, AnyElement> Picker<D> {
+   |                       ++++++++++++
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\footer.rs:103:20
+    |
+103 |             return None;
+    |                    ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\footer.rs:108:9
+    |
+108 |         Some(
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Window` in this scope
+   --> crates\picker\src\footer.rs:127:22
+    |
+127 |         window: &mut Window,
+    |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+   --> crates\picker\src\footer.rs:128:18
+    |
+128 |         cx: &mut Context<Self>,
+    |                  ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use core::task::Context;
+    |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+   --> crates\picker\src\footer.rs:129:15
+    |
+129 |     ) -> impl IntoElement {
+    |               ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Window` in this scope
+   --> crates\picker\src\footer.rs:195:23
+    |
+195 |         _window: &mut Window,
+    |                       ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+   --> crates\picker\src\footer.rs:196:18
+    |
+196 |         cx: &mut Context<Self>,
+    |                  ^^^^^^^ not found in this scope
+    |
+help: consider importing this struct
+    |
+  1 + use core::task::Context;
+    |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+   --> crates\picker\src\footer.rs:197:15
+    |
+197 |     ) -> impl IntoElement {
+    |               ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\footer.rs:211:17
+    |
+211 |                 Some(ContextMenu::build(window, cx, move |mut menu, _, _| {
+    |                 ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0405]: cannot find trait `FnMut` in this scope
+  --> crates\picker\src\head.rs:19:32
+   |
+19 |         mut edit_handler: impl FnMut(&mut V, &ErasedEditorEvent, &mut Window, &mut Context<V>) + 'static,
+   |                                ^^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::FnMut;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\head.rs:19:71
+   |
+19 |         mut edit_handler: impl FnMut(&mut V, &ErasedEditorEvent, &mut Window, &mut Context<V>) + 'static,
+   |                                                                       ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\head.rs:19:84
+   |
+19 |         mut edit_handler: impl FnMut(&mut V, &ErasedEditorEvent, &mut Window, &mut Context<V>) + 'static,
+   |                                                                                    ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\head.rs:20:22
+   |
+20 |         window: &mut Window,
+   |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\head.rs:21:18
+   |
+21 |         cx: &mut Context<V>,
+   |                  ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0405]: cannot find trait `FnMut` in this scope
+  --> crates\picker\src\head.rs:41:28
+   |
+41 |         blur_handler: impl FnMut(&mut V, &mut Window, &mut Context<V>) + 'static,
+   |                            ^^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::FnMut;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\head.rs:41:47
+   |
+41 |         blur_handler: impl FnMut(&mut V, &mut Window, &mut Context<V>) + 'static,
+   |                                               ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\head.rs:41:60
+   |
+41 |         blur_handler: impl FnMut(&mut V, &mut Window, &mut Context<V>) + 'static,
+   |                                                            ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\head.rs:42:22
+   |
+42 |         window: &mut Window,
+   |                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\head.rs:43:18
+   |
+43 |         cx: &mut Context<V>,
+   |                  ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\head.rs:58:21
+   |
+58 |     fn new(cx: &mut Context<Self>) -> Self {
+   |                     ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0405]: cannot find trait `Render` in this scope
+  --> crates\picker\src\head.rs:65:6
+   |
+65 | impl Render for EmptyHead {
+   |      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\head.rs:66:34
+   |
+66 |     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+   |                                  ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Context` in this scope
+  --> crates\picker\src\head.rs:66:51
+   |
+66 |     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+   |                                                   ^^^^^^^ not found in this scope
+   |
+help: consider importing this struct
+   |
+ 1 + use core::task::Context;
+   |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+  --> crates\picker\src\head.rs:66:74
+   |
+66 |     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+   |                                                                          ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+ --> crates\picker\src\highlighted_match_with_paths.rs:5:17
+  |
+5 |     pub prefix: Option<SharedString>,
+  |                 ^^^^^^ not found in this scope
+  |
+help: consider importing this enum
+  |
+1 + use core::option::Option;
+  |
+
+error[E0425]: cannot find type `SharedString` in this scope
+ --> crates\picker\src\highlighted_match_with_paths.rs:5:24
+  |
+5 |     pub prefix: Option<SharedString>,
+  |                        ^^^^^^^^^^^^ not found in this scope
+  |
+help: you might be missing a type parameter
+  |
+4 | pub struct HighlightedMatchWithPaths<SharedString> {
+  |                                     ++++++++++++++
+
+error[E0425]: cannot find type `Vec` in this scope
+ --> crates\picker\src\highlighted_match_with_paths.rs:7:16
+  |
+7 |     pub paths: Vec<HighlightedMatch>,
+  |                ^^^ not found in this scope
+
+error[E0425]: cannot find type `String` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:13:15
+   |
+13 |     pub text: String,
+   |               ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Vec` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:14:30
+   |
+14 |     pub highlight_positions: Vec<usize>,
+   |                              ^^^ not found in this scope
+
+error[E0425]: cannot find type `Color` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:15:16
+   |
+15 |     pub color: Color,
+   |                ^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `Iterator` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:19:34
+   |
+19 |     pub fn join(components: impl Iterator<Item = Self>, separator: &str) -> Self {
+   |                                  ^^^^^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::iter::Iterator;
+   |
+
+error[E0425]: cannot find type `Color` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:49:31
+   |
+49 |     pub fn color(self, color: Color) -> Self {
+   |                               ^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `RenderOnce` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:53:6
+   |
+53 | impl RenderOnce for HighlightedMatch {
+   |      ^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:54:35
+   |
+54 |     fn render(self, _window: &mut Window, _: &mut App) -> impl IntoElement {
+   |                                   ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:54:51
+   |
+54 |     fn render(self, _window: &mut Window, _: &mut App) -> impl IntoElement {
+   |                                                   ^^^ not found in this scope
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:54:64
+   |
+54 |     fn render(self, _window: &mut Window, _: &mut App) -> impl IntoElement {
+   |                                                                ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Div` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:62:54
+   |
+62 |     pub fn render_paths_children(&mut self, element: Div) -> Div {
+   |                                                      ^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Div;
+   |
+
+error[E0425]: cannot find type `Div` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:62:62
+   |
+62 |     pub fn render_paths_children(&mut self, element: Div) -> Div {
+   |                                                              ^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Div;
+   |
+
+error[E0405]: cannot find trait `RenderOnce` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:76:6
+   |
+76 | impl RenderOnce for HighlightedMatchWithPaths {
+   |      ^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:77:39
+   |
+77 |     fn render(mut self, _window: &mut Window, _: &mut App) -> impl IntoElement {
+   |                                       ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:77:55
+   |
+77 |     fn render(mut self, _window: &mut Window, _: &mut App) -> impl IntoElement {
+   |                                                       ^^^ not found in this scope
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:77:68
+   |
+77 |     fn render(mut self, _window: &mut Window, _: &mut App) -> impl IntoElement {
+   |                                                                    ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\parts.rs:10:10
+   |
+10 |     cx: &App,
+   |          ^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\parts.rs:11:6
+   |
+11 | ) -> Option<impl IntoElement> {
+   |      ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 3 + use core::option::Option;
+   |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+  --> crates\picker\src\parts.rs:11:18
+   |
+11 | ) -> Option<impl IntoElement> {
+   |                  ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\persistence.rs:13:21
+   |
+13 |     preview_layout: Option<preview::Layout>,
+   |                     ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\persistence.rs:45:21
+   |
+45 |     preview_layout: Option<preview::Layout>,
+   |                     ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0405]: cannot find trait `Into` in this scope
+  --> crates\picker\src\persistence.rs:61:26
+   |
+61 |     preview_layout: impl Into<Option<preview::Layout>>,
+   |                          ^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::convert::Into;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\persistence.rs:61:31
+   |
+61 |     preview_layout: impl Into<Option<preview::Layout>>,
+   |                               ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\persistence.rs:63:21
+   |
+63 | ) -> anyhow::Result<Option<Shape>> {
+   |                     ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Ok` in this scope
+  --> crates\picker\src\persistence.rs:69:16
+   |
+69 |         return Ok(None);
+   |                ^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::result::Result::Ok;
+   |
+
+error[E0425]: cannot find value `None` in this scope
+  --> crates\picker\src\persistence.rs:69:19
+   |
+69 |         return Ok(None);
+   |                   ^^^^ not found in this scope
+   |
+help: consider importing this unit variant
+   |
+ 1 + use core::option::Option::None;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\persistence.rs:64:9
+   |
+64 |     let Some(shape) = KeyValueStore::global(cx)
+   |         ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Ok` in this scope
+  --> crates\picker\src\persistence.rs:75:5
+   |
+75 |     Ok(Some(Shape::HorizontallyCentered(shape)))
+   |     ^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::result::Result::Ok;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\persistence.rs:75:8
+   |
+75 |     Ok(Some(Shape::HorizontallyCentered(shape)))
+   |        ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\persistence.rs:81:21
+   |
+81 | ) -> anyhow::Result<Option<preview::Layout>> {
+   |                     ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Ok` in this scope
+  --> crates\picker\src\persistence.rs:87:16
+   |
+87 |         return Ok(None);
+   |                ^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::result::Result::Ok;
+   |
+
+error[E0425]: cannot find value `None` in this scope
+  --> crates\picker\src\persistence.rs:87:19
+   |
+87 |         return Ok(None);
+   |                   ^^^^ not found in this scope
+   |
+help: consider importing this unit variant
+   |
+ 1 + use core::option::Option::None;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\persistence.rs:82:9
+   |
+82 |     let Some(last_layout) = KeyValueStore::global(cx)
+   |         ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\persistence.rs:93:61
+   |
+93 | fn shape_key(picker_delegate: &'static str, preview_layout: Option<preview::Layout>) -> String {
+   |                                                             ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `String` in this scope
+  --> crates\picker\src\persistence.rs:93:89
+   |
+93 | fn shape_key(picker_delegate: &'static str, preview_layout: Option<preview::Layout>) -> String {
+   |                                                                                         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `String` in this scope
+  --> crates\picker\src\persistence.rs:97:54
+   |
+97 | fn last_layout_key(picker_delegate: &'static str) -> String {
+   |                                                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\persistence.rs:101:26
+    |
+101 | fn layout_as_str(layout: Option<preview::Layout>) -> &'static str {
+    |                          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\persistence.rs:103:9
+    |
+103 |         Some(preview::Layout::Hidden) => "hidden",
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\persistence.rs:104:9
+    |
+104 |         Some(preview::Layout::Below) => "below",
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\persistence.rs:105:9
+    |
+105 |         Some(preview::Layout::Right) => "right",
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\persistence.rs:110:44
+    |
+110 | fn parse_layout(s: &str) -> anyhow::Result<Option<preview::Layout>> {
+    |                                            ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Ok` in this scope
+   --> crates\picker\src\persistence.rs:111:5
+    |
+111 |     Ok(Some(match s {
+    |     ^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::result::Result::Ok;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\persistence.rs:111:8
+    |
+111 |     Ok(Some(match s {
+    |        ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Ok` in this scope
+   --> crates\picker\src\persistence.rs:115:26
+    |
+115 |         "none" => return Ok(None),
+    |                          ^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::result::Result::Ok;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\persistence.rs:115:29
+    |
+115 |         "none" => return Ok(None),
+    |                             ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Err` in this scope
+   --> crates\picker\src\persistence.rs:116:21
+    |
+116 |         _ => return Err(anyhow!("Unknown layout: `{}`", s)),
+    |                     ^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::result::Result::Err;
+    |
+
+error[E0405]: cannot find trait `ButtonCommon` in this scope
+  --> crates\picker\src\popover_menu.rs:13:25
+   |
+13 |     T: PopoverTrigger + ButtonCommon,
+   |                         ^^^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `Fn` in this scope
+  --> crates\picker\src\popover_menu.rs:14:9
+   |
+14 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |         ^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Fn;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\popover_menu.rs:14:17
+   |
+14 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:14:30
+   |
+14 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                              ^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\popover_menu.rs:20:13
+   |
+20 |     handle: Option<PopoverMenuHandle<Picker<P>>>,
+   |             ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\popover_menu.rs:22:13
+   |
+22 |     offset: Option<Point<Pixels>>,
+   |             ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `Vec` in this scope
+  --> crates\picker\src\popover_menu.rs:23:21
+   |
+23 |     _subscriptions: Vec<Subscription>,
+   |                     ^^^ not found in this scope
+
+error[E0405]: cannot find trait `ButtonCommon` in this scope
+  --> crates\picker\src\popover_menu.rs:28:25
+   |
+28 |     T: PopoverTrigger + ButtonCommon,
+   |                         ^^^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `Fn` in this scope
+  --> crates\picker\src\popover_menu.rs:29:9
+   |
+29 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |         ^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Fn;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\popover_menu.rs:29:17
+   |
+29 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:29:30
+   |
+29 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                              ^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:37:18
+   |
+37 |         cx: &mut App,
+   |                  ^^^ not found in this scope
+
+error[E0425]: cannot find value `None` in this scope
+  --> crates\picker\src\popover_menu.rs:47:21
+   |
+47 |             handle: None,
+   |                     ^^^^ not found in this scope
+   |
+help: consider importing this unit variant
+   |
+ 1 + use core::option::Option::None;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\popover_menu.rs:48:21
+   |
+48 |             offset: Some(Point {
+   |                     ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\popover_menu.rs:57:23
+   |
+57 |         self.handle = Some(handle);
+   |                       ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\popover_menu.rs:62:23
+   |
+62 |         self.offset = Some(offset);
+   |                       ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0405]: cannot find trait `ButtonCommon` in this scope
+  --> crates\picker\src\popover_menu.rs:69:25
+   |
+69 |     T: PopoverTrigger + ButtonCommon,
+   |                         ^^^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `Fn` in this scope
+  --> crates\picker\src\popover_menu.rs:70:9
+   |
+70 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |         ^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Fn;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\popover_menu.rs:70:17
+   |
+70 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:70:30
+   |
+70 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                              ^^^ not found in this scope
+
+error[E0405]: cannot find trait `ButtonCommon` in this scope
+  --> crates\picker\src\popover_menu.rs:77:25
+   |
+77 |     T: PopoverTrigger + ButtonCommon,
+   |                         ^^^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `Fn` in this scope
+  --> crates\picker\src\popover_menu.rs:78:9
+   |
+78 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |         ^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Fn;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\popover_menu.rs:78:17
+   |
+78 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:78:30
+   |
+78 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                              ^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:81:33
+   |
+81 |     fn focus_handle(&self, cx: &App) -> FocusHandle {
+   |                                 ^^^ not found in this scope
+
+error[E0405]: cannot find trait `RenderOnce` in this scope
+  --> crates\picker\src\popover_menu.rs:86:16
+   |
+86 | impl<T, TT, P> RenderOnce for PickerPopoverMenu<T, TT, P>
+   |                ^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `ButtonCommon` in this scope
+  --> crates\picker\src\popover_menu.rs:88:25
+   |
+88 |     T: PopoverTrigger + ButtonCommon,
+   |                         ^^^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `Fn` in this scope
+  --> crates\picker\src\popover_menu.rs:89:9
+   |
+89 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |         ^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+ 1 + use core::ops::Fn;
+   |
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\popover_menu.rs:89:17
+   |
+89 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:89:30
+   |
+89 |     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
+   |                              ^^^ not found in this scope
+
+error[E0425]: cannot find type `Window` in this scope
+  --> crates\picker\src\popover_menu.rs:92:35
+   |
+92 |     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+   |                                   ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+  --> crates\picker\src\popover_menu.rs:92:53
+   |
+92 |     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+   |                                                     ^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\popover_menu.rs:96:39
+   |
+96 |             .menu(move |_window, _cx| Some(picker.clone()))
+   |                                       ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\preview.rs:98:25
+   |
+98 |     pub match_location: Option<MatchLocation>,
+   |                         ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\preview.rs:106:29
+    |
+106 |             match_location: None,
+    |                             ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\preview.rs:117:29
+    |
+117 |             match_location: None,
+    |                             ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\preview.rs:125:29
+    |
+125 |             match_location: Some(highlight),
+    |                             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\preview.rs:136:29
+    |
+136 |             match_location: None,
+    |                             ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0405]: cannot find trait `Render` in this scope
+  --> crates\picker\src\render\window_controls.rs:69:6
+   |
+69 | impl Render for DragPreview {
+   |      ^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+  --> crates\picker\src\render\window_controls.rs:70:81
+   |
+70 |     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+   |                                                                                 ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Pixels` in this scope
+  --> crates\picker\src\render\window_controls.rs:79:29
+   |
+79 |     mouse_pos_before: Point<Pixels>,
+   |                             ^^^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+76 | struct ResizeDrag<S, Pixels> {
+   |                    ++++++++
+
+error[E0405]: cannot find trait `Copy` in this scope
+  --> crates\picker\src\render\window_controls.rs:82:24
+   |
+82 | pub(crate) trait Side: Copy + 'static {
+   |                        ^^^^ not found in this scope
+   |
+help: consider importing this trait
+   |
+59 + use core::marker::Copy;
+   |
+
+error[E0425]: cannot find type `Pixels` in this scope
+  --> crates\picker\src\render\window_controls.rs:89:41
+   |
+89 |     fn handle_width(window: &Window) -> Pixels {
+   |                                         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Pixels` in this scope
+  --> crates\picker\src\render\window_controls.rs:92:42
+   |
+92 |     fn handle_offset(window: &Window) -> Pixels {
+   |                                          ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Pixels` in this scope
+  --> crates\picker\src\render\window_controls.rs:97:45
+   |
+97 |     fn corner_clearance(window: &Window) -> Pixels {
+   |                                             ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:105:29
+    |
+105 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:108:25
+    |
+108 |     ) -> gpui::Stateful<Div>;
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:112:31
+    |
+112 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+ 82 | pub(crate) trait Side<Pixels>: Copy + 'static {
+    |                      ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:118:17
+    |
+118 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:132:29
+    |
+132 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:135:25
+    |
+135 |     ) -> gpui::Stateful<Div> {
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:144:31
+    |
+144 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+126 | impl<Pixels> Side for Left {
+    |     ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:153:17
+    |
+153 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:171:29
+    |
+171 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:174:25
+    |
+174 |     ) -> gpui::Stateful<Div> {
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:183:31
+    |
+183 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+165 | impl<Pixels> Side for Right {
+    |     ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:195:17
+    |
+195 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:221:29
+    |
+221 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:224:25
+    |
+224 |     ) -> gpui::Stateful<Div> {
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:245:31
+    |
+245 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+208 | impl<Pixels> Side for Middle {
+    |     ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:260:17
+    |
+260 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:279:29
+    |
+279 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:282:25
+    |
+282 |     ) -> gpui::Stateful<Div> {
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:291:31
+    |
+291 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+273 | impl<Pixels> Side for Bottom {
+    |     ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:303:17
+    |
+303 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:321:29
+    |
+321 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:324:25
+    |
+324 |     ) -> gpui::Stateful<Div> {
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:333:31
+    |
+333 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+315 | impl<Pixels> Side for LeftCorner {
+    |     ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:348:17
+    |
+348 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:368:29
+    |
+368 |         div: gpui::Stateful<Div>,
+    |                             ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\render\window_controls.rs:371:25
+    |
+371 |     ) -> gpui::Stateful<Div> {
+    |                         ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+ 59 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find type `Pixels` in this scope
+   --> crates\picker\src\render\window_controls.rs:380:31
+    |
+380 |         mouse_movement: Point<Pixels>,
+    |                               ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+362 | impl<Pixels> Side for RightCorner {
+    |     ++++++++
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:395:17
+    |
+395 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\render\window_controls.rs:412:17
+    |
+412 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+ 59 + use core::option::Option;
+    |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+   --> crates\picker\src\render\window_controls.rs:432:15
+    |
+432 |     ) -> impl IntoElement {
+    |               ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `App` in this scope
+   --> crates\picker\src\render\window_controls.rs:500:71
+    |
+500 | fn do_nothing(_: &gpui::MouseDownEvent, window: &mut Window, cx: &mut App) {
+    |                                                                       ^^^ not found in this scope
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\render.rs:34:13
+   |
+34 |             Some(
+   |             ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\render.rs:43:13
+   |
+43 |             Some(
+   |             ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\render.rs:48:37
+   |
+48 |             ) if rendered_layout == Some(Layout::Below) => self
+   |                                     ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\render.rs:51:13
+   |
+51 |             Some(
+   |             ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+  --> crates\picker\src\render.rs:59:13
+   |
+59 |             Some(Preview {
+   |             ^^^^ not found in this scope
+   |
+help: consider importing this tuple variant
+   |
+ 1 + use core::option::Option::Some;
+   |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:102:16
+    |
+102 |         if let Some(custom) = self.delegate.render_editor(editor, window, cx) {
+    |                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:180:43
+    |
+180 |                         picker_bounds.set(Some(bounds));
+    |                                           ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:211:25
+    |
+211 |                         Some(self.render_editor(&editor, window, cx))
+    |                         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\render.rs:213:25
+    |
+213 |                         None
+    |                         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:216:44
+    |
+216 |                 Head::Empty(empty_head) => Some(h_flex().child(empty_head.clone())),
+    |                                            ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:272:25
+    |
+272 |                         Some(self.render_editor(&editor, window, cx))
+    |                         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\render.rs:274:25
+    |
+274 |                         None
+    |                         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:277:44
+    |
+277 |                 Head::Empty(empty_head) => Some(div().child(empty_head.clone())),
+    |                                            ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:280:13
+    |
+280 |         let Some(aside) = aside else {
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:303:18
+    |
+303 |                 (Some(picker_bounds), Some(item_bounds)) => {
+    |                  ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:303:39
+    |
+303 |                 (Some(picker_bounds), Some(item_bounds)) => {
+    |                                       ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:306:21
+    |
+306 |                     Some((relative_top, height))
+    |                     ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\render.rs:308:22
+    |
+308 |                 _ => None,
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:352:33
+    |
+352 |                         .height(Some(preview::Layout::Below), &self.size_bounds, window))
+    |                                 ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:396:33
+    |
+396 |                         .height(Some(Layout::Right), &self.size_bounds, window))
+    |                                 ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:411:37
+    |
+411 | ...                   Some(Layout::Right),
+    |                       ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\render.rs:446:20
+    |
+446 |             if let Some(preview) = &mut self.preview {
+    |                    ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0405]: cannot find trait `From` in this scope
+   --> crates\picker\src\shape.rs:41:14
+    |
+ 41 |         impl From<Rems> for $name {
+    |              ^^^^ not found in this scope
+...
+151 | relative_size!(RelativeHeight, height);
+    | -------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this trait
+    |
+  1 + use core::convert::From;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:84:38
+    |
+ 84 |             pub fn as_rems(&self) -> Option<Rems> {
+    |                                      ^^^^^^ not found in this scope
+...
+151 | relative_size!(RelativeHeight, height);
+    | -------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0405]: cannot find trait `From` in this scope
+   --> crates\picker\src\shape.rs:41:14
+    |
+ 41 |         impl From<Rems> for $name {
+    |              ^^^^ not found in this scope
+...
+152 | relative_size!(RelativeWidth, width);
+    | ------------------------------------ in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this trait
+    |
+  1 + use core::convert::From;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:84:38
+    |
+ 84 |             pub fn as_rems(&self) -> Option<Rems> {
+    |                                      ^^^^^^ not found in this scope
+...
+152 | relative_size!(RelativeWidth, width);
+    | ------------------------------------ in this macro invocation
+    |
+    = note: this error originates in the macro `relative_size` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0405]: cannot find trait `Default` in this scope
+   --> crates\picker\src\shape.rs:237:6
+    |
+237 | impl Default for SizeBounds {
+    |      ^^^^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::default::Default;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:260:33
+    |
+260 |     fn min_width(&self, layout: Option<Layout>, window: &Window) -> Pixels {
+    |                                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:265:13
+    |
+265 |             Some(Layout::Right) => results + preview,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:266:13
+    |
+266 |             Some(Layout::Below) => results.max(preview),
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:267:13
+    |
+267 |             Some(Layout::Hidden) | None => results,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:272:34
+    |
+272 |     fn min_height(&self, layout: Option<Layout>, window: &Window) -> Pixels {
+    |                                  ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:277:13
+    |
+277 |             Some(Layout::Below) => results + preview,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:278:13
+    |
+278 |             Some(Layout::Right) => results.max(preview),
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:279:13
+    |
+279 |             Some(Layout::Hidden) | None => results,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:287:17
+    |
+287 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:299:17
+    |
+299 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:315:17
+    |
+315 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:322:22
+    |
+322 |         if layout == Some(Layout::Right) {
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:332:17
+    |
+332 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:339:22
+    |
+339 |         if layout == Some(Layout::Right) {
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:349:17
+    |
+349 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:356:22
+    |
+356 |         if layout == Some(Layout::Below) {
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:367:17
+    |
+367 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:372:13
+    |
+372 |             Some(Layout::Right) => (
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:377:13
+    |
+377 |             Some(Layout::Below) => (
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:382:13
+    |
+382 |             Some(Layout::Hidden) | None => return,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:389:40
+    |
+389 |         let min_width = self.min_width(Some(Layout::Right), window);
+    |                                        ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:392:39
+    |
+392 |             .picker_position_and_size(Some(Layout::Right), window)
+    |                                       ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:407:17
+    |
+407 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\shape.rs:425:22
+    |
+425 |         layout: impl Into<Option<Layout>>,
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:425:27
+    |
+425 |         layout: impl Into<Option<Layout>>,
+    |                           ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:443:21
+    |
+443 |                     Some(Layout::Below) => preview_size.height_as_pixels(window),
+    |                     ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:444:21
+    |
+444 |                     Some(Layout::Right) => preview_size.width_as_pixels(window),
+    |                     ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:445:21
+    |
+445 |                     Some(Layout::Hidden) | None => Pixels::ZERO,
+    |                     ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:458:17
+    |
+458 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:473:54
+    |
+473 |         let mut pos = self.clamped_position_and_size(Some(layout), bounds, window);
+    |                                                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:489:54
+    |
+489 |         let mut pos = self.clamped_position_and_size(Some(layout), bounds, window);
+    |                                                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\shape.rs:514:22
+    |
+514 |         layout: impl Into<Option<Layout>>,
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:514:27
+    |
+514 |         layout: impl Into<Option<Layout>>,
+    |                           ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:525:13
+    |
+525 |             Some(Layout::Right) => (full.right - full.left) - full.preview,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:531:17
+    |
+531 |                 Some(Layout::Below) => (full.bottom - full.top) - full.preview,
+    |                 ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:545:10
+    |
+545 |     ) -> Option<Pixels> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\shape.rs:547:13
+    |
+547 |             None
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:549:13
+    |
+549 |             Some(self.height(None, bounds, window))
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\shape.rs:549:30
+    |
+549 |             Some(self.height(None, bounds, window))
+    |                              ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:556:17
+    |
+556 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:566:17
+    |
+566 |         layout: Option<Layout>,
+    |                 ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\shape.rs:606:22
+    |
+606 |         layout: impl Into<Option<Layout>>,
+    |                      ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\shape.rs:606:27
+    |
+606 |         layout: impl Into<Option<Layout>>,
+    |                           ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:611:13
+    |
+611 |             Some(Pl::Below) => ViewportFraction::from_height_pixels(pos.preview, window),
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:612:13
+    |
+612 |             Some(Pl::Right) => ViewportFraction::from_width_pixels(pos.preview, window),
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\shape.rs:613:13
+    |
+613 |             Some(Pl::Hidden) | None => ViewportFraction::ZERO,
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\shape.rs:623:56
+    |
+623 |     pub(crate) fn set_initial_width(&mut self, w: impl Into<RelativeWidth>) {
+    |                                                        ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\shape.rs:629:57
+    |
+629 |     pub(crate) fn set_initial_height(&mut self, h: impl Into<RelativeHeight>) {
+    |                                                         ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0405]: cannot find trait `Default` in this scope
+   --> crates\picker\src\shape.rs:664:6
+    |
+664 | impl Default for Centered {
+    |      ^^^^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::default::Default;
+    |
+
+error[E0405]: cannot find trait `Default` in this scope
+   --> crates\picker\src\shape.rs:674:6
+    |
+674 | impl Default for Shape {
+    |      ^^^^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::default::Default;
+    |
+
+error[E0425]: cannot find type `Rems` in this scope
+  --> crates\picker\src\picker.rs:45:32
+   |
+45 | pub const DEFAULT_MODAL_WIDTH: Rems = Rems(34.0);
+   |                                ^^^^ not found in this scope
+
+error[E0425]: cannot find type `Rems` in this scope
+  --> crates\picker\src\picker.rs:46:37
+   |
+46 | pub const DEFAULT_MODAL_MAX_HEIGHT: Rems = Rems(24.0);
+   |                                     ^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+  --> crates\picker\src\picker.rs:99:30
+   |
+99 |     delegate_update_matches: Option<Task<()>>,
+   |                              ^^^^^^ not found in this scope
+   |
+help: consider importing this enum
+   |
+ 1 + use core::option::Option;
+   |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:131:14
+    |
+131 |     preview: Option<Preview>,
+    |              ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:132:29
+    |
+132 |     pending_update_matches: Option<PendingUpdateMatches>,
+    |                             ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:133:24
+    |
+133 |     confirm_on_update: Option<bool>,
+    |                        ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:145:28
+    |
+145 |     picker_bounds: Rc<Cell<Option<Bounds<Pixels>>>>,
+    |                            ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0405]: cannot find trait `Sized` in this scope
+   --> crates\picker\src\picker.rs:164:27
+    |
+164 | pub trait PickerDelegate: Sized + 'static {
+    |                           ^^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::marker::Sized;
+    |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+   --> crates\picker\src\picker.rs:165:20
+    |
+165 |     type ListItem: IntoElement;
+    |                    ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Vec` in this scope
+   --> crates\picker\src\picker.rs:172:43
+    |
+172 |     fn separators_after_indices(&self) -> Vec<usize> {
+    |                                           ^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:190:10
+    |
+190 |     ) -> Option<String> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `String` in this scope
+   --> crates\picker\src\picker.rs:190:17
+    |
+190 |     ) -> Option<String> {
+    |                 ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+164 | pub trait PickerDelegate<String>: Sized + 'static {
+    |                         ++++++++
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:191:9
+    |
+191 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:211:10
+    |
+211 |     ) -> Option<Box<dyn Fn(&mut Window, &mut App) + 'static>> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Box` in this scope
+   --> crates\picker\src\picker.rs:211:17
+    |
+211 |     ) -> Option<Box<dyn Fn(&mut Window, &mut App) + 'static>> {
+    |                 ^^^ not found in this scope
+
+error[E0405]: cannot find trait `Fn` in this scope
+   --> crates\picker\src\picker.rs:211:25
+    |
+211 |     ) -> Option<Box<dyn Fn(&mut Window, &mut App) + 'static>> {
+    |                         ^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::ops::Fn;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:212:9
+    |
+212 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:215:71
+    |
+215 |     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
+    |                                                                       ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `SharedString` in this scope
+   --> crates\picker\src\picker.rs:215:78
+    |
+215 |     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
+    |                                                                              ^^^^^^^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+164 | pub trait PickerDelegate<SharedString>: Sized + 'static {
+    |                         ++++++++++++++
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:216:9
+    |
+216 |         Some("No matches".into())
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `String` in this scope
+   --> crates\picker\src\picker.rs:220:16
+    |
+220 |         query: String,
+    |                ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `String` in this scope
+   --> crates\picker\src\picker.rs:231:17
+    |
+231 |         _query: String,
+    |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:244:10
+    |
+244 |     ) -> Option<String> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `String` in this scope
+   --> crates\picker\src\picker.rs:244:17
+    |
+244 |     ) -> Option<String> {
+    |                 ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+164 | pub trait PickerDelegate<String>: Sized + 'static {
+    |                         ++++++++
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:245:9
+    |
+245 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `String` in this scope
+   --> crates\picker\src\picker.rs:298:17
+    |
+298 |         _query: String,
+    |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:301:10
+    |
+301 |     ) -> Option<String> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `String` in this scope
+   --> crates\picker\src\picker.rs:301:17
+    |
+301 |     ) -> Option<String> {
+    |                 ^^^^^^ not found in this scope
+    |
+help: you might be missing a type parameter
+    |
+164 | pub trait PickerDelegate<String>: Sized + 'static {
+    |                         ++++++++
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:302:9
+    |
+302 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:323:10
+    |
+323 |     ) -> Option<AnyElement> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:324:9
+    |
+324 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:336:10
+    |
+336 |     ) -> Option<Div> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Div` in this scope
+   --> crates\picker\src\picker.rs:336:17
+    |
+336 |     ) -> Option<Div> {
+    |                 ^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::ops::Div;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:337:9
+    |
+337 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:340:60
+    |
+340 |     fn try_get_preview_data_for_match(&self, _cx: &App) -> Option<PreviewUpdate> {
+    |                                                            ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:341:9
+    |
+341 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:354:10
+    |
+354 |     ) -> Option<Self::ListItem>;
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:363:10
+    |
+363 |     ) -> Option<Self::ListItem> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:364:9
+    |
+364 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:371:10
+    |
+371 |     ) -> Option<AnyElement> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:372:9
+    |
+372 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:383:10
+    |
+383 |     ) -> Option<AnyElement> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:384:9
+    |
+384 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Vec` in this scope
+   --> crates\picker\src\picker.rs:392:10
+    |
+392 |     ) -> Vec<footer::PickerAction> {
+    |          ^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:400:10
+    |
+400 |     ) -> Option<DocumentationAside> {
+    |          ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:401:9
+    |
+401 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:407:44
+    |
+407 |     fn documentation_aside_index(&self) -> Option<usize> {
+    |                                            ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:408:9
+    |
+408 |         None
+    |         ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:439:63
+    |
+439 |         Self::new(delegate, ContainerKind::UniformList, head, None, window, cx)
+    |                                                               ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:462:13
+    |
+462 |             Some(preview),
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:490:13
+    |
+490 |             Some(preview),
+    |             ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:505:63
+    |
+505 |         Self::new(delegate, ContainerKind::UniformList, head, None, window, cx)
+    |                                                               ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:514:56
+    |
+514 |         Self::new(delegate, ContainerKind::List, head, None, window, cx)
+    |                                                        ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:528:56
+    |
+528 |         Self::new(delegate, ContainerKind::List, head, None, window, cx)
+    |                                                        ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:535:22
+    |
+535 |         mut preview: Option<Preview>,
+    |                      ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:540:16
+    |
+540 |         if let Some(preview) = &mut preview {
+    |                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:564:32
+    |
+564 |         if !has_preview && let Some(width) = default_shape.width.as_rems() {
+    |                                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:571:37
+    |
+571 |             pending_update_matches: None,
+    |                                     ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:572:32
+    |
+572 |             confirm_on_update: None,
+    |                                ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0425]: cannot find value `None` in this scope
+   --> crates\picker\src\picker.rs:587:46
+    |
+587 |             picker_bounds: Rc::new(Cell::new(None)),
+    |                                              ^^^^ not found in this scope
+    |
+help: consider importing this unit variant
+    |
+  1 + use core::option::Option::None;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\picker.rs:624:48
+    |
+624 |     pub fn initial_width(mut self, width: impl Into<RelativeWidth>) -> Self {
+    |                                                ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:633:20
+    |
+633 |             && let Some(rems) = width.as_rems()
+    |                    ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0405]: cannot find trait `Into` in this scope
+   --> crates\picker\src\picker.rs:644:46
+    |
+644 |     pub fn max_height(mut self, height: impl Into<RelativeHeight>) -> Self {
+    |                                              ^^^^ not found in this scope
+    |
+help: consider importing this trait
+    |
+  1 + use core::convert::Into;
+    |
+
+error[E0425]: cannot find type `Option` in this scope
+   --> crates\picker\src\picker.rs:767:29
+    |
+767 |         fallback_direction: Option<Direction>,
+    |                             ^^^^^^ not found in this scope
+    |
+help: consider importing this enum
+    |
+  1 + use core::option::Option;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:777:16
+    |
+777 |         if let Some(bias) = fallback_direction {
+    |                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:811:20
+    |
+811 |             if let Some(action) = self.delegate.selected_index_changed(ix, window, cx) {
+    |                    ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:814:20
+    |
+814 |             if let Some(preview) = &mut self.preview
+    |                    ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:815:24
+    |
+815 |                 && let Some(update) = self.delegate.try_get_preview_data_for_match(cx)
+    |                        ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:832:16
+    |
+832 |         if let Some(query) = self
+    |                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:843:41
+    |
+843 |             self.set_selected_index(ix, Some(Direction::Down), true, window, cx);
+    |                                         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0433]: cannot find type `Default` in this scope
+   --> crates\picker\src\picker.rs:849:31
+    |
+849 |         self.select_previous(&Default::default(), window, cx);
+    |                               ^^^^^^^ use of undeclared type `Default`
+    |
+help: consider importing this trait
+    |
+  1 + use core::default::Default;
+    |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:859:16
+    |
+859 |         if let Some(query) = self
+    |                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:870:41
+    |
+870 |             self.set_selected_index(ix, Some(Direction::Up), true, window, cx);
+    |                                         ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0433]: cannot find type `Default` in this scope
+   --> crates\picker\src\picker.rs:876:27
+    |
+876 |         self.select_next(&Default::default(), window, cx);
+    |                           ^^^^^^^ use of undeclared type `Default`
+    |
+help: consider importing this trait
+    |
+  1 + use core::default::Default;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:887:40
+    |
+887 |             self.set_selected_index(0, Some(Direction::Down), true, window, cx);
+    |                                        ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:895:48
+    |
+895 |             self.set_selected_index(count - 1, Some(Direction::Up), true, window, cx);
+    |                                                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:904:44
+    |
+904 |         self.set_selected_index(new_index, Some(Direction::Down), true, window, cx);
+    |                                            ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `ToggleMultiSelect` in this scope
+   --> crates\picker\src\picker.rs:919:13
+    |
+919 |         _: &ToggleMultiSelect,
+    |             ^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `MultiSelectNext` in this scope
+   --> crates\picker\src\picker.rs:936:13
+    |
+936 |         _: &MultiSelectNext,
+    |             ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:962:38
+    |
+962 |             self.confirm_on_update = Some(false)
+    |                                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:983:38
+    |
+983 |             self.confirm_on_update = Some(true)
+    |                                      ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `ConfirmCompletion` in this scope
+   --> crates\picker\src\picker.rs:995:13
+    |
+995 |         _: &ConfirmCompletion,
+    |             ^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+   --> crates\picker\src\picker.rs:999:16
+    |
+999 |         if let Some(new_query) = self.delegate.confirm_completion(self.query(cx), window, cx) {
+    |                ^^^^ not found in this scope
+    |
+help: consider importing this tuple variant
+    |
+  1 + use core::option::Option::Some;
+    |
+
+error[E0425]: cannot find type `SetPreviewRight` in this scope
+    --> crates\picker\src\picker.rs:1008:13
+     |
+1008 |         _: &SetPreviewRight,
+     |             ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `SetPreviewBelow` in this scope
+    --> crates\picker\src\picker.rs:1017:13
+     |
+1017 |         _: &SetPreviewBelow,
+     |             ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `SetPreviewHidden` in this scope
+    --> crates\picker\src\picker.rs:1026:13
+     |
+1026 |         _: &SetPreviewHidden,
+     |             ^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `ToggleActionsMenu` in this scope
+    --> crates\picker\src\picker.rs:1035:13
+     |
+1035 |         _: &ToggleActionsMenu,
+     |             ^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `None` in this scope
+    --> crates\picker\src\picker.rs:1054:37
+     |
+1054 |         self.set_selected_index(ix, None, false, window, cx);
+     |                                     ^^^^ not found in this scope
+     |
+help: consider importing this unit variant
+     |
+   1 + use core::option::Option::None;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1068:23
+     |
+1068 |         } else if let Some(update_query) = self.delegate.confirm_update_query(window, cx) {
+     |                       ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1070:40
+     |
+1070 |             self.set_selected_index(0, Some(Direction::Down), false, window, cx);
+     |                                        ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find type `String` in this scope
+    --> crates\picker\src\picker.rs:1129:45
+     |
+1129 |     pub fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Self>) {
+     |                                             ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `String` in this scope
+    --> crates\picker\src\picker.rs:1135:16
+     |
+1135 |         query: String,
+     |                ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1149:39
+     |
+1149 |         self.pending_update_matches = Some(PendingUpdateMatches {
+     |                                       ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1150:38
+     |
+1150 |             delegate_update_matches: Some(delegate_pending_update_matches),
+     |                                      ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1176:20
+     |
+1176 |             && let Some(preview) = &mut self.preview
+     |                    ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find value `None` in this scope
+    --> crates\picker\src\picker.rs:1202:39
+     |
+1202 |         self.pending_update_matches = None;
+     |                                       ^^^^ not found in this scope
+     |
+help: consider importing this unit variant
+     |
+   1 + use core::option::Option::None;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1203:16
+     |
+1203 |         if let Some(update) = self.delegate.try_get_preview_data_for_match(cx)
+     |                ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1204:20
+     |
+1204 |             && let Some(preview) = &mut self.preview
+     |                    ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1208:16
+     |
+1208 |         if let Some(secondary) = self.confirm_on_update.take() {
+     |                ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find type `String` in this scope
+    --> crates\picker\src\picker.rs:1214:38
+     |
+1214 |     pub fn query(&self, cx: &App) -> String {
+     |                                      ^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+    --> crates\picker\src\picker.rs:1245:41
+     |
+1245 |     pub fn is_scrolled_to_end(&self) -> Option<bool> {
+     |                                         ^^^^^^ not found in this scope
+     |
+help: consider importing this enum
+     |
+   1 + use core::option::Option;
+     |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+    --> crates\picker\src\picker.rs:1257:15
+     |
+1257 |     ) -> impl IntoElement + use<D> {
+     |               ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `None` in this scope
+    --> crates\picker\src\picker.rs:1278:13
+     |
+1278 |             None
+     |             ^^^^ not found in this scope
+     |
+help: consider importing this unit variant
+     |
+   1 + use core::option::Option::None;
+     |
+
+error[E0425]: cannot find value `MultiSelectNext` in this scope
+    --> crates\picker\src\picker.rs:1299:38
+     |
+1299 | ...                   &MultiSelectNext,
+     |                        ^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `None` in this scope
+    --> crates\picker\src\picker.rs:1350:53
+     |
+1350 |                         this.set_selected_index(ix, None, false, window, cx);
+     |                                                     ^^^^ not found in this scope
+     |
+help: consider importing this unit variant
+     |
+   1 + use core::option::Option::None;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1356:24
+     |
+1356 |                 if let Some(item) = item_with_checkbox {
+     |                        ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+    --> crates\picker\src\picker.rs:1402:15
+     |
+1402 |     ) -> impl IntoElement {
+     |               ^^^^^^^^^^^ not found in this scope
+
+error[E0405]: cannot find trait `IntoElement` in this scope
+    --> crates\picker\src\picker.rs:1414:72
+     |
+1414 |     fn render_element_container(&self, cx: &mut Context<Self>) -> impl IntoElement {
+     |                                                                        ^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `Option` in this scope
+    --> crates\picker\src\picker.rs:1462:33
+     |
+1462 |     fn preview_layout(&self) -> Option<preview::Layout> {
+     |                                 ^^^^^^ not found in this scope
+     |
+help: consider importing this enum
+     |
+   1 + use core::option::Option;
+     |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1466:34
+     |
+1466 |         self.preview_layout() == Some(preview::Layout::Right)
+     |                                  ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find type `Option` in this scope
+    --> crates\picker\src\picker.rs:1473:59
+     |
+1473 |     fn preview_layout_rendered(&self, window: &Window) -> Option<preview::Layout> {
+     |                                                           ^^^^^^ not found in this scope
+     |
+help: consider importing this enum
+     |
+   1 + use core::option::Option;
+     |
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1482:13
+     |
+1482 |             Some(preview::Layout::Below)
+     |             ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0425]: cannot find type `TogglePreview` in this scope
+    --> crates\picker\src\picker.rs:1499:38
+     |
+1499 |     fn toggle_preview(&mut self, _: &TogglePreview, window: &mut Window, cx: &mut Context<Self>) {
+     |                                      ^^^^^^^^^^^^^ not found in this scope
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1505:13
+     |
+1505 |             Some(preview::Layout::Hidden) | None => preview::Layout::Right,
+     |             ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1506:13
+     |
+1506 |             Some(_) => preview::Layout::Hidden,
+     |             ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error[E0531]: cannot find tuple struct or tuple variant `Some` in this scope
+    --> crates\picker\src\picker.rs:1519:13
+     |
+1519 |         let Some(preview) = &mut self.preview else {
+     |             ^^^^ not found in this scope
+     |
+help: consider importing this tuple variant
+     |
+   1 + use core::option::Option::Some;
+     |
+
+error: requires `None` lang_item
+   --> crates\picker\src\footer.rs:213:21
+    |
+213 | /                     for item in actions.iter() {
+214 | |                         menu = item.add_to_menu(menu, &focus_handle);
+215 | |                     }
+    | |_____________________^
+
+error[E0433]: cannot find type `IconName` in this scope
+   --> crates\picker\src\footer.rs:137:13
+    |
+137 |             IconName::DiffSplitAuto
+    |             ^^^^^^^^ use of undeclared type `IconName`
+
+error[E0433]: cannot find type `IconName` in this scope
+   --> crates\picker\src\footer.rs:139:13
+    |
+139 |             IconName::DiffSplit
+    |             ^^^^^^^^ use of undeclared type `IconName`
+
+error[E0433]: cannot find type `Button` in this scope
+   --> crates\picker\src\footer.rs:144:17
+    |
+144 |                 Button::new("picker-preview-toggle", "Preview")
+    |                 ^^^^^^ use of undeclared type `Button`
+
+error[E0433]: cannot find type `Color` in this scope
+   --> crates\picker\src\footer.rs:145:62
+    |
+145 |                     .when(preview_visible, |this| this.color(Color::Accent))
+    |                                                              ^^^^^ use of undeclared type `Color`
+
+error[E0433]: cannot find type `IconButton` in this scope
+   --> crates\picker\src\footer.rs:157:25
+    |
+157 |                         IconButton::new("picker-preview-below", IconName::DiffUnified)
+    |                         ^^^^^^^^^^ use of undeclared type `IconButton`
+
+error[E0433]: cannot find type `IconName` in this scope
+   --> crates\picker\src\footer.rs:157:65
+    |
+157 |                         IconButton::new("picker-preview-below", IconName::DiffUnified)
+    |                                                                 ^^^^^^^^ use of undeclared type `IconName`
+
+error[E0433]: cannot find type `IconSize` in this scope
+   --> crates\picker\src\footer.rs:158:40
+    |
+158 | ...                   .icon_size(IconSize::Small)
+    |                                  ^^^^^^^^ use of undeclared type `IconSize`
+
+error[E0433]: cannot find type `IconButton` in this scope
+   --> crates\picker\src\footer.rs:173:25
+    |
+173 |                         IconButton::new("picker-preview-right", diff_split)
+    |                         ^^^^^^^^^^ use of undeclared type `IconButton`
+
+error[E0433]: cannot find type `IconSize` in this scope
+   --> crates\picker\src\footer.rs:174:40
+    |
+174 | ...                   .icon_size(IconSize::Small)
+    |                                  ^^^^^^^^ use of undeclared type `IconSize`
+
+error[E0433]: cannot find type `Button` in this scope
+   --> crates\picker\src\footer.rs:201:17
+    |
+201 |                 Button::new("picker-actions-trigger", "ActionsΓÇª")
+    |                 ^^^^^^ use of undeclared type `Button`
+
+error[E0433]: cannot find type `Box` in this scope
+  --> crates\picker\src\head.rs:29:17
+   |
+29 |                 Box::new(move |event, window, cx| {
+   |                 ^^^ use of undeclared type `Box`
+
+error[E0433]: cannot find type `String` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:23:24
+   |
+23 |         let mut text = String::new();
+   |                        ^^^^^^ use of undeclared type `String`
+
+error[E0433]: cannot find type `Vec` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:24:39
+   |
+24 |         let mut highlight_positions = Vec::new();
+   |                                       ^^^ use of undeclared type `Vec`
+
+error[E0433]: cannot find type `Color` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:45:20
+   |
+45 |             color: Color::Default,
+   |                    ^^^^^ use of undeclared type `Color`
+
+error[E0433]: cannot find type `LabelSize` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:65:23
+   |
+65 |                 .size(LabelSize::Small)
+   |                       ^^^^^^^^^ use of undeclared type `LabelSize`
+
+error[E0433]: cannot find type `Color` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:66:24
+   |
+66 |                 .color(Color::Muted)
+   |                        ^^^^^ use of undeclared type `Color`
+
+error[E0433]: cannot find type `Label` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:85:36
+   |
+85 |                         this.child(Label::new(format!("({})", prefix)).color(Color::Muted))
+   |                                    ^^^^^ use of undeclared type `Label`
+
+error[E0433]: cannot find type `Color` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:85:78
+   |
+85 |                         this.child(Label::new(format!("({})", prefix)).color(Color::Muted))
+   |                                                                              ^^^^^ use of undeclared type `Color`
+
+error[E0433]: cannot find type `Icon` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:89:29
+   |
+89 | ...                   Icon::new(IconName::Check)
+   |                       ^^^^ use of undeclared type `Icon`
+
+error[E0433]: cannot find type `IconName` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:89:39
+   |
+89 | ...                   Icon::new(IconName::Check)
+   |                                 ^^^^^^^^ use of undeclared type `IconName`
+
+error[E0433]: cannot find type `IconSize` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:90:39
+   |
+90 | ...                   .size(IconSize::Small)
+   |                             ^^^^^^^^ use of undeclared type `IconSize`
+
+error[E0433]: cannot find type `Color` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:91:40
+   |
+91 | ...                   .color(Color::Accent),
+   |                              ^^^^^ use of undeclared type `Color`
+
+error[E0433]: cannot find type `Icon` in this scope
+  --> crates\picker\src\parts.rs:21:17
+   |
+21 |                 Icon::new(IconName::LoadCircle)
+   |                 ^^^^ use of undeclared type `Icon`
+
+error[E0433]: cannot find type `IconName` in this scope
+  --> crates\picker\src\parts.rs:21:27
+   |
+21 |                 Icon::new(IconName::LoadCircle)
+   |                           ^^^^^^^^ use of undeclared type `IconName`
+
+error[E0433]: cannot find type `Color` in this scope
+  --> crates\picker\src\parts.rs:22:28
+   |
+22 |                     .color(Color::Accent)
+   |                            ^^^^^ use of undeclared type `Color`
+
+error[E0433]: cannot find type `IconSize` in this scope
+  --> crates\picker\src\parts.rs:23:27
+   |
+23 |                     .size(IconSize::Small)
+   |                           ^^^^^^^^ use of undeclared type `IconSize`
+
+error[E0433]: cannot find type `IconButton` in this scope
+   --> crates\picker\src\render.rs:133:9
+    |
+133 |         IconButton::new("picker-multi-select-toggle", IconName::FileMultiple)
+    |         ^^^^^^^^^^ use of undeclared type `IconButton`
+
+error[E0433]: cannot find type `IconName` in this scope
+   --> crates\picker\src\render.rs:133:55
+    |
+133 |         IconButton::new("picker-multi-select-toggle", IconName::FileMultiple)
+    |                                                       ^^^^^^^^ use of undeclared type `IconName`
+
+error[E0433]: cannot find type `IconSize` in this scope
+   --> crates\picker\src\render.rs:134:24
+    |
+134 |             .icon_size(IconSize::Small)
+    |                        ^^^^^^^^ use of undeclared type `IconSize`
+
+error[E0433]: cannot find type `Vec` in this scope
+   --> crates\picker\src\picker.rs:173:9
+    |
+173 |         Vec::new()
+    |         ^^^ use of undeclared type `Vec`
+
+error[E0433]: cannot find type `Vec` in this scope
+   --> crates\picker\src\picker.rs:393:9
+    |
+393 |         Vec::new()
+    |         ^^^ use of undeclared type `Vec`
+
+error[E0433]: cannot find type `Label` in this scope
+    --> crates\picker\src\picker.rs:1303:40
+     |
+1303 | ...                   .child(Label::new("Select")),
+     |                              ^^^^^ use of undeclared type `Label`
+
+error[E0433]: cannot find type `Label` in this scope
+    --> crates\picker\src\picker.rs:1310:40
+     |
+1310 | ...                   .child(Label::new("Open")),
+     |                              ^^^^^ use of undeclared type `Label`
+
+error[E0433]: cannot find type `DynamicSpacing` in this scope
+    --> crates\picker\src\picker.rs:1447:17
+     |
+1447 |             .py(DynamicSpacing::Base04.rems(cx))
+     |                 ^^^^^^^^^^^^^^ use of undeclared type `DynamicSpacing`
+
+error[E0425]: cannot find function `h_flex` in this scope
+   --> crates\picker\src\footer.rs:109:13
+    |
+109 |             h_flex()
+    |             ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+   --> crates\picker\src\footer.rs:142:9
+    |
+142 |         h_flex()
+    |         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `rems_from_px` in this scope
+   --> crates\picker\src\footer.rs:148:35
+    |
+148 | ...                   .size(rems_from_px(12.)),
+    |                             ^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `rems_from_px` in this scope
+   --> crates\picker\src\footer.rs:204:35
+    |
+204 | ...                   .size(rems_from_px(12.)),
+    |                             ^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `px` in this scope
+   --> crates\picker\src\footer.rs:222:20
+    |
+222 |                 x: px(0.0),
+    |                    ^^
+    |
+help: a local variable with a similar name exists
+    |
+222 -                 x: px(0.0),
+222 +                 x: cx(0.0),
+    |
+
+error[E0425]: cannot find function `px` in this scope
+   --> crates\picker\src\footer.rs:223:20
+    |
+223 |                 y: px(-2.0),
+    |                    ^^
+    |
+help: a local variable with a similar name exists
+    |
+223 -                 y: px(-2.0),
+223 +                 y: cx(-2.0),
+    |
+
+error[E0425]: cannot find function `div` in this scope
+  --> crates\picker\src\head.rs:67:9
+   |
+67 |         div().track_focus(&self.focus_handle(cx))
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find function `v_flex` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:78:9
+   |
+78 |         v_flex()
+   |         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+  --> crates\picker\src\highlighted_match_with_paths.rs:81:17
+   |
+81 |                 h_flex()
+   |                 ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+  --> crates\picker\src\parts.rs:17:9
+   |
+17 |         h_flex()
+   |         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `px` in this scope
+  --> crates\picker\src\popover_menu.rs:49:20
+   |
+49 |                 x: px(0.0),
+   |                    ^^
+   |
+help: a local variable with a similar name exists
+   |
+49 -                 x: px(0.0),
+49 +                 x: cx(0.0),
+   |
+
+error[E0425]: cannot find function `px` in this scope
+  --> crates\picker\src\popover_menu.rs:50:20
+   |
+50 |                 y: px(-2.0),
+   |                    ^^
+   |
+help: a local variable with a similar name exists
+   |
+50 -                 y: px(-2.0),
+50 +                 y: cx(-2.0),
+   |
+
+error[E0425]: cannot find function `div` in this scope
+  --> crates\picker\src\render\window_controls.rs:71:9
+   |
+71 |         div()
+   |         ^^^ not found in this scope
+
+error[E0425]: cannot find function `rems` in this scope
+  --> crates\picker\src\render\window_controls.rs:90:9
+   |
+90 |         rems(0.375).to_pixels(window.rem_size())
+   |         ^^^^ not found in this scope
+
+error[E0425]: cannot find function `rems` in this scope
+  --> crates\picker\src\render\window_controls.rs:98:9
+   |
+98 |         rems(1.125).to_pixels(window.rem_size())
+   |         ^^^^ not found in this scope
+
+error[E0425]: cannot find function `div` in this scope
+   --> crates\picker\src\render\window_controls.rs:433:9
+    |
+433 |         div()
+    |         ^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Rems` in this scope
+  --> crates\picker\src\picker.rs:45:39
+   |
+45 | pub const DEFAULT_MODAL_WIDTH: Rems = Rems(34.0);
+   |                                       ^^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Rems` in this scope
+  --> crates\picker\src\picker.rs:46:44
+   |
+46 | pub const DEFAULT_MODAL_MAX_HEIGHT: Rems = Rems(24.0);
+   |                                            ^^^^ not found in this scope
+
+error[E0425]: cannot find function `px` in this scope
+   --> crates\picker\src\picker.rs:613:84
+    |
+613 |                 ElementContainer::List(ListState::new(0, gpui::ListAlignment::Top, px(1000.)))
+    |                                                                                    ^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+    --> crates\picker\src\picker.rs:1293:21
+     |
+1293 |                     h_flex()
+     |                     ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+    --> crates\picker\src\picker.rs:1296:29
+     |
+1296 | ...                   h_flex()
+     |                       ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+    --> crates\picker\src\picker.rs:1307:29
+     |
+1307 | ...                   h_flex()
+     |                       ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `h_flex` in this scope
+    --> crates\picker\src\picker.rs:1360:25
+     |
+1360 |                         h_flex()
+     |                         ^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `px` in this scope
+    --> crates\picker\src\picker.rs:1392:29
+     |
+1392 |                         .py(px(-1.0))
+     |                             ^^
+     |
+help: a local variable with a similar name exists
+     |
+1392 -                         .py(px(-1.0))
+1392 +                         .py(cx(-1.0))
+     |
+
+Some errors have detailed explanations: E0405, E0408, E0425, E0432, E0433, E0463, E0531.
+For more information about an error, try `rustc --explain E0405`.
+error: could not compile `picker` (lib) due to 500 previous errors
+note: no errors encountered even though delayed bugs were created
+
+note: those delayed bugs will now be shown as internal compiler errors
+
+error: internal compiler error: no resolution for an import
+ --> crates\platform_title_bar\src\platform_title_bar.rs:9:5
+  |
+9 | use project::DisableAiSettings;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+note: delayed at /rustc-dev/59807616e1fa2540724bfbac14d7976d7e4a3860/compiler\rustc_ast_lowering\src\lib.rs:786:24 - disabled backtrace
+ --> crates\platform_title_bar\src\platform_title_bar.rs:9:5
+  |
+9 | use project::DisableAiSettings;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: internal compiler error: `Res::Err` but no error emitted
+   --> crates\platform_title_bar\src\platform_title_bar.rs:113:10
+    |
+113 |         !DisableAiSettings::get_global(cx).disable_ai
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+note: delayed at /rustc-dev/59807616e1fa2540724bfbac14d7976d7e4a3860/compiler\rustc_hir_typeck\src\expr.rs:606:32 - disabled backtrace
+   --> crates\platform_title_bar\src\platform_title_bar.rs:113:10
+    |
+113 |         !DisableAiSettings::get_global(cx).disable_ai
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: internal compiler error[E0618]: expected function, found `{type error}`
+   --> crates\platform_title_bar\src\platform_title_bar.rs:113:10
+    |
+113 |         !DisableAiSettings::get_global(cx).disable_ai
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^----
+    |          |
+    |          call expression requires function
+    |
+note: delayed at /rustc-dev/59807616e1fa2540724bfbac14d7976d7e4a3860/compiler\rustc_hir_typeck\src\callee.rs:744:34 - disabled backtrace
+   --> crates\platform_title_bar\src\platform_title_bar.rs:113:10
+    |
+113 |         !DisableAiSettings::get_global(cx).disable_ai
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: we would appreciate a bug report: https://github.com/rust-lang/rust-clippy/issues/new?template=ice.yml
+
+note: rustc 1.95.0 (59807616e 2026-04-14) running on x86_64-pc-windows-gnu
+
+note: compiler flags: --crate-type lib -C embed-bitcode=no -C codegen-units=16 -C debuginfo=1 -C incremental=[REDACTED] -C symbol-mangling-version=v0
+
+note: some of the compiler flags provided by cargo are hidden
+
+query stack during panic:
+end of query stack
+note: Clippy version: clippy 0.1.95 (59807616e1 2026-04-14)
+
+warning: `platform_title_bar` (lib) generated 1 warning (run `cargo clippy --fix --lib -p platform_title_bar -- --no-deps` to apply 1 suggestion)
+error: could not compile `platform_title_bar` (lib); 1 warning emitted
+
+Caused by:
+  process didn't exit successfully: `G:\Dev\Caches\rustup\toolchains\1.95.0-x86_64-pc-windows-gnu\bin\clippy-driver.exe G:\Dev\Caches\rustup\toolchains\1.95.0-x86_64-pc-windows-gnu\bin\rustc.exe --crate-name platform_title_bar --edition=2024 crates\platform_title_bar\src\platform_title_bar.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata -C embed-bitcode=no -C codegen-units=16 -C debuginfo=1 --allow=clippy::style --allow=unexpected_cfgs --allow=clippy::type_complexity --allow=clippy::too_many_arguments --deny=clippy::todo --allow=clippy::single_range_in_vec_init --deny=clippy::redundant_clone --allow=clippy::nonminimal_bool --allow=clippy::let_underscore_future --allow=clippy::large_enum_variant --deny=clippy::disallowed_methods --deny=clippy::declare_interior_mutable_const --deny=clippy::dbg_macro --check-cfg cfg(docsrs,test) --check-cfg "cfg(feature, values())" -C metadata=ba78863744d20abb -C extra-filename=-2e9d973542026f98 --out-dir G:\Dx\code\target\debug\deps -C incremental=G:\Dx\code\target\debug\incremental -L dependency=G:\Dx\code\target\debug\deps --extern gpui=G:\Dx\code\target\debug\deps\libgpui-3b8080b630b1d343.rmeta --extern project=G:\Dx\code\target\debug\deps\libproject-59af15819bee3b80.rmeta --extern settings=G:\Dx\code\target\debug\deps\libsettings-f95652ff8ef3140b.rmeta --extern smallvec=G:\Dx\code\target\debug\deps\libsmallvec-4c1f364273abc979.rmeta --extern theme=G:\Dx\code\target\debug\deps\libtheme-cb3a2c08df8b23ce.rmeta --extern theme_settings=G:\Dx\code\target\debug\deps\libtheme_settings-62064fb59cb44220.rmeta --extern ui=G:\Dx\code\target\debug\deps\libui-4f190f8c946c8edf.rmeta --extern windows=G:\Dx\code\target\debug\deps\libwindows-67d1bcf67bfaa5c0.rmeta --extern workspace=G:\Dx\code\target\debug\deps\libworkspace-cdf499b2d25bacf3.rmeta --extern zed_actions=G:\Dx\code\target\debug\deps\libzed_actions-ed907376ef4df0fc.rmeta -C symbol-mangling-version=v0 --cfg tokio_unstable -L native=G:\Dx\code\target\debug\build\stacker-69a96f356205cecb\out -L native=G:\Dx\code\target\debug\build\psm-b0ec92aef10d113f\out -L native=G:\Dx\code\target\debug\build\tree-sitter-b8a0d4cdcd1095f3\out -L native=G:\Dx\code\target\debug\build\wasmtime-70375facad141b26\out -L native=G:\Dx\code\target\debug\build\wasmtime-internal-fiber-e85b96138fea8009\out -L native=G:\Dx\code\target\debug\build\aws-lc-sys-91622dc2b44090d7\out -L native=G:\Dx\code\target\debug\build\ring-d41e936f921d5bb6\out -L native=G:\Dx\code\target\debug\build\zstd-sys-ebf857b143cb7cd5\out -L native=G:\Dx\code\target\debug\build\tree-sitter-json-26d0183596bde932\out -L native=G:\Dx\code\target\debug\build\libsqlite3-sys-470edc8db7b714c5\out -L native=G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\windows_x86_64_gnu-0.52.6\lib -L native=G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\windows_x86_64_gnu-0.53.1\lib -L native=G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\winapi-x86_64-pc-windows-gnu-0.4.0\lib` (exit code: 101)
+error: cannot determine resolution for the macro `serde_json::json`
+   --> crates\shadcn_ui\src\shadcn_ui.rs:317:22
+    |
+317 |     let components = serde_json::json!({
+    |                      ^^^^^^^^^^^^^^^^
+    |
+    = note: import resolution is stuck, try simplifying macro imports
+
+error: could not compile `shadcn_ui` (lib) due to 1 previous error
+For more information about this error, try `rustc --explain E0463`.
+error: could not compile `notifications` (lib) due to 1 previous error

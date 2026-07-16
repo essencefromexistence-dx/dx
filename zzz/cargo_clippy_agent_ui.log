@@ -1,0 +1,421 @@
+    Checking gpui_util v0.1.0 (G:\Dx\code\crates\gpui_util)
+    Checking scheduler v0.1.0 (G:\Dx\code\crates\scheduler)
+    Checking net v0.1.0 (G:\Dx\code\crates\net)
+    Checking http_client_tls v0.1.0 (G:\Dx\code\crates\http_client_tls)
+    Checking oauth_callback_server v0.1.0 (G:\Dx\code\crates\oauth_callback_server)
+    Checking collections v0.1.0 (G:\Dx\code\crates\collections)
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking zlog v0.1.0 (G:\Dx\code\crates\zlog)
+    Checking language_core v0.1.0 (G:\Dx\code\crates\language_core)
+    Checking http_proxy v0.1.0 (G:\Dx\code\crates\http_proxy)
+    Checking ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking edit_prediction_metrics v0.1.0 (G:\Dx\code\crates\edit_prediction_metrics)
+    Checking sandbox v0.1.0 (G:\Dx\code\crates\sandbox)
+    Checking time_format v0.1.0 (G:\Dx\code\crates\time_format)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking language v0.1.0 (G:\Dx\code\crates\language)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+error: redundant clone
+   --> crates\agent_ui\src\agent_configuration.rs:960:72
+    |
+960 | ...                   let save_draft_command = save_draft_command.clone();
+    |                                                                  ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\agent_configuration.rs:960:54
+    |
+960 | ...                   let save_draft_command = save_draft_command.clone();
+    |                                                ^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+    = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: redundant clone
+   --> crates\agent_ui\src\agent_configuration.rs:975:64
+    |
+975 | ...                   let enable_command = enable_command.clone();
+    |                                                          ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\agent_configuration.rs:975:50
+    |
+975 | ...                   let enable_command = enable_command.clone();
+    |                                            ^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:1187:51
+     |
+1187 |             flow_voice_runtime: flow_voice_runtime.clone(),
+     |                                                   ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:1187:33
+     |
+1187 |             flow_voice_runtime: flow_voice_runtime.clone(),
+     |                                 ^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: unnecessary use of `cloned`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:5075:43
+     |
+5075 | ...                   for plugin in plugins.iter().cloned() {
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_to_owned
+     = note: `-D clippy::unnecessary-to-owned` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::unnecessary_to_owned)]`
+help: remove any references to the binding
+     |
+5075 ~                             for plugin in plugins.iter() {
+5076 |                                 let status_plugin = plugin.clone();
+ ...
+5085 |
+5086 ~                                 let action_label = configured_plugin_menu_action_label(plugin);
+     |
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_check_panel_view\view_rows.rs:344:31
+    |
+344 |             Label::new(message.clone())
+    |                               ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_check_panel_view\view_rows.rs:344:24
+    |
+344 |             Label::new(message.clone())
+    |                        ^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+  --> crates\agent_ui\src\dx_skill_panel.rs:57:79
+   |
+57 |         let http_client = _workspace.project().read(cx).client().http_client().clone();
+   |                                                                               ^^^^^^^^ help: remove this
+   |
+note: this value is dropped without further use
+  --> crates\agent_ui\src\dx_skill_panel.rs:57:27
+   |
+57 |         let http_client = _workspace.project().read(cx).client().http_client().clone();
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:110:41
+    |
+110 | ...                   id: full_name.clone().into(),
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `full_name.clone()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+    = note: `-D clippy::useless-conversion` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::useless_conversion)]`
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:111:43
+    |
+111 | ...                   name: full_name.into(),
+    |                             ^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `full_name`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:112:50
+    |
+112 | ...                   description: description.clone().into(),
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `description.clone()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:113:45
+    |
+113 | ...                   source: html_url.clone().into(),
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `html_url.clone()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_skill_panel.rs:191:37
+    |
+191 |                 let target2 = target.clone();
+    |                                     ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_skill_panel.rs:191:31
+    |
+191 |                 let target2 = target.clone();
+    |                               ^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: using `contains()` instead of `iter().any()` is more efficient
+   --> crates\agent_ui\src\dx_deploy_receipt_summary.rs:118:30
+    |
+118 |             .filter(|status| statuses.iter().any(|expected| *expected == *status))
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `statuses.contains(status)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#manual_contains
+    = note: `-D clippy::manual-contains` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_contains)]`
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:119:31
+    |
+119 |         let title = open_title.clone();
+    |                               ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:119:21
+    |
+119 |         let title = open_title.clone();
+    |                     ^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:230:26
+    |
+230 | fn target_path_for_group<'a>(
+    |                          ^^
+231 |     group: ProviderGroup,
+232 |     snapshot: &'a DxForgePanelSnapshot,
+    |                ^^
+233 | ) -> Option<&'a str> {
+    |              ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+    = note: `-D clippy::needless-lifetimes` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::needless_lifetimes)]`
+help: elide the lifetimes
+    |
+230 ~ fn target_path_for_group(
+231 |     group: ProviderGroup,
+232 ~     snapshot: &DxForgePanelSnapshot,
+233 ~ ) -> Option<&str> {
+    |
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:247:31
+    |
+247 | fn target_open_path_for_group<'a>(
+    |                               ^^
+248 |     group: ProviderGroup,
+249 |     snapshot: &'a DxForgePanelSnapshot,
+    |                ^^
+250 | ) -> Option<&'a str> {
+    |              ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+247 ~ fn target_open_path_for_group(
+248 |     group: ProviderGroup,
+249 ~     snapshot: &DxForgePanelSnapshot,
+250 ~ ) -> Option<&str> {
+    |
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:149:42
+    |
+149 |             open_path: registry_open_path.clone(),
+    |                                          ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:149:24
+    |
+149 |             open_path: registry_open_path.clone(),
+    |                        ^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:96:32
+   |
+96 |     let checkbox_key = item_key.clone();
+   |                                ^^^^^^^^ help: remove this
+   |
+note: this value is dropped without further use
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:96:24
+   |
+96 |     let checkbox_key = item_key.clone();
+   |                        ^^^^^^^^
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:195:19
+    |
+195 |     fn automation<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentAutomation> {
+    |                   ^^                   ^^                                   ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+195 -     fn automation<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentAutomation> {
+195 +     fn automation(self, snapshot: &DxAgentBridgeSnapshot) -> Option<&DxAgentAutomation> {
+    |
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:273:17
+    |
+273 |     fn provider<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentProvider> {
+    |                 ^^                   ^^                                   ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+273 -     fn provider<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentProvider> {
+273 +     fn provider(self, snapshot: &DxAgentBridgeSnapshot) -> Option<&DxAgentProvider> {
+    |
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:280:23
+    |
+280 |     fn social_account<'a>(
+    |                       ^^
+281 |         self,
+282 |         snapshot: &'a DxAgentBridgeSnapshot,
+    |                    ^^
+283 |     ) -> Option<&'a DxAgentSocialAccount> {
+    |                  ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+280 ~     fn social_account(
+281 |         self,
+282 ~         snapshot: &DxAgentBridgeSnapshot,
+283 ~     ) -> Option<&DxAgentSocialAccount> {
+    |
+
+error: consider using `sort_by_key`
+   --> crates\agent_ui\src\dx_style_panel\apply_gate.rs:203:5
+    |
+203 |     paths.sort_by(|left, right| receipt_modified(right).cmp(&receipt_modified(left)));
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_sort_by
+    = note: `-D clippy::unnecessary-sort-by` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::unnecessary_sort_by)]`
+help: try
+    |
+203 -     paths.sort_by(|left, right| receipt_modified(right).cmp(&receipt_modified(left)));
+203 +     paths.sort_by_key(|right| std::cmp::Reverse(receipt_modified(right)));
+    |
+
+error: consider using `sort_by_key`
+   --> crates\agent_ui\src\dx_www_launch_evidence.rs:141:5
+    |
+141 |     latest.sort_by(|left, right| right.0.cmp(&left.0));
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_sort_by
+help: try
+    |
+141 -     latest.sort_by(|left, right| right.0.cmp(&left.0));
+141 +     latest.sort_by_key(|right| std::cmp::Reverse(right.0));
+    |
+
+error: could not compile `agent_ui` (lib) due to 22 previous errors

@@ -1,0 +1,379 @@
+    Checking compression-codecs v0.4.31
+    Checking tokio v1.52.1
+    Checking async-compression v0.4.32
+    Checking async_zip v0.0.18
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+    Checking tokio-util v0.7.18
+    Checking tokio-rustls v0.26.4
+    Checking h2 v0.4.12
+    Checking async-tungstenite v0.31.0
+    Checking tokio-native-tls v0.3.1
+    Checking tokio-socks v0.5.2
+    Checking aws-smithy-types v1.4.7
+    Checking aws-smithy-async v1.2.14
+    Checking h2 v0.3.27
+    Checking aws-smithy-runtime-api v1.11.4
+    Checking tower v0.5.2
+    Checking aws-smithy-eventstream v0.60.20
+    Checking hyper v1.7.0
+    Checking tokio-rustls v0.24.1
+    Checking aws-smithy-http v0.63.4
+    Checking aws-credential-types v1.2.12
+    Checking hyper-util v0.1.17
+    Checking aws-smithy-observability v0.2.5
+    Checking hyper v0.14.32
+    Checking aws-sigv4 v1.4.0
+    Checking aws-types v1.3.12
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking yawc v0.2.5
+    Checking hyper-rustls v0.27.9
+    Checking aws-smithy-json v0.62.5
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+    Checking hyper-rustls v0.24.2
+    Checking aws-smithy-http-client v1.1.10
+    Checking aws-smithy-runtime v1.10.1
+    Checking aws-smithy-query v0.60.15
+    Checking wasmtime-wasi v36.0.12
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking aws-runtime v1.7.0
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking aws-sdk-sts v1.98.0
+    Checking aws-sdk-bedrockruntime v1.125.0
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking aws-sdk-sso v1.94.0
+    Checking aws-sdk-ssooidc v1.96.0
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking aws-config v1.8.14
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking tower-http v0.6.6
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking reqwest v0.12.24
+    Checking tower v0.4.13
+    Checking tokio-tungstenite v0.20.1
+    Checking gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking jsonschema v0.37.4
+    Checking axum v0.6.20
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking language v0.1.0 (G:\Dx\code\crates\language)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking dev_container v0.1.0 (G:\Dx\code\crates\dev_container)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking markdown_preview v0.1.0 (G:\Dx\code\crates\markdown_preview)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking project_panel v0.1.0 (G:\Dx\code\crates\project_panel)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+    Checking open_path_prompt v0.1.0 (G:\Dx\code\crates\open_path_prompt)
+    Checking recent_projects v0.1.0 (G:\Dx\code\crates\recent_projects)
+    Checking web_preview v0.1.0 (G:\Dx\code\crates\web_preview)
+    Checking sidebar v0.1.0 (G:\Dx\code\crates\sidebar)
+error: unneeded cloning of iterator items
+     --> crates\sidebar\src\sidebar.rs:10280:35
+      |
+10280 |                           .children(row.iter().cloned().map(|entry| {
+      |  ___________________________________^
+10281 | |                             let sidebar_view = sidebar_view.clone();
+10282 | |                             let action_for_entry = entry.action.clone();
+10283 | |                             let subtitle = if matches!(action_for_entry, SidebarGridAction::OpenThread(_)) {
+...     |
+10473 | |                                 })
+10474 | |                         }))
+      | |__________________________^
+      |
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_iter_cloned
+      = note: `-D clippy::redundant-iter-cloned` implied by `-D warnings`
+      = help: to override `-D warnings` add `#[allow(clippy::redundant_iter_cloned)]`
+help: try
+      |
+10280 ~                         .children(row.iter().map(|entry| {
+10281 +                             let sidebar_view = sidebar_view.clone();
+10282 +                             let action_for_entry = entry.action.clone();
+10283 +                             let subtitle = if matches!(action_for_entry, SidebarGridAction::OpenThread(_)) {
+10284 +                                 None
+10285 +                             } else {
+10286 +                                 entry.subtitle.clone()
+10287 +                             };
+10288 +                             let tooltip_label =
+10289 +                                 subtitle.clone().unwrap_or_else(|| entry.label.clone());
+10290 +                             let action_for_menu = action_for_entry.clone();
+10291 +                             let open_entry = cx.listener(move |this, _, window, cx| {
+10292 +                                 this.open_grid_entry(action_for_entry.clone(), window, cx);
+10293 +                             });
+10294 +                             let entry_id = entry.id.clone();
+10295 +                             let entry_label = entry.label.clone();
+10296 +                             let entry_subtitle = subtitle.clone();
+10297 +                             let is_dx_web_tool = entry.id.starts_with("dx-web-tool-");
+10298 +                             let dx_web_tool_id = if is_dx_web_tool {
+10299 +                                 entry.id.trim_start_matches("dx-web-tool-").to_string()
+10300 +                             } else {
+10301 +                                 String::new()
+10302 +                             };
+10303 +                             let entry_icon = entry.icon;
+10304 + 
+10305 +                             let is_light_theme = cx.theme().appearance.is_light();
+10306 +                             let renaming_grid_shortcut_id = self.renaming_grid_shortcut_id.clone();
+10307 +                             let thread_rename_editor = self.thread_rename_editor.clone();
+10308 +                             let menu_entry_id = entry_id.clone();
+10309 +                             right_click_menu::<ContextMenu>(format!("grid-context-{}", entry_id))
+10310 +                                 .trigger({
+10311 +                                     let entry_label = entry_label.clone();
+10312 +                                     let entry_id = entry_id.clone();
+10313 +                                     move |_is_menu_active, _window, _cx| {
+10314 +                                     let icon_element: AnyElement = if is_dx_web_tool {
+10315 +                                         let path = if is_light_theme {
+10316 +                                             format!("icons/dx_web_tools/{}-light-transparent.svg", dx_web_tool_id)
+10317 +                                         } else {
+10318 +                                             format!("icons/dx_web_tools/{}-dark-transparent.svg", dx_web_tool_id)
+10319 +                                         };
+10320 +                                         Icon::from_path(path).size(IconSize::Medium).color(Color::Muted).into_any_element()
+10321 +                                     } else {
+10322 +                                         Icon::new(entry_icon)
+10323 +                                             .size(IconSize::Medium)
+10324 +                                             .color(Color::Muted)
+10325 +                                             .into_any_element()
+10326 +                                     };
+10327 +                                     div()
+10328 +                                         .id(entry_id.clone())
+10329 +                                         .relative()
+10330 +                                         .w(px(item_width))
+10331 +                                         .h(px(52.0))
+10332 +                                         .flex_shrink_0()
+10333 +                                         .rounded_md()
+10334 +                                         .border_1()
+10335 +                                         .border_color(item_border)
+10336 +                                         .bg(item_bg)
+10337 +                                         .flex()
+10338 +                                         .flex_col()
+10339 +                                         .px_1p5()
+10340 +                                         .gap_1()
+10341 +                                         .items_center()
+10342 +                                         .justify_center()
+10343 +                                         .cursor_pointer()
+10344 +                                         .tooltip(Tooltip::text(tooltip_label))
+10345 +                                         .hover(|style| style.bg(hover_bg).border_color(hover_border))
+10346 +                                         .on_click(open_entry)
+10347 +                                         .child(icon_element)
+10348 +                                         .child(
+10349 +                                             if renaming_grid_shortcut_id.as_ref() == Some(&entry_id.to_string()) {
+10350 +                                                 thread_rename_editor.clone().into_any_element()
+10351 +                                             } else {
+10352 +                                                 div().w_full().text_center().child(
+10353 +                                                     Label::new(entry_label.clone()).size(LabelSize::Small).truncate(),
+10354 +                                                 ).into_any_element()
+10355 +                                             }
+10356 +                                         )
+10357 +                                         .when_some(entry_subtitle, |this, subtitle| {
+10358 +                                             if renaming_grid_shortcut_id.as_ref() == Some(&entry_id.to_string()) {
+10359 +                                                 this
+10360 +                                             } else {
+10361 +                                                 this.child(
+10362 +                                                     div().w_full().text_center().child(
+10363 +                                                         Label::new(subtitle)
+10364 +                                                             .size(LabelSize::XSmall)
+10365 +                                                             .color(Color::Muted)
+10366 +                                                             .truncate(),
+10367 +                                                     ),
+10368 +                                                 )
+10369 +                                             }
+10370 +                                         })
+10371 +                                     }
+10372 +                                 })
+10373 +                                 .menu({
+10374 +                                     let sidebar_view = sidebar_view.clone();
+10375 +                                     move |window, cx| {
+10376 +                                     let entry_id = menu_entry_id.clone();
+10377 +                                     let sidebar_view = sidebar_view.clone();
+10378 +                                     let entry_label_for_rename = entry_label.to_string();
+10379 +                                     let open_action = action_for_menu.clone();
+10380 +                                     // Only user-pinned shortcuts (sidebar-grid-pinned-*) can be
+10381 ~                                     // renamed/deleted ΓÇö they live in `grid_shortcuts`. Generated
+10382 +                                     // entries (files/folders/sites) and built-in web tools are not
+10383 +                                     // persisted shortcuts, so rename/delete would silently no-op.
+10384 +                                     let is_pinned_shortcut = entry_id.starts_with("sidebar-grid-pinned-");
+10385 +                                     ContextMenu::build(window, cx, move |menu, _window, cx| {
+10386 +                                         let sidebar_view = sidebar_view.clone();
+10387 +                                         let header_label = if is_pinned_shortcut {
+10388 +                                             "Pinned Shortcut"
+10389 +                                         } else {
+10390 +                                             "Cell Options"
+10391 +                                         };
+10392 +                                         let mut menu = menu.header(header_label);
+10393 + 
+10394 +                                         // "Open" always works: it dispatches the entry's real action
+10395 +                                         // (open file / folder / website / thread / web tool).
+10396 +                                         menu = menu.item(
+10397 +                                             ContextMenuEntry::new("Open")
+10398 +                                                 .icon(IconName::ArrowUpRight)
+10399 +                                                 .handler({
+10400 +                                                     let open_action = open_action.clone();
+10401 +                                                     let sidebar_view = sidebar_view.clone();
+10402 +                                                     move |window, cx| {
+10403 +                                                         let open_action = open_action.clone();
+10404 +                                                         let sidebar_view = sidebar_view.clone();
+10405 +                                                         window.defer(cx, move |_window, cx| {
+10406 +                                                             if let Some(sidebar) = sidebar_view.upgrade() {
+10407 +                                                                 sidebar.update(cx, |sidebar, cx| {
+10408 +                                                                     sidebar.open_grid_entry(open_action, _window, cx);
+10409 +                                                                 });
+10410 +                                                             }
+10411 +                                                         });
+10412 +                                                     }
+10413 +                                                 }),
+10414 +                                         );
+10415 + 
+10416 +                                         // Rename: only for user-pinned shortcuts (actually persisted +
+10417 +                                         // editable). For other entries this would silently no-op, so we
+10418 +                                         // hide it and instead surface a clear note below.
+10419 +                                         if is_pinned_shortcut {
+10420 +                                             menu = menu.item(
+10421 +                                                 ContextMenuEntry::new("Rename")
+10422 +                                                     .icon(IconName::Pencil)
+10423 +                                                     .handler({
+10424 +                                                         let entry_id = entry_id.clone();
+10425 +                                                         let sidebar_view = sidebar_view.clone();
+10426 +                                                         let entry_label = entry_label_for_rename.clone();
+10427 +                                                         move |window, cx| {
+10428 +                                                             let entry_id = entry_id.clone();
+10429 +                                                             let entry_label = entry_label.clone();
+10430 +                                                             let sidebar_view = sidebar_view.clone();
+10431 +                                                             window.defer(cx, move |window, cx| {
+10432 +                                                                 if let Some(sidebar) = sidebar_view.upgrade() {
+10433 +                                                                     sidebar.update(cx, |sidebar, cx| {
+10434 +                                                                         sidebar.start_renaming_grid_shortcut(entry_id.to_string(), entry_label.to_string(), window, cx);
+10435 +                                                                     });
+10436 +                                                                 }
+10437 +                                                             });
+10438 +                                                         }
+10439 +                                                     }),
+10440 +                                             );
+10441 +                                             // Delete: removes the pinned shortcut from grid_shortcuts.
+10442 +                                             menu = menu.item(
+10443 +                                                 ContextMenuEntry::new("Remove Pin")
+10444 +                                                     .icon(IconName::Trash)
+10445 +                                                     .handler({
+10446 +                                                         let entry_id = entry_id.clone();
+10447 +                                                         let sidebar_view = sidebar_view.clone();
+10448 +                                                         move |window, cx| {
+10449 +                                                             let value = entry_id.clone();
+10450 +                                                             let sidebar_view = sidebar_view.clone();
+10451 +                                                             window.defer(cx, move |_window, cx| {
+10452 +                                                                 if let Some(sidebar) = sidebar_view.upgrade() {
+10453 +                                                                     sidebar.update(cx, |sidebar, cx| {
+10454 +                                                                         sidebar.delete_grid_shortcut(&value, cx);
+10455 +                                                                     });
+10456 +                                                                 }
+10457 +                                                             });
+10458 +                                                         }
+10459 +                                                     }),
+10460 +                                             );
+10461 +                                         } else {
+10462 +                                             // Non-pinned entries: explain that only pinned shortcuts
+10463 +                                             // are customizable, instead of offering dead actions.
+10464 +                                             menu = menu.separator().item(
+10465 +                                                 ContextMenuEntry::new("Only pinned shortcuts can be renamed or removed.")
+10466 +                                                     .disabled(true),
+10467 +                                             );
+10468 +                                         }
+10469 + 
+10470 +                                         menu
+10471 +                                     })
+10472 +                                     }
+10473 +                                 })
+10474 ~                         }))
+      |
+
+error: could not compile `sidebar` (lib) due to 1 previous error

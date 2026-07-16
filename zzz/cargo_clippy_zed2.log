@@ -1,0 +1,65 @@
+    Checking collections v0.1.0 (G:\Dx\code\crates\collections)
+    Checking path v0.1.0 (G:\Dx\code\crates\path)
+   Compiling gpui v0.2.2 (G:\Dx\code\crates\gpui)
+   Compiling proto v0.1.0 (G:\Dx\code\crates\proto)
+    Checking clock v0.1.0 (G:\Dx\code\crates\clock)
+   Compiling language v0.1.0 (G:\Dx\code\crates\language)
+   Compiling livekit_api v0.1.0 (G:\Dx\code\crates\livekit_api)
+    Checking zlog v0.1.0 (G:\Dx\code\crates\zlog)
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking language_core v0.1.0 (G:\Dx\code\crates\language_core)
+    Checking ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking grammars v0.1.0 (G:\Dx\code\crates\grammars)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking reqwest_client v0.1.0 (G:\Dx\code\crates\reqwest_client)
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+error: unused attribute `allow`
+   --> crates\gpui\src\window.rs:272:1
+    |
+272 | #[allow(clippy::missing_const_for_thread_local)]
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+note: the built-in attribute `allow` will be ignored, since it's applied to the macro invocation `thread_local`
+   --> crates\gpui\src\window.rs:273:1
+    |
+273 | thread_local! {
+    | ^^^^^^^^^^^^
+    = note: `-D unused-attributes` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(unused_attributes)]`
+
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+error: initializer for `thread_local` value can be made `const`
+   --> crates\gpui\src\window.rs:273:1
+    |
+273 | / thread_local! {
+274 | |     /// Fallback arena used when no app-specific arena is active.
+275 | |     /// In production, each window draw sets CURRENT_ELEMENT_ARENA to the app's arena.
+276 | |     pub(crate) static ELEMENT_ARENA: RefCell<Arena> = RefCell::new(Arena::new(1024 * 1024));
+...   |
+281 | |     static CURRENT_ELEMENT_ARENA: Cell<Option<*const RefCell<Arena>>> = const { Cell::new(None) };
+282 | | }
+    | |_^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#missing_const_for_thread_local
+    = note: `-D clippy::missing-const-for-thread-local` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::missing_const_for_thread_local)]`
+
+error: could not compile `gpui` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...

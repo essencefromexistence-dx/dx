@@ -1,0 +1,95 @@
+    Blocking waiting for file lock on package cache
+    Checking sidebar v0.1.0 (G:\Dx\code\crates\sidebar)
+    Checking gpui_platform v0.1.0 (G:\Dx\code\crates\gpui_platform)
+    Checking acp_tools v0.1.0 (G:\Dx\code\crates\acp_tools)
+    Checking auto_update_ui v0.1.0 (G:\Dx\code\crates\auto_update_ui)
+    Checking web_search_providers v0.1.0 (G:\Dx\code\crates\web_search_providers)
+    Checking language_tools v0.1.0 (G:\Dx\code\crates\language_tools)
+    Checking activity_indicator v0.1.0 (G:\Dx\code\crates\activity_indicator)
+    Checking extensions_ui v0.1.0 (G:\Dx\code\crates\extensions_ui)
+    Checking lsp_locations v0.1.0 (G:\Dx\code\crates\lsp_locations)
+    Checking project_symbols v0.1.0 (G:\Dx\code\crates\project_symbols)
+    Checking miniprofiler_ui v0.1.0 (G:\Dx\code\crates\miniprofiler_ui)
+    Checking theme_selector v0.1.0 (G:\Dx\code\crates\theme_selector)
+    Checking settings_profile_selector v0.1.0 (G:\Dx\code\crates\settings_profile_selector)
+    Checking encoding_selector v0.1.0 (G:\Dx\code\crates\encoding_selector)
+    Checking line_ending_selector v0.1.0 (G:\Dx\code\crates\line_ending_selector)
+    Checking tab_switcher v0.1.0 (G:\Dx\code\crates\tab_switcher)
+    Checking go_to_line v0.1.0 (G:\Dx\code\crates\go_to_line)
+    Checking language_onboarding v0.1.0 (G:\Dx\code\crates\language_onboarding)
+    Checking csv_preview v0.1.0 (G:\Dx\code\crates\csv_preview)
+    Checking diagnostics v0.1.0 (G:\Dx\code\crates\diagnostics)
+    Checking journal v0.1.0 (G:\Dx\code\crates\journal)
+    Checking image_viewer v0.1.0 (G:\Dx\code\crates\image_viewer)
+    Checking svg_preview v0.1.0 (G:\Dx\code\crates\svg_preview)
+    Checking install_cli v0.1.0 (G:\Dx\code\crates\install_cli)
+    Checking ui_prompt v0.1.0 (G:\Dx\code\crates\ui_prompt)
+    Checking language_extension v0.1.0 (G:\Dx\code\crates\language_extension)
+    Checking theme_extension v0.1.0 (G:\Dx\code\crates\theme_extension)
+    Checking debug_adapter_extension v0.1.0 (G:\Dx\code\crates\debug_adapter_extension)
+    Checking zlog_settings v0.1.0 (G:\Dx\code\crates\zlog_settings)
+    Checking input_latency_ui v0.1.0 (G:\Dx\code\crates\input_latency_ui)
+    Checking zed v1.13.0 (G:\Dx\code\crates\zed)
+error: field `workspace_root` is never read
+ --> crates\zed\src\dx_config.rs:6:9
+  |
+5 | pub struct CodeDxConfig {
+  |            ------------ field in this struct
+6 |     pub workspace_root: PathBuf,
+  |         ^^^^^^^^^^^^^^
+  |
+  = note: `-D dead-code` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[expect(dead_code)]` or `#[allow(dead_code)]`
+
+error: methods `sr_path`, `write_sr`, and `read_status` are never used
+  --> crates\zed\src\dx_config.rs:21:12
+   |
+11 | impl CodeDxConfig {
+   | ----------------- methods in this implementation
+...
+21 |     pub fn sr_path(&self, name: &str) -> PathBuf {
+   |            ^^^^^^^
+...
+25 |     pub fn write_sr(&self, name: &str, entries: &[(&str, &str)]) -> std::io::Result<()> {
+   |            ^^^^^^^^
+...
+42 |     pub fn read_status(&self, name: &str) -> Option<HashMap<String, String>> {
+   |            ^^^^^^^^^^^
+
+error: function `write_llm_value` is never used
+  --> crates\zed\src\dx_config.rs:59:4
+   |
+59 | fn write_llm_value(buf: &mut Vec<u8>, value: &str) -> std::io::Result<()> {
+   |    ^^^^^^^^^^^^^^^
+
+error: constant `MAX_QUIT_WORKSPACE_WINDOWS` is never used
+   --> crates\zed\src\zed.rs:120:7
+    |
+120 | const MAX_QUIT_WORKSPACE_WINDOWS: usize = 512;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `collect_quit_workspace_windows` is never used
+    --> crates\zed\src\zed.rs:1793:4
+     |
+1793 | fn collect_quit_workspace_windows(cx: &mut App) -> Option<Vec<WindowHandle<MultiWorkspace>>> {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_EAGER_THEME_BYTES` is never used
+    --> crates\zed\src\zed.rs:2882:7
+     |
+2882 | const MAX_EAGER_THEME_BYTES: u64 = 4 * 1024 * 1024;
+     |       ^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_EAGER_ICON_THEME_BYTES` is never used
+    --> crates\zed\src\zed.rs:2883:7
+     |
+2883 | const MAX_EAGER_ICON_THEME_BYTES: u64 = 8 * 1024 * 1024;
+     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `load_limited_startup_file_bytes` is never used
+    --> crates\zed\src\zed.rs:2885:10
+     |
+2885 | async fn load_limited_startup_file_bytes(
+     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: could not compile `zed` (bin "dx-code") due to 8 previous errors

@@ -1,0 +1,72 @@
+    Blocking waiting for file lock on package cache
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking gpui_platform v0.1.0 (G:\Dx\code\crates\gpui_platform)
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking language v0.1.0 (G:\Dx\code\crates\language)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking livekit_client v0.1.0 (G:\Dx\code\crates\livekit_client)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking zlog_settings v0.1.0 (G:\Dx\code\crates\zlog_settings)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking web_search_providers v0.1.0 (G:\Dx\code\crates\web_search_providers)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking dap_adapters v0.1.0 (G:\Dx\code\crates\dap_adapters)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking debug_adapter_extension v0.1.0 (G:\Dx\code\crates\debug_adapter_extension)
+    Checking theme_extension v0.1.0 (G:\Dx\code\crates\theme_extension)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking json_schema_store v0.1.0 (G:\Dx\code\crates\json_schema_store)
+    Checking language_extension v0.1.0 (G:\Dx\code\crates\language_extension)
+    Checking languages v0.1.0 (G:\Dx\code\crates\languages)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+error: function `observe_accessible_mode` is never used
+   --> crates\workspace\src\workspace_settings.rs:168:8
+    |
+168 | pub fn observe_accessible_mode(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `-D dead-code` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[expect(dead_code)]` or `#[allow(dead_code)]`
+
+error: used consecutive `str::replace` call
+   --> crates\workspace\src\pane.rs:189:14
+    |
+189 |               .replace('_', " ")
+    |  ______________^
+190 | |             .replace('-', " ");
+    | |______________________________^ help: replace with: `replace(['_', '-'], " ")`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#collapsible_str_replace
+    = note: `-D clippy::collapsible-str-replace` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_str_replace)]`
+
+error: could not compile `workspace` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...

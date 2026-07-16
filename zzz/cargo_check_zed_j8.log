@@ -1,0 +1,793 @@
+crates\workspace\src\workspace_settings.rs:152:11: warning: trait `AccessibleMode` is never used
+crates\workspace\src\workspace_settings.rs:168:8: warning: function `observe_accessible_mode` is never used
+warning: `workspace` (lib) generated 2 warnings
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+crates\agent_ui\src\agent_panel.rs:94:27: error[E0432]: unresolved imports `crate::agent_configuration::AgentConfiguration`, `crate::agent_configuration::AssistantConfigurationEvent`: no `AgentConfiguration` in `agent_configuration`, no `AssistantConfigurationEvent` in `agent_configuration`
+crates\agent_ui\src\conversation_view.rs:1492:37: error[E0433]: cannot find `ConfigurationViewTargetAgent` in `language_model`: could not find `ConfigurationViewTargetAgent` in `language_model`
+crates\agent_ui\src\agent_panel.rs:1350:19: error[E0425]: cannot find type `Instant` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:1364:19: error[E0425]: cannot find type `Instant` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:1847:70: error[E0425]: cannot find value `window` in this scope
+crates\agent_ui\src\agent_panel.rs:1857:72: error[E0425]: cannot find value `window` in this scope
+crates\agent_ui\src\agent_panel.rs:1867:62: error[E0425]: cannot find value `window` in this scope
+crates\agent_ui\src\agent_panel.rs:2630:24: error[E0425]: cannot find value `TERMINAL_INIT_COMMAND_STARTUP_TIMEOUT` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:4032:36: error[E0425]: cannot find value `OpenSkillCreator` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:4037:19: error[E0425]: cannot find type `OpenSkillCreator` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:4051:19: error[E0425]: cannot find type `CreateSkillFromUrl` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:4675:40: error[E0422]: cannot find struct, variant or union type `LanguageModelSelection` in this scope
+crates\agent_ui\src\agent_panel.rs:4747:37: error[E0405]: cannot find trait `ItemHandle` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:7208:38: error[E0425]: cannot find value `empty_thread_title` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:7221:32: error[E0425]: cannot find value `full_screen_button` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:7874:16: error[E0425]: cannot find type `Range` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:7889:16: error[E0425]: cannot find type `Range` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:7904:16: error[E0425]: cannot find type `Range` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8770:39: error[E0433]: cannot find type `Instant` in this scope: use of undeclared type `Instant`
+crates\agent_ui\src\agent_panel.rs:8910:39: error[E0433]: cannot find type `Instant` in this scope: use of undeclared type `Instant`
+crates\agent_ui\src\agent_panel.rs:9244:51: error[E0425]: cannot find type `ToolCallStatus` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:631:24: error[E0425]: cannot find type `MessageQueue` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:647:27: error[E0425]: cannot find type `ComposerVoiceState` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:648:34: error[E0425]: cannot find type `ComposerVoiceAvailability` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:649:25: error[E0425]: cannot find type `FlowSpeechRuntime` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:650:36: error[E0425]: cannot find type `FlowRecordingSession` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:651:38: error[E0425]: cannot find type `FlowSpeechCancellation` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:669:28: error[E0425]: cannot find type `VerifiedSandboxStatus` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:670:32: error[E0425]: cannot find type `SandboxStatusKey` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:671:40: error[E0425]: cannot find type `SandboxStatusKey` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:1076:34: error[E0433]: cannot find type `FlowSpeechRuntime` in this scope: use of undeclared type `FlowSpeechRuntime`
+crates\agent_ui\src\conversation_view\thread_view.rs:1077:43: error[E0422]: cannot find struct, variant or union type `ComposerVoiceAvailability` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:1139:35: error[E0433]: cannot find type `ComposerVoiceState` in this scope: use of undeclared type `ComposerVoiceState`
+crates\agent_ui\src\conversation_view\thread_view.rs:1187:57: error[E0425]: cannot find value `visible_range` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:1197:72: error[E0425]: cannot find value `visible_range` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:1240:37: error[E0433]: cannot find type `FlowSpeechRuntime` in this scope: use of undeclared type `FlowSpeechRuntime`
+crates\agent_ui\src\conversation_view\thread_view.rs:2311:36: error[E0422]: cannot find struct, variant or union type `QueueEntry` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2325:13: error[E0425]: cannot find type `QueueEntryId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2356:43: error[E0425]: cannot find type `QueueEntryId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2382:13: error[E0425]: cannot find type `QueueEntryId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2384:17: error[E0425]: cannot find type `QueueEntry` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2392:48: error[E0425]: cannot find type `QueueEntryId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2411:13: error[E0425]: cannot find type `QueueEntryId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2426:16: error[E0425]: cannot find type `QueueEntry` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2458:12: error[E0425]: cannot find value `is_send_now` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:2487:13: error[E0425]: cannot find type `QueueEntryId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:3131:33: error[E0422]: cannot find struct, variant or union type `ShareAgentThread` in crate `proto`: not found in `proto`
+crates\agent_ui\src\conversation_view\thread_view.rs:3182:46: error[E0425]: cannot find type `NativeAgentSessionList` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:3192:33: error[E0422]: cannot find struct, variant or union type `GetSharedAgentThread` in crate `proto`: not found in `proto`
+crates\agent_ui\src\conversation_view\thread_view.rs:3230:55: error[E0425]: cannot find type `UserMessageId` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:4703:41: error[E0425]: cannot find function `render_voice_recording_panel` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5087:57: error[E0425]: cannot find type `ComposerProfileKind` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5106:65: error[E0425]: cannot find type `ComposerProfileKind` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5107:9: error[E0433]: cannot find type `ComposerProfileKind` in this scope: use of undeclared type `ComposerProfileKind`
+crates\agent_ui\src\conversation_view\thread_view.rs:5110:42: error[E0425]: cannot find type `ComposerOptionSlot` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5255:9: error[E0425]: cannot find function `render_voice_buttons` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5264:69: error[E0425]: cannot find type `FlowSpeechRuntime` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5274:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5275:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5276:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5276:48: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5277:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5277:41: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5285:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5286:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5287:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5287:48: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5290:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5290:41: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5296:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5297:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5298:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5298:48: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5301:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5301:41: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5317:31: error[E0433]: cannot find type `FlowSpeechRuntime` in this scope: use of undeclared type `FlowSpeechRuntime`
+crates\agent_ui\src\conversation_view\thread_view.rs:5331:18: error[E0425]: cannot find type `FlowRecordingSession` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5350:62: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5364:56: error[E0425]: cannot find value `MAX_RECORDING_SECONDS` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5409:28: error[E0433]: cannot find type `FlowSpeechCancellation` in this scope: use of undeclared type `FlowSpeechCancellation`
+crates\agent_ui\src\conversation_view\thread_view.rs:5479:49: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5492:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5492:48: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5496:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5496:45: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5500:13: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5500:41: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:5515:23: error[E0433]: cannot find type `FlowSpeechRuntime` in this scope: use of undeclared type `FlowSpeechRuntime`
+crates\agent_ui\src\conversation_view\thread_view.rs:5529:28: error[E0433]: cannot find type `FlowSpeechCancellation` in this scope: use of undeclared type `FlowSpeechCancellation`
+crates\agent_ui\src\conversation_view\thread_view.rs:6051:76: error[E0425]: cannot find type `VerifiedSandboxStatus` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:7972:23: error[E0425]: cannot find type `Elicitation` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8258:13: error[E0425]: cannot find value `container` in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8258:25: error[E0425]: cannot find value `container` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8278:17: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8278:49: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8282:17: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8282:52: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8290:17: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8290:52: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8299:13: error[E0425]: cannot find value `container` in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8299:25: error[E0425]: cannot find value `container` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8308:29: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8308:64: error[E0433]: cannot find type `ComposerVoicePhase` in this scope: use of undeclared type `ComposerVoicePhase`
+crates\agent_ui\src\conversation_view\thread_view.rs:8343:13: error[E0425]: cannot find value `container` in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8343:25: error[E0425]: cannot find value `container` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8418:13: error[E0425]: cannot find value `container` in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8418:25: error[E0425]: cannot find value `container` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8421:9: error[E0425]: cannot find value `container` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8422:20: error[E0425]: cannot find value `open_as_markdown` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8951:17: error[E0433]: cannot find type `ThreadSearchBar` in this scope: use of undeclared type `ThreadSearchBar`
+crates\agent_ui\src\conversation_view\thread_view.rs:8963:40: error[E0433]: cannot find type `ThreadSearchBarEvent` in this scope: use of undeclared type `ThreadSearchBarEvent`
+crates\agent_ui\src\conversation_view\thread_view.rs:9953:18: error[E0425]: cannot find type `SandboxNotAppliedReason` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:10291:29: error[E0425]: cannot find value `options` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:11111:19: error[E0425]: cannot find type `SandboxFallbackAuthorizationDetails` in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:14460:37: error[E0425]: cannot find type `ComposerOptionSlot` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:14495:35: error[E0425]: cannot find type `ComposerOptionSlot` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\thread_view.rs:14495:63: error[E0425]: cannot find type `ComposerOptionEntry` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view.rs:933:35: error[E0425]: cannot find value `previous_request_elicitation_connection` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view.rs:934:17: error[E0425]: cannot find value `next_request_elicitation_connection` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view.rs:2338:37: error[E0425]: cannot find type `AnyView` in this scope: not found in this scope
+crates\agent_ui\src\message_editor.rs:150:47: error[E0425]: cannot find type `PromptLocalCommand` in this scope: not found in this scope
+crates\agent_ui\src\message_editor.rs:178:58: error[E0425]: cannot find type `PromptLocalCommand` in this scope: not found in this scope
+crates\agent_ui\src\message_editor.rs:182:42: error[E0425]: cannot find type `PromptLocalCommand` in this scope: not found in this scope
+crates\agent_ui\src\message_editor.rs:243:25: error[E0425]: cannot find type `PromptLocalCommand` in this scope: not found in this scope
+crates\agent_ui\src\message_editor.rs:330:18: error[E0425]: cannot find type `PathBuf` in this scope: not found in this scope
+crates\agent_ui\src\message_editor.rs:671:52: error[E0425]: cannot find type `PromptLocalCommand` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:89:5: warning: unused import: `AddContextServer`
+crates\agent_ui\src\conversation_view.rs:3:19: warning: unused import: `ClientUserMessageId`
+crates\agent_ui\src\conversation_view\thread_view.rs:19:18: warning: unused import: `ContentBlock`
+crates\agent_ui\src\conversation_view\thread_view.rs:31:5: warning: unused import: `TerminalToolHeader`
+crates\agent_ui\src\dx_agent_bridge.rs:44:16: warning: unused import: `self::automation_actions::automation_public_command_for_action`
+crates\agent_ui\src\dx_agent_bridge.rs:49:5: warning: unused import: `catalog_active_provider_label`
+crates\agent_ui\src\dx_agent_bridge.rs:55:5: warning: unused imports: `DxAgentMetadataCommand`, `run_dx_agent_metadata_command`, and `run_dx_agent_public_command`
+crates\agent_ui\src\dx_skill_panel.rs:9:22: warning: unused imports: `Button` and `TintColor`
+crates\agent_ui\src\dx_forge_panel\panel.rs:12:10: warning: unused imports: `DxUiIcon` and `dx_icon`
+crates\agent_ui\src\agent_panel.rs:7736:13: error[E0433]: cannot find type `Callout` in this scope: use of undeclared type `Callout`
+crates\agent_ui\src\agent_panel.rs:7739:34: error[E0433]: cannot find type `CalloutBorderPosition` in this scope: use of undeclared type `CalloutBorderPosition`
+crates\agent_ui\src\conversation_view\thread_view.rs:5745:48: error[E0599]: no method named `render_queue_steer_button` found for reference `&thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5819:48: error[E0599]: no method named `render_queue_steer_button` found for reference `&thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:8179:60: error[E0599]: no method named `is_thread_feedback_enabled` found for reference `&thread_view::ThreadView` in the current scope: method not found in `&thread_view::ThreadView`
+crates\agent_ui\src\conversation_view\thread_view.rs:8398:34: error[E0599]: no method named `is_imported_thread` found for reference `&thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:12815:31: error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:14006:14: error[E0599]: no method named `sync_local_commands` found for mutable reference `&mut thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:14051:30: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14055:45: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14062:30: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14066:45: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14073:30: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14077:45: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14086:30: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14090:45: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14098:26: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14102:41: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14110:30: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14114:45: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14331:22: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14332:35: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:14356:28: error[E0599]: no method named `render_request_elicitations` found for mutable reference `&mut thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view.rs:3652:29: error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view.rs:3708:29: error[E0026]: variant `AuthState::Unauthenticated` does not have fields named `configuration_view`, `_subscription`: variant `AuthState::Unauthenticated` does not have these fields
+crates\agent_ui\src\dx_check_panel_view\tabs.rs:66:10: error[E0599]: no method named `fill_available_width` found for struct `ui::Tab` in the current scope: method not found in `ui::Tab`
+crates\agent_ui\src\dx_forge_panel\rows.rs:28:42: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_forge_panel\rows.rs:28:34: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_forge_panel\tabs.rs:68:10: error[E0599]: no method named `fill_available_width` found for struct `ui::Tab` in the current scope: method not found in `ui::Tab`
+crates\agent_ui\src\dx_launch_workspace.rs:241:60: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:241:52: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:253:58: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:253:50: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:258:58: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:258:50: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:268:58: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:268:50: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:275:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:275:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:283:61: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:283:53: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:302:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:302:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:1889:13: error[E0560]: struct `agent_panel::AgentPanel` has no field named `configuration`: `agent_panel::AgentPanel` does not have this field
+crates\agent_ui\src\agent_panel.rs:1890:13: error[E0560]: struct `agent_panel::AgentPanel` has no field named `configuration_subscription`: `agent_panel::AgentPanel` does not have this field
+crates\agent_ui\src\agent_panel.rs:4122:17: error[E0609]: no field `overlay_view` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:4245:26: error[E0609]: no field `overlay_view` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:4254:14: error[E0609]: no field `configuration` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:4268:43: error[E0609]: no field `configuration` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:4269:18: error[E0609]: no field `configuration_subscription` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:4278:43: error[E0609]: no field `configuration` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:4676:43: error[E0425]: cannot find function, tuple struct or tuple variant `LanguageModelProviderSetting` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:5006:14: error[E0609]: no field `overlay_view` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:5023:14: error[E0609]: no field `overlay_view` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:5024:14: error[E0609]: no field `configuration_subscription` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:5025:14: error[E0609]: no field `configuration` on type `&mut agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:5084:43: error[E0609]: no field `overlay_view` on type `&agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:5087:56: error[E0609]: no field `configuration` on type `&agent_panel::AgentPanel`: unknown field
+crates\agent_ui\src\agent_panel.rs:8061:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_panel.rs:8061:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8234:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_panel.rs:8234:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8261:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_panel.rs:8261:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8272:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_panel.rs:8272:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8327:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_panel.rs:8327:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8354:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_panel.rs:8354:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:8468:56: error[E0308]: mismatched types: expected `&str`, found `String`
+crates\agent_ui\src\agent_panel.rs:9282:34: error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\agent_screen.rs:71:32: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\agent_screen.rs:71:24: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\automation_screen.rs:74:32: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\automation_screen.rs:74:24: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\connections_screen.rs:74:32: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\connections_screen.rs:74:24: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\conversation_view\composer_profile_options.rs:652:38: error[E0599]: no function or associated item named `dx_builtin_metadata_for_id` found for struct `AgentProfile` in the current scope: function or associated item not found in `AgentProfile`
+crates\agent_ui\src\conversation_view\thread_search_bar.rs:337:71: error[E0599]: no method named `editor` found for reference `&message_editor::MessageEditor` in the current scope: private field, not a method
+crates\agent_ui\src\conversation_view\thread_view.rs:1124:28: error[E0433]: cannot find type `MessageQueue` in this scope: use of undeclared type `MessageQueue`
+crates\agent_ui\src\conversation_view\thread_view.rs:1133:13: error[E0560]: struct `thread_view::ThreadView` has no field named `skip_queue_processing_count`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1134:13: error[E0560]: struct `thread_view::ThreadView` has no field named `user_interrupted_generation`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1135:13: error[E0560]: struct `thread_view::ThreadView` has no field named `can_fast_track_queue`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1160:13: error[E0560]: struct `thread_view::ThreadView` has no field named `transparent_header_height`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1162:13: error[E0560]: struct `thread_view::ThreadView` has no field named `response_anchor_scroll_request`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1163:13: error[E0560]: struct `thread_view::ThreadView` has no field named `active_response_anchor_entry_ix`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1164:13: error[E0560]: struct `thread_view::ThreadView` has no field named `visible_entry_range`: `thread_view::ThreadView` does not have this field
+crates\agent_ui\src\conversation_view\thread_view.rs:1172:14: error[E0599]: no method named `sync_editor_mode_for_empty_state` found for struct `thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:1187:30: error[E0609]: no field `visible_entry_range` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:1189:53: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:1190:34: error[E0609]: no field `active_response_anchor_entry_ix` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:1193:33: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:1196:34: error[E0609]: no field `active_response_anchor_entry_ix` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:2461:18: error[E0609]: no field `skip_queue_processing_count` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:3126:33: error[E0433]: cannot find type `SharedThread` in this scope: use of undeclared type `SharedThread`
+crates\agent_ui\src\conversation_view\thread_view.rs:3145:29: error[E0433]: cannot find type `Toast` in this scope: use of undeclared type `Toast`
+crates\agent_ui\src\conversation_view\thread_view.rs:3146:33: error[E0433]: cannot find type `NotificationId` in this scope: use of undeclared type `NotificationId`
+crates\agent_ui\src\conversation_view\thread_view.rs:3175:18: error[E0599]: no method named `is_imported_thread` found for mutable reference `&mut thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:3197:33: error[E0433]: cannot find type `SharedThread` in this scope: use of undeclared type `SharedThread`
+crates\agent_ui\src\conversation_view\thread_view.rs:3214:29: error[E0433]: cannot find type `Toast` in this scope: use of undeclared type `Toast`
+crates\agent_ui\src\conversation_view\thread_view.rs:3215:33: error[E0433]: cannot find type `NotificationId` in this scope: use of undeclared type `NotificationId`
+crates\agent_ui\src\conversation_view\thread_view.rs:4844:17: error[E0609]: no field `transparent_header_height` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:4848:14: error[E0609]: no field `transparent_header_height` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:4891:28: error[E0433]: cannot find type `Chip` in this scope: use of undeclared type `Chip`
+crates\agent_ui\src\conversation_view\thread_view.rs:5194:44: error[E0599]: no method named `modes` found for reference `&mode_selector::ModeSelector` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:5555:24: error[E0277]: the size for values of type `[u8]` cannot be known at compilation time: doesn't have a size known at compile-time
+crates\agent_ui\src\conversation_view\thread_view.rs:5551:23: error[E0277]: the size for values of type `[u8]` cannot be known at compilation time: doesn't have a size known at compile-time
+crates\agent_ui\src\conversation_view\thread_view.rs:5544:51: error[E0277]: the size for values of type `[u8]` cannot be known at compilation time: doesn't have a size known at compile-time
+crates\agent_ui\src\conversation_view\thread_view.rs:5544:36: error[E0277]: the size for values of type `[u8]` cannot be known at compilation time: doesn't have a size known at compile-time
+crates\agent_ui\src\conversation_view\thread_view.rs:5619:32: error[E0277]: the size for values of type `[u8]` cannot be known at compilation time: doesn't have a size known at compile-time
+crates\agent_ui\src\conversation_view\thread_view.rs:5545:54: error[E0277]: the size for values of type `[u8]` cannot be known at compilation time: doesn't have a size known at compile-time
+crates\agent_ui\src\conversation_view\thread_view.rs:5658:21: error[E0433]: cannot find type `Toast` in this scope: use of undeclared type `Toast`
+crates\agent_ui\src\conversation_view\thread_view.rs:5659:25: error[E0433]: cannot find type `NotificationId` in this scope: use of undeclared type `NotificationId`
+crates\agent_ui\src\conversation_view\thread_view.rs:7482:46: error[E0609]: no field `transparent_header_height` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:7505:52: error[E0599]: no function or associated item named `is_waiting_for_confirmation` found for struct `thread_view::ThreadView` in the current scope: function or associated item not found in `thread_view::ThreadView`
+crates\agent_ui\src\conversation_view\thread_view.rs:8462:14: error[E0609]: no field `active_response_anchor_entry_ix` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8465:41: error[E0609]: no field `response_anchor_scroll_request` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8564:14: error[E0609]: no field `visible_entry_range` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8657:14: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8661:14: error[E0609]: no field `active_response_anchor_entry_ix` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8670:38: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8677:18: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8682:18: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8683:18: error[E0609]: no field `active_response_anchor_entry_ix` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8689:14: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8750:17: error[E0609]: no field `response_anchor_scroll_request` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8756:14: error[E0609]: no field `visible_entry_range` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8762:17: error[E0609]: no field `active_response_anchor_entry_ix` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8763:18: error[E0609]: no field `active_response_anchor_entry_ix` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8896:18: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8899:33: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8911:18: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8915:33: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8919:14: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8931:17: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8964:30: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8970:18: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8975:14: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8979:17: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8980:38: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8983:18: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8987:18: error[E0609]: no field `thread_search_visible` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:8988:37: error[E0609]: no field `thread_search_bar` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9177:21: error[E0609]: no field `auto_expanded_thinking_block` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9178:22: error[E0609]: no field `auto_expanded_thinking_block` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9179:22: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9182:24: error[E0609]: no field `auto_expanded_thinking_block` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9183:36: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9184:41: error[E0609]: no field `auto_expanded_thinking_block` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9185:30: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9186:30: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9190:18: error[E0609]: no field `auto_expanded_thinking_block` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9196:14: error[E0609]: no field `auto_expanded_thinking_block` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9204:36: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9205:29: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9208:26: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9209:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9211:26: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9212:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9216:45: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9217:47: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9220:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9221:26: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9223:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9225:26: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9226:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9230:25: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9231:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9233:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9237:25: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9238:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9239:26: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9241:26: error[E0609]: no field `expanded_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9242:26: error[E0609]: no field `user_toggled_thinking_blocks` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9264:36: error[E0609]: no field `user_toggled_thinking_blocks` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9265:39: error[E0609]: no field `expanded_thinking_blocks` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9281:39: error[E0609]: no field `auto_expanded_thinking_block` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9330:38: error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:9334:30: error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:9739:32: error[E0609]: no field `expanded_tool_calls` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9778:34: error[E0609]: no field `expanded_tool_calls` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:9780:34: error[E0609]: no field `expanded_tool_calls` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\thread_view.rs:10288:37: error[E0061]: this method takes 8 arguments but 7 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:12073:26: error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:14435:16: error[E0433]: cannot find type `Chip` in this scope: use of undeclared type `Chip`
+crates\agent_ui\src\conversation_view\thread_view.rs:14436:16: error[E0433]: cannot find type `Chip` in this scope: use of undeclared type `Chip`
+crates\agent_ui\src\conversation_view\voice_controls.rs:457:14: error[E0599]: no method named `with_rotate_animation` found for struct `ui::Icon` in the current scope
+crates\agent_ui\src\conversation_view.rs:909:17: error[E0609]: no field `transparent_header_height` on type `&mut conversation_view::ConversationView`: unknown field
+crates\agent_ui\src\conversation_view.rs:913:14: error[E0609]: no field `transparent_header_height` on type `&mut conversation_view::ConversationView`: unknown field
+crates\agent_ui\src\conversation_view.rs:1180:29: error[E0061]: this function takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view.rs:1468:82: error[E0609]: no field `provider_id` on type `acp_thread::AuthRequired`: unknown field
+crates\agent_ui\src\conversation_view.rs:1469:28: error[E0433]: cannot find type `LanguageModelRegistry` in this scope: use of undeclared type `LanguageModelRegistry`
+crates\agent_ui\src\conversation_view.rs:1477:28: error[E0433]: cannot find type `LanguageModelRegistry` in this scope: use of undeclared type `LanguageModelRegistry`
+crates\agent_ui\src\conversation_view.rs:1639:24: error[E0599]: no method named `send_queued_message_at_index` found for mutable reference `&mut thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view.rs:1764:36: error[E0061]: this method takes 0 arguments but 1 argument was supplied
+crates\agent_ui\src\conversation_view.rs:2009:13: error[E0026]: variant `AuthState::Unauthenticated` does not have a field named `configuration_view`: variant `AuthState::Unauthenticated` does not have this field, help: `AuthState::Unauthenticated` has a field named `description`
+crates\agent_ui\src\conversation_view.rs:2853:43: error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2866:35: error[E0609]: no field `local_queued_messages` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2867:28: error[E0609]: no field `local_queued_messages` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2885:18: error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2894:45: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2933:45: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2934:43: error[E0609]: no field `last_synced_queue_length` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2942:24: error[E0609]: no field `queued_message_editors` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2944:22: error[E0609]: no field `queued_message_editor_subscriptions` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2948:43: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2959:31: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2960:41: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3016:24: error[E0609]: no field `queued_message_editors` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3018:22: error[E0609]: no field `queued_message_editor_subscriptions` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3025:24: error[E0609]: no field `last_synced_queue_length` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3474:13: error[E0061]: this function takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view.rs:3530:5: error[E0425]: cannot find function `dx_loading_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_check_panel_view.rs:83:39: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_check_panel_view.rs:83:31: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_check_panel_view.rs:84:39: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_check_panel_view.rs:84:31: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_check_panel_view.rs:753:22: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_check_panel_view.rs:753:14: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_deploy_matrix_rail.rs:260:51: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_deploy_matrix_rail.rs:260:43: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_deploy_rail.rs:180:33: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_deploy_rail.rs:180:25: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_forge_panel\panel_view.rs:256:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_forge_panel\panel_view.rs:256:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_forge_panel\providers\view.rs:137:6: error[E0599]: no method named `anchor_scroll` found for struct `ui::ListItem` in the current scope: method not found in `ui::ListItem`
+crates\agent_ui\src\dx_forge_panel\providers\view.rs:293:41: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_forge_panel\providers\view.rs:293:33: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:151:10: error[E0599]: no method named `anchor_scroll` found for struct `ui::ListItem` in the current scope: method not found in `ui::ListItem`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:25:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:25:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:32:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:32:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:39:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:39:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:75:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:75:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:89:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:89:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:100:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:100:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:125:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:125:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:132:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:132:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:146:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:146:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:153:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:153:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:172:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:172:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:179:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agent_workspace.rs:179:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:41:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:41:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:48:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:48:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:90:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:90:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:114:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:114:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:126:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:126:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:141:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:141:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\connection_rows.rs:71:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\connection_rows.rs:71:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\connection_rows.rs:77:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\connection_rows.rs:77:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:22:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:22:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:29:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:29:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:67:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:67:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:86:31: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers\rows.rs:86:23: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers.rs:28:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers.rs:28:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers.rs:38:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers.rs:38:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\providers.rs:55:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\providers.rs:55:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:17:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:17:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:27:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:27:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:72:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:72:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:90:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:90:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:102:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:102:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:117:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social\rows.rs:117:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:21:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:21:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:27:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:27:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:33:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:33:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:45:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social.rs:45:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social_actions.rs:62:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social_actions.rs:62:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social_actions.rs:70:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social_actions.rs:70:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\agents\social_actions.rs:77:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\agents\social_actions.rs:77:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:19:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:19:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:25:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:25:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:31:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:31:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:37:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:37:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:49:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:49:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:72:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:72:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:78:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:78:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:95:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:95:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:158:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:158:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:172:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:172:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:186:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:186:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:193:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:193:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:214:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:214:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:221:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\details.rs:221:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:54:65: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:54:57: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:55:63: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:55:55: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:56:63: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:56:55: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:57:62: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:57:54: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:182:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:182:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:245:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:245:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:361:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:361:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:374:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:374:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:402:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog.rs:402:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\drafts.rs:26:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\drafts.rs:26:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\drafts.rs:54:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\drafts.rs:54:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\rows.rs:22:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\rows.rs:22:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\rows.rs:36:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\rows.rs:36:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\rows.rs:84:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections\rows.rs:84:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:21:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:21:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:27:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:27:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:36:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:36:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:74:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:74:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:80:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:80:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:116:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:116:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:154:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen\sections.rs:154:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:61:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:61:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:69:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:69:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:77:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:77:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:85:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:85:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:93:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:93:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:110:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:110:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:128:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\automation_screen.rs:128:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:22:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:22:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:40:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:40:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:46:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:46:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:70:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:70:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:76:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:76:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:82:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:82:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:88:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:88:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:100:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:100:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:112:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:112:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:129:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:129:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:135:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:135:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:141:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:141:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:164:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:164:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:176:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:176:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:185:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:185:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:202:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:202:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:232:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:232:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:239:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:239:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:246:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:246:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:253:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:253:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:274:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:274:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:286:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:286:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:293:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:293:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:300:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:300:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:307:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:307:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:314:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:314:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:321:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:321:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:328:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\details.rs:328:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:78:65: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:78:57: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:79:66: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:79:58: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:80:57: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:80:49: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:81:56: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:81:48: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:82:65: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:82:57: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:83:60: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:83:52: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:84:65: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:84:57: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:183:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:183:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:246:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:246:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:365:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:365:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:378:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:378:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:406:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog.rs:406:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:62:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:62:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:70:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:70:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:82:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:82:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:94:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:94:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:102:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:102:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:110:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:110:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:127:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:127:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:145:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:145:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:282:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:282:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:288:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:288:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:294:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:294:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:306:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:306:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:315:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:315:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:328:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:328:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:340:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:340:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:349:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:349:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:420:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\connections_screen.rs:420:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:18:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:18:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:25:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:25:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:39:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:39:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:46:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\sources\controller.rs:46:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\style_panel.rs:27:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\style_panel.rs:27:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\style_panel.rs:105:47: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\style_panel.rs:105:39: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:220:49: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:220:41: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:252:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:252:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:358:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:358:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:502:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\catalog.rs:502:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:23:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:23:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:59:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:59:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:95:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:95:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:101:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:101:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:123:37: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:123:29: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:175:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:175:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:187:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:187:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:206:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:206:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:217:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:217:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:301:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:301:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:312:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:312:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:393:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:393:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:398:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:398:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:407:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:407:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:418:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\details.rs:418:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:145:31: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:145:23: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:199:31: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:199:23: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:254:31: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:254:23: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:279:43: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:279:35: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:352:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:352:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:68:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:68:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:76:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:76:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:81:33: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:81:25: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:91:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:91:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:96:33: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:96:25: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:106:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:106:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:126:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:126:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:143:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:143:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:161:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:161:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:214:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:214:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:258:27: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:258:19: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:305:21: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:305:13: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:317:35: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:317:27: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:329:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:329:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:344:29: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace\tools_screen.rs:344:21: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:404:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:404:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:489:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:489:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:501:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:501:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:513:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:513:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:525:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:525:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:537:25: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:537:17: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:756:69: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:756:61: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:775:17: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:775:9: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_launch_workspace.rs:863:46: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_launch_workspace.rs:863:38: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\dx_plugin_credentials.rs:115:39: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\dx_plugin_credentials.rs:115:31: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\tools_screen.rs:119:32: error[E0433]: cannot find type `DxUiIcon` in this scope: use of undeclared type `DxUiIcon`
+crates\agent_ui\src\tools_screen.rs:119:24: error[E0425]: cannot find function `dx_icon` in this scope: not found in this scope
+crates\agent_ui\src\workflow_node_icons.rs:62:23: error[E0599]: no function or associated item named `from_external_svg_with_original_colors` found for struct `ui::Icon` in the current scope: function or associated item not found in `ui::Icon`
+crates\agent_ui\src\agent_panel.rs:4509:20: error[E0433]: cannot find type `ClipboardEntry` in this scope: use of undeclared type `ClipboardEntry`
+crates\agent_ui\src\agent_panel.rs:4521:24: error[E0433]: cannot find type `ClipboardEntry` in this scope: use of undeclared type `ClipboardEntry`
+crates\agent_ui\src\agent_panel.rs:4530:20: error[E0433]: cannot find type `ClipboardEntry` in this scope: use of undeclared type `ClipboardEntry`
+crates\agent_ui\src\conversation_view\thread_view.rs:9997:29: error[E0433]: cannot find type `SandboxNotAppliedReason` in this scope: use of undeclared type `SandboxNotAppliedReason`
+crates\agent_ui\src\conversation_view\thread_view.rs:6061:13: error[E0433]: cannot find type `SandboxStatusRefresh` in this scope: use of undeclared type `SandboxStatusRefresh`
+crates\agent_ui\src\conversation_view\thread_view.rs:6067:13: error[E0433]: cannot find type `SandboxStatusRefresh` in this scope: use of undeclared type `SandboxStatusRefresh`
+crates\agent_ui\src\conversation_view\thread_view.rs:9153:42: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9153:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:6125:17: error[E0433]: cannot find type `ThreadSandbox` in this scope: use of undeclared type `ThreadSandbox`
+crates\agent_ui\src\conversation_view\thread_view.rs:6124:17: error[E0433]: cannot find type `ThreadSandbox` in this scope: use of undeclared type `ThreadSandbox`
+crates\agent_ui\src\conversation_view\thread_view.rs:6115:57: error[E0433]: cannot find type `ThreadSandbox` in this scope: use of undeclared type `ThreadSandbox`
+crates\agent_ui\src\agent_panel.rs:9123:17: error[E0433]: cannot find type `AgentThreadEntry` in this scope: use of undeclared type `AgentThreadEntry`
+crates\agent_ui\src\agent_panel.rs:9246:13: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\agent_panel.rs:9247:13: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\agent_panel.rs:9248:13: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\agent_panel.rs:9249:13: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\agent_panel.rs:9250:13: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\agent_panel.rs:9250:38: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\agent_panel.rs:9250:65: error[E0433]: cannot find type `ToolCallStatus` in this scope: use of undeclared type `ToolCallStatus`
+crates\agent_ui\src\conversation_view\thread_view.rs:6115:14: error[E0433]: cannot find type `ThreadSandbox` in this scope: use of undeclared type `ThreadSandbox`
+crates\agent_ui\src\conversation_view\thread_view.rs:6112:14: error[E0433]: cannot find type `ThreadSandbox` in this scope: use of undeclared type `ThreadSandbox`
+crates\agent_ui\src\conversation_view\thread_view.rs:9203:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9215:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9229:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9236:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9268:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9272:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9277:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9278:13: error[E0433]: cannot find type `ThinkingBlockDisplay` in this scope: use of undeclared type `ThinkingBlockDisplay`
+crates\agent_ui\src\conversation_view\thread_view.rs:9959:17: error[E0433]: cannot find type `SandboxNotAppliedReason` in this scope: use of undeclared type `SandboxNotAppliedReason`
+crates\agent_ui\src\conversation_view\thread_view.rs:9964:17: error[E0433]: cannot find type `SandboxNotAppliedReason` in this scope: use of undeclared type `SandboxNotAppliedReason`
+warning: `agent_ui` (lib) generated 9 warnings
+error: could not compile `agent_ui` (lib) due to 778 previous errors; 9 warnings emitted

@@ -1,0 +1,272 @@
+    Checking windows-sys v0.61.2
+    Checking futures-util v0.3.32
+    Checking windows-sys v0.59.0
+    Checking windows-future v0.2.1
+    Checking windows v0.61.3
+    Checking futures-executor v0.3.32
+    Checking futures v0.3.32
+    Checking postage v0.5.0
+   Compiling gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking scheduler v0.1.0 (G:\Dx\code\crates\scheduler)
+    Checking windows-sys v0.60.2
+   Compiling aws-lc-rs v1.16.3
+    Checking home v0.5.11
+    Checking which v6.0.3
+    Checking gpui_util v0.1.0 (G:\Dx\code\crates\gpui_util)
+    Checking stacker v0.1.23
+    Checking collections v0.1.0 (G:\Dx\code\crates\collections)
+    Checking stacksafe v0.1.4
+    Checking zlog v0.1.0 (G:\Dx\code\crates\zlog)
+   Compiling rustls v0.23.40
+    Checking wasmtime-internal-fiber v36.0.12
+    Checking wasmtime-internal-jit-icache-coherence v36.0.12
+    Checking telemetry v0.1.0 (G:\Dx\code\crates\telemetry)
+    Checking is_executable v1.0.5
+    Checking oauth_callback_server v0.1.0 (G:\Dx\code\crates\oauth_callback_server)
+    Checking io-extras v0.18.4
+    Checking fs-set-times v0.20.3
+    Checking winx v0.36.4
+    Checking rustls-webpki v0.103.13
+    Checking cap-primitives v3.4.4
+    Checking mio v1.2.0
+    Checking socket2 v0.6.3
+    Checking winapi-util v0.1.11
+    Checking errno v0.3.14
+    Checking tokio v1.52.1
+    Checking rustix v1.1.2
+    Checking polling v3.11.0
+    Checking same-file v1.0.6
+    Checking walkdir v2.5.0
+    Checking async-io v2.6.0
+    Checking rust-embed-utils v8.11.0
+    Checking dirs-sys v0.5.0
+    Checking dirs v6.0.0
+    Checking rust-embed v8.11.0
+    Checking async-process v2.5.0 (https://github.com/zed-industries/async-process.git?rev=0b6d6713570af61806e1e5cb40e0f757cb93fd9d#0b6d6713)
+    Checking async-net v2.0.0
+    Checking tempfile v3.23.0
+    Checking smol v2.0.2
+    Checking async-global-executor v2.4.1
+    Checking nu-ansi-term v0.50.3
+    Checking async-std v1.13.2
+    Checking tracing-subscriber v0.3.22
+    Checking ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking termcolor v1.4.1
+    Checking wasmprinter v0.236.1
+    Checking wasmtime-environ v36.0.12
+    Checking async-tar v0.6.1
+    Checking async-compression v0.4.32
+    Checking async_zip v0.0.18
+    Checking tokio-util v0.7.18
+    Checking ignore v0.4.24
+    Checking notify v9.0.0-rc.4 (https://github.com/zed-industries/notify?rev=faecbc33db4f59313e5225ef766bfd9e54a54cfd#faecbc33)
+    Checking h2 v0.4.12
+    Checking tokio-rustls v0.26.4
+    Checking schannel v0.1.28
+    Checking wasmtime-internal-cranelift v36.0.12
+    Checking tungstenite v0.27.0
+    Checking async-tungstenite v0.31.0
+    Checking shellexpand v3.1.1
+    Checking diffy v0.4.2
+    Checking native-tls v0.2.18
+    Checking tokio-native-tls v0.3.1
+    Checking rustls-platform-verifier v0.5.3
+    Checking http_client_tls v0.1.0 (G:\Dx\code\crates\http_client_tls)
+    Checking wasmtime v36.0.12
+    Checking tokio-socks v0.5.2
+    Checking miow v0.6.1
+    Checking hyper v1.7.0
+    Checking alacritty_terminal v0.26.1-dev (https://github.com/zed-industries/alacritty?rev=4c129667ce56611becdc82de6e28218c80e2e88f#4c129667)
+    Checking wax v0.7.0
+    Checking hyper-util v0.1.17
+    Checking aws-smithy-types v1.4.7
+    Checking yawc v0.2.5
+    Checking aws-smithy-async v1.2.14
+    Checking rustls-native-certs v0.8.3
+    Checking tower v0.5.2
+    Checking aws-smithy-runtime-api v1.11.4
+    Checking hyper-rustls v0.27.9
+    Checking h2 v0.3.27
+    Checking aws-smithy-eventstream v0.60.20
+    Checking tokio-rustls v0.24.1
+    Checking aws-smithy-http v0.63.4
+    Checking aws-credential-types v1.2.12
+    Checking aws-smithy-observability v0.2.5
+    Checking aws-types v1.3.12
+    Checking aws-sigv4 v1.4.0
+    Checking aws-smithy-json v0.62.5
+    Checking cap-std v3.4.4
+    Checking cap-fs-ext v3.4.4
+    Checking fd-lock v4.0.4
+    Checking system-interface v0.27.3
+    Checking http_proxy v0.1.0 (G:\Dx\code\crates\http_proxy)
+    Checking hyper v0.14.32
+    Checking cap-time-ext v3.4.4
+    Checking cap-net-ext v3.4.4
+    Checking aws-smithy-query v0.60.15
+    Checking agent-client-protocol v1.1.0
+    Checking hyper-rustls v0.24.2
+    Checking sandbox v0.1.0 (G:\Dx\code\crates\sandbox)
+    Checking wasmtime-c-api-impl v36.0.9
+    Checking aws-smithy-http-client v1.1.10
+    Checking wasmtime-wasi-io v36.0.12
+    Checking aws-smithy-runtime v1.10.1
+    Checking tree-sitter v0.26.9
+    Checking wiggle v36.0.12
+    Checking wasmtime-wasi v36.0.12
+    Checking language_core v0.1.0 (G:\Dx\code\crates\language_core)
+    Checking edit_prediction_metrics v0.1.0 (G:\Dx\code\crates\edit_prediction_metrics)
+    Checking aws-runtime v1.7.0
+    Checking aws-sdk-ssooidc v1.96.0
+    Checking aws-sdk-sso v1.94.0
+    Checking aws-sdk-sts v1.98.0
+    Checking aws-sdk-bedrockruntime v1.125.0
+    Checking handlebars v4.5.0
+    Checking tower-http v0.6.6
+    Checking aws-config v1.8.14
+    Checking hyper-tls v0.6.0
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking reqwest v0.12.24
+    Checking tokio-tungstenite v0.20.1
+    Checking axum-core v0.3.4
+    Checking jsonschema v0.37.4
+    Checking tower v0.4.13
+    Checking tower-http v0.4.4
+    Checking axum v0.6.20
+    Checking dx-media v1.0.0 (https://github.com/essence-dx/media?rev=caacb6134a455bea4e0eb6b58d522e96af230e4a#caacb613)
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking net v0.1.0 (G:\Dx\code\crates\net)
+    Checking sysinfo v0.37.2
+    Checking webview2-com-sys v0.38.2
+    Checking time_format v0.1.0 (G:\Dx\code\crates\time_format)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking webview2-com v0.38.2
+    Checking wry v0.53.5
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking language v0.1.0 (G:\Dx\code\crates\language)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+    Checking web_preview v0.1.0 (G:\Dx\code\crates\web_preview)
+    Checking font_panel v0.1.0 (G:\Dx\code\crates\font_panel)
+    Checking media_panel v0.1.0 (G:\Dx\code\crates\media_panel)
+    Checking shadcn_ui_panel v0.1.0 (G:\Dx\code\crates\shadcn_ui_panel)
+error: redundant redefinition of a binding `url`
+    --> crates\media_panel\src\media_panel.rs:1635:17
+     |
+1635 |                 let url = url;
+     |                 ^^^^^^^^^^^^^^
+     |
+help: `url` is initially defined here
+    --> crates\media_panel\src\media_panel.rs:1544:13
+     |
+1544 |         let url = asset.url.into_owned();
+     |             ^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_locals
+     = note: `-D clippy::redundant-locals` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::redundant_locals)]`
+
+error: could not compile `media_panel` (lib) due to 1 previous error

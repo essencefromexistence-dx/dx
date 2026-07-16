@@ -54,7 +54,8 @@ impl settings::Settings for AllLanguageModelSettings {
         let bedrock = language_models.bedrock.unwrap();
         let deepseek = language_models.deepseek.unwrap();
         let google = language_models.google.unwrap();
-        let llama_cpp = language_models.llama_cpp.unwrap();
+        // Defaults may omit this provider (or use a legacy key); empty content is safe.
+        let llama_cpp = language_models.llama_cpp.unwrap_or_default();
         let lmstudio = language_models.lmstudio.unwrap();
         let mistral = language_models.mistral.unwrap();
         let ollama = language_models.ollama.unwrap();
@@ -121,7 +122,9 @@ impl settings::Settings for AllLanguageModelSettings {
                 custom_headers: custom_headers_from("Google AI", google.custom_headers, &[]),
             },
             llama_cpp: LlamaCppSettings {
-                api_url: llama_cpp.api_url.unwrap(),
+                api_url: llama_cpp
+                    .api_url
+                    .unwrap_or_else(|| "http://127.0.0.1:8080/v1".into()),
                 auto_discover: llama_cpp.auto_discover.unwrap_or(true),
                 available_models: llama_cpp.available_models.unwrap_or_default(),
                 context_window: llama_cpp.context_window,

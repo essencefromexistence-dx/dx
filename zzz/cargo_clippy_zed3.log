@@ -1,0 +1,71 @@
+    Checking gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking system_specs v0.1.0 (G:\Dx\code\crates\system_specs)
+    Checking cli v0.1.0 (G:\Dx\code\crates\cli)
+    Checking input_latency_ui v0.1.0 (G:\Dx\code\crates\input_latency_ui)
+    Checking crashes v0.1.0 (G:\Dx\code\crates\crashes)
+error: fields `controller` and `bounds` are never read
+  --> crates\gpui_windows\src\window.rs:40:9
+   |
+39 | pub struct WebviewPassthroughTarget {
+   |            ------------------------ fields in this struct
+40 |     pub controller: ICoreWebView2CompositionController,
+   |         ^^^^^^^^^^
+41 |     pub controller_key: usize,
+42 |     pub bounds: RECT,
+   |         ^^^^^^
+   |
+   = note: `WebviewPassthroughTarget` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `-D dead-code` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[expect(dead_code)]` or `#[allow(dead_code)]`
+
+error: function `lookup_webview_passthrough_target` is never used
+   --> crates\gpui_windows\src\window.rs:181:15
+    |
+181 | pub(crate) fn lookup_webview_passthrough_target(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: could not compile `gpui_windows` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: initializer for `thread_local` value can be made `const`
+ --> crates\settings_content\src\fallible_options.rs:7:1
+  |
+7 | / thread_local! {
+8 | |     static ERRORS: RefCell<Option<Vec<anyhow::Error>>> = const { RefCell::new(None) };
+9 | | }
+  | |_^
+  |
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#missing_const_for_thread_local
+  = note: `-D clippy::missing-const-for-thread-local` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(clippy::missing_const_for_thread_local)]`
+
+error: could not compile `settings_content` (lib) due to 1 previous error

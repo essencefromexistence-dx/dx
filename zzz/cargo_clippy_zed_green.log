@@ -1,0 +1,27 @@
+    Checking zed v1.13.0 (G:\Dx\code\crates\zed)
+error[E0433]: cannot find `SessionId` in `acp`
+    --> crates\zed\src\main.rs:1129:43
+     |
+1129 |                     let session_id = acp::SessionId::new(session_id);
+     |                                           ^^^^^^^^^ could not find `SessionId` in `acp`
+
+error[E0422]: cannot find struct, variant or union type `GetSharedAgentThread` in crate `proto`
+    --> crates\zed\src\main.rs:1121:41
+     |
+1121 |                         .request(proto::GetSharedAgentThread {
+     |                                         ^^^^^^^^^^^^^^^^^^^^ not found in `proto`
+
+error[E0599]: no variant named `SharedAgentThread` found for enum `zed::open_listener::OpenRequestKind`
+    --> crates\zed\src\main.rs:1077:30
+     |
+1077 |             OpenRequestKind::SharedAgentThread { session_id } => {
+     |                              ^^^^^^^^^^^^^^^^^ variant not found in `zed::open_listener::OpenRequestKind`
+     |
+    ::: crates\zed\src\zed\open_listener.rs:48:1
+     |
+  48 | pub enum OpenRequestKind {
+     | ------------------------ variant `SharedAgentThread` not found here
+
+Some errors have detailed explanations: E0422, E0433, E0599.
+For more information about an error, try `rustc --explain E0422`.
+error: could not compile `zed` (bin "dx-code") due to 3 previous errors

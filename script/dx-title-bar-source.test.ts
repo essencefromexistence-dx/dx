@@ -63,6 +63,8 @@ test("application menu hover closes deployed popovers after leaving the menu are
 });
 
 test("title bar screen and right-tool buttons use domain-specific icons", () => {
+  // Guards the recovered Dx screen dock (centered dock with screen_order, nav, add/list menus).
+  // Do not "simplify" this back into a flat four-button strip.
   const screenDock = functionBodyFrom(titleBarSource, "render_screen_dock");
   const agentScreenButton = functionBodyFrom(titleBarSource, "render_agent_screen_button");
   const agentScreenActive = functionBodyFrom(titleBarSource, "agent_screen_is_active");
@@ -70,43 +72,29 @@ test("title bar screen and right-tool buttons use domain-specific icons", () => 
     titleBarSource,
     "collect_workspace_screen_entries",
   );
-  const agentButtonIndex = screenDock.indexOf("render_agent_screen_button(agent_screen_is_active, cx)");
-  const editorButtonIndex = screenDock.indexOf("WorkspaceScreenKind::Editor", agentButtonIndex);
-  const browserButtonIndex = screenDock.indexOf("WorkspaceScreenKind::Browser", editorButtonIndex);
-  const terminalButtonIndex = screenDock.indexOf("WorkspaceScreenKind::Terminal", browserButtonIndex);
-  assert.ok(agentButtonIndex >= 0, "screen dock should render the AI button");
-  assert.equal(screenDock.indexOf("WorkspaceScreenKind::Automations"), -1, "Automations should not be a primary screen dock button");
-  assert.equal(screenDock.indexOf("WorkspaceScreenKind::Connections"), -1, "Connections should not be a primary screen dock button");
-  assert.equal(screenDock.indexOf("WorkspaceScreenKind::Tools"), -1, "Tools should not be a primary screen dock button");
-  assert.ok(editorButtonIndex > agentButtonIndex, "Code should follow AI in the screen dock");
-  assert.ok(browserButtonIndex > editorButtonIndex, "Browser should follow Editor in the screen dock");
-  assert.ok(terminalButtonIndex > browserButtonIndex, "Terminal should follow Browser in the screen dock");
+  assert.match(titleBarSource, /fn render_screen_dock_navigation\b/, "original dock has back/forward navigation");
+  assert.match(titleBarSource, /fn render_screen_dock_add_menu\b/, "original dock has add-screen control");
+  assert.match(titleBarSource, /fn render_screen_dock_list_menu\b/, "original dock has screen list menu");
+  assert.match(titleBarSource, /fn render_screen_dock_divider\b/, "original dock uses segment dividers");
+  assert.match(
+    titleBarSource,
+    /screen_order:\s*vec!\[\s*workspace::WorkspaceScreenKind::Agent,\s*workspace::WorkspaceScreenKind::Editor,\s*workspace::WorkspaceScreenKind::Browser,\s*workspace::WorkspaceScreenKind::Terminal,\s*\]/s,
+    "primary screen_order must stay AI, Code, Browser, Terminal",
+  );
+  assert.match(screenDock, /self\.screen_order\.clone\(\)/, "dock renders from screen_order");
+  assert.match(screenDock, /render_agent_screen_button/, "screen dock should render the AI button");
+  assert.match(screenDock, /render_screen_kind_button/, "screen dock should render non-AI kind buttons");
+  assert.match(screenDock, /let agent_screen_is_active = self\.agent_screen_is_active\(cx\);/);
+  assert.match(
+    screenDock,
+    /kind == WorkspaceScreenKind::Agent[\s\S]*?agent_screen_is_active[\s\S]*?!agent_screen_is_active && active_screen_kind == kind/s,
+    "non-AI dock buttons must not stay active while fullscreen AI is active",
+  );
   assert.doesNotMatch(screenDock, /extra_entries|render_screen_entry_button/, "screen dock should not leak dynamic extra screen buttons");
   assert.doesNotMatch(
     screenDock,
     /render_screen_kind_button\(\s*WorkspaceScreenKind::Onboarding/,
     "fullscreen onboarding WebPreview is disabled for now",
-  );
-  assert.match(
-    screenDock,
-    /\.child\(self\.render_agent_screen_button\(agent_screen_is_active, cx\)\)[\s\S]*?\.child\(self\.render_screen_kind_button\(\s*WorkspaceScreenKind::Editor,[\s\S]*?\.child\(self\.render_screen_kind_button\(\s*WorkspaceScreenKind::Browser,[\s\S]*?\.child\(self\.render_screen_kind_button\(\s*WorkspaceScreenKind::Terminal,/s,
-    "primary screen dock buttons must stay AI, Code, Browser, Terminal",
-  );
-  assert.match(screenDock, /let agent_screen_is_active = self\.agent_screen_is_active\(cx\);/);
-  assert.match(
-    screenDock,
-    /WorkspaceScreenKind::Editor,\s*!agent_screen_is_active\s*&& active_screen_kind == WorkspaceScreenKind::Editor/s,
-    "code dock button must not stay active while fullscreen AI is active",
-  );
-  assert.match(
-    screenDock,
-    /WorkspaceScreenKind::Browser,\s*!agent_screen_is_active\s*&& active_screen_kind == WorkspaceScreenKind::Browser/s,
-    "browser dock button must not stay active while fullscreen AI is active",
-  );
-  assert.match(
-    screenDock,
-    /WorkspaceScreenKind::Terminal,\s*!agent_screen_is_active\s*&& active_screen_kind == WorkspaceScreenKind::Terminal/s,
-    "terminal dock button must not stay active while fullscreen AI is active",
   );
   assert.doesNotMatch(
     titleBarSource,

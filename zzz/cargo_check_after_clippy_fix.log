@@ -1,0 +1,224 @@
+    Checking gpui v0.2.2 (G:\Dx\code\crates\gpui)
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking system_specs v0.1.0 (G:\Dx\code\crates\system_specs)
+    Checking crashes v0.1.0 (G:\Dx\code\crates\crashes)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking cli v0.1.0 (G:\Dx\code\crates\cli)
+    Checking input_latency_ui v0.1.0 (G:\Dx\code\crates\input_latency_ui)
+    Checking gpui_platform v0.1.0 (G:\Dx\code\crates\gpui_platform)
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking language v0.1.0 (G:\Dx\code\crates\language)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking livekit_client v0.1.0 (G:\Dx\code\crates\livekit_client)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking web_search_providers v0.1.0 (G:\Dx\code\crates\web_search_providers)
+    Checking zlog_settings v0.1.0 (G:\Dx\code\crates\zlog_settings)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking dap_adapters v0.1.0 (G:\Dx\code\crates\dap_adapters)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking theme_extension v0.1.0 (G:\Dx\code\crates\theme_extension)
+    Checking debug_adapter_extension v0.1.0 (G:\Dx\code\crates\debug_adapter_extension)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking json_schema_store v0.1.0 (G:\Dx\code\crates\json_schema_store)
+    Checking languages v0.1.0 (G:\Dx\code\crates\languages)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking call v0.1.0 (G:\Dx\code\crates\call)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking dev_container v0.1.0 (G:\Dx\code\crates\dev_container)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking command_palette v0.1.0 (G:\Dx\code\crates\command_palette)
+    Checking feedback v0.1.0 (G:\Dx\code\crates\feedback)
+    Checking which_key v0.1.0 (G:\Dx\code\crates\which_key)
+    Checking component_preview v0.1.0 (G:\Dx\code\crates\component_preview)
+    Checking miniprofiler_ui v0.1.0 (G:\Dx\code\crates\miniprofiler_ui)
+    Checking theme_selector v0.1.0 (G:\Dx\code\crates\theme_selector)
+    Checking settings_profile_selector v0.1.0 (G:\Dx\code\crates\settings_profile_selector)
+    Checking install_cli v0.1.0 (G:\Dx\code\crates\install_cli)
+    Checking ui_prompt v0.1.0 (G:\Dx\code\crates\ui_prompt)
+    Checking svg_preview v0.1.0 (G:\Dx\code\crates\svg_preview)
+    Checking etw_tracing v0.1.0 (G:\Dx\code\crates\etw_tracing)
+    Checking language_extension v0.1.0 (G:\Dx\code\crates\language_extension)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking markdown_preview v0.1.0 (G:\Dx\code\crates\markdown_preview)
+    Checking icon_picker v0.1.0 (G:\Dx\code\crates\icon_picker)
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking tasks_ui v0.1.0 (G:\Dx\code\crates\tasks_ui)
+    Checking debugger_tools v0.1.0 (G:\Dx\code\crates\debugger_tools)
+    Checking outline v0.1.0 (G:\Dx\code\crates\outline)
+    Checking debugger_ui v0.1.0 (G:\Dx\code\crates\debugger_ui)
+    Checking outline_panel v0.1.0 (G:\Dx\code\crates\outline_panel)
+    Checking auto_update_ui v0.1.0 (G:\Dx\code\crates\auto_update_ui)
+    Checking keymap_editor v0.1.0 (G:\Dx\code\crates\keymap_editor)
+    Checking project_panel v0.1.0 (G:\Dx\code\crates\project_panel)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking vim v0.1.0 (G:\Dx\code\crates\vim)
+    Checking repl v0.1.0 (G:\Dx\code\crates\repl)
+    Checking open_path_prompt v0.1.0 (G:\Dx\code\crates\open_path_prompt)
+    Checking recent_projects v0.1.0 (G:\Dx\code\crates\recent_projects)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+    Checking language_selector v0.1.0 (G:\Dx\code\crates\language_selector)
+    Checking snippets_ui v0.1.0 (G:\Dx\code\crates\snippets_ui)
+    Checking toolchain_selector v0.1.0 (G:\Dx\code\crates\toolchain_selector)
+    Checking file_finder v0.1.0 (G:\Dx\code\crates\file_finder)
+    Checking project_symbols v0.1.0 (G:\Dx\code\crates\project_symbols)
+    Checking lsp_locations v0.1.0 (G:\Dx\code\crates\lsp_locations)
+    Checking tab_switcher v0.1.0 (G:\Dx\code\crates\tab_switcher)
+    Checking activity_indicator v0.1.0 (G:\Dx\code\crates\activity_indicator)
+    Checking journal v0.1.0 (G:\Dx\code\crates\journal)
+    Checking image_viewer v0.1.0 (G:\Dx\code\crates\image_viewer)
+    Checking diagnostics v0.1.0 (G:\Dx\code\crates\diagnostics)
+    Checking language_tools v0.1.0 (G:\Dx\code\crates\language_tools)
+    Checking language_onboarding v0.1.0 (G:\Dx\code\crates\language_onboarding)
+    Checking inspector_ui v0.1.0 (G:\Dx\code\crates\inspector_ui)
+    Checking go_to_line v0.1.0 (G:\Dx\code\crates\go_to_line)
+    Checking csv_preview v0.1.0 (G:\Dx\code\crates\csv_preview)
+    Checking extensions_ui v0.1.0 (G:\Dx\code\crates\extensions_ui)
+    Checking encoding_selector v0.1.0 (G:\Dx\code\crates\encoding_selector)
+    Checking line_ending_selector v0.1.0 (G:\Dx\code\crates\line_ending_selector)
+    Checking web_preview v0.1.0 (G:\Dx\code\crates\web_preview)
+    Checking acp_tools v0.1.0 (G:\Dx\code\crates\acp_tools)
+    Checking shadcn_ui_panel v0.1.0 (G:\Dx\code\crates\shadcn_ui_panel)
+    Checking media_panel v0.1.0 (G:\Dx\code\crates\media_panel)
+    Checking font_panel v0.1.0 (G:\Dx\code\crates\font_panel)
+    Checking sidebar v0.1.0 (G:\Dx\code\crates\sidebar)
+    Checking onboarding v0.1.0 (G:\Dx\code\crates\onboarding)
+    Checking title_bar v0.1.0 (G:\Dx\code\crates\title_bar)
+    Checking collab_ui v0.1.0 (G:\Dx\code\crates\collab_ui)
+    Checking zed v1.13.0 (G:\Dx\code\crates\zed)
+warning: field `workspace_root` is never read
+ --> crates\zed\src\dx_config.rs:6:9
+  |
+5 | pub struct CodeDxConfig {
+  |            ------------ field in this struct
+6 |     pub workspace_root: PathBuf,
+  |         ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: methods `sr_path`, `write_sr`, and `read_status` are never used
+  --> crates\zed\src\dx_config.rs:21:12
+   |
+11 | impl CodeDxConfig {
+   | ----------------- methods in this implementation
+...
+21 |     pub fn sr_path(&self, name: &str) -> PathBuf {
+   |            ^^^^^^^
+...
+25 |     pub fn write_sr(&self, name: &str, entries: &[(&str, &str)]) -> std::io::Result<()> {
+   |            ^^^^^^^^
+...
+42 |     pub fn read_status(&self, name: &str) -> Option<HashMap<String, String>> {
+   |            ^^^^^^^^^^^
+
+warning: function `write_llm_value` is never used
+  --> crates\zed\src\dx_config.rs:59:4
+   |
+59 | fn write_llm_value(buf: &mut Vec<u8>, value: &str) -> std::io::Result<()> {
+   |    ^^^^^^^^^^^^^^^
+
+warning: constant `MAX_QUIT_WORKSPACE_WINDOWS` is never used
+   --> crates\zed\src\zed.rs:120:7
+    |
+120 | const MAX_QUIT_WORKSPACE_WINDOWS: usize = 512;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `collect_quit_workspace_windows` is never used
+    --> crates\zed\src\zed.rs:1793:4
+     |
+1793 | fn collect_quit_workspace_windows(cx: &mut App) -> Option<Vec<WindowHandle<MultiWorkspace>>> {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MAX_EAGER_THEME_BYTES` is never used
+    --> crates\zed\src\zed.rs:2882:7
+     |
+2882 | const MAX_EAGER_THEME_BYTES: u64 = 4 * 1024 * 1024;
+     |       ^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `MAX_EAGER_ICON_THEME_BYTES` is never used
+    --> crates\zed\src\zed.rs:2883:7
+     |
+2883 | const MAX_EAGER_ICON_THEME_BYTES: u64 = 8 * 1024 * 1024;
+     |       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `load_limited_startup_file_bytes` is never used
+    --> crates\zed\src\zed.rs:2885:10
+     |
+2885 | async fn load_limited_startup_file_bytes(
+     |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `zed` (bin "dx-code") generated 8 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5m 57s

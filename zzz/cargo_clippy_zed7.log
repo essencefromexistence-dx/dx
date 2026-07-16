@@ -1,0 +1,3177 @@
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking icon_picker v0.1.0 (G:\Dx\code\crates\icon_picker)
+    Checking outline_panel v0.1.0 (G:\Dx\code\crates\outline_panel)
+    Checking debugger_ui v0.1.0 (G:\Dx\code\crates\debugger_ui)
+    Checking repl v0.1.0 (G:\Dx\code\crates\repl)
+    Checking inspector_ui v0.1.0 (G:\Dx\code\crates\inspector_ui)
+    Checking vim v0.1.0 (G:\Dx\code\crates\vim)
+    Checking keymap_editor v0.1.0 (G:\Dx\code\crates\keymap_editor)
+    Checking auto_update_ui v0.1.0 (G:\Dx\code\crates\auto_update_ui)
+    Checking language_tools v0.1.0 (G:\Dx\code\crates\language_tools)
+    Checking extensions_ui v0.1.0 (G:\Dx\code\crates\extensions_ui)
+    Checking activity_indicator v0.1.0 (G:\Dx\code\crates\activity_indicator)
+    Checking project_symbols v0.1.0 (G:\Dx\code\crates\project_symbols)
+    Checking lsp_locations v0.1.0 (G:\Dx\code\crates\lsp_locations)
+    Checking tab_switcher v0.1.0 (G:\Dx\code\crates\tab_switcher)
+    Checking diagnostics v0.1.0 (G:\Dx\code\crates\diagnostics)
+    Checking project_panel v0.1.0 (G:\Dx\code\crates\project_panel)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+    Checking language_onboarding v0.1.0 (G:\Dx\code\crates\language_onboarding)
+    Checking csv_preview v0.1.0 (G:\Dx\code\crates\csv_preview)
+    Checking line_ending_selector v0.1.0 (G:\Dx\code\crates\line_ending_selector)
+    Checking encoding_selector v0.1.0 (G:\Dx\code\crates\encoding_selector)
+    Checking journal v0.1.0 (G:\Dx\code\crates\journal)
+    Checking go_to_line v0.1.0 (G:\Dx\code\crates\go_to_line)
+    Checking image_viewer v0.1.0 (G:\Dx\code\crates\image_viewer)
+    Checking open_path_prompt v0.1.0 (G:\Dx\code\crates\open_path_prompt)
+    Checking recent_projects v0.1.0 (G:\Dx\code\crates\recent_projects)
+    Checking snippets_ui v0.1.0 (G:\Dx\code\crates\snippets_ui)
+    Checking toolchain_selector v0.1.0 (G:\Dx\code\crates\toolchain_selector)
+    Checking language_selector v0.1.0 (G:\Dx\code\crates\language_selector)
+    Checking file_finder v0.1.0 (G:\Dx\code\crates\file_finder)
+error: unused import: `borrow::Cow`
+ --> crates\agent_ui\src\agent_panel.rs:2:5
+  |
+2 |     borrow::Cow,
+  |     ^^^^^^^^^^^
+  |
+  = note: `-D unused-imports` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(unused_imports)]`
+
+error: unused import: `AddContextServer`
+  --> crates\agent_ui\src\agent_panel.rs:91:5
+   |
+91 |     AddContextServer, AgentDiffPane, AutomationScreen, ConnectionsScreen, ConversationView,
+   |     ^^^^^^^^^^^^^^^^
+
+error: unused import: `ClientUserMessageId`
+ --> crates\agent_ui\src\conversation_view.rs:3:19
+  |
+3 |     AuthRequired, ClientUserMessageId, ElicitationEntryId, ElicitationStatus, ElicitationStore,
+  |                   ^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `LanguageModelRegistry`
+  --> crates\agent_ui\src\conversation_view.rs:38:52
+   |
+38 | use language_model::{LanguageModelCompletionError, LanguageModelRegistry};
+   |                                                    ^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `ContentBlock`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:20:43
+   |
+20 |     ClientUserMessageId as UserMessageId, ContentBlock, Elicitation, PlanEntry,
+   |                                           ^^^^^^^^^^^^
+
+error: unused import: `NativeAgentSessionList`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:24:5
+   |
+24 |     NativeAgentSessionList, SandboxStatusKey, SandboxStatusRefresh, SkillLoadingIssue,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `TerminalToolHeader`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:37:5
+   |
+37 |     TerminalToolHeader,
+   |     ^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Button` and `TintColor`
+ --> crates\agent_ui\src\dx_skill_panel.rs:9:22
+  |
+9 | ...ude::*, Button, ButtonStyle, Color, IconButton, IconName, IconSize, Label, LabelSize, ListItem, ListItemSpacing, TintColor, Toolti...
+  |            ^^^^^^                                                                                                   ^^^^^^^^^
+
+error: unused imports: `DxUiIcon` and `dx_icon`
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:12:10
+   |
+12 | use ui::{DxUiIcon, IconName, dx_icon};
+   |          ^^^^^^^^            ^^^^^^^
+
+error: unused import: `itertools::Itertools`
+  --> crates\agent_ui\src\agent_panel.rs:22:5
+   |
+22 | use itertools::Itertools;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+error: unused variable: `editor_bg_color`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:4650:13
+     |
+4650 |         let editor_bg_color = cx.theme().colors().editor_background;
+     |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_editor_bg_color`
+     |
+     = note: `-D unused-variables` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(unused_variables)]`
+
+error: variable does not need to be mutable
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:5127:13
+     |
+5127 |         let mut rendered = slots
+     |             ----^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+     |
+     = note: `-D unused-mut` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(unused_mut)]`
+
+error: unused variable: `is_voice_busy`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:6633:13
+     |
+6633 |         let is_voice_busy = self.composer_voice_state.is_busy();
+     |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_voice_busy`
+
+error: unused variable: `render_trailing_safe_area`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:7581:9
+     |
+7581 |         render_trailing_safe_area: bool,
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_render_trailing_safe_area`
+
+error: unused variable: `copy_response_button`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:8176:13
+     |
+8176 |         let copy_response_button = last_response_index.map(|response_index| {
+     |             ^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_copy_response_button`
+
+error: unused variable: `feedback_buttons`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:8247:13
+     |
+8247 |         let feedback_buttons = (self.is_subagent() && self.is_thread_feedback_enabled(cx)).then(
+     |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feedback_buttons`
+
+error: unused variable: `header_bg`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9787:13
+     |
+9787 |         let header_bg = cx
+     |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_header_bg`
+
+error: unused variable: `command_element`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9799:13
+     |
+9799 |         let command_element = self.render_collapsible_command(
+     |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_command_element`
+
+error: unused variable: `summary`
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:10849:17
+      |
+10849 |             let summary = if details.allow_fs_write_all {
+      |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_summary`
+
+error: unused variable: `dimensions_label`
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:12434:13
+      |
+12434 |         let dimensions_label = if let Some(size) = dimensions {
+      |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dimensions_label`
+
+error: unused variable: `configuration_view`
+    --> crates\agent_ui\src\conversation_view.rs:2336:9
+     |
+2336 |         configuration_view: Option<&AnyView>,
+     |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_configuration_view`
+
+error: unused variable: `request_elicitation_connection`
+    --> crates\agent_ui\src\conversation_view.rs:3501:13
+     |
+3501 |         let request_elicitation_connection = self.request_elicitation_connection();
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request_elicitation_connection`
+
+error: unused variable: `active_thread_renders_request_elicitations`
+    --> crates\agent_ui\src\conversation_view.rs:3502:13
+     |
+3502 |         let active_thread_renders_request_elicitations =
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_active_thread_renders_request_elicitations`
+
+error: unused variable: `content`
+    --> crates\agent_ui\src\conversation_view.rs:3504:13
+     |
+3504 |         let content = match &self.server_state {
+     |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_content`
+
+error: constant `MAX_LAST_USED_AGENT_JSON_BYTES` is never used
+   --> crates\agent_ui\src\agent_panel.rs:163:7
+    |
+163 | const MAX_LAST_USED_AGENT_JSON_BYTES: usize = 16 * 1024;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `-D dead-code` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[expect(dead_code)]` or `#[allow(dead_code)]`
+
+error: constant `MAX_LAST_CREATED_ENTRY_KIND_JSON_BYTES` is never used
+   --> crates\agent_ui\src\agent_panel.rs:182:7
+    |
+182 | const MAX_LAST_CREATED_ENTRY_KIND_JSON_BYTES: usize = 4 * 1024;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_SERIALIZED_AGENT_PANEL_JSON_BYTES` is never used
+   --> crates\agent_ui\src\agent_panel.rs:183:7
+    |
+183 | const MAX_SERIALIZED_AGENT_PANEL_JSON_BYTES: usize = 256 * 1024;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_THREAD_CLIPBOARD_DECOMPRESSED_BYTES` is never used
+   --> crates\agent_ui\src\agent_panel.rs:187:7
+    |
+187 | const MAX_THREAD_CLIPBOARD_DECOMPRESSED_BYTES: usize = 64 * 1024 * 1024;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_SKILL_URL_CLIPBOARD_BYTES` is never used
+   --> crates\agent_ui\src\agent_panel.rs:188:7
+    |
+188 | const MAX_SKILL_URL_CLIPBOARD_BYTES: usize = 64 * 1024;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `ensure_kvp_json_within_limit` is never used
+   --> crates\agent_ui\src\agent_panel.rs:296:4
+    |
+296 | fn ensure_kvp_json_within_limit(json: &str, max_bytes: usize, key: &str) -> Option<()> {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: variant `ToolsWorkspace` is never constructed
+    --> crates\agent_ui\src\agent_panel.rs:1269:5
+     |
+1264 | enum AgentPanelHostKind {
+     |      ------------------ variant in this enum
+...
+1269 |     ToolsWorkspace,
+     |     ^^^^^^^^^^^^^^
+     |
+     = note: `AgentPanelHostKind` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+error: method `which_font_size_used` is never used
+    --> crates\agent_ui\src\agent_panel.rs:1282:12
+     |
+1281 | impl OverlayView {
+     | ---------------- method in this implementation
+1282 |     pub fn which_font_size_used(&self) -> WhichFontSize {
+     |            ^^^^^^^^^^^^^^^^^^^^
+
+error: associated items `new_tools_workspace`, `message_editor_draft_content_blocks_snapshot_with_size_limit`, and `deploy_skill_creator_from_url` are never used
+    --> crates\agent_ui\src\agent_panel.rs:2001:19
+     |
+1479 | impl AgentPanel {
+     | --------------- associated items in this implementation
+...
+2001 |     pub(crate) fn new_tools_workspace(
+     |                   ^^^^^^^^^^^^^^^^^^^
+...
+2303 |     fn message_editor_draft_content_blocks_snapshot_with_size_limit(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+4059 |     fn deploy_skill_creator_from_url(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: method `render_toolbar_back_button` is never used
+    --> crates\agent_ui\src\agent_panel.rs:6645:8
+     |
+5921 | impl AgentPanel {
+     | --------------- method in this implementation
+...
+6645 |     fn render_toolbar_back_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: variant `Overlay` is never constructed
+    --> crates\agent_ui\src\agent_panel.rs:7027:13
+     |
+7026 |         enum ToolbarMode {
+     |              ----------- variant in this enum
+7027 |             Overlay,
+     |             ^^^^^^^
+
+error: struct `QueuedMessage` is never constructed
+   --> crates\agent_ui\src\conversation_view.rs:120:12
+    |
+120 | pub struct QueuedMessage {
+    |            ^^^^^^^^^^^^^
+
+error: multiple methods are never used
+    --> crates\agent_ui\src\conversation_view.rs:1622:8
+     |
+ 811 | impl ConversationView {
+     | --------------------- methods in this implementation
+...
+1622 |     fn send_queued_message_at_index(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1639 |     fn move_queued_message_to_main_editor(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2849 |     fn queued_messages_len(&self, cx: &App) -> usize {
+     |        ^^^^^^^^^^^^^^^^^^^
+...
+2855 |     fn update_queued_message(
+     |        ^^^^^^^^^^^^^^^^^^^^^
+...
+2879 |     fn queued_message_contents(&self, cx: &App) -> Vec<Vec<acp::ContentBlock>> {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^
+...
+2891 |     fn save_queued_message_at_index(&mut self, index: usize, cx: &mut Context<Self>) {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2911 |     fn sync_queued_message_editors(&mut self, _window: &mut Window, _cx: &mut Context<Self>) {}
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: variant `BackendPending` is never constructed
+  --> crates\agent_ui\src\conversation_view\composer_profile_options.rs:16:5
+   |
+14 | pub(super) enum ComposerSlotControlState {
+   |                 ------------------------ variant in this enum
+15 |     DisplayOnly,
+16 |     BackendPending,
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `ComposerSlotControlState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `render_agent_liquid_glass_chat_input_surface` is never used
+ --> crates\agent_ui\src\conversation_view\liquid_glass_composer.rs:8:15
+  |
+8 | pub(super) fn render_agent_liquid_glass_chat_input_surface(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `agent_liquid_glass_style_from_settings` is never used
+  --> crates\agent_ui\src\conversation_view\liquid_glass_composer.rs:23:15
+   |
+23 | pub(super) fn agent_liquid_glass_style_from_settings(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: field `expanded_compactions` is never read
+   --> crates\agent_ui\src\conversation_view\thread_view.rs:641:5
+    |
+609 | pub struct ThreadView {
+    |            ---------- field in this struct
+...
+641 |     expanded_compactions: HashSet<usize>,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+error: methods `handle_message_editor_move_up`, `sync_existing_elicitation_states`, `cancel_active_flow_voice_action`, `open_agent_www_tool_preview`, and `render_agent_www_preview_surface` are never used
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:2581:8
+     |
+ 902 | impl ThreadView {
+     | --------------- methods in this implementation
+...
+2581 |     fn handle_message_editor_move_up(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+2863 |     fn sync_existing_elicitation_states(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+5350 |     fn cancel_active_flow_voice_action(&mut self, cx: &mut Context<Self>) {
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+6796 |     fn open_agent_www_tool_preview(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+6888 |     fn render_agent_www_preview_surface(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: methods `sandbox_not_applied_warning` and `find_thread_sandbox_error` are never used
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:10019:8
+      |
+ 7526 | impl ThreadView {
+      | --------------- methods in this implementation
+...
+10019 |     fn sandbox_not_applied_warning(
+      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+10062 |     fn find_thread_sandbox_error(&self, cx: &App) -> Option<acp_thread::LinuxWslSandboxError> {
+      |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: fields `next_action` and `show_in_agent_rail` are never read
+   --> crates\agent_ui\src\dx_agent_bridge.rs:88:9
+    |
+ 77 | pub(crate) struct DxAgentBridgeSnapshot {
+    |                   --------------------- fields in this struct
+...
+ 88 |     pub next_action: String,
+    |         ^^^^^^^^^^^
+...
+108 |     pub show_in_agent_rail: bool,
+    |         ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `DxAgentBridgeSnapshot` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `safe_regeneration_command` and `commands` are never read
+   --> crates\agent_ui\src\dx_agent_bridge.rs:242:9
+    |
+235 | pub(crate) struct DxAgentContractSummary {
+    |                   ---------------------- fields in this struct
+...
+242 |     pub safe_regeneration_command: String,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+246 |     pub commands: Vec<String>,
+    |         ^^^^^^^^
+    |
+    = note: `DxAgentContractSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `recovery_fixture_count`, `next_action`, and `recovery_commands` are never read
+   --> crates\agent_ui\src\dx_agent_bridge.rs:284:9
+    |
+271 | pub(crate) struct DxAgentImportSummary {
+    |                   -------------------- fields in this struct
+...
+284 |     pub recovery_fixture_count: usize,
+    |         ^^^^^^^^^^^^^^^^^^^^^^
+285 |     pub freshness_state: String,
+286 |     pub next_action: String,
+    |         ^^^^^^^^^^^
+...
+289 |     pub recovery_commands: Vec<String>,
+    |         ^^^^^^^^^^^^^^^^^
+    |
+    = note: `DxAgentImportSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `receipt_count` and `next_action` are never read
+   --> crates\agent_ui\src\dx_agent_bridge.rs:303:9
+    |
+293 | pub(crate) struct DxAgentReleaseGateSummary {
+    |                   ------------------------- fields in this struct
+...
+303 |     pub receipt_count: usize,
+    |         ^^^^^^^^^^^^^
+...
+315 |     pub next_action: String,
+    |         ^^^^^^^^^^^
+    |
+    = note: `DxAgentReleaseGateSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `dx_agent_bridge_snapshot` is never used
+   --> crates\agent_ui\src\dx_agent_bridge.rs:393:15
+    |
+393 | pub(crate) fn dx_agent_bridge_snapshot(cx: &App) -> DxAgentBridgeSnapshot {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_snapshot_from_settings` is never used
+   --> crates\agent_ui\src\dx_agent_bridge.rs:411:15
+    |
+411 | pub(crate) fn dx_agent_bridge_snapshot_from_settings(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_dx_home` is never used
+   --> crates\agent_ui\src\dx_agent_bridge.rs:450:15
+    |
+450 | pub(crate) fn dx_agent_dx_home(cx: &App) -> Option<PathBuf> {
+    |               ^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_receipt_root` is never used
+   --> crates\agent_ui\src\dx_agent_bridge.rs:462:15
+    |
+462 | pub(crate) fn dx_agent_receipt_root(cx: &App) -> PathBuf {
+    |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: fields `id`, `kind`, `value`, `placeholder`, and `status` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\automation_contract.rs:45:9
+   |
+44 | pub(crate) struct DxAgentAutomationComposerField {
+   |                   ------------------------------ fields in this struct
+45 |     pub id: String,
+   |         ^^
+46 |     pub label: String,
+47 |     pub kind: String,
+   |         ^^^^
+48 |     pub required: bool,
+49 |     pub value: String,
+   |         ^^^^^
+50 |     pub placeholder: String,
+   |         ^^^^^^^^^^^
+51 |     pub status: String,
+   |         ^^^^^^
+   |
+   = note: `DxAgentAutomationComposerField` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: field `rrule` is never read
+  --> crates\agent_ui\src\dx_agent_bridge\automation_contract.rs:93:9
+   |
+90 | pub(crate) struct DxAgentAutomationSchedule {
+   |                   ------------------------- field in this struct
+...
+93 |     pub rrule: String,
+   |         ^^^^^
+   |
+   = note: `DxAgentAutomationSchedule` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: field `started_at` is never read
+   --> crates\agent_ui\src\dx_agent_bridge\automation_contract.rs:124:9
+    |
+121 | pub(crate) struct DxAgentAutomationHistoryEntry {
+    |                   ----------------------------- field in this struct
+...
+124 |     pub started_at: String,
+    |         ^^^^^^^^^^
+    |
+    = note: `DxAgentAutomationHistoryEntry` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `catalog_path` and `generated_at` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes.rs:41:9
+   |
+36 | pub(crate) struct DxWorkflowNodeCatalogSummary {
+   |                   ---------------------------- fields in this struct
+...
+41 |     pub catalog_path: PathBuf,
+   |         ^^^^^^^^^^^^
+...
+44 |     pub generated_at: Option<String>,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodeCatalogSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id` and `description` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\contract.rs:14:9
+   |
+13 | pub(crate) struct DxWorkflowNodePortSummary {
+   |                   ------------------------- fields in this struct
+14 |     pub id: String,
+   |         ^^
+...
+18 |     pub description: String,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodePortSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id` and `description` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\contract.rs:23:9
+   |
+22 | pub(crate) struct DxWorkflowNodePermissionSummary {
+   |                   ------------------------------- fields in this struct
+23 |     pub id: String,
+   |         ^^
+...
+27 |     pub description: String,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodePermissionSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id`, `parameter_id`, `source`, `action_id`, `receipt_id`, and `credential_required` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\contract.rs:32:9
+   |
+31 | pub(crate) struct DxWorkflowNodeDynamicOptionSummary {
+   |                   ---------------------------------- fields in this struct
+32 |     pub id: String,
+   |         ^^
+33 |     pub parameter_id: String,
+   |         ^^^^^^^^^^^^
+34 |     pub label: String,
+35 |     pub source: String,
+   |         ^^^^^^
+36 |     pub status: String,
+37 |     pub action_id: String,
+   |         ^^^^^^^^^
+38 |     pub receipt_id: String,
+   |         ^^^^^^^^^^
+39 |     pub credential_required: bool,
+   |         ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodeDynamicOptionSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id`, `generated_at`, and `path` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\contract.rs:44:9
+   |
+43 | pub(crate) struct DxWorkflowNodeReceiptSummary {
+   |                   ---------------------------- fields in this struct
+44 |     pub id: String,
+   |         ^^
+...
+48 |     pub generated_at: Option<String>,
+   |         ^^^^^^^^^^^^
+49 |     pub path: String,
+   |         ^^^^
+   |
+   = note: `DxWorkflowNodeReceiptSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id`, `kind`, `writes_receipts`, and `receipt_id` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\contract.rs:54:9
+   |
+53 | pub(crate) struct DxWorkflowNodeActionSummary {
+   |                   --------------------------- fields in this struct
+54 |     pub id: String,
+   |         ^^
+55 |     pub label: String,
+56 |     pub kind: String,
+   |         ^^^^
+...
+59 |     pub writes_receipts: bool,
+   |         ^^^^^^^^^^^^^^^
+60 |     pub receipt_id: String,
+   |         ^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodeActionSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `kind`, `secret`, and `placeholder` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\credentials.rs:13:9
+   |
+10 | pub(crate) struct DxWorkflowNodeCredentialInputSummary {
+   |                   ------------------------------------ fields in this struct
+...
+13 |     pub kind: String,
+   |         ^^^^
+14 |     pub required: bool,
+15 |     pub secret: bool,
+   |         ^^^^^^
+16 |     pub placeholder: String,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodeCredentialInputSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `kind`, `required`, `receipt_required`, `receipt_id`, and `configure_action_id` are never read
+  --> crates\agent_ui\src\dx_agent_bridge\workflow_nodes\credentials.rs:22:9
+   |
+20 | pub(crate) struct DxWorkflowNodeCredentialSummary {
+   |                   ------------------------------- fields in this struct
+21 |     pub id: String,
+22 |     pub kind: String,
+   |         ^^^^
+23 |     pub credential_type: String,
+24 |     pub required: bool,
+   |         ^^^^^^^^
+25 |     pub receipt_required: bool,
+   |         ^^^^^^^^^^^^^^^^
+26 |     pub status: String,
+27 |     pub receipt_id: String,
+   |         ^^^^^^^^^^
+28 |     pub configure_action_id: String,
+   |         ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `DxWorkflowNodeCredentialSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `init` is never used
+   --> crates\agent_ui\src\dx_check_panel_view.rs:120:8
+    |
+120 | pub fn init(cx: &mut App) {
+    |        ^^^^
+
+error: function `init` is never used
+   --> crates\agent_ui\src\dx_skill_panel.rs:398:15
+    |
+398 | pub(crate) fn init(cx: &mut App) {
+    |               ^^^^
+
+error: field `provider_gate` is never read
+  --> crates\agent_ui\src\dx_deploy_capabilities.rs:35:9
+   |
+28 | pub(crate) struct DxDeployCapabilityMatrixSnapshot {
+   |                   -------------------------------- field in this struct
+...
+35 |     pub provider_gate: Option<DxDeployProviderGateReceiptSummary>,
+   |         ^^^^^^^^^^^^^
+   |
+   = note: `DxDeployCapabilityMatrixSnapshot` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `deploy_provider_gate_state` is never used
+ --> crates\agent_ui\src\dx_deploy_gate_rail.rs:9:15
+  |
+9 | pub(crate) fn deploy_provider_gate_state(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_provider_gate_quick_fix` is never used
+  --> crates\agent_ui\src\dx_deploy_gate_rail.rs:67:4
+   |
+67 | fn deploy_provider_gate_quick_fix(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_quick_fix_detail` is never used
+  --> crates\agent_ui\src\dx_deploy_gate_rail.rs:90:4
+   |
+90 | fn deploy_quick_fix_detail(quick_fix: &DxDeployProviderGateQuickFix) -> String {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_provider_gate_status` is never used
+   --> crates\agent_ui\src\dx_deploy_gate_rail.rs:105:4
+    |
+105 | fn deploy_provider_gate_status(receipt: &DxDeployProviderGateReceiptSummary) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_provider_gate_row` is never used
+   --> crates\agent_ui\src\dx_deploy_gate_rail.rs:142:4
+    |
+142 | fn deploy_provider_gate_row(row: &DxDeployProviderGateRow, cx: &App) -> AnyElement {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_action_detail_parts` is never used
+ --> crates\agent_ui\src\dx_deploy_launch_action_labels.rs:1:15
+  |
+1 | pub(crate) fn launch_action_detail_parts(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `approval_state_label` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_action_labels.rs:25:4
+   |
+25 | fn approval_state_label(requires_user_approval: Option<bool>) -> &'static str {
+   |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `receipt_write_state_label` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_action_labels.rs:33:4
+   |
+33 | fn receipt_write_state_label(writes_receipts: Option<bool>) -> &'static str {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_launch_action_state` is never used
+ --> crates\agent_ui\src\dx_deploy_launch_actions_rail.rs:8:15
+  |
+8 | pub(crate) fn deploy_launch_action_state(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_action_row` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_actions_rail.rs:32:4
+   |
+32 | fn launch_action_row(id: SharedString, action: &DxDeployLaunchAction) -> AnyElement {
+   |    ^^^^^^^^^^^^^^^^^
+
+error: function `approval_evidence_rows` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_approval_evidence.rs:18:15
+   |
+18 | pub(crate) fn approval_evidence_rows(evidence: &DxDeployLaunchApprovalEvidence) -> Vec<String> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `push_evidence_row` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_approval_evidence.rs:41:4
+   |
+41 | fn push_evidence_row(rows: &mut Vec<String>, label: &str, evidence: &[String]) {
+   |    ^^^^^^^^^^^^^^^^^
+
+error: function `launch_bucket_summary_rows` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_buckets.rs:37:15
+   |
+37 | pub(crate) fn launch_bucket_summary_rows(buckets: &[DxDeployLaunchBucket]) -> Vec<String> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: fields `required`, `receipt_path`, and `next_action` are never read
+  --> crates\agent_ui\src\dx_deploy_launch_evidence.rs:10:9
+   |
+ 4 | pub(crate) struct DxDeployLaunchEvidenceSource {
+   |                   ---------------------------- fields in this struct
+...
+10 |     pub required: bool,
+   |         ^^^^^^^^
+11 |     pub command: Option<String>,
+12 |     pub receipt_path: Option<String>,
+   |         ^^^^^^^^^^^^
+...
+16 |     pub next_action: Option<String>,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxDeployLaunchEvidenceSource` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `approved` and `blocked_source_count` are never read
+  --> crates\agent_ui\src\dx_deploy_launch_evidence.rs:22:9
+   |
+20 | pub(crate) struct DxDeployLaunchChain {
+   |                   ------------------- fields in this struct
+21 |     pub status: Option<String>,
+22 |     pub approved: Option<bool>,
+   |         ^^^^^^^^
+...
+25 |     pub blocked_source_count: Option<usize>,
+   |         ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `DxDeployLaunchChain` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `deploy_launch_evidence_state` is never used
+ --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:7:15
+  |
+7 | pub(crate) fn deploy_launch_evidence_state(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_chain_blocker_rows` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:37:4
+   |
+37 | fn launch_chain_blocker_rows(chain: &DxDeployLaunchChain) -> AnyElement {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_evidence_summary` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:47:4
+   |
+47 | fn launch_evidence_summary(sources: &[DxDeployLaunchEvidenceSource]) -> String {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_chain_summary` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:66:4
+   |
+66 | fn launch_chain_summary(chain: &DxDeployLaunchChain) -> String {
+   |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_evidence_row` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:100:4
+    |
+100 | fn launch_evidence_row(id: SharedString, source: &DxDeployLaunchEvidenceSource) -> AnyElement {
+    |    ^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_evidence_source_blocker_rows` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:146:4
+    |
+146 | fn launch_evidence_source_blocker_rows(source: &DxDeployLaunchEvidenceSource) -> AnyElement {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `count_parts` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:156:4
+    |
+156 | fn count_parts(counts: &[(usize, &str)]) -> Option<String> {
+    |    ^^^^^^^^^^^
+
+error: function `approval_state_label` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_evidence_rail.rs:170:4
+    |
+170 | fn approval_state_label(approved: Option<bool>) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: fields `schema_version` and `command` are never read
+  --> crates\agent_ui\src\dx_deploy_launch_gate.rs:28:9
+   |
+25 | pub(crate) struct DxDeployLaunchGateSnapshot {
+   |                   -------------------------- fields in this struct
+...
+28 |     pub schema_version: Option<String>,
+   |         ^^^^^^^^^^^^^^
+29 |     pub command: Option<String>,
+   |         ^^^^^^^
+   |
+   = note: `DxDeployLaunchGateSnapshot` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `deploy_launch_gate_state` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_gate_rail.rs:17:15
+   |
+17 | pub(crate) fn deploy_launch_gate_state(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_gate_status` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_gate_rail.rs:129:4
+    |
+129 | fn launch_gate_status(snapshot: &DxDeployLaunchGateSnapshot) -> String {
+    |    ^^^^^^^^^^^^^^^^^^
+
+error: function `launch_gate_approval_summary` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_gate_rail.rs:152:4
+    |
+152 | fn launch_gate_approval_summary(snapshot: &DxDeployLaunchGateSnapshot) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `approval_state_label` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_gate_rail.rs:181:4
+    |
+181 | fn approval_state_label(approved: Option<bool>) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_gate_notice_row` is never used
+   --> crates\agent_ui\src\dx_deploy_launch_gate_rail.rs:189:4
+    |
+189 | fn launch_gate_notice_row(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: field `next_action` is never read
+  --> crates\agent_ui\src\dx_deploy_launch_notices.rs:14:9
+   |
+ 9 | pub(crate) struct DxDeployLaunchGateNotice {
+   |                   ------------------------ field in this struct
+...
+14 |     pub next_action: Option<String>,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxDeployLaunchGateNotice` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `launch_outcome_summary` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_outcome.rs:24:15
+   |
+24 | pub(crate) fn launch_outcome_summary(outcome: &DxDeployLaunchOutcome) -> Option<String> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `launch_scope_summary` is never used
+  --> crates\agent_ui\src\dx_deploy_launch_scope.rs:30:15
+   |
+30 | pub(crate) fn launch_scope_summary(scope: &DxDeployLaunchScope) -> Option<String> {
+   |               ^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_capability_matrix_state` is never used
+  --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:11:15
+   |
+11 | pub(crate) fn deploy_capability_matrix_state(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `invalid_deploy_receipt_row` is never used
+  --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:81:4
+   |
+81 | fn invalid_deploy_receipt_row(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_command_receipt_row` is never used
+   --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:105:4
+    |
+105 | fn deploy_command_receipt_row(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_command_receipt_status` is never used
+   --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:149:4
+    |
+149 | fn deploy_command_receipt_status(receipt: &DxDeployCommandReceiptSummary) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_capability_provider_row` is never used
+   --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:184:4
+    |
+184 | fn deploy_capability_provider_row(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_provider_summary` is never used
+   --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:233:4
+    |
+233 | fn deploy_provider_summary(snapshot: &DxDeployCapabilityMatrixSnapshot) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_provider_icon` is never used
+   --> crates\agent_ui\src\dx_deploy_matrix_rail.rs:257:4
+    |
+257 | fn deploy_provider_icon(provider_id: &str) -> IconName {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: multiple fields are never read
+  --> crates\agent_ui\src\dx_deploy_provider_gate_summary.rs:6:9
+   |
+ 5 | pub(crate) struct DxDeployProviderGateReceiptSummary {
+   |                   ---------------------------------- fields in this struct
+ 6 |     pub label: String,
+   |         ^^^^^
+ 7 |     pub schema_version: Option<String>,
+   |         ^^^^^^^^^^^^^^
+ 8 |     pub provider: Option<String>,
+   |         ^^^^^^^^
+ 9 |     pub command: Option<String>,
+   |         ^^^^^^^
+10 |     pub status: Option<String>,
+   |         ^^^^^^
+11 |     pub deploy_ready: Option<bool>,
+   |         ^^^^^^^^^^^^
+12 |     pub dry_run: Option<bool>,
+   |         ^^^^^^^
+13 |     pub deploy_ran: Option<bool>,
+   |         ^^^^^^^^^^
+14 |     pub zed_panel_kind: Option<String>,
+   |         ^^^^^^^^^^^^^^
+15 |     pub zed_title: Option<String>,
+   |         ^^^^^^^^^
+16 |     pub zed_summary: Option<String>,
+   |         ^^^^^^^^^^^
+17 |     pub blocker_count: usize,
+   |         ^^^^^^^^^^^^^
+18 |     pub warning_count: usize,
+   |         ^^^^^^^^^^^^^
+19 |     pub next_action: Option<String>,
+   |         ^^^^^^^^^^^
+20 |     pub rows: Vec<DxDeployProviderGateRow>,
+   |         ^^^^
+21 |     pub quick_fix_count: usize,
+   |         ^^^^^^^^^^^^^^^
+22 |     pub quick_fixes: Vec<DxDeployProviderGateQuickFix>,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxDeployProviderGateReceiptSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id`, `label`, `status`, and `detail` are never read
+  --> crates\agent_ui\src\dx_deploy_provider_gate_summary.rs:26:9
+   |
+25 | pub(crate) struct DxDeployProviderGateRow {
+   |                   ----------------------- fields in this struct
+26 |     pub id: String,
+   |         ^^
+27 |     pub label: String,
+   |         ^^^^^
+28 |     pub status: String,
+   |         ^^^^^^
+29 |     pub detail: Option<String>,
+   |         ^^^^^^
+   |
+   = note: `DxDeployProviderGateRow` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `id`, `label`, `command`, `risk_level`, `requires_user_approval`, and `writes_receipts` are never read
+  --> crates\agent_ui\src\dx_deploy_provider_gate_summary.rs:33:9
+   |
+32 | pub(crate) struct DxDeployProviderGateQuickFix {
+   |                   ---------------------------- fields in this struct
+33 |     pub id: String,
+   |         ^^
+34 |     pub label: String,
+   |         ^^^^^
+35 |     pub command: String,
+   |         ^^^^^^^
+36 |     pub risk_level: String,
+   |         ^^^^^^^^^^
+37 |     pub requires_user_approval: bool,
+   |         ^^^^^^^^^^^^^^^^^^^^^^
+38 |     pub writes_receipts: bool,
+   |         ^^^^^^^^^^^^^^^
+   |
+   = note: `DxDeployProviderGateQuickFix` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `deploy_target_state` is never used
+  --> crates\agent_ui\src\dx_deploy_rail.rs:11:15
+   |
+11 | pub(crate) fn deploy_target_state(snapshot: &DxDeployTargetSnapshot, cx: &App) -> AnyElement {
+   |               ^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_receipt_bucket_stack` is never used
+  --> crates\agent_ui\src\dx_deploy_rail.rs:56:4
+   |
+56 | fn deploy_receipt_bucket_stack(snapshot: &DxDeployTargetSnapshot, cx: &App) -> AnyElement {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_receipt_bucket_row` is never used
+  --> crates\agent_ui\src\dx_deploy_rail.rs:73:4
+   |
+73 | fn deploy_receipt_bucket_row(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_receipt_summary_detail` is never used
+   --> crates\agent_ui\src\dx_deploy_rail.rs:124:4
+    |
+124 | fn deploy_receipt_summary_detail(summary: &DxDeployReceiptSummary) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `deploy_target_row` is never used
+   --> crates\agent_ui\src\dx_deploy_rail.rs:146:4
+    |
+146 | fn deploy_target_row(id: SharedString, target: &DxDeployTarget, cx: &App) -> AnyElement {
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `deploy_platform_icon` is never used
+   --> crates\agent_ui\src\dx_deploy_rail.rs:177:4
+    |
+177 | fn deploy_platform_icon(platform: &str) -> IconName {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `metric_row` is never used
+ --> crates\agent_ui\src\dx_deploy_rail_ui.rs:4:15
+  |
+4 | pub(crate) fn metric_row(
+  |               ^^^^^^^^^^
+
+error: function `muted_card` is never used
+  --> crates\agent_ui\src\dx_deploy_rail_ui.rs:26:15
+   |
+26 | pub(crate) fn muted_card(label: impl Into<SharedString>, cx: &App) -> AnyElement {
+   |               ^^^^^^^^^^
+
+error: function `muted_label` is never used
+  --> crates\agent_ui\src\dx_deploy_rail_ui.rs:38:15
+   |
+38 | pub(crate) fn muted_label(label: impl Into<SharedString>) -> AnyElement {
+   |               ^^^^^^^^^^^
+
+error: function `source_row` is never used
+  --> crates\agent_ui\src\dx_deploy_rail_ui.rs:46:15
+   |
+46 | pub(crate) fn source_row(
+   |               ^^^^^^^^^^
+
+error: function `signal_row` is never used
+  --> crates\agent_ui\src\dx_deploy_rail_ui.rs:65:15
+   |
+65 | pub(crate) fn signal_row(
+   |               ^^^^^^^^^^
+
+error: fields `root_label`, `root_exists`, and `latest` are never read
+  --> crates\agent_ui\src\dx_deploy_receipt_buckets.rs:20:9
+   |
+18 | pub(crate) struct DxDeployReceiptBucket {
+   |                   --------------------- fields in this struct
+19 |     pub label: &'static str,
+20 |     pub root_label: &'static str,
+   |         ^^^^^^^^^^
+21 |     pub root_exists: bool,
+   |         ^^^^^^^^^^^
+...
+24 |     pub latest: Vec<String>,
+   |         ^^^^^^
+   |
+   = note: `DxDeployReceiptBucket` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: multiple fields are never read
+  --> crates\agent_ui\src\dx_deploy_receipt_summary.rs:9:9
+   |
+ 8 | pub(crate) struct DxDeployCommandReceiptSummary {
+   |                   ----------------------------- fields in this struct
+ 9 |     pub label: String,
+   |         ^^^^^
+10 |     pub schema_version: Option<String>,
+   |         ^^^^^^^^^^^^^^
+11 |     pub command: Option<String>,
+   |         ^^^^^^^
+12 |     pub status: Option<String>,
+13 |     pub latest_plan_status: Option<String>,
+   |         ^^^^^^^^^^^^^^^^^^
+14 |     pub dry_run: Option<bool>,
+   |         ^^^^^^^
+15 |     pub deploy_ran: Option<bool>,
+   |         ^^^^^^^^^^
+16 |     pub provider_count: usize,
+   |         ^^^^^^^^^^^^^^
+17 |     pub ready_plan_count: Option<usize>,
+   |         ^^^^^^^^^^^^^^^^
+18 |     pub blocked_plan_count: Option<usize>,
+   |         ^^^^^^^^^^^^^^^^^^
+19 |     pub fixture_label: Option<String>,
+   |         ^^^^^^^^^^^^^
+20 |     pub blocker_count: usize,
+   |         ^^^^^^^^^^^^^
+21 |     pub warning_count: usize,
+   |         ^^^^^^^^^^^^^
+22 |     pub next_action: Option<String>,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxDeployCommandReceiptSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `name`, `target_kinds`, `write_support`, and `needs_credentials_count` are never read
+  --> crates\agent_ui\src\dx_deploy_receipt_summary.rs:28:9
+   |
+26 | pub(crate) struct DxDeployCapabilityRow {
+   |                   --------------------- fields in this struct
+27 |     pub id: String,
+28 |     pub name: String,
+   |         ^^^^
+29 |     pub target_kinds: Vec<String>,
+   |         ^^^^^^^^^^^^
+30 |     pub current_support: String,
+31 |     pub write_support: String,
+   |         ^^^^^^^^^^^^^
+32 |     pub dry_run: bool,
+33 |     pub needs_credentials_count: usize,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `DxDeployCapabilityRow` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: field `detail` is never read
+  --> crates\agent_ui\src\dx_deploy_target_detection.rs:10:9
+   |
+ 7 | pub(crate) struct DxDeployTarget {
+   |                   -------------- field in this struct
+...
+10 |     pub detail: String,
+   |         ^^^^^^
+   |
+   = note: `DxDeployTarget` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: fields `workspace_root_count` and `receipt_root_exists` are never read
+  --> crates\agent_ui\src\dx_deploy_targets.rs:24:9
+   |
+22 | pub(crate) struct DxDeployTargetSnapshot {
+   |                   ---------------------- fields in this struct
+23 |     pub targets: Vec<DxDeployTarget>,
+24 |     pub workspace_root_count: usize,
+   |         ^^^^^^^^^^^^^^^^^^^^
+25 |     pub receipt_root_exists: bool,
+   |         ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `DxDeployTargetSnapshot` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: constant `DX_FORGE_PANEL_KEY` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:27:7
+   |
+27 | const DX_FORGE_PANEL_KEY: &str = "dx_forge_panel";
+   |       ^^^^^^^^^^^^^^^^^^
+
+error: constant `DEFAULT_PANEL_WIDTH` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:28:7
+   |
+28 | const DEFAULT_PANEL_WIDTH: gpui::Pixels = px(360.0);
+   |       ^^^^^^^^^^^^^^^^^^^
+
+error: constant `MIN_PANEL_WIDTH` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:29:7
+   |
+29 | const MIN_PANEL_WIDTH: gpui::Pixels = px(280.0);
+   |       ^^^^^^^^^^^^^^^
+
+error: function `init` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:31:15
+   |
+31 | pub(crate) fn init(cx: &mut App) {
+   |               ^^^^
+
+error: function `ensure_panel` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:49:4
+   |
+49 | fn ensure_panel(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
+   |    ^^^^^^^^^^^^
+
+error: struct `DxForgePanel` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:59:19
+   |
+59 | pub(crate) struct DxForgePanel {
+   |                   ^^^^^^^^^^^^
+
+error: multiple associated items are never used
+   --> crates\agent_ui\src\dx_forge_panel\panel.rs:71:8
+    |
+ 70 | impl DxForgePanel {
+    | ----------------- associated items in this implementation
+ 71 |     fn new(workspace: WeakEntity<Workspace>, cx: &mut Context<Self>) -> Self {
+    |        ^^^
+...
+ 84 |     fn workspace_roots(&self, cx: &App) -> Vec<String> {
+    |        ^^^^^^^^^^^^^^^
+...
+ 97 |     fn clear_active_item(&mut self) {
+    |        ^^^^^^^^^^^^^^^^^
+...
+101 |     fn sync_visible_rows(&mut self, visible_rows: Vec<DxForgeVisibleRow>) {
+    |        ^^^^^^^^^^^^^^^^^
+...
+124 |     pub(super) fn refresh(&mut self, cx: &mut Context<Self>) {
+    |                   ^^^^^^^
+...
+134 |     pub(super) fn set_active_tab(&mut self, tab: DxForgePanelTab, cx: &mut Context<Self>) {
+    |                   ^^^^^^^^^^^^^^
+...
+143 |     pub(super) fn toggle_item_checked(&mut self, item_key: DxForgeRowKey, cx: &mut Context<Self>) {
+    |                   ^^^^^^^^^^^^^^^^^^^
+...
+150 |     pub(super) fn activate_item(&mut self, item_key: DxForgeRowKey, cx: &mut Context<Self>) {
+    |                   ^^^^^^^^^^^^^
+...
+157 |     pub(super) fn row_scroll_anchor(&self, item_key: &DxForgeRowKey) -> Option<ScrollAnchor> {
+    |                   ^^^^^^^^^^^^^^^^^
+...
+161 |     pub(super) fn scroll_item_into_view(
+    |                   ^^^^^^^^^^^^^^^^^^^^^
+...
+172 |     pub(super) fn item_checked(&self, item_key: &DxForgeRowKey) -> bool {
+    |                   ^^^^^^^^^^^^
+...
+176 |     pub(super) fn item_active(&self, item_key: &DxForgeRowKey) -> bool {
+    |                   ^^^^^^^^^^^
+...
+180 |     pub(super) fn focus_panel(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    |                   ^^^^^^^^^^^
+...
+184 |     fn focus_panel_on_mouse_down(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: enum `DxForgePanelTab` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel.rs:195:17
+    |
+195 | pub(super) enum DxForgePanelTab {
+    |                 ^^^^^^^^^^^^^^^
+
+error: function `status_actions` is never used
+ --> crates\agent_ui\src\dx_forge_panel\controls.rs:8:15
+  |
+8 | pub(super) fn status_actions(
+  |               ^^^^^^^^^^^^^^
+
+error: function `open_exact_abs_path_button` is never used
+  --> crates\agent_ui\src\dx_forge_panel\controls.rs:65:15
+   |
+65 | pub(super) fn open_exact_abs_path_button(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `exact_abs_path` is never used
+  --> crates\agent_ui\src\dx_forge_panel\controls.rs:99:15
+   |
+99 | pub(super) fn exact_abs_path(path: &str) -> Option<PathBuf> {
+   |               ^^^^^^^^^^^^^^
+
+error: function `open_exact_abs_path` is never used
+   --> crates\agent_ui\src\dx_forge_panel\controls.rs:108:15
+    |
+108 | pub(super) fn open_exact_abs_path(
+    |               ^^^^^^^^^^^^^^^^^^^
+
+error: constant `MACHINE_CACHE_CACHE_TTL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:13:7
+   |
+13 | const MACHINE_CACHE_CACHE_TTL: Duration = Duration::from_secs(5);
+   |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MACHINE_CACHE_ROOTS` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:14:7
+   |
+14 | const MAX_MACHINE_CACHE_ROOTS: usize = 4;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MACHINE_CACHE_FILES` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:15:7
+   |
+15 | const MAX_MACHINE_CACHE_FILES: usize = 64;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MACHINE_CACHE_DIRECTORIES` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:16:7
+   |
+16 | const MAX_MACHINE_CACHE_DIRECTORIES: usize = 512;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MACHINE_CACHE_ENTRIES_PER_DIRECTORY` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:17:7
+   |
+17 | const MAX_MACHINE_CACHE_ENTRIES_PER_DIRECTORY: usize = 256;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MACHINE_CACHE_TOTAL_ENTRIES` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:18:7
+   |
+18 | const MAX_MACHINE_CACHE_TOTAL_ENTRIES: usize = 4096;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MACHINE_HEADER_BYTES` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:19:7
+   |
+19 | const MACHINE_HEADER_BYTES: usize = 8;
+   |       ^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MACHINE_METADATA_SUFFIX` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:20:7
+   |
+20 | const MACHINE_METADATA_SUFFIX: &str = ".machine.meta.json";
+   |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `SERIALIZER_DOCUMENT_MAGIC` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:21:7
+   |
+21 | const SERIALIZER_DOCUMENT_MAGIC: &[u8; 4] = b"DXM1";
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `TYPED_CACHE_MAGIC` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:22:7
+   |
+22 | const TYPED_CACHE_MAGIC: &[u8; 8] = b"DXMCACH1";
+   |       ^^^^^^^^^^^^^^^^^
+
+error: static `MACHINE_CACHE` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:24:8
+   |
+24 | static MACHINE_CACHE: OnceLock<Mutex<Option<(Instant, Vec<String>, Vec<DxForgeSourceRow>)>>> =
+   |        ^^^^^^^^^^^^^
+
+error: function `machine_cache_rows` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:27:15
+   |
+27 | pub(super) fn machine_cache_rows(workspace_roots: &[String]) -> Vec<DxForgeSourceRow> {
+   |               ^^^^^^^^^^^^^^^^^^
+
+error: function `invalidate_machine_cache_snapshot_cache` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:47:15
+   |
+47 | pub(super) fn invalidate_machine_cache_snapshot_cache() {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `scan_machine_cache_rows` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:54:4
+   |
+54 | fn scan_machine_cache_rows(workspace_roots: &[String]) -> Vec<DxForgeSourceRow> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: struct `MachineCacheSummary` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:76:8
+   |
+76 | struct MachineCacheSummary {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+error: function `collect_machine_files` is never used
+  --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:87:4
+   |
+87 | fn collect_machine_files(dx_root: &Path, summary: &mut MachineCacheSummary) {
+   |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `is_machine_path` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:139:4
+    |
+139 | fn is_machine_path(path: &Path) -> bool {
+    |    ^^^^^^^^^^^^^^^
+
+error: function `inspect_machine_file` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:145:4
+    |
+145 | fn inspect_machine_file(path: &Path, summary: &mut MachineCacheSummary) {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `machine_header` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:159:4
+    |
+159 | fn machine_header(path: &Path) -> Option<([u8; MACHINE_HEADER_BYTES], usize)> {
+    |    ^^^^^^^^^^^^^^
+
+error: function `machine_family` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:166:4
+    |
+166 | fn machine_family(header: &[u8; MACHINE_HEADER_BYTES], len: usize) -> MachineFamily {
+    |    ^^^^^^^^^^^^^^
+
+error: function `machine_cache_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:178:4
+    |
+178 | fn machine_cache_row(
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `family_detail` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:205:4
+    |
+205 | fn family_detail(summary: &MachineCacheSummary) -> String {
+    |    ^^^^^^^^^^^^^
+
+error: function `metadata_detail` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:227:4
+    |
+227 | fn metadata_detail(summary: &MachineCacheSummary) -> String {
+    |    ^^^^^^^^^^^^^^^
+
+error: function `warnings` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:243:4
+    |
+243 | fn warnings(summary: &MachineCacheSummary) -> Vec<String> {
+    |    ^^^^^^^^
+
+error: function `metadata_path_for` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:277:4
+    |
+277 | fn metadata_path_for(machine_path: &Path) -> PathBuf {
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `display_path` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:286:4
+    |
+286 | fn display_path(workspace_root: &Path, path: &Path) -> String {
+    |    ^^^^^^^^^^^^
+
+error: function `plural` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:291:4
+    |
+291 | fn plural(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
+    |    ^^^^^^
+
+error: enum `MachineFamily` is never used
+   --> crates\agent_ui\src\dx_forge_panel\machine_cache.rs:295:6
+    |
+295 | enum MachineFamily {
+    |      ^^^^^^^^^^^^^
+
+error: constant `MAX_PACKAGE_STATUS_BYTES` is never used
+ --> crates\agent_ui\src\dx_forge_panel\package_status.rs:9:7
+  |
+9 | const MAX_PACKAGE_STATUS_BYTES: u64 = 1024 * 1024;
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_WORKSPACE_ROOTS` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:10:7
+   |
+10 | const MAX_WORKSPACE_ROOTS: usize = 4;
+   |       ^^^^^^^^^^^^^^^^^^^
+
+error: function `package_status_rows` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:12:15
+   |
+12 | pub(super) fn package_status_rows(workspace_roots: &[String]) -> Vec<DxForgeSourceRow> {
+   |               ^^^^^^^^^^^^^^^^^^^
+
+error: function `invalidate_package_status_snapshot_cache` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:16:15
+   |
+16 | pub(super) fn invalidate_package_status_snapshot_cache() {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `scan_package_status_rows` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:20:15
+   |
+20 | pub(super) fn scan_package_status_rows(workspace_roots: &[String]) -> Vec<DxForgeSourceRow> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `package_status_candidate_rows` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:33:4
+   |
+33 | fn package_status_candidate_rows(context: &ForgeRootContext) -> Option<DxForgeSourceRow> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `read_package_status_json` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:49:4
+   |
+49 | fn read_package_status_json(path: &Path) -> Option<Value> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `package_status_row` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:62:4
+   |
+62 | fn package_status_row(workspace_root: &Path, path: &Path, value: &Value) -> DxForgeSourceRow {
+   |    ^^^^^^^^^^^^^^^^^^
+
+error: function `unreadable_package_status_row` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status.rs:92:4
+   |
+92 | fn unreadable_package_status_row(workspace_root: &Path, path: &Path) -> DxForgeSourceRow {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_package_status_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:109:4
+    |
+109 | fn forge_package_status_row(workspace_root: &Path, path: &Path, value: &Value) -> DxForgeSourceRow {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_package_status_warnings` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:149:4
+    |
+149 | fn forge_package_status_warnings(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_summary_missing_count` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:171:4
+    |
+171 | fn forge_summary_missing_count(value: &Value) -> usize {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `status_detail` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:186:4
+    |
+186 | fn status_detail(status: &str, package_count: usize, current_receipts: usize) -> String {
+    |    ^^^^^^^^^^^^^
+
+error: function `package_status_label` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:190:4
+    |
+190 | fn package_status_label(status: &str) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `node_modules_detail` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:200:4
+    |
+200 | fn node_modules_detail(value: &Value) -> &'static str {
+    |    ^^^^^^^^^^^^^^^^^^^
+
+error: function `package_status_evidence_detail` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:208:4
+    |
+208 | fn package_status_evidence_detail(value: &Value) -> String {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `current_receipt_count` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:229:4
+    |
+229 | fn current_receipt_count(value: &Value) -> usize {
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `warning_count` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:238:4
+    |
+238 | fn warning_count(value: &Value) -> usize {
+    |    ^^^^^^^^^^^^^
+
+error: function `package_rows` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:254:4
+    |
+254 | fn package_rows(value: &Value) -> &[Value] {
+    |    ^^^^^^^^^^^^
+
+error: function `display_path` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:263:4
+    |
+263 | fn display_path(workspace_root: &Path, path: &Path) -> String {
+    |    ^^^^^^^^^^^^
+
+error: function `string_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:268:4
+    |
+268 | fn string_field(value: &Value, path: &[&str]) -> Option<String> {
+    |    ^^^^^^^^^^^^
+
+error: function `bool_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:274:4
+    |
+274 | fn bool_field(value: &Value, path: &[&str]) -> Option<bool> {
+    |    ^^^^^^^^^^
+
+error: function `usize_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:278:4
+    |
+278 | fn usize_field(value: &Value, path: &[&str]) -> Option<usize> {
+    |    ^^^^^^^^^^^
+
+error: function `array_len_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:284:4
+    |
+284 | fn array_len_field(value: &Value, path: &[&str]) -> Option<usize> {
+    |    ^^^^^^^^^^^^^^^
+
+error: function `field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:288:4
+    |
+288 | fn field<'a>(value: &'a Value, path: &[&str]) -> Option<&'a Value> {
+    |    ^^^^^
+
+error: function `plural` is never used
+   --> crates\agent_ui\src\dx_forge_panel\package_status.rs:296:4
+    |
+296 | fn plural(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
+    |    ^^^^^^
+
+error: constant `PACKAGE_STATUS_CACHE_TTL` is never used
+ --> crates\agent_ui\src\dx_forge_panel\package_status_cache.rs:9:7
+  |
+9 | const PACKAGE_STATUS_CACHE_TTL: Duration = Duration::from_secs(5);
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: static `PACKAGE_STATUS_CACHE` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status_cache.rs:11:8
+   |
+11 | static PACKAGE_STATUS_CACHE: OnceLock<
+   |        ^^^^^^^^^^^^^^^^^^^^
+
+error: function `package_status_rows` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status_cache.rs:15:15
+   |
+15 | pub(super) fn package_status_rows(workspace_roots: &[String]) -> Vec<DxForgeSourceRow> {
+   |               ^^^^^^^^^^^^^^^^^^^
+
+error: function `invalidate_package_status_snapshot_cache` is never used
+  --> crates\agent_ui\src\dx_forge_panel\package_status_cache.rs:35:15
+   |
+35 | pub(super) fn invalidate_package_status_snapshot_cache() {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `render_panel` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:20:15
+   |
+20 | pub(super) fn render_panel(
+   |               ^^^^^^^^^^^^
+
+error: function `remote_registry_section` is never used
+  --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:85:4
+   |
+85 | fn remote_registry_section(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `package_status_section` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:111:4
+    |
+111 | fn package_status_section(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `machine_cache_section` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:137:4
+    |
+137 | fn machine_cache_section(
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `repository_section` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:163:4
+    |
+163 | fn repository_section(
+    |    ^^^^^^^^^^^^^^^^^^
+
+error: function `receipt_section` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:172:4
+    |
+172 | fn receipt_section(
+    |    ^^^^^^^^^^^^^^^
+
+error: function `restore_section` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:220:4
+    |
+220 | fn restore_section(
+    |    ^^^^^^^^^^^^^^^
+
+error: function `media_section` is never used
+   --> crates\agent_ui\src\dx_forge_panel\panel_view.rs:246:4
+    |
+246 | fn media_section(
+    |    ^^^^^^^^^^^^^
+
+error: enum `ProviderGroup` is never used
+ --> crates\agent_ui\src\dx_forge_panel\providers\catalog.rs:4:17
+  |
+4 | pub(super) enum ProviderGroup {
+  |                 ^^^^^^^^^^^^^
+
+error: associated constant `ALL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\catalog.rs:11:22
+   |
+10 | impl ProviderGroup {
+   | ------------------ associated constant in this implementation
+11 |     pub(super) const ALL: [ProviderGroup; 3] = [
+   |                      ^^^
+
+error: struct `ForgeProvider` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\providers\catalog.rs:18:19
+   |
+18 | pub(super) struct ForgeProvider {
+   |                   ^^^^^^^^^^^^^
+
+error: constant `PROVIDERS` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\catalog.rs:27:18
+   |
+27 | pub(super) const PROVIDERS: &[ForgeProvider] = &[
+   |                  ^^^^^^^^^
+
+error: methods `key`, `title`, and `provider_labels` are never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\catalog.rs:95:19
+    |
+ 94 | impl ProviderGroup {
+    | ------------------ methods in this implementation
+ 95 |     pub(super) fn key(self) -> &'static str {
+    |                   ^^^
+...
+103 |     pub(super) fn title(self) -> &'static str {
+    |                   ^^^^^
+...
+111 |     pub(super) fn provider_labels(self) -> String {
+    |                   ^^^^^^^^^^^^^^^
+
+error: function `providers_for` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\catalog.rs:119:15
+    |
+119 | pub(super) fn providers_for(group: ProviderGroup) -> impl Iterator<Item = &'static ForgeProvider> {
+    |               ^^^^^^^^^^^^^
+
+error: struct `RemoteTargetState` is never constructed
+ --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:8:19
+  |
+8 | pub(super) struct RemoteTargetState {
+  |                   ^^^^^^^^^^^^^^^^^
+
+error: function `remote_target_state` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:14:15
+   |
+14 | pub(super) fn remote_target_state(
+   |               ^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_target_state` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:35:15
+   |
+35 | pub(super) fn provider_target_state(
+   |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `group_target_state` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:58:4
+   |
+58 | fn group_target_state(
+   |    ^^^^^^^^^^^^^^^^^^
+
+error: function `provider_state_from_remote` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:93:4
+   |
+93 | fn provider_state_from_remote(remote: &DxForgeRemoteProvider) -> RemoteTargetState {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `code_target_state` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:116:4
+    |
+116 | fn code_target_state(snapshot: &DxForgePanelSnapshot) -> RemoteTargetState {
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `storage_target_state` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:156:4
+    |
+156 | fn storage_target_state(snapshot: &DxForgePanelSnapshot) -> RemoteTargetState {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+error: function `media_target_state` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:194:4
+    |
+194 | fn media_target_state(snapshot: &DxForgePanelSnapshot) -> RemoteTargetState {
+    |    ^^^^^^^^^^^^^^^^^^
+
+error: function `target_state` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:229:4
+    |
+229 | fn target_state(label: &'static str, detail: impl Into<String>, color: Color) -> RemoteTargetState {
+    |    ^^^^^^^^^^^^
+
+error: function `plural` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\state.rs:237:4
+    |
+237 | fn plural(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
+    |    ^^^^^^
+
+error: function `provider_tooltip_meta` is never used
+ --> crates\agent_ui\src\dx_forge_panel\providers\tooltips.rs:7:15
+  |
+7 | pub(super) fn provider_tooltip_meta(
+  |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `remote_target_tooltip` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\tooltips.rs:37:15
+   |
+37 | pub(super) fn remote_target_tooltip(
+   |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `remote_target_strip` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:21:34
+   |
+21 | pub(in crate::dx_forge_panel) fn remote_target_strip(
+   |                                  ^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_target_button` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:43:4
+   |
+43 | fn provider_target_button(
+   |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_group_controls` is never used
+  --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:80:4
+   |
+80 | fn provider_group_controls(
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_buttons_for_group` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:180:4
+    |
+180 | fn provider_buttons_for_group(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_group_actions` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:207:4
+    |
+207 | fn provider_group_actions(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `target_path_for_group` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:230:4
+    |
+230 | fn target_path_for_group<'a>(
+    |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `target_open_path_for_group` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:247:4
+    |
+247 | fn target_open_path_for_group<'a>(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `target_path_for_provider` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:264:4
+    |
+264 | fn target_path_for_provider<'a>(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `target_open_path_for_provider` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:273:4
+    |
+273 | fn target_open_path_for_provider<'a>(
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_target_indicator` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:282:4
+    |
+282 | fn provider_target_indicator(state: &RemoteTargetState) -> Indicator {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `group_icon` is never used
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:289:4
+    |
+289 | fn group_icon(group: ProviderGroup) -> IconName {
+    |    ^^^^^^^^^^
+
+error: constant `REMOTE_REGISTRY_CACHE_TTL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:18:7
+   |
+18 | const REMOTE_REGISTRY_CACHE_TTL: Duration = Duration::from_secs(5);
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_REMOTE_REGISTRY_BYTES` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:19:7
+   |
+19 | const MAX_REMOTE_REGISTRY_BYTES: u64 = 256 * 1024;
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_WORKSPACE_ROOTS` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:20:7
+   |
+20 | const MAX_WORKSPACE_ROOTS: usize = 4;
+   |       ^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_REMOTE_ROWS` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:21:7
+   |
+21 | const MAX_REMOTE_ROWS: usize = 64;
+   |       ^^^^^^^^^^^^^^^
+
+error: static `REMOTE_REGISTRY_CACHE` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:23:8
+   |
+23 | static REMOTE_REGISTRY_CACHE: OnceLock<
+   |        ^^^^^^^^^^^^^^^^^^^^^
+
+error: struct `ForgeRemoteRegistrySnapshot` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:28:19
+   |
+28 | pub(super) struct ForgeRemoteRegistrySnapshot {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `remote_registry_snapshot` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:34:15
+   |
+34 | pub(super) fn remote_registry_snapshot(workspace_roots: &[String]) -> ForgeRemoteRegistrySnapshot {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `invalidate_remote_registry_snapshot_cache` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:54:15
+   |
+54 | pub(super) fn invalidate_remote_registry_snapshot_cache() {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `scan_remote_registries` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:61:4
+   |
+61 | fn scan_remote_registries(workspace_roots: &[String]) -> ForgeRemoteRegistrySnapshot {
+   |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `read_remote_registry_json` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:90:4
+   |
+90 | fn read_remote_registry_json(path: &Path) -> Option<Value> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `remote_registry_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:103:4
+    |
+103 | fn remote_registry_row(
+    |    ^^^^^^^^^^^^^^^^^^^
+
+error: function `unreadable_registry_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:166:4
+    |
+166 | fn unreadable_registry_row(workspace_root: &Path, path: &Path) -> DxForgeSourceRow {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `registry_warnings` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:183:4
+    |
+183 | fn registry_warnings(
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `kind_counts` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:224:4
+    |
+224 | fn kind_counts(remotes: &[&Value]) -> Vec<String> {
+    |    ^^^^^^^^^^^
+
+error: function `kind_detail` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:238:4
+    |
+238 | fn kind_detail(kinds: &[String]) -> String {
+    |    ^^^^^^^^^^^
+
+error: function `remote_values` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:246:4
+    |
+246 | fn remote_values(value: &Value) -> Vec<&Value> {
+    |    ^^^^^^^^^^^^^
+
+error: function `enabled` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:254:4
+    |
+254 | fn enabled(value: &Value) -> bool {
+    |    ^^^^^^^
+
+error: function `display_path` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:258:4
+    |
+258 | fn display_path(workspace_root: &Path, path: &Path) -> String {
+    |    ^^^^^^^^^^^^
+
+error: function `string_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:265:4
+    |
+265 | fn string_field(value: &Value, path: &[&str]) -> Option<String> {
+    |    ^^^^^^^^^^^^
+
+error: function `primary_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:272:4
+    |
+272 | fn primary_field(value: &Value) -> Option<String> {
+    |    ^^^^^^^^^^^^^
+
+error: function `bool_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:280:4
+    |
+280 | fn bool_field(value: &Value, path: &[&str]) -> Option<bool> {
+    |    ^^^^^^^^^^
+
+error: function `array_len_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:284:4
+    |
+284 | fn array_len_field(value: &Value, path: &[&str]) -> Option<usize> {
+    |    ^^^^^^^^^^^^^^^
+
+error: function `field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:288:4
+    |
+288 | fn field<'a>(value: &'a Value, path: &[&str]) -> Option<&'a Value> {
+    |    ^^^^^
+
+error: function `plural` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:296:4
+    |
+296 | fn plural(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
+    |    ^^^^^^
+
+error: function `remote_providers` is never used
+ --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:5:15
+  |
+5 | pub(super) fn remote_providers(
+  |               ^^^^^^^^^^^^^^^^
+
+error: function `catalog_provider_info` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:37:15
+   |
+37 | pub(super) fn catalog_provider_info(
+   |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `canonical_kind_label` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:53:15
+   |
+53 | pub(super) fn canonical_kind_label(kind: &str) -> &'static str {
+   |               ^^^^^^^^^^^^^^^^^^^^
+
+error: function `provider_detail` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:72:4
+   |
+72 | fn provider_detail(kind: &str, mapping_count: usize, has_auth_backend: bool) -> String {
+   |    ^^^^^^^^^^^^^^^
+
+error: function `remote_kind_key` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:86:4
+   |
+86 | fn remote_kind_key(kind: &str) -> String {
+   |    ^^^^^^^^^^^^^^^
+
+error: function `string_field` is never used
+  --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:93:4
+   |
+93 | fn string_field(value: &Value, path: &[&str]) -> Option<String> {
+   |    ^^^^^^^^^^^^
+
+error: function `bool_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:100:4
+    |
+100 | fn bool_field(value: &Value, path: &[&str]) -> Option<bool> {
+    |    ^^^^^^^^^^
+
+error: function `array_len_field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:104:4
+    |
+104 | fn array_len_field(value: &Value, path: &[&str]) -> Option<usize> {
+    |    ^^^^^^^^^^^^^^^
+
+error: function `field` is never used
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry\providers.rs:108:4
+    |
+108 | fn field<'a>(value: &'a Value, path: &[&str]) -> Option<&'a Value> {
+    |    ^^^^^
+
+error: struct `ForgeRootContext` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\roots.rs:10:19
+   |
+10 | pub(super) struct ForgeRootContext {
+   |                   ^^^^^^^^^^^^^^^^
+
+error: methods `workspace_root`, `forge_package_status_candidates`, `forge_remote_registry_path`, `forge_machine_cache_root`, `is_configured`, and `is_workspace_configured` are never used
+  --> crates\agent_ui\src\dx_forge_panel\roots.rs:20:19
+   |
+19 | impl ForgeRootContext {
+   | --------------------- methods in this implementation
+20 |     pub(super) fn workspace_root(&self) -> &Path {
+   |                   ^^^^^^^^^^^^^^
+...
+24 |     pub(super) fn forge_package_status_candidates(&self) -> Vec<PathBuf> {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+37 |     pub(super) fn forge_remote_registry_path(&self) -> PathBuf {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+41 |     pub(super) fn forge_machine_cache_root(&self) -> PathBuf {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+45 |     fn is_configured(&self) -> bool {
+   |        ^^^^^^^^^^^^^
+...
+51 |     fn is_workspace_configured(&self) -> bool {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_root_contexts` is never used
+  --> crates\agent_ui\src\dx_forge_panel\roots.rs:56:15
+   |
+56 | pub(super) fn forge_root_contexts(workspace_roots: &[String]) -> Vec<ForgeRootContext> {
+   |               ^^^^^^^^^^^^^^^^^^^
+
+error: function `configured_forge_root_count` is never used
+  --> crates\agent_ui\src\dx_forge_panel\roots.rs:75:15
+   |
+75 | pub(super) fn configured_forge_root_count(workspace_roots: &[String]) -> usize {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_root_context` is never used
+  --> crates\agent_ui\src\dx_forge_panel\roots.rs:82:4
+   |
+82 | fn forge_root_context(context: DxProjectContext) -> ForgeRootContext {
+   |    ^^^^^^^^^^^^^^^^^^
+
+error: function `shared_fallback_context` is never used
+  --> crates\agent_ui\src\dx_forge_panel\roots.rs:97:4
+   |
+97 | fn shared_fallback_context() -> Option<ForgeRootContext> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `shared_fallback_forge_root` is never used
+   --> crates\agent_ui\src\dx_forge_panel\roots.rs:110:4
+    |
+110 | fn shared_fallback_forge_root() -> PathBuf {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `shared_fallback_metadata_forge_root` is never used
+   --> crates\agent_ui\src\dx_forge_panel\roots.rs:114:4
+    |
+114 | fn shared_fallback_metadata_forge_root() -> PathBuf {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `push_context` is never used
+   --> crates\agent_ui\src\dx_forge_panel\roots.rs:120:4
+    |
+120 | fn push_context(
+    |    ^^^^^^^^^^^^
+
+error: multiple methods are never used
+   --> crates\agent_ui\src\dx_forge_panel\row_selection.rs:7:19
+    |
+  6 | impl DxForgePanel {
+    | ----------------- methods in this implementation
+  7 |     pub(super) fn dispatch_context(&self) -> KeyContext {
+    |                   ^^^^^^^^^^^^^^^^
+...
+ 14 |     fn active_visible_row_index(&self) -> Option<usize> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 21 |     fn active_visible_row_key(&self) -> Option<DxForgeRowKey> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+...
+ 28 |     fn set_active_visible_row(
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+...
+ 45 |     fn select_first_visible_row(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 51 |     fn select_last_visible_row(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 57 |     pub(super) fn select_next(
+    |                   ^^^^^^^^^^^
+...
+ 77 |     pub(super) fn select_previous(
+    |                   ^^^^^^^^^^^^^^^
+...
+ 95 |     pub(super) fn select_first(
+    |                   ^^^^^^^^^^^^
+...
+105 |     pub(super) fn select_last(
+    |                   ^^^^^^^^^^^
+...
+115 |     pub(super) fn toggle_active_item_checked(
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `panel_header` is never used
+ --> crates\agent_ui\src\dx_forge_panel\rows.rs:7:15
+  |
+7 | pub(super) fn panel_header(
+  |               ^^^^^^^^^^^^
+
+error: function `status_strip` is never used
+  --> crates\agent_ui\src\dx_forge_panel\rows.rs:44:15
+   |
+44 | pub(super) fn status_strip(
+   |               ^^^^^^^^^^^^
+
+error: function `section_header` is never used
+  --> crates\agent_ui\src\dx_forge_panel\rows.rs:82:15
+   |
+82 | pub(super) fn section_header(
+   |               ^^^^^^^^^^^^^^
+
+error: function `empty_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\rows.rs:107:15
+    |
+107 | pub(super) fn empty_row(id: &'static str, label: &'static str, _cx: &App) -> AnyElement {
+    |               ^^^^^^^^^
+
+error: function `state_presentation` is never used
+   --> crates\agent_ui\src\dx_forge_panel\rows.rs:127:15
+    |
+127 | pub(super) fn state_presentation(state: DxForgePanelState) -> (IconName, Color, &'static str) {
+    |               ^^^^^^^^^^^^^^^^^^
+
+error: constant `FORGE_HISTORY_LABEL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:11:7
+   |
+11 | const FORGE_HISTORY_LABEL: &str = "Forge History";
+   |       ^^^^^^^^^^^^^^^^^^^
+
+error: constant `PACKAGE_STATUS_LABEL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:12:18
+   |
+12 | pub(super) const PACKAGE_STATUS_LABEL: &str = "Package Status";
+   |                  ^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MACHINE_CACHES_LABEL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:13:18
+   |
+13 | pub(super) const MACHINE_CACHES_LABEL: &str = "Machine Caches";
+   |                  ^^^^^^^^^^^^^^^^^^^^
+
+error: constant `REMOTE_REGISTRY_LABEL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:14:18
+   |
+14 | pub(super) const REMOTE_REGISTRY_LABEL: &str = "Remote Registry";
+   |                  ^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `RESTORE_PREVIEWS_LABEL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:15:7
+   |
+15 | const RESTORE_PREVIEWS_LABEL: &str = "Restore Previews";
+   |       ^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MEDIA_OUTPUTS_LABEL` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:16:7
+   |
+16 | const MEDIA_OUTPUTS_LABEL: &str = "Media Outputs";
+   |       ^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_PANEL_ROWS` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:17:7
+   |
+17 | const MAX_PANEL_ROWS: usize = 4;
+   |       ^^^^^^^^^^^^^^
+
+error: struct `DxForgePanelSnapshot` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:20:19
+   |
+20 | pub(super) struct DxForgePanelSnapshot {
+   |                   ^^^^^^^^^^^^^^^^^^^^
+
+error: methods `remote_provider_for`, `remote_registry_count_for_group`, and `configured_provider_count_for_group` are never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:41:19
+   |
+40 | impl DxForgePanelSnapshot {
+   | ------------------------- methods in this implementation
+41 |     pub(super) fn remote_provider_for(&self, provider_id: &str) -> Option<&DxForgeRemoteProvider> {
+   |                   ^^^^^^^^^^^^^^^^^^^
+...
+57 |     pub(super) fn remote_registry_count_for_group(&self, group_key: &str) -> usize {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+64 |     pub(super) fn configured_provider_count_for_group(&self, group_key: &str) -> usize {
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `remote_provider_rank` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:72:4
+   |
+72 | fn remote_provider_rank(provider: &DxForgeRemoteProvider) -> u8 {
+   |    ^^^^^^^^^^^^^^^^^^^^
+
+error: enum `DxForgePanelState` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:82:17
+   |
+82 | pub(super) enum DxForgePanelState {
+   |                 ^^^^^^^^^^^^^^^^^
+
+error: struct `DxForgeReceiptRow` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:92:19
+   |
+92 | pub(super) struct DxForgeReceiptRow {
+   |                   ^^^^^^^^^^^^^^^^^
+
+error: struct `DxForgeSourceRow` is never constructed
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:103:19
+    |
+103 | pub(super) struct DxForgeSourceRow {
+    |                   ^^^^^^^^^^^^^^^^
+
+error: struct `DxForgeRemoteProvider` is never constructed
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:113:19
+    |
+113 | pub(super) struct DxForgeRemoteProvider {
+    |                   ^^^^^^^^^^^^^^^^^^^^^
+
+error: struct `DxForgeReceiptDrilldown` is never constructed
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:126:19
+    |
+126 | pub(super) struct DxForgeReceiptDrilldown {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_panel_snapshot` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:131:15
+    |
+131 | pub(super) fn forge_panel_snapshot(workspace_roots: &[String]) -> DxForgePanelSnapshot {
+    |               ^^^^^^^^^^^^^^^^^^^^
+
+error: function `receipt_rows` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:208:4
+    |
+208 | fn receipt_rows(bucket: &DxToolHistoryBucket) -> Vec<DxForgeReceiptRow> {
+    |    ^^^^^^^^^^^^
+
+error: function `source_rows_for_set` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:225:4
+    |
+225 | fn source_rows_for_set(
+    |    ^^^^^^^^^^^^^^^^^^^
+
+error: function `source_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot.rs:241:4
+    |
+241 | fn source_row(source: &DxSourceItem) -> DxForgeSourceRow {
+    |    ^^^^^^^^^^
+
+error: constant `MAX_WORKSPACE_ROOTS` is never used
+ --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:5:7
+  |
+5 | const MAX_WORKSPACE_ROOTS: usize = 4;
+  |       ^^^^^^^^^^^^^^^^^^^
+
+error: struct `ForgeStateInputs` is never constructed
+ --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:7:19
+  |
+7 | pub(super) struct ForgeStateInputs<'a> {
+  |                   ^^^^^^^^^^^^^^^^
+
+error: function `forge_state` is never used
+  --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:26:15
+   |
+26 | pub(super) fn forge_state(input: ForgeStateInputs<'_>) -> (DxForgePanelState, String) {
+   |               ^^^^^^^^^^^
+
+error: function `workspace_scope` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:142:15
+    |
+142 | pub(super) fn workspace_scope(workspace_roots: &[String]) -> String {
+    |               ^^^^^^^^^^^^^^^
+
+error: function `configured_root_scope` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:151:15
+    |
+151 | pub(super) fn configured_root_scope(
+    |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `forge_history_root_path` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:163:15
+    |
+163 | pub(super) fn forge_history_root_path(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `source_label` is never used
+   --> crates\agent_ui\src\dx_forge_panel\snapshot_state.rs:180:4
+    |
+180 | fn source_label(label: &'static str, count: usize) -> String {
+    |    ^^^^^^^^^^^^
+
+error: struct `SourceSection` is never constructed
+  --> crates\agent_ui\src\dx_forge_panel\source_section.rs:13:19
+   |
+13 | pub(super) struct SourceSection {
+   |                   ^^^^^^^^^^^^^
+
+error: function `source_section` is never used
+  --> crates\agent_ui\src\dx_forge_panel\source_section.rs:25:15
+   |
+25 | pub(super) fn source_section(
+   |               ^^^^^^^^^^^^^^
+
+error: function `render_tab_bar` is never used
+  --> crates\agent_ui\src\dx_forge_panel\tabs.rs:12:15
+   |
+12 | pub(super) fn render_tab_bar(
+   |               ^^^^^^^^^^^^^^
+
+error: function `forge_tab` is never used
+  --> crates\agent_ui\src\dx_forge_panel\tabs.rs:54:4
+   |
+54 | fn forge_tab(
+   |    ^^^^^^^^^
+
+error: function `tab_position` is never used
+  --> crates\agent_ui\src\dx_forge_panel\tabs.rs:98:4
+   |
+98 | fn tab_position(tab: DxForgePanelTab, active_tab: DxForgePanelTab) -> TabPosition {
+   |    ^^^^^^^^^^^^
+
+error: function `tab_index` is never used
+   --> crates\agent_ui\src\dx_forge_panel\tabs.rs:111:4
+    |
+111 | fn tab_index(tab: DxForgePanelTab) -> usize {
+    |    ^^^^^^^^^
+
+error: function `tab_icon` is never used
+   --> crates\agent_ui\src\dx_forge_panel\tabs.rs:120:4
+    |
+120 | fn tab_icon(tab: DxForgePanelTab) -> IconName {
+    |    ^^^^^^^^
+
+error: constant `REMOTE_TARGET_GROUP_KEYS` is never used
+ --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:6:7
+  |
+6 | const REMOTE_TARGET_GROUP_KEYS: [&str; 3] = ["code", "storage", "media"];
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: struct `DxForgeVisibleRow` is never constructed
+ --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:9:19
+  |
+9 | pub(super) struct DxForgeVisibleRow {
+  |                   ^^^^^^^^^^^^^^^^^
+
+error: associated items `new` and `item_key` are never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:15:8
+   |
+14 | impl DxForgeVisibleRow {
+   | ---------------------- associated items in this implementation
+15 |     fn new(item_key: DxForgeRowKey, kind: DxForgeVisibleRowKind) -> Self {
+   |        ^^^
+...
+19 |     pub(super) fn item_key(&self) -> &DxForgeRowKey {
+   |                   ^^^^^^^^
+
+error: enum `DxForgeVisibleRowKind` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:25:17
+   |
+25 | pub(super) enum DxForgeVisibleRowKind {
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+error: enum `DxForgeRowKey` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:36:17
+   |
+36 | pub(super) enum DxForgeRowKey {
+   |                 ^^^^^^^^^^^^^
+
+error: function `receipt_item_key` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:42:15
+   |
+42 | pub(super) fn receipt_item_key(receipt: &DxForgeReceiptRow) -> DxForgeRowKey {
+   |               ^^^^^^^^^^^^^^^^
+
+error: function `source_item_key` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:46:15
+   |
+46 | pub(super) fn source_item_key(source: &DxForgeSourceRow) -> DxForgeRowKey {
+   |               ^^^^^^^^^^^^^^^
+
+error: function `remote_target_item_key` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:50:15
+   |
+50 | pub(super) fn remote_target_item_key(group_key: &str) -> DxForgeRowKey {
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `visible_row_count_for_tab` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:54:15
+   |
+54 | pub(super) fn visible_row_count_for_tab(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `visible_rows_for_tab` is never used
+  --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:70:15
+   |
+70 | pub(super) fn visible_rows_for_tab(
+   |               ^^^^^^^^^^^^^^^^^^^^
+
+error: function `push_source_rows` is never used
+   --> crates\agent_ui\src\dx_forge_panel\visible_rows.rs:127:4
+    |
+127 | fn push_source_rows(
+    |    ^^^^^^^^^^^^^^^^
+
+error: function `selectable_receipt_row` is never used
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:12:15
+   |
+12 | pub(super) fn selectable_receipt_row(
+   |               ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `selectable_source_row` is never used
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:48:15
+   |
+48 | pub(super) fn selectable_source_row(
+   |               ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `selection_checkbox` is never used
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:84:15
+   |
+84 | pub(super) fn selection_checkbox(
+   |               ^^^^^^^^^^^^^^^^^^
+
+error: function `selectable_row` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:130:4
+    |
+130 | fn selectable_row(
+    |    ^^^^^^^^^^^^^^
+
+error: function `row_scroll_anchor` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:176:15
+    |
+176 | pub(super) fn row_scroll_anchor(
+    |               ^^^^^^^^^^^^^^^^^
+
+error: function `selectable_row_actions` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:186:4
+    |
+186 | fn selectable_row_actions(
+    |    ^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `item_checked` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:208:4
+    |
+208 | fn item_checked(panel: &WeakEntity<DxForgePanel>, item_key: &DxForgeRowKey, cx: &App) -> bool {
+    |    ^^^^^^^^^^^^
+
+error: function `item_active` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:214:4
+    |
+214 | fn item_active(panel: &WeakEntity<DxForgePanel>, item_key: &DxForgeRowKey, cx: &App) -> bool {
+    |    ^^^^^^^^^^^
+
+error: function `receipt_tooltip` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:220:4
+    |
+220 | fn receipt_tooltip(receipt: &DxForgeReceiptRow) -> String {
+    |    ^^^^^^^^^^^^^^^
+
+error: function `source_tooltip` is never used
+   --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:234:4
+    |
+234 | fn source_tooltip(source: &DxForgeSourceRow) -> String {
+    |    ^^^^^^^^^^^^^^
+
+error: field `snapshot_scan_truncated` is never read
+  --> crates\agent_ui\src\dx_launch_receipts.rs:39:9
+   |
+27 | pub(crate) struct DxLaunchReceiptReviewSnapshot {
+   |                   ----------------------------- field in this struct
+...
+39 |     pub snapshot_scan_truncated: bool,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `DxLaunchReceiptReviewSnapshot` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `dx_agent_automation_state` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\automations.rs:13:25
+   |
+13 | pub(in super::super) fn dx_agent_automation_state(
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_automation_composer_contract` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\automations\composer.rs:8:15
+  |
+8 | pub(super) fn dx_agent_automation_composer_contract(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `automation_schedule_label` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\automations\labels.rs:3:15
+  |
+3 | pub(super) fn automation_schedule_label(automation: &DxAgentAutomation) -> String {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `automation_destination_label` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\automations\labels.rs:16:15
+   |
+16 | pub(super) fn automation_destination_label(automation: &DxAgentAutomation) -> String {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `automation_receipt_label` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\automations\labels.rs:32:15
+   |
+32 | pub(super) fn automation_receipt_label(automation: &DxAgentAutomation) -> String {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `automation_history_label` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\automations\labels.rs:45:15
+   |
+45 | pub(super) fn automation_history_label(automation: &DxAgentAutomation) -> String {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_automation_row` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:13:15
+   |
+13 | pub(super) fn dx_agent_automation_row(
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `automation_status` is never used
+   --> crates\agent_ui\src\dx_launch_workspace\agents\automations\rows.rs:150:4
+    |
+150 | fn automation_status(automation: &DxAgentAutomation) -> AiSettingItemStatus {
+    |    ^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_state` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\bridge.rs:15:25
+   |
+15 | pub(in super::super) fn dx_agent_bridge_state(
+   |                         ^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_detail_rows` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\details.rs:8:15
+  |
+8 | pub(super) fn dx_agent_bridge_detail_rows(snapshot: &DxAgentBridgeSnapshot) -> Vec<AnyElement> {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_review_row` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\review.rs:12:15
+   |
+12 | pub(super) fn dx_agent_bridge_review_row(snapshot: &DxAgentBridgeSnapshot) -> AnyElement {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_next_action` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\review\next_action.rs:3:15
+  |
+3 | pub(super) fn dx_agent_bridge_next_action(snapshot: &DxAgentBridgeSnapshot) -> String {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_warning_row` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\review\warnings.rs:8:15
+  |
+8 | pub(super) fn dx_agent_bridge_warning_row(snapshot: &DxAgentBridgeSnapshot) -> Option<AnyElement> {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `warning_row` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\review\warnings.rs:57:4
+   |
+57 | fn warning_row(id: &'static str, label: impl Into<SharedString>) -> AnyElement {
+   |    ^^^^^^^^^^^
+
+error: function `dx_agent_bridge_summary_rows` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\summary.rs:15:15
+   |
+15 | pub(super) fn dx_agent_bridge_summary_rows(snapshot: &DxAgentBridgeSnapshot) -> Vec<AnyElement> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_contract_rows` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\summary\contract.rs:7:15
+  |
+7 | pub(super) fn dx_agent_bridge_contract_rows(snapshot: &DxAgentBridgeSnapshot) -> Vec<AnyElement> {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_gate_rows` is never used
+  --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\summary\gate.rs:10:15
+   |
+10 | pub(super) fn dx_agent_bridge_gate_rows(snapshot: &DxAgentBridgeSnapshot) -> Vec<AnyElement> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_gate_recovery_rows` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\summary\gate\recovery.rs:7:15
+  |
+7 | pub(super) fn dx_agent_bridge_gate_recovery_rows(
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_import_rows` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\summary\import.rs:7:15
+  |
+7 | pub(super) fn dx_agent_bridge_import_rows(snapshot: &DxAgentBridgeSnapshot) -> Vec<AnyElement> {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `dx_agent_bridge_overview_rows` is never used
+ --> crates\agent_ui\src\dx_launch_workspace\agents\bridge\summary\overview.rs:7:15
+  |
+7 | pub(super) fn dx_agent_bridge_overview_rows(snapshot: &DxAgentBridgeSnapshot) -> Vec<AnyElement> {
+  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `yes_no` is never used
+   --> crates\agent_ui\src\dx_launch_workspace\tools_screen\workflow_nodes.rs:507:4
+    |
+507 | fn yes_no(value: bool) -> &'static str {
+    |    ^^^^^^
+
+error: field `source_path` is never read
+  --> crates\agent_ui\src\dx_receipt_history.rs:29:9
+   |
+27 | pub(crate) struct DxToolHistoryReceiptSummary {
+   |                   --------------------------- field in this struct
+28 |     pub label: String,
+29 |     pub source_path: String,
+   |         ^^^^^^^^^^^
+   |
+   = note: `DxToolHistoryReceiptSummary` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+error: function `invalidate_tool_history_snapshot_cache` is never used
+  --> crates\agent_ui\src\dx_receipt_history.rs:67:15
+   |
+67 | pub(crate) fn invalidate_tool_history_snapshot_cache() {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `invalidate_source_set_snapshot_cache` is never used
+  --> crates\agent_ui\src\dx_source_sets\cache.rs:38:15
+   |
+38 | pub(crate) fn invalidate_source_set_snapshot_cache() {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: methods `clear_auto_expand_tracking`, `is_auto_expanded_thinking_block`, `auto_expand_streaming_thought`, and `toggle_thinking_block_expansion` are never used
+   --> crates\agent_ui\src\entry_view_state.rs:108:19
+    |
+ 53 | impl EntryViewState {
+    | ------------------- methods in this implementation
+...
+108 |     pub(crate) fn clear_auto_expand_tracking(&mut self) {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+112 |     pub(crate) fn is_auto_expanded_thinking_block(&self, key: (usize, usize)) -> bool {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+116 |     pub(crate) fn auto_expand_streaming_thought(&mut self, thread: &AcpThread, cx: &App) -> bool {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+157 |     pub(crate) fn toggle_thinking_block_expansion(&mut self, key: (usize, usize), cx: &App) {
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MARKDOWN_MENTION_LINK_PASTE_BYTES` is never used
+   --> crates\agent_ui\src\message_editor.rs:256:7
+    |
+256 | const MAX_MARKDOWN_MENTION_LINK_PASTE_BYTES: usize = 256 * 1024;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MESSAGE_EDITOR_PASTE_CLIPBOARD_ENTRIES` is never used
+   --> crates\agent_ui\src\message_editor.rs:257:7
+    |
+257 | const MAX_MESSAGE_EDITOR_PASTE_CLIPBOARD_ENTRIES: usize = 64;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `MAX_MESSAGE_EDITOR_PASTE_EXTERNAL_PATHS` is never used
+   --> crates\agent_ui\src\message_editor.rs:258:7
+    |
+258 | const MAX_MESSAGE_EDITOR_PASTE_EXTERNAL_PATHS: usize = 512;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: function `should_parse_pasted_mention_links` is never used
+   --> crates\agent_ui\src\message_editor.rs:260:4
+    |
+260 | fn should_parse_pasted_mention_links(text: &str) -> bool {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: enum `PastedContextEntry` is never used
+   --> crates\agent_ui\src\message_editor.rs:331:6
+    |
+331 | enum PastedContextEntry {
+    |      ^^^^^^^^^^^^^^^^^^
+
+error: function `limited_pasted_context_entries` is never used
+   --> crates\agent_ui\src\message_editor.rs:336:4
+    |
+336 | fn limited_pasted_context_entries(clipboard: &ClipboardItem) -> Vec<PastedContextEntry> {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: methods `on_toggle_expand` and `on_stop` are never used
+  --> crates\agent_ui\src\ui\terminal_tool_header.rs:84:12
+   |
+34 | impl TerminalToolHeader {
+   | ----------------------- methods in this implementation
+...
+84 |     pub fn on_toggle_expand(
+   |            ^^^^^^^^^^^^^^^^
+...
+92 |     pub fn on_stop(
+   |            ^^^^^^^
+
+error: redundant clone
+   --> crates\agent_ui\src\agent_configuration.rs:960:72
+    |
+960 | ...                   let save_draft_command = save_draft_command.clone();
+    |                                                                  ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\agent_configuration.rs:960:54
+    |
+960 | ...                   let save_draft_command = save_draft_command.clone();
+    |                                                ^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+    = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: redundant clone
+   --> crates\agent_ui\src\agent_configuration.rs:975:64
+    |
+975 | ...                   let enable_command = enable_command.clone();
+    |                                                          ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\agent_configuration.rs:975:50
+    |
+975 | ...                   let enable_command = enable_command.clone();
+    |                                            ^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: manually reimplementing `div_ceil`
+   --> crates\agent_ui\src\agent_panel.rs:186:5
+    |
+186 |     ((MAX_THREAD_CLIPBOARD_DECODED_BYTES + 2) / 3) * 4;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using `.div_ceil()`: `MAX_THREAD_CLIPBOARD_DECODED_BYTES.div_ceil(3)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#manual_div_ceil
+    = note: `-D clippy::manual-div-ceil` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_div_ceil)]`
+
+error: the variable `card_count` is used as a loop counter
+    --> crates\agent_ui\src\agent_panel.rs:8078:9
+     |
+8078 | /         for source in source_sets
+8079 | |             .sets
+8080 | |             .iter()
+8081 | |             .flat_map(|set| set.sources.iter())
+8082 | |             .filter(|source| !matches!(source.kind, DxSourceKind::WorkspaceRoot))
+8083 | |             .take(2)
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#explicit_counter_loop
+     = note: `-D clippy::explicit-counter-loop` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::explicit_counter_loop)]`
+help: consider using
+     |
+8078 ~         for (card_count, source) in source_sets
+8079 +             .sets
+8080 +             .iter()
+8081 +             .flat_map(|set| set.sources.iter())
+8082 +             .filter(|source| !matches!(source.kind, DxSourceKind::WorkspaceRoot))
+8083 +             .take(2).enumerate()
+     |
+
+error: redundant clone
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:1187:51
+     |
+1187 |             flow_voice_runtime: flow_voice_runtime.clone(),
+     |                                                   ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:1187:33
+     |
+1187 |             flow_voice_runtime: flow_voice_runtime.clone(),
+     |                                 ^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: unnecessary use of `cloned`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:5075:43
+     |
+5075 | ...                   for plugin in plugins.iter().cloned() {
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_to_owned
+     = note: `-D clippy::unnecessary-to-owned` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::unnecessary_to_owned)]`
+help: remove any references to the binding
+     |
+5075 ~                             for plugin in plugins.iter() {
+5076 |                                 let status_plugin = plugin.clone();
+ ...
+5085 |
+5086 ~                                 let action_label = configured_plugin_menu_action_label(plugin);
+     |
+
+error: use of a disallowed method `std::process::Command::output`
+   --> crates\agent_ui\src\dx_agent_bridge\commands.rs:216:10
+    |
+216 |         .output()
+    |          ^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+    = note: requested on the command line with `-D clippy::disallowed-methods`
+help: Spawning `std::process::Command` can block the current thread for an unknown duration
+    |
+216 |         .smol::process::Command::output()
+    |          ++++++++++++++++++++++++
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_check_panel_view\view_rows.rs:344:31
+    |
+344 |             Label::new(message.clone())
+    |                               ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_check_panel_view\view_rows.rs:344:24
+    |
+344 |             Label::new(message.clone())
+    |                        ^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+  --> crates\agent_ui\src\dx_skill_panel.rs:57:79
+   |
+57 |         let http_client = _workspace.project().read(cx).client().http_client().clone();
+   |                                                                               ^^^^^^^^ help: remove this
+   |
+note: this value is dropped without further use
+  --> crates\agent_ui\src\dx_skill_panel.rs:57:27
+   |
+57 |         let http_client = _workspace.project().read(cx).client().http_client().clone();
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:110:41
+    |
+110 | ...                   id: full_name.clone().into(),
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `full_name.clone()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+    = note: `-D clippy::useless-conversion` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::useless_conversion)]`
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:111:43
+    |
+111 | ...                   name: full_name.into(),
+    |                             ^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `full_name`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:112:50
+    |
+112 | ...                   description: description.clone().into(),
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `description.clone()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+
+error: useless conversion to the same type: `std::string::String`
+   --> crates\agent_ui\src\dx_skill_panel.rs:113:45
+    |
+113 | ...                   source: html_url.clone().into(),
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^ help: consider removing `.into()`: `html_url.clone()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_conversion
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_skill_panel.rs:191:37
+    |
+191 |                 let target2 = target.clone();
+    |                                     ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_skill_panel.rs:191:31
+    |
+191 |                 let target2 = target.clone();
+    |                               ^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: using `contains()` instead of `iter().any()` is more efficient
+   --> crates\agent_ui\src\dx_deploy_receipt_summary.rs:118:30
+    |
+118 |             .filter(|status| statuses.iter().any(|expected| *expected == *status))
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `statuses.contains(status)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#manual_contains
+    = note: `-D clippy::manual-contains` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_contains)]`
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:119:31
+    |
+119 |         let title = open_title.clone();
+    |                               ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:119:21
+    |
+119 |         let title = open_title.clone();
+    |                     ^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:230:26
+    |
+230 | fn target_path_for_group<'a>(
+    |                          ^^
+231 |     group: ProviderGroup,
+232 |     snapshot: &'a DxForgePanelSnapshot,
+    |                ^^
+233 | ) -> Option<&'a str> {
+    |              ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+    = note: `-D clippy::needless-lifetimes` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::needless_lifetimes)]`
+help: elide the lifetimes
+    |
+230 ~ fn target_path_for_group(
+231 |     group: ProviderGroup,
+232 ~     snapshot: &DxForgePanelSnapshot,
+233 ~ ) -> Option<&str> {
+    |
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_forge_panel\providers\view.rs:247:31
+    |
+247 | fn target_open_path_for_group<'a>(
+    |                               ^^
+248 |     group: ProviderGroup,
+249 |     snapshot: &'a DxForgePanelSnapshot,
+    |                ^^
+250 | ) -> Option<&'a str> {
+    |              ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+247 ~ fn target_open_path_for_group(
+248 |     group: ProviderGroup,
+249 ~     snapshot: &DxForgePanelSnapshot,
+250 ~ ) -> Option<&str> {
+    |
+
+error: redundant clone
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:149:42
+    |
+149 |             open_path: registry_open_path.clone(),
+    |                                          ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\agent_ui\src\dx_forge_panel\remote_registry.rs:149:24
+    |
+149 |             open_path: registry_open_path.clone(),
+    |                        ^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: redundant clone
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:96:32
+   |
+96 |     let checkbox_key = item_key.clone();
+   |                                ^^^^^^^^ help: remove this
+   |
+note: this value is dropped without further use
+  --> crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:96:24
+   |
+96 |     let checkbox_key = item_key.clone();
+   |                        ^^^^^^^^
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_launch_workspace\automation_screen\catalog\entry.rs:195:19
+    |
+195 |     fn automation<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentAutomation> {
+    |                   ^^                   ^^                                   ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+195 -     fn automation<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentAutomation> {
+195 +     fn automation(self, snapshot: &DxAgentBridgeSnapshot) -> Option<&DxAgentAutomation> {
+    |
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:273:17
+    |
+273 |     fn provider<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentProvider> {
+    |                 ^^                   ^^                                   ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+273 -     fn provider<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentProvider> {
+273 +     fn provider(self, snapshot: &DxAgentBridgeSnapshot) -> Option<&DxAgentProvider> {
+    |
+
+error: the following explicit lifetimes could be elided: 'a
+   --> crates\agent_ui\src\dx_launch_workspace\connections_screen\catalog\entry.rs:280:23
+    |
+280 |     fn social_account<'a>(
+    |                       ^^
+281 |         self,
+282 |         snapshot: &'a DxAgentBridgeSnapshot,
+    |                    ^^
+283 |     ) -> Option<&'a DxAgentSocialAccount> {
+    |                  ^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+    |
+280 ~     fn social_account(
+281 |         self,
+282 ~         snapshot: &DxAgentBridgeSnapshot,
+283 ~     ) -> Option<&DxAgentSocialAccount> {
+    |
+
+error: consider using `sort_by_key`
+   --> crates\agent_ui\src\dx_style_panel\apply_gate.rs:203:5
+    |
+203 |     paths.sort_by(|left, right| receipt_modified(right).cmp(&receipt_modified(left)));
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_sort_by
+    = note: `-D clippy::unnecessary-sort-by` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::unnecessary_sort_by)]`
+help: try
+    |
+203 -     paths.sort_by(|left, right| receipt_modified(right).cmp(&receipt_modified(left)));
+203 +     paths.sort_by_key(|right| std::cmp::Reverse(receipt_modified(right)));
+    |
+
+error: consider using `sort_by_key`
+   --> crates\agent_ui\src\dx_www_launch_evidence.rs:141:5
+    |
+141 |     latest.sort_by(|left, right| right.0.cmp(&left.0));
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_sort_by
+help: try
+    |
+141 -     latest.sort_by(|left, right| right.0.cmp(&left.0));
+141 +     latest.sort_by_key(|right| std::cmp::Reverse(right.0));
+    |
+
+error: use of a disallowed method `std::process::Command::stderr`
+   --> crates\agent_ui\src\flow_speech_runtime.rs:858:14
+    |
+858 |             .stderr(Stdio::null());
+    |              ^^^^^^ help: `smol::process::Command::from()` does not preserve stdio configuration: `smol::process::Command::stderr`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+
+error: use of a disallowed method `std::process::Command::stdout`
+   --> crates\agent_ui\src\flow_speech_runtime.rs:857:14
+    |
+857 |             .stdout(Stdio::piped())
+    |              ^^^^^^ help: `smol::process::Command::from()` does not preserve stdio configuration: `smol::process::Command::stdout`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+
+error: use of a disallowed method `std::process::Command::stdin`
+   --> crates\agent_ui\src\flow_speech_runtime.rs:856:14
+    |
+856 |             .stdin(Stdio::piped())
+    |              ^^^^^ help: `smol::process::Command::from()` does not preserve stdio configuration: `smol::process::Command::stdin`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+
+error: use of a disallowed method `std::process::Command::spawn`
+   --> crates\agent_ui\src\flow_speech_runtime.rs:860:14
+    |
+860 |             .spawn()
+    |              ^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+help: Spawning `std::process::Command` can block the current thread for an unknown duration
+    |
+860 |             .smol::process::Command::spawn()
+    |              ++++++++++++++++++++++++
+
+error: use of a disallowed method `std::process::Command::stderr`
+    --> crates\agent_ui\src\flow_speech_runtime.rs:1540:10
+     |
+1540 |         .stderr(Stdio::piped());
+     |          ^^^^^^ help: `smol::process::Command::from()` does not preserve stdio configuration: `smol::process::Command::stderr`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+
+error: use of a disallowed method `std::process::Command::stdout`
+    --> crates\agent_ui\src\flow_speech_runtime.rs:1539:10
+     |
+1539 |         .stdout(Stdio::piped())
+     |          ^^^^^^ help: `smol::process::Command::from()` does not preserve stdio configuration: `smol::process::Command::stdout`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+
+error: use of a disallowed method `std::process::Command::stdin`
+    --> crates\agent_ui\src\flow_speech_runtime.rs:1538:10
+     |
+1538 |         .stdin(Stdio::null())
+     |          ^^^^^ help: `smol::process::Command::from()` does not preserve stdio configuration: `smol::process::Command::stdin`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+
+error: use of a disallowed method `std::process::Command::spawn`
+    --> crates\agent_ui\src\flow_speech_runtime.rs:1542:10
+     |
+1542 |         .spawn()
+     |          ^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#disallowed_methods
+help: Spawning `std::process::Command` can block the current thread for an unknown duration
+     |
+1542 |         .smol::process::Command::spawn()
+     |          ++++++++++++++++++++++++
+
+error: useless use of `format!`
+  --> crates\agent_ui\src\tools_screen.rs:31:23
+   |
+31 |                 name: format!("{base}").into(),
+   |                       ^^^^^^^^^^^^^^^^^ help: consider using `.to_string()`: `base.to_string()`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#useless_format
+   = note: `-D clippy::useless-format` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::useless_format)]`
+
+error: could not compile `agent_ui` (lib) due to 399 previous errors

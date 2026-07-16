@@ -1,0 +1,229 @@
+   Compiling ui v0.1.0 (G:\Dx\code\crates\ui)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+warning: trait `AccessibleMode` is never used
+   --> crates\workspace\src\workspace_settings.rs:152:11
+    |
+152 | pub trait AccessibleMode {
+    |           ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `observe_accessible_mode` is never used
+   --> crates\workspace\src\workspace_settings.rs:168:8
+    |
+168 | pub fn observe_accessible_mode(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `workspace` (lib) generated 2 warnings
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+warning: unused import: `borrow::Cow`
+ --> crates\agent_ui\src\agent_panel.rs:2:5
+  |
+2 |     borrow::Cow,
+  |     ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `AddContextServer`
+  --> crates\agent_ui\src\agent_panel.rs:91:5
+   |
+91 |     AddContextServer, AgentDiffPane, AutomationScreen, ConnectionsScreen, ConversationView,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: unused import: `ClientUserMessageId`
+ --> crates\agent_ui\src\conversation_view.rs:3:19
+  |
+3 |     AuthRequired, ClientUserMessageId, ElicitationEntryId, ElicitationStatus, ElicitationStore,
+  |                   ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `LanguageModelRegistry`
+  --> crates\agent_ui\src\conversation_view.rs:38:52
+   |
+38 | use language_model::{LanguageModelCompletionError, LanguageModelRegistry};
+   |                                                    ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `ContentBlock`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:20:43
+   |
+20 |     ClientUserMessageId as UserMessageId, ContentBlock, Elicitation, PlanEntry,
+   |                                           ^^^^^^^^^^^^
+
+warning: unused import: `NativeAgentSessionList`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:24:5
+   |
+24 |     NativeAgentSessionList, SandboxStatusKey, SandboxStatusRefresh, SkillLoadingIssue,
+   |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `TerminalToolHeader`
+  --> crates\agent_ui\src\conversation_view\thread_view.rs:37:5
+   |
+37 |     TerminalToolHeader,
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `Button` and `TintColor`
+ --> crates\agent_ui\src\dx_skill_panel.rs:9:22
+  |
+9 | ...ude::*, Button, ButtonStyle, Color, IconButton, IconName, IconSize, Label, LabelSize, ListItem, ListItemSpacing, TintColor, Toolti...
+  |            ^^^^^^                                                                                                   ^^^^^^^^^
+
+warning: unused imports: `DxUiIcon` and `dx_icon`
+  --> crates\agent_ui\src\dx_forge_panel\panel.rs:12:10
+   |
+12 | use ui::{DxUiIcon, IconName, dx_icon};
+   |          ^^^^^^^^            ^^^^^^^
+
+error[E0277]: the trait bound `Cow<'static, str>: From<gpui::SharedString>` is not satisfied
+    --> crates\agent_ui\src\agent_panel.rs:4404:29
+     |
+4402 |                         workspace::Toast::new(
+     |                         --------------------- required by a bound introduced by this call
+4403 |                             workspace::notifications::NotificationId::unique::<ClipboardToast>(),
+4404 |                             message,
+     |                             ^^^^^^^ the trait `From<gpui::SharedString>` is not implemented for `Cow<'static, str>`
+     |
+help: the trait `From<gpui::SharedString>` is not implemented for `Cow<'static, str>`
+      but trait `From<serde_urlencoded::ser::key::Key<'_>>` is implemented for it
+    --> G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_urlencoded-0.7.1\src\ser\key.rs:23:1
+     |
+  23 | impl<'key> From<Key<'key>> for Cow<'static, str> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for that trait implementation, expected `serde_urlencoded::ser::key::Key<'_>`, found `gpui::SharedString`
+     = note: required for `gpui::SharedString` to implement `Into<Cow<'static, str>>`
+note: required by a bound in `workspace::Toast::new`
+    --> crates\workspace\src\workspace.rs:609:19
+     |
+ 609 |     pub fn new<I: Into<Cow<'static, str>>>(id: NotificationId, message: I) -> Self {
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Toast::new`
+
+warning: unused import: `itertools::Itertools`
+  --> crates\agent_ui\src\agent_panel.rs:22:5
+   |
+22 | use itertools::Itertools;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `editor_bg_color`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:4650:13
+     |
+4650 |         let editor_bg_color = cx.theme().colors().editor_background;
+     |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_editor_bg_color`
+     |
+     = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:5127:13
+     |
+5127 |         let mut rendered = slots
+     |             ----^^^^^^^^
+     |             |
+     |             help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `is_voice_busy`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:6633:13
+     |
+6633 |         let is_voice_busy = self.composer_voice_state.is_busy();
+     |             ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_is_voice_busy`
+
+warning: unused variable: `render_trailing_safe_area`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:7581:9
+     |
+7581 |         render_trailing_safe_area: bool,
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_render_trailing_safe_area`
+
+warning: unused variable: `copy_response_button`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:8176:13
+     |
+8176 |         let copy_response_button = last_response_index.map(|response_index| {
+     |             ^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_copy_response_button`
+
+warning: unused variable: `feedback_buttons`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:8247:13
+     |
+8247 |         let feedback_buttons = (self.is_subagent() && self.is_thread_feedback_enabled(cx)).then(
+     |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feedback_buttons`
+
+warning: unused variable: `header_bg`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9787:13
+     |
+9787 |         let header_bg = cx
+     |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_header_bg`
+
+warning: unused variable: `command_element`
+    --> crates\agent_ui\src\conversation_view\thread_view.rs:9799:13
+     |
+9799 |         let command_element = self.render_collapsible_command(
+     |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_command_element`
+
+warning: unused variable: `summary`
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:10849:17
+      |
+10849 |             let summary = if details.allow_fs_write_all {
+      |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_summary`
+
+warning: unused variable: `dimensions_label`
+     --> crates\agent_ui\src\conversation_view\thread_view.rs:12434:13
+      |
+12434 |         let dimensions_label = if let Some(size) = dimensions {
+      |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dimensions_label`
+
+warning: unused variable: `configuration_view`
+    --> crates\agent_ui\src\conversation_view.rs:2336:9
+     |
+2336 |         configuration_view: Option<&AnyView>,
+     |         ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_configuration_view`
+
+warning: unused variable: `request_elicitation_connection`
+    --> crates\agent_ui\src\conversation_view.rs:3501:13
+     |
+3501 |         let request_elicitation_connection = self.request_elicitation_connection();
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request_elicitation_connection`
+
+warning: unused variable: `active_thread_renders_request_elicitations`
+    --> crates\agent_ui\src\conversation_view.rs:3502:13
+     |
+3502 |         let active_thread_renders_request_elicitations =
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_active_thread_renders_request_elicitations`
+
+warning: unused variable: `content`
+    --> crates\agent_ui\src\conversation_view.rs:3504:13
+     |
+3504 |         let content = match &self.server_state {
+     |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_content`
+
+For more information about this error, try `rustc --explain E0277`.
+warning: `agent_ui` (lib) generated 24 warnings
+error: could not compile `agent_ui` (lib) due to 1 previous error; 24 warnings emitted

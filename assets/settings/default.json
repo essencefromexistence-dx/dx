@@ -2674,76 +2674,34 @@
     "google": {
       "api_url": "https://generativelanguage.googleapis.com",
     },
-    "llama_cpp": {
+    // Key must be "llama.cpp" (serde rename on AllLanguageModelSettingsContent::llama_cpp).
+    "llama.cpp": {
       "api_url": "http://127.0.0.1:8080/v1",
-      "host": "127.0.0.1",
-      "port": 8080,
-      "auto_start": true,
-      "auto_download_models": true,
-      "auto_install_server": true,
-      "auto_discover_local_models": true,
+      "auto_discover": true,
       "context_window": 32768,
-      "threads": 6,
-      "normal_model": {
-        "name": "gemma-4-E4B-it-GGUF",
-        "display_name": "Gemma 4 E4B Local",
-        "max_tokens": 32768,
-        "max_output_tokens": 4096,
-        "hf_repo": "ggml-org/gemma-4-E4B-it-GGUF",
-        "hf_quant": "Q4_K_M",
-        "hf_file": "gemma-4-E4B-it-Q4_K_M.gguf",
-        "local_path": "G:/Dx/code/models/llama.cpp/gemma-4-E4B-it-Q4_K_M.gguf",
-        "supports_tools": false,
-        "supports_images": false,
-      },
-      "low_spec_model": {
-        "name": "Qwen3.5-0.8B-GGUF",
-        "display_name": "Qwen 3.5 0.8B Local",
-        "max_tokens": 32768,
-        "max_output_tokens": 2048,
-        "hf_repo": "AaryanK/Qwen3.5-0.8B-GGUF",
-        "hf_quant": "Q4_0",
-        "local_path": "G:/Dx/code/models/llama.cpp/Qwen3.5-0.8B-Q4_0.gguf",
-        "supports_tools": false,
-        "supports_images": false,
-      },
       "available_models": [
         {
           "name": "Qwen3.5-0.8B-GGUF",
           "display_name": "Qwen 3.5 0.8B Local",
           "max_tokens": 32768,
-          "max_output_tokens": 2048,
-          "hf_repo": "AaryanK/Qwen3.5-0.8B-GGUF",
-          "hf_quant": "Q4_0",
-          "local_path": "G:/Dx/code/models/llama.cpp/Qwen3.5-0.8B-Q4_0.gguf",
           "supports_tools": false,
-          "supports_images": false,
+          "supports_images": false
         },
         {
           "name": "Qwen3-4B-Q4_K_M",
           "display_name": "Qwen 3 4B Local",
           "max_tokens": 32768,
-          "max_output_tokens": 4096,
-          "hf_repo": "ggml-org/Qwen3-4B-GGUF",
-          "hf_quant": "Q4_K_M",
-          "hf_file": "Qwen3-4B-Q4_K_M.gguf",
-          "local_path": "G:/Dx/code/models/llama.cpp/Qwen3-4B-Q4_K_M.gguf",
           "supports_tools": false,
-          "supports_images": false,
+          "supports_images": false
         },
         {
           "name": "gemma-4-E4B-it-GGUF",
           "display_name": "Gemma 4 E4B Local",
           "max_tokens": 32768,
-          "max_output_tokens": 4096,
-          "hf_repo": "ggml-org/gemma-4-E4B-it-GGUF",
-          "hf_quant": "Q4_K_M",
-          "hf_file": "gemma-4-E4B-it-Q4_K_M.gguf",
-          "local_path": "G:/Dx/code/models/llama.cpp/gemma-4-E4B-it-Q4_K_M.gguf",
           "supports_tools": false,
-          "supports_images": false,
-        },
-      ],
+          "supports_images": false
+        }
+      ]
     },
     "ollama": {
       "api_url": "http://localhost:11434",

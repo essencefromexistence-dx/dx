@@ -1,0 +1,77 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+crates\workspace\src\workspace_settings.rs:152:11: warning: trait `AccessibleMode` is never used
+crates\workspace\src\workspace_settings.rs:168:8: warning: function `observe_accessible_mode` is never used
+warning: `workspace` (lib) generated 2 warnings
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+crates\agent_ui\src\conversation_view.rs:2075:43: error: expected `}`, found `,`: expected `}`
+crates\agent_ui\src\conversation_view.rs:2128:39: error: expected `}`, found `,`: expected `}`
+crates\agent_ui\src\conversation_view\thread_view.rs:10359:29: error[E0425]: cannot find value `options` in this scope: not found in this scope
+crates\agent_ui\src\agent_panel.rs:2:5: warning: unused import: `borrow::Cow`
+crates\agent_ui\src\agent_panel.rs:91:5: warning: unused import: `AddContextServer`
+crates\agent_ui\src\conversation_view.rs:3:19: warning: unused import: `ClientUserMessageId`
+crates\agent_ui\src\conversation_view\thread_view.rs:20:43: warning: unused import: `ContentBlock`
+crates\agent_ui\src\conversation_view\thread_view.rs:24:5: warning: unused import: `NativeAgentSessionList`
+crates\agent_ui\src\conversation_view\thread_view.rs:37:5: warning: unused import: `TerminalToolHeader`
+crates\agent_ui\src\dx_skill_panel.rs:9:22: warning: unused imports: `Button` and `TintColor`
+crates\agent_ui\src\dx_forge_panel\panel.rs:12:10: warning: unused imports: `DxUiIcon` and `dx_icon`
+crates\agent_ui\src\agent_panel.rs:7145:42: error[E0382]: use of moved value: value used here after move
+crates\agent_ui\src\conversation_view\thread_view.rs:12883:31: error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view.rs:3670:29: error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\agent_panel.rs:1900:13: error[E0062]: field `configuration` specified more than once: used more than once
+crates\agent_ui\src\agent_panel.rs:1901:13: error[E0062]: field `configuration_subscription` specified more than once: used more than once
+crates\agent_ui\src\agent_panel.rs:4759:24: error[E0599]: no method named `set_active_pane_item` found for mutable reference `&mut BufferSearchBar` in the current scope: method not found in `&mut BufferSearchBar`
+crates\agent_ui\src\agent_panel.rs:8508:56: error[E0308]: mismatched types: expected `&str`, found `String`
+crates\agent_ui\src\agent_panel.rs:9322:34: error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view\composer_profile_options.rs:652:38: error[E0599]: no function or associated item named `dx_builtin_metadata_for_id` found for struct `AgentProfile` in the current scope: function or associated item not found in `AgentProfile`
+crates\agent_ui\src\conversation_view\thread_search_bar.rs:337:71: error[E0599]: no method named `editor` found for reference `&message_editor::MessageEditor` in the current scope: private field, not a method
+crates\agent_ui\src\conversation_view\thread_view.rs:5250:44: error[E0599]: no method named `modes` found for reference `&mode_selector::ModeSelector` in the current scope
+crates\agent_ui\src\conversation_view\thread_view.rs:9398:38: error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:9402:30: error[E0061]: this method takes 2 arguments but 3 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:10356:37: error[E0061]: this method takes 8 arguments but 7 arguments were supplied
+crates\agent_ui\src\conversation_view\thread_view.rs:12141:26: error[E0061]: this method takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view\voice_controls.rs:457:14: error[E0599]: no method named `with_rotate_animation` found for struct `ui::Icon` in the current scope
+crates\agent_ui\src\conversation_view.rs:913:17: error[E0609]: no field `transparent_header_height` on type `&mut conversation_view::ConversationView`: unknown field
+crates\agent_ui\src\conversation_view.rs:917:14: error[E0609]: no field `transparent_header_height` on type `&mut conversation_view::ConversationView`: unknown field
+crates\agent_ui\src\conversation_view.rs:1188:29: error[E0061]: this function takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\conversation_view.rs:1476:82: error[E0609]: no field `provider_id` on type `acp_thread::AuthRequired`: unknown field
+crates\agent_ui\src\conversation_view.rs:1477:28: error[E0433]: cannot find type `LanguageModelRegistry` in this scope: use of undeclared type `LanguageModelRegistry`
+crates\agent_ui\src\conversation_view.rs:1485:28: error[E0433]: cannot find type `LanguageModelRegistry` in this scope: use of undeclared type `LanguageModelRegistry`
+crates\agent_ui\src\conversation_view.rs:1649:24: error[E0599]: no method named `send_queued_message_at_index` found for mutable reference `&mut thread_view::ThreadView` in the current scope
+crates\agent_ui\src\conversation_view.rs:1665:21: error[E0308]: mismatched types: expected `QueueEntryId`, found `usize`
+crates\agent_ui\src\conversation_view.rs:1774:36: error[E0061]: this method takes 0 arguments but 1 argument was supplied
+crates\agent_ui\src\conversation_view.rs:1802:36: error[E0061]: this method takes 4 arguments but 3 arguments were supplied
+crates\agent_ui\src\conversation_view.rs:2867:43: error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2880:35: error[E0609]: no field `local_queued_messages` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2881:28: error[E0609]: no field `local_queued_messages` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2899:18: error[E0609]: no field `local_queued_messages` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2908:45: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2947:45: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2948:43: error[E0609]: no field `last_synced_queue_length` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2956:24: error[E0609]: no field `queued_message_editors` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2958:22: error[E0609]: no field `queued_message_editor_subscriptions` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2962:43: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2973:31: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:2974:41: error[E0609]: no field `queued_message_editors` on type `&thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3030:24: error[E0609]: no field `queued_message_editors` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3032:22: error[E0609]: no field `queued_message_editor_subscriptions` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3039:24: error[E0609]: no field `last_synced_queue_length` on type `&mut thread_view::ThreadView`: unknown field
+crates\agent_ui\src\conversation_view.rs:3488:13: error[E0061]: this function takes 6 arguments but 5 arguments were supplied
+crates\agent_ui\src\dx_forge_panel\providers\view.rs:137:6: error[E0599]: no method named `anchor_scroll` found for struct `ui::ListItem` in the current scope: method not found in `ui::ListItem`
+crates\agent_ui\src\dx_forge_panel\workflow_rows.rs:151:10: error[E0599]: no method named `anchor_scroll` found for struct `ui::ListItem` in the current scope: method not found in `ui::ListItem`
+crates\agent_ui\src\agent_panel.rs:22:5: warning: unused import: `itertools::Itertools`
+crates\agent_ui\src\agent_panel.rs:6218:29: error[E0004]: non-exhaustive patterns: `VisibleSurface::Configuration(_)` not covered: pattern `VisibleSurface::Configuration(_)` not covered
+crates\agent_ui\src\conversation_view\thread_view.rs:4650:13: warning: unused variable: `editor_bg_color`: help: if this is intentional, prefix it with an underscore: `_editor_bg_color`
+crates\agent_ui\src\conversation_view\thread_view.rs:5127:13: warning: variable does not need to be mutable
+crates\agent_ui\src\conversation_view\thread_view.rs:6633:13: warning: unused variable: `is_voice_busy`: help: if this is intentional, prefix it with an underscore: `_is_voice_busy`
+crates\agent_ui\src\conversation_view\thread_view.rs:7581:9: warning: unused variable: `render_trailing_safe_area`: help: if this is intentional, prefix it with an underscore: `_render_trailing_safe_area`
+crates\agent_ui\src\conversation_view\thread_view.rs:8176:13: warning: unused variable: `copy_response_button`: help: if this is intentional, prefix it with an underscore: `_copy_response_button`
+crates\agent_ui\src\conversation_view\thread_view.rs:8247:13: warning: unused variable: `feedback_buttons`: help: if this is intentional, prefix it with an underscore: `_feedback_buttons`
+crates\agent_ui\src\conversation_view\thread_view.rs:9787:13: warning: unused variable: `header_bg`: help: if this is intentional, prefix it with an underscore: `_header_bg`
+crates\agent_ui\src\conversation_view\thread_view.rs:9799:13: warning: unused variable: `command_element`: help: if this is intentional, prefix it with an underscore: `_command_element`
+crates\agent_ui\src\conversation_view\thread_view.rs:10847:17: warning: unused variable: `summary`: help: if this is intentional, prefix it with an underscore: `_summary`
+crates\agent_ui\src\conversation_view\thread_view.rs:12425:13: warning: unused variable: `dimensions_label`: help: if this is intentional, prefix it with an underscore: `_dimensions_label`
+crates\agent_ui\src\conversation_view.rs:2352:9: warning: unused variable: `configuration_view`: help: if this is intentional, prefix it with an underscore: `_configuration_view`
+warning: `agent_ui` (lib) generated 20 warnings
+error: could not compile `agent_ui` (lib) due to 48 previous errors; 20 warnings emitted

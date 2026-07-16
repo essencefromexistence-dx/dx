@@ -1,0 +1,29 @@
+    Checking zed v1.13.0 (G:\Dx\code\crates\zed)
+error: unused imports: `SharedThread` and `ThreadStore`
+  --> crates\zed\src\main.rs:29:13
+   |
+29 | use agent::{SharedThread, ThreadStore};
+   |             ^^^^^^^^^^^^  ^^^^^^^^^^^
+   |
+   = note: `-D unused-imports` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unused_imports)]`
+
+error: unused import: `agent_client_protocol::schema as acp`
+  --> crates\zed\src\main.rs:30:5
+   |
+30 | use agent_client_protocol::schema as acp;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `Focusable as _`
+  --> crates\zed\src\main.rs:47:45
+   |
+47 |     App, AppContext, Application, AsyncApp, Focusable as _, QuitMode, ReadGlobal, Task, TaskExt,
+   |                                             ^^^^^^^^^^^^^^
+
+error: unused import: `proto`
+  --> crates\zed\src\main.rs:64:5
+   |
+64 | use proto;
+   |     ^^^^^
+
+error: could not compile `zed` (bin "dx-code") due to 4 previous errors

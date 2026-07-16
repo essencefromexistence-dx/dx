@@ -10,6 +10,18 @@ perf-test = ["test", "--profile", "release-fast", "--lib", "--bins", "--tests", 
 # Keep similar flags here to share some ccache
 perf-compare = ["run", "--profile", "release-fast", "-p", "perf", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]", "--", "compare"]
 
+# Dx Windows: keep PE under the ~2GB CreateProcess limit.
+# Default host here is often x86_64-pc-windows-gnu. Do NOT force rust-lld here —
+# gnu+rust-lld fails to find libs like ktmw32. Keep the default gcc/ld driver and
+# only strip debuginfo so CreateProcess accepts the binary.
+[target.x86_64-pc-windows-gnu]
+rustflags = [
+    "-C",
+    "debuginfo=0",
+    "-C",
+    "strip=debuginfo",
+]
+
 # Dx Windows fast-link + slim-error settings, with upstream's windows_slim_errors / crt-static intent.
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"
@@ -20,6 +32,8 @@ rustflags = [
     "target-feature=+crt-static",
     "-C",
     "debuginfo=0",
+    "-C",
+    "strip=debuginfo",
     "-C",
     "link-arg=/DEBUG:NONE",
     "-C",

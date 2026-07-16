@@ -15,7 +15,8 @@ pub struct AllLanguageModelSettingsContent {
     pub bedrock: Option<AmazonBedrockSettingsContent>,
     pub deepseek: Option<DeepseekSettingsContent>,
     pub google: Option<GoogleSettingsContent>,
-    #[serde(rename = "llama.cpp")]
+    // Canonical key is "llama.cpp"; alias accepts older "llama_cpp" defaults.
+    #[serde(rename = "llama.cpp", alias = "llama_cpp")]
     pub llama_cpp: Option<LlamaCppSettingsContent>,
     pub lmstudio: Option<LmStudioSettingsContent>,
     pub mistral: Option<MistralSettingsContent>,

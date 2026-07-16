@@ -1,0 +1,1783 @@
+    Checking gpui_util v0.1.0 (G:\Dx\code\crates\gpui_util)
+    Checking path v0.1.0 (G:\Dx\code\crates\path)
+    Checking gpui_shared_string v0.1.0 (G:\Dx\code\crates\gpui_shared_string)
+   Compiling ztracing v0.1.0 (G:\Dx\code\crates\ztracing)
+   Compiling ztracing_macro v0.1.0 (G:\Dx\code\crates\ztracing_macro)
+   Compiling derive_refineable v0.1.0 (G:\Dx\code\crates\refineable\derive_refineable)
+   Compiling gpui v0.2.2 (G:\Dx\code\crates\gpui)
+    Checking scheduler v0.1.0 (G:\Dx\code\crates\scheduler)
+   Compiling gpui_macros v0.1.0 (G:\Dx\code\crates\gpui_macros)
+    Checking zeta_prompt v0.1.0 (G:\Dx\code\crates\zeta_prompt)
+   Compiling proto v0.1.0 (G:\Dx\code\crates\proto)
+    Checking net v0.1.0 (G:\Dx\code\crates\net)
+    Checking collections v0.1.0 (G:\Dx\code\crates\collections)
+    Checking clock v0.1.0 (G:\Dx\code\crates\clock)
+    Checking util v0.1.0 (G:\Dx\code\crates\util)
+    Checking zlog v0.1.0 (G:\Dx\code\crates\zlog)
+    Checking telemetry_events v0.1.0 (G:\Dx\code\crates\telemetry_events)
+   Compiling perf v0.1.0 (G:\Dx\code\tooling\perf)
+   Compiling settings_macros v0.1.0 (G:\Dx\code\crates\settings_macros)
+    Checking watch v0.1.0 (G:\Dx\code\crates\watch)
+    Checking telemetry v0.1.0 (G:\Dx\code\crates\telemetry)
+   Compiling language v0.1.0 (G:\Dx\code\crates\language)
+    Checking language_core v0.1.0 (G:\Dx\code\crates\language_core)
+   Compiling feature_flags_macros v0.1.0 (G:\Dx\code\crates\feature_flags_macros)
+    Checking http_client_tls v0.1.0 (G:\Dx\code\crates\http_client_tls)
+    Checking cloud_llm_client v0.1.0 (G:\Dx\code\crates\cloud_llm_client)
+    Checking sum_tree v0.1.0 (G:\Dx\code\crates\sum_tree)
+    Checking icons v0.1.0 (G:\Dx\code\crates\icons)
+   Compiling util_macros v0.1.0 (G:\Dx\code\crates\util_macros)
+   Compiling ui v0.1.0 (G:\Dx\code\crates\ui)
+   Compiling ui_macros v0.1.0 (G:\Dx\code\crates\ui_macros)
+    Checking env_var v0.1.0 (G:\Dx\code\crates\env_var)
+    Checking http_client v0.1.0 (G:\Dx\code\crates\http_client)
+    Checking paths v0.1.0 (G:\Dx\code\crates\paths)
+    Checking rope v0.1.0 (G:\Dx\code\crates\rope)
+    Checking settings_json v0.1.0 (G:\Dx\code\crates\settings_json)
+    Checking cloud_api_types v0.1.0 (G:\Dx\code\crates\cloud_api_types)
+    Checking oauth_callback_server v0.1.0 (G:\Dx\code\crates\oauth_callback_server)
+    Checking snippet v0.1.0 (G:\Dx\code\crates\snippet)
+    Checking sqlez v0.1.0 (G:\Dx\code\crates\sqlez)
+    Checking language_model_core v0.1.0 (G:\Dx\code\crates\language_model_core)
+    Checking text v0.1.0 (G:\Dx\code\crates\text)
+    Checking node_runtime v0.1.0 (G:\Dx\code\crates\node_runtime)
+    Checking zed_env_vars v0.1.0 (G:\Dx\code\crates\zed_env_vars)
+    Checking http_proxy v0.1.0 (G:\Dx\code\crates\http_proxy)
+   Compiling extension_host v0.1.0 (G:\Dx\code\crates\extension_host)
+    Checking edit_prediction_metrics v0.1.0 (G:\Dx\code\crates\edit_prediction_metrics)
+    Checking sandbox v0.1.0 (G:\Dx\code\crates\sandbox)
+    Checking bedrock v0.1.0 (G:\Dx\code\crates\bedrock)
+    Checking aws_http_client v0.1.0 (G:\Dx\code\crates\aws_http_client)
+    Checking anthropic v0.1.0 (G:\Dx\code\crates\anthropic)
+    Checking open_ai v0.1.0 (G:\Dx\code\crates\open_ai)
+    Checking google_ai v0.1.0 (G:\Dx\code\crates\google_ai)
+    Checking lmstudio v0.1.0 (G:\Dx\code\crates\lmstudio)
+    Checking deepseek v0.1.0 (G:\Dx\code\crates\deepseek)
+    Checking mistral v0.1.0 (G:\Dx\code\crates\mistral)
+    Checking refineable v0.1.0 (G:\Dx\code\crates\refineable)
+    Checking llama_cpp v0.1.0 (G:\Dx\code\crates\llama_cpp)
+    Checking x_ai v0.1.0 (G:\Dx\code\crates\x_ai)
+    Checking dx_catalog v0.1.0 (G:\Dx\code\crates\dx_catalog)
+    Checking shell_command_parser v0.1.0 (G:\Dx\code\crates\shell_command_parser)
+    Checking opencode v0.1.0 (G:\Dx\code\crates\opencode)
+    Checking streaming_diff v0.1.0 (G:\Dx\code\crates\streaming_diff)
+    Checking html_to_markdown v0.1.0 (G:\Dx\code\crates\html_to_markdown)
+    Checking time_format v0.1.0 (G:\Dx\code\crates\time_format)
+   Compiling gpui_windows v0.1.0 (G:\Dx\code\crates\gpui_windows)
+   Compiling sqlez_macros v0.1.0 (G:\Dx\code\crates\sqlez_macros)
+    Checking release_channel v0.1.0 (G:\Dx\code\crates\release_channel)
+    Checking askpass v0.1.0 (G:\Dx\code\crates\askpass)
+    Checking settings_content v0.1.0 (G:\Dx\code\crates\settings_content)
+    Checking syntax_theme v0.1.0 (G:\Dx\code\crates\syntax_theme)
+    Checking zed_actions v0.1.0 (G:\Dx\code\crates\zed_actions)
+    Checking fuzzy v0.1.0 (G:\Dx\code\crates\fuzzy)
+    Checking credentials_provider v0.1.0 (G:\Dx\code\crates\credentials_provider)
+    Checking gpui_tokio v0.1.0 (G:\Dx\code\crates\gpui_tokio)
+    Checking menu v0.1.0 (G:\Dx\code\crates\menu)
+    Checking mermaid_render v0.1.0 (G:\Dx\code\crates\mermaid_render)
+    Checking assets v0.1.0 (G:\Dx\code\crates\assets)
+    Checking language_model v0.1.0 (G:\Dx\code\crates\language_model)
+    Checking theme v0.1.0 (G:\Dx\code\crates\theme)
+    Checking web_search v0.1.0 (G:\Dx\code\crates\web_search)
+    Checking lsp v0.1.0 (G:\Dx\code\crates\lsp)
+    Checking git v0.1.0 (G:\Dx\code\crates\git)
+    Checking fuzzy_nucleo v0.1.0 (G:\Dx\code\crates\fuzzy_nucleo)
+    Checking zed_credentials_provider v0.1.0 (G:\Dx\code\crates\zed_credentials_provider)
+    Checking cloud_api_client v0.1.0 (G:\Dx\code\crates\cloud_api_client)
+    Checking db v0.1.0 (G:\Dx\code\crates\db)
+    Checking language_models_cloud v0.1.0 (G:\Dx\code\crates\language_models_cloud)
+    Checking session v0.1.0 (G:\Dx\code\crates\session)
+    Checking component v0.1.0 (G:\Dx\code\crates\component)
+    Checking file_icons v0.1.0 (G:\Dx\code\crates\file_icons)
+    Checking fs v0.1.0 (G:\Dx\code\crates\fs)
+    Checking rpc v0.1.0 (G:\Dx\code\crates\rpc)
+    Checking task v0.1.0 (G:\Dx\code\crates\task)
+    Checking agent_skills v0.1.0 (G:\Dx\code\crates\agent_skills)
+    Checking ui_input v0.1.0 (G:\Dx\code\crates\ui_input)
+    Checking migrator v0.1.0 (G:\Dx\code\crates\migrator)
+    Checking settings v0.1.0 (G:\Dx\code\crates\settings)
+    Checking feature_flags v0.1.0 (G:\Dx\code\crates\feature_flags)
+    Checking theme_settings v0.1.0 (G:\Dx\code\crates\theme_settings)
+    Checking context_server v0.1.0 (G:\Dx\code\crates\context_server)
+    Checking git_hosting_providers v0.1.0 (G:\Dx\code\crates\git_hosting_providers)
+    Checking remote v0.1.0 (G:\Dx\code\crates\remote)
+    Checking audio v0.1.0 (G:\Dx\code\crates\audio)
+    Checking copilot_chat v0.1.0 (G:\Dx\code\crates\copilot_chat)
+    Checking vim_mode_setting v0.1.0 (G:\Dx\code\crates\vim_mode_setting)
+    Checking open_router v0.1.0 (G:\Dx\code\crates\open_router)
+    Checking ollama v0.1.0 (G:\Dx\code\crates\ollama)
+    Checking terminal v0.1.0 (G:\Dx\code\crates\terminal)
+    Checking worktree v0.1.0 (G:\Dx\code\crates\worktree)
+    Checking buffer_diff v0.1.0 (G:\Dx\code\crates\buffer_diff)
+    Checking markdown v0.1.0 (G:\Dx\code\crates\markdown)
+    Checking prettier v0.1.0 (G:\Dx\code\crates\prettier)
+    Checking prompt_store v0.1.0 (G:\Dx\code\crates\prompt_store)
+    Checking multi_buffer v0.1.0 (G:\Dx\code\crates\multi_buffer)
+    Checking client v0.1.0 (G:\Dx\code\crates\client)
+    Checking dap v0.1.0 (G:\Dx\code\crates\dap)
+    Checking edit_prediction_types v0.1.0 (G:\Dx\code\crates\edit_prediction_types)
+    Checking ai_onboarding v0.1.0 (G:\Dx\code\crates\ai_onboarding)
+    Checking channel v0.1.0 (G:\Dx\code\crates\channel)
+    Checking extension v0.1.0 (G:\Dx\code\crates\extension)
+    Checking snippet_provider v0.1.0 (G:\Dx\code\crates\snippet_provider)
+    Checking project v0.1.0 (G:\Dx\code\crates\project)
+    Checking agent_settings v0.1.0 (G:\Dx\code\crates\agent_settings)
+    Checking action_log v0.1.0 (G:\Dx\code\crates\action_log)
+    Checking edit_prediction_context v0.1.0 (G:\Dx\code\crates\edit_prediction_context)
+    Checking acp_thread v0.1.0 (G:\Dx\code\crates\acp_thread)
+    Checking workspace v0.1.0 (G:\Dx\code\crates\workspace)
+    Checking agent_servers v0.1.0 (G:\Dx\code\crates\agent_servers)
+    Checking command_palette_hooks v0.1.0 (G:\Dx\code\crates\command_palette_hooks)
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking breadcrumbs v0.1.0 (G:\Dx\code\crates\breadcrumbs)
+    Checking picker v0.1.0 (G:\Dx\code\crates\picker)
+    Checking auto_update v0.1.0 (G:\Dx\code\crates\auto_update)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking notifications v0.1.0 (G:\Dx\code\crates\notifications)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking copilot v0.1.0 (G:\Dx\code\crates\copilot)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking git_ui v0.1.0 (G:\Dx\code\crates\git_ui)
+    Checking settings_ui v0.1.0 (G:\Dx\code\crates\settings_ui)
+    Checking agent_ui v0.1.0 (G:\Dx\code\crates\agent_ui)
+    Checking web_preview v0.1.0 (G:\Dx\code\crates\web_preview)
+warning: failed to automatically apply fixes suggested by rustc to crate `web_preview`
+
+after fixes were automatically applied the compiler reported errors within these files:
+
+  * G:\Dev\Caches\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde_json-1.0.145\src\macros.rs
+  * crates\web_preview\src\web_preview_view.rs
+
+This likely indicates a bug in either rustc or cargo itself,
+and we would appreciate a bug report! You're likely to see
+a number of compiler warnings after this message which cargo
+attempted to fix but failed. If you could open an issue at
+https://github.com/rust-lang/rust-clippy/issues
+quoting the full output of this command we'd be very appreciative!
+Note that you may be able to make some more progress in the near-term
+fixing code with the `--broken-code` flag
+
+The following errors were reported:
+error[E0382]: borrow of moved value: `refresh_variant_actions`
+     --> crates\web_preview\src\web_preview_view.rs:12798:26
+      |
+12751 |           let refresh_variant_actions = refresh
+      |               ----------------------- move occurs because `refresh_variant_actions` has type `serde_json::Value`, which does not implement the `Copy` trait
+...
+12781 |                   refresh_variant_actions
+      |                   ----------------------- value moved here
+...
+12798 |           affordances.push(serde_json::json!({
+      |  __________________________^
+12799 | |             "schema": AGENT_BROWSER_PANEL_CARD_AFFORDANCE_SCHEMA,
+12800 | |             "id": "refresh",
+12801 | |             "role": "refresh",
+...     |
+12824 | |                 .unwrap_or_else(Self::agent_browser_panel_card_default_safety),
+12825 | |         }));
+      | |__________^ value borrowed here after move
+      |
+      = note: this error originates in the macro `$crate::json_internal` which comes from the expansion of the macro `serde_json::json` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider cloning the value if the performance cost is acceptable
+      |
+12781 |                 refresh_variant_actions.clone()
+      |                                        ++++++++
+
+error[E0382]: borrow of moved value: `refresh_updates`
+     --> crates\web_preview\src\web_preview_view.rs:12798:26
+      |
+12755 |           let refresh_updates = refresh
+      |               --------------- move occurs because `refresh_updates` has type `serde_json::Value`, which does not implement the `Copy` trait
+...
+12786 |                   refresh_updates
+      |                   --------------- value moved here
+...
+12798 |           affordances.push(serde_json::json!({
+      |  __________________________^
+12799 | |             "schema": AGENT_BROWSER_PANEL_CARD_AFFORDANCE_SCHEMA,
+12800 | |             "id": "refresh",
+12801 | |             "role": "refresh",
+...     |
+12824 | |                 .unwrap_or_else(Self::agent_browser_panel_card_default_safety),
+12825 | |         }));
+      | |__________^ value borrowed here after move
+      |
+      = note: this error originates in the macro `$crate::json_internal` which comes from the expansion of the macro `serde_json::json` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider cloning the value if the performance cost is acceptable
+      |
+12786 |                 refresh_updates.clone()
+      |                                ++++++++
+
+error[E0382]: borrow of moved value: `refresh_instructions`
+     --> crates\web_preview\src\web_preview_view.rs:12798:26
+      |
+12759 |           let refresh_instructions = refresh
+      |               -------------------- move occurs because `refresh_instructions` has type `serde_json::Value`, which does not implement the `Copy` trait
+...
+12791 |                   refresh_instructions
+      |                   -------------------- value moved here
+...
+12798 |           affordances.push(serde_json::json!({
+      |  __________________________^
+12799 | |             "schema": AGENT_BROWSER_PANEL_CARD_AFFORDANCE_SCHEMA,
+12800 | |             "id": "refresh",
+12801 | |             "role": "refresh",
+...     |
+12824 | |                 .unwrap_or_else(Self::agent_browser_panel_card_default_safety),
+12825 | |         }));
+      | |__________^ value borrowed here after move
+      |
+      = note: this error originates in the macro `$crate::json_internal` which comes from the expansion of the macro `serde_json::json` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider cloning the value if the performance cost is acceptable
+      |
+12791 |                 refresh_instructions.clone()
+      |                                     ++++++++
+
+error: aborting due to 3 previous errors
+
+For more information about this error, try `rustc --explain E0382`.
+Original diagnostics will follow.
+
+warning: redundant clone
+   --> crates\web_preview\src\dx_studio_session.rs:136:47
+    |
+136 |                 "source": edit_contract_source.clone(),
+    |                                               ^^^^^^^^ help: remove this
+    |
+note: cloned value is neither consumed nor mutated
+   --> crates\web_preview\src\dx_studio_session.rs:136:27
+    |
+136 |                 "source": edit_contract_source.clone(),
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+    = note: requested on the command line with `-W clippy::redundant-clone`
+
+warning: redundant clone
+   --> crates\web_preview\src\dx_studio_session.rs:140:52
+    |
+140 |                 "operation_ids": edit_operation_ids.clone(),
+    |                                                    ^^^^^^^^ help: remove this
+    |
+note: cloned value is neither consumed nor mutated
+   --> crates\web_preview\src\dx_studio_session.rs:140:34
+    |
+140 |                 "operation_ids": edit_operation_ids.clone(),
+    |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+   --> crates\web_preview\src\dx_studio_session.rs:141:60
+    |
+141 |                 "marker_attributes": edit_marker_attributes.clone(),
+    |                                                            ^^^^^^^^ help: remove this
+    |
+note: cloned value is neither consumed nor mutated
+   --> crates\web_preview\src\dx_studio_session.rs:141:38
+    |
+141 |                 "marker_attributes": edit_marker_attributes.clone(),
+    |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: consider using `sort_by_key`
+  --> crates\web_preview\src\dx_studio_source_edit\manifest\selectors.rs:29:5
+   |
+29 |     scored.sort_by(|left, right| right.0.cmp(&left.0));
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#unnecessary_sort_by
+   = note: requested on the command line with `-W clippy::unnecessary-sort-by`
+help: try
+   |
+29 -     scored.sort_by(|left, right| right.0.cmp(&left.0));
+29 +     scored.sort_by_key(|right| std::cmp::Reverse(right.0));
+   |
+
+warning: redundant clone
+    --> crates\web_preview\src\dx_style_source_apply.rs:1493:47
+     |
+1493 |             "preview_anatomy": preview_anatomy.clone(),
+     |                                               ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\dx_style_source_apply.rs:1493:32
+     |
+1493 |             "preview_anatomy": preview_anatomy.clone(),
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant guard
+    --> crates\web_preview\src\dx_style_source_apply.rs:1314:28
+     |
+1314 |             Some(value) if value.is_empty() => {
+     |                            ^^^^^^^^^^^^^^^^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_guards
+     = note: requested on the command line with `-W clippy::redundant-guards`
+help: try
+     |
+1314 -             Some(value) if value.is_empty() => {
+1314 +             Some("") => {
+     |
+
+warning: using `contains()` instead of `iter().any()` is more efficient
+    --> crates\web_preview\src\dx_style_source_apply.rs:3221:13
+     |
+3221 |           && !replacement_utility_strings
+     |  _____________^
+3222 | |             .iter()
+3223 | |             .any(|utility| *utility == target_utility)
+     | |______________________________________________________^ help: try: `replacement_utility_strings.contains(&target_utility)`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#manual_contains
+     = note: requested on the command line with `-W clippy::manual-contains`
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4450:55
+     |
+4450 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                                       ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4450:36
+     |
+4450 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4489:55
+     |
+4489 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                                       ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4489:36
+     |
+4489 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4491:41
+     |
+4491 |                 "target_dir": target_dir.clone(),
+     |                                         ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4491:31
+     |
+4491 |                 "target_dir": target_dir.clone(),
+     |                               ^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4492:43
+     |
+4492 |                 "target_root": target_root.clone(),
+     |                                           ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4492:32
+     |
+4492 |                 "target_root": target_root.clone(),
+     |                                ^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4570:55
+     |
+4570 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                                       ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4570:36
+     |
+4570 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4621:55
+     |
+4621 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                                       ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4621:36
+     |
+4621 |             "target_drive_policy": target_drive_policy.clone(),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4634:59
+     |
+4634 |                 "target_drive_policy": target_drive_policy.clone(),
+     |                                                           ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:4634:40
+     |
+4634 |                 "target_drive_policy": target_drive_policy.clone(),
+     |                                        ^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4635:51
+     |
+4635 |                 "size_inspection": size_inspection.clone(),
+     |                                                   ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4635:36
+     |
+4635 |                 "size_inspection": size_inspection.clone(),
+     |                                    ^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4636:67
+     |
+4636 |                 "cleanup_result_template": cleanup_result_template.clone(),
+     |                                                                   ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4636:44
+     |
+4636 |                 "cleanup_result_template": cleanup_result_template.clone(),
+     |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4637:59
+     |
+4637 |                 "cleanup_result_gate": cleanup_result_gate.clone(),
+     |                                                           ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:4637:40
+     |
+4637 |                 "cleanup_result_gate": cleanup_result_gate.clone(),
+     |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:4922:61
+     |
+4922 |             "headroom_recovery_plan": headroom_recovery_plan.clone(),
+     |                                                             ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:4922:39
+     |
+4922 |             "headroom_recovery_plan": headroom_recovery_plan.clone(),
+     |                                       ^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:8883:73
+     |
+8883 |                 "runtime_green_report_badge": runtime_green_report_badge.clone(),
+     |                                                                         ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> crates\web_preview\src\web_preview_view.rs:8883:47
+     |
+8883 |                 "runtime_green_report_badge": runtime_green_report_badge.clone(),
+     |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9094:69
+     |
+9094 |                     "current_capacity": final_runtime_proof_capacity.clone(),
+     |                                                                     ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9094:41
+     |
+9094 |                     "current_capacity": final_runtime_proof_capacity.clone(),
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9138:73
+     |
+9138 |                     "current_plan": final_runtime_headroom_recovery_plan.clone(),
+     |                                                                         ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9138:37
+     |
+9138 |                     "current_plan": final_runtime_headroom_recovery_plan.clone(),
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9164:73
+     |
+9164 |                     "current_card": final_runtime_headroom_recovery_card.clone(),
+     |                                                                         ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9164:37
+     |
+9164 |                     "current_card": final_runtime_headroom_recovery_card.clone(),
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9192:85
+     |
+9192 |                     "current_checklist": final_runtime_headroom_inspection_checklist.clone(),
+     |                                                                                     ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9192:42
+     |
+9192 |                     "current_checklist": final_runtime_headroom_inspection_checklist.clone(),
+     |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9206:86
+     |
+9206 |                     "current_size_inspection": final_runtime_headroom_size_inspection.clone(),
+     |                                                                                      ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9206:48
+     |
+9206 |                     "current_size_inspection": final_runtime_headroom_size_inspection.clone(),
+     |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9220:87
+     |
+9220 |                     "current_template": final_runtime_headroom_cleanup_result_template.clone(),
+     |                                                                                       ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9220:41
+     |
+9220 |                     "current_template": final_runtime_headroom_cleanup_result_template.clone(),
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9259:79
+     |
+9259 |                     "current_gate": final_runtime_headroom_cleanup_result_gate.clone(),
+     |                                                                               ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9259:37
+     |
+9259 |                     "current_gate": final_runtime_headroom_cleanup_result_gate.clone(),
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9282:84
+     |
+9282 |                     "current_candidates": final_runtime_headroom_reclaim_candidates.clone(),
+     |                                                                                    ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9282:43
+     |
+9282 |                     "current_candidates": final_runtime_headroom_reclaim_candidates.clone(),
+     |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9294:65
+     |
+9294 |                     "current_board": final_runtime_blocker_board.clone(),
+     |                                                                 ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9294:38
+     |
+9294 |                     "current_board": final_runtime_blocker_board.clone(),
+     |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9308:74
+     |
+9308 |                     "current_gate": final_runtime_headroom_readiness_gate.clone(),
+     |                                                                          ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9308:37
+     |
+9308 |                     "current_gate": final_runtime_headroom_readiness_gate.clone(),
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9320:81
+     |
+9320 |                     "current_sequence": final_runtime_headroom_recovery_sequence.clone(),
+     |                                                                                 ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9320:41
+     |
+9320 |                     "current_sequence": final_runtime_headroom_recovery_sequence.clone(),
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9391:65
+     |
+9391 |                     "current_snapshot": runtime_green_claim_gate.clone()
+     |                                                                 ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9391:41
+     |
+9391 |                     "current_snapshot": runtime_green_claim_gate.clone()
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9399:70
+     |
+9399 |                     "current_snapshot": runtime_green_claim_readiness.clone()
+     |                                                                      ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9399:41
+     |
+9399 |                     "current_snapshot": runtime_green_claim_readiness.clone()
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9409:66
+     |
+9409 |                     "current_snapshot": runtime_green_report_gate.clone()
+     |                                                                  ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9409:41
+     |
+9409 |                     "current_snapshot": runtime_green_report_gate.clone()
+     |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9415:64
+     |
+9415 |                     "current_badge": runtime_green_report_badge.clone(),
+     |                                                                ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9415:38
+     |
+9415 |                     "current_badge": runtime_green_report_badge.clone(),
+     |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9436:69
+     |
+9436 |                     "current_guide": runtime_green_final_proof_guide.clone(),
+     |                                                                     ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9436:38
+     |
+9436 |                     "current_guide": runtime_green_final_proof_guide.clone(),
+     |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9448:72
+     |
+9448 |                     "current_packet": runtime_green_final_report_packet.clone(),
+     |                                                                        ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9448:39
+     |
+9448 |                     "current_packet": runtime_green_final_report_packet.clone(),
+     |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+    --> crates\web_preview\src\web_preview_view.rs:9460:72
+     |
+9460 |                     "current_card": runtime_green_report_readiness_card.clone(),
+     |                                                                        ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\web_preview\src\web_preview_view.rs:9460:37
+     |
+9460 |                     "current_card": runtime_green_report_readiness_card.clone(),
+     |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:10386:63
+      |
+10386 |                     "recommended_handoff": recommended_handoff.clone(),
+      |                                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:10386:44
+      |
+10386 |                     "recommended_handoff": recommended_handoff.clone(),
+      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:12781:40
+      |
+12781 |                 refresh_variant_actions.clone()
+      |                                        ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:12781:17
+      |
+12781 |                 refresh_variant_actions.clone()
+      |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:12786:32
+      |
+12786 |                 refresh_updates.clone()
+      |                                ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:12786:17
+      |
+12786 |                 refresh_updates.clone()
+      |                 ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:12791:37
+      |
+12791 |                 refresh_instructions.clone()
+      |                                     ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:12791:17
+      |
+12791 |                 refresh_instructions.clone()
+      |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:12795:29
+      |
+12795 |             "safety": safety.clone(),
+      |                             ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:12795:23
+      |
+12795 |             "safety": safety.clone(),
+      |                       ^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:12842:33
+      |
+12842 |                 "safety": safety.clone(),
+      |                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:12842:27
+      |
+12842 |                 "safety": safety.clone(),
+      |                           ^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:14443:29
+      |
+14443 |             "action": action.clone(),
+      |                             ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:14443:23
+      |
+14443 |             "action": action.clone(),
+      |                       ^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:16652:48
+      |
+16652 |                 Some(asset_provisioning_receipt.clone()),
+      |                                                ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\web_preview\src\web_preview_view.rs:16652:22
+      |
+16652 |                 Some(asset_provisioning_receipt.clone()),
+      |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:16938:93
+      |
+16938 |                 "missing_expected_required_checks": browser_missing_expected_required_checks.clone(),
+      |                                                                                             ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:16938:53
+      |
+16938 |                 "missing_expected_required_checks": browser_missing_expected_required_checks.clone(),
+      |                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:20417:71
+      |
+20417 |             "browser_final_blocker_strip": browser_final_blocker_strip.clone(),
+      |                                                                       ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:20417:44
+      |
+20417 |             "browser_final_blocker_strip": browser_final_blocker_strip.clone(),
+      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:22171:46
+      |
+22171 | ...                   "text": type_text.clone().unwrap_or_default(),
+      |                                        ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\web_preview\src\web_preview_view.rs:22171:37
+      |
+22171 | ...                   "text": type_text.clone().unwrap_or_default(),
+      |                               ^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: the following explicit lifetimes could be elided: 'a
+     --> crates\web_preview\src\web_preview_view.rs:22220:58
+      |
+22220 |     fn extract_agent_browser_executor_payload_from_value<'a>(
+      |                                                          ^^
+22221 |         value: &'a Value,
+      |                 ^^
+22222 |     ) -> Option<&'a serde_json::Map<String, Value>> {
+      |                  ^^
+      |
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+      = note: requested on the command line with `-W clippy::needless-lifetimes`
+help: elide the lifetimes
+      |
+22220 ~     fn extract_agent_browser_executor_payload_from_value(
+22221 ~         value: &Value,
+22222 ~     ) -> Option<&serde_json::Map<String, Value>> {
+      |
+
+warning: the following explicit lifetimes could be elided: 'a
+     --> crates\web_preview\src\web_preview_view.rs:22685:45
+      |
+22685 |     fn extract_type_text_payload_from_value<'a>(
+      |                                             ^^
+22686 |         value: &'a Value,
+      |                 ^^
+22687 |     ) -> Option<&'a serde_json::Map<String, Value>> {
+      |                  ^^
+      |
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#needless_lifetimes
+help: elide the lifetimes
+      |
+22685 ~     fn extract_type_text_payload_from_value(
+22686 ~         value: &Value,
+22687 ~     ) -> Option<&serde_json::Map<String, Value>> {
+      |
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23119:69
+      |
+23119 |                 "runtime_green_claim_gate": runtime_green_claim_gate.clone(),
+      |                                                                     ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23119:45
+      |
+23119 |                 "runtime_green_claim_gate": runtime_green_claim_gate.clone(),
+      |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23120:79
+      |
+23120 |                 "runtime_green_claim_readiness": runtime_green_claim_readiness.clone(),
+      |                                                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23120:50
+      |
+23120 |                 "runtime_green_claim_readiness": runtime_green_claim_readiness.clone(),
+      |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23121:71
+      |
+23121 |                 "runtime_green_report_gate": runtime_green_report_gate.clone(),
+      |                                                                       ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23121:46
+      |
+23121 |                 "runtime_green_report_gate": runtime_green_report_gate.clone(),
+      |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23122:73
+      |
+23122 |                 "runtime_green_report_badge": runtime_green_report_badge.clone(),
+      |                                                                         ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23122:47
+      |
+23122 |                 "runtime_green_report_badge": runtime_green_report_badge.clone(),
+      |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23123:83
+      |
+23123 |                 "runtime_green_final_proof_guide": runtime_green_final_proof_guide.clone(),
+      |                                                                                   ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23123:52
+      |
+23123 |                 "runtime_green_final_proof_guide": runtime_green_final_proof_guide.clone(),
+      |                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23124:87
+      |
+23124 |                 "runtime_green_final_report_packet": runtime_green_final_report_packet.clone(),
+      |                                                                                       ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23124:54
+      |
+23124 |                 "runtime_green_final_report_packet": runtime_green_final_report_packet.clone(),
+      |                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23125:91
+      |
+23125 |                 "runtime_green_report_readiness_card": runtime_green_report_readiness_card.clone(),
+      |                                                                                           ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23125:56
+      |
+23125 |                 "runtime_green_report_readiness_card": runtime_green_report_readiness_card.clone(),
+      |                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23192:80
+      |
+23192 |                         "current_summary": agent_plugin_catalog_current_summary.clone(),
+      |                                                                                ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23192:44
+      |
+23192 |                         "current_summary": agent_plugin_catalog_current_summary.clone(),
+      |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23203:109
+      |
+23203 |                     "agent_browser_final_runtime_proof_capacity": agent_browser_final_runtime_proof_capacity.clone(),
+      |                                                                                                             ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23203:67
+      |
+23203 |                     "agent_browser_final_runtime_proof_capacity": agent_browser_final_runtime_proof_capacity.clone(),
+      |                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23204:125
+      |
+23204 | ...agent_browser_final_runtime_headroom_recovery_plan.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23204:75
+      |
+23204 | ...   "agent_browser_final_runtime_headroom_recovery_plan": agent_browser_final_runtime_headroom_recovery_plan.clone(),
+      |                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23205:125
+      |
+23205 | ...agent_browser_final_runtime_headroom_recovery_card.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23205:75
+      |
+23205 | ...   "agent_browser_final_runtime_headroom_recovery_card": agent_browser_final_runtime_headroom_recovery_card.clone(),
+      |                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23206:139
+      |
+23206 | ...rowser_final_runtime_headroom_inspection_checklist.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23206:82
+      |
+23206 | ...adroom_inspection_checklist": agent_browser_final_runtime_headroom_inspection_checklist.clone(),
+      |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23207:129
+      |
+23207 | ...ent_browser_final_runtime_headroom_size_inspection.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23207:77
+      |
+23207 | ...   "agent_browser_final_runtime_headroom_size_inspection": agent_browser_final_runtime_headroom_size_inspection.clone(),
+      |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23208:145
+      |
+23208 | ...ser_final_runtime_headroom_cleanup_result_template.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23208:85
+      |
+23208 | ...om_cleanup_result_template": agent_browser_final_runtime_headroom_cleanup_result_template.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23209:137
+      |
+23209 | ...browser_final_runtime_headroom_cleanup_result_gate.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23209:81
+      |
+23209 | ...headroom_cleanup_result_gate": agent_browser_final_runtime_headroom_cleanup_result_gate.clone(),
+      |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23210:127
+      |
+23210 | ...gent_browser_final_runtime_headroom_readiness_gate.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23210:76
+      |
+23210 | ...   "agent_browser_final_runtime_headroom_readiness_gate": agent_browser_final_runtime_headroom_readiness_gate.clone(),
+      |                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23211:135
+      |
+23211 | ..._browser_final_runtime_headroom_reclaim_candidates.clone(),
+      |                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23211:80
+      |
+23211 | ..._headroom_reclaim_candidates": agent_browser_final_runtime_headroom_reclaim_candidates.clone(),
+      |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23212:107
+      |
+23212 |                     "agent_browser_final_runtime_blocker_board": agent_browser_final_runtime_blocker_board.clone(),
+      |                                                                                                           ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23212:66
+      |
+23212 |                     "agent_browser_final_runtime_blocker_board": agent_browser_final_runtime_blocker_board.clone(),
+      |                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23222:73
+      |
+23222 |                     "runtime_green_claim_gate": runtime_green_claim_gate.clone(),
+      |                                                                         ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23222:49
+      |
+23222 |                     "runtime_green_claim_gate": runtime_green_claim_gate.clone(),
+      |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23223:83
+      |
+23223 |                     "runtime_green_claim_readiness": runtime_green_claim_readiness.clone(),
+      |                                                                                   ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23223:54
+      |
+23223 |                     "runtime_green_claim_readiness": runtime_green_claim_readiness.clone(),
+      |                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23224:75
+      |
+23224 |                     "runtime_green_report_gate": runtime_green_report_gate.clone(),
+      |                                                                           ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23224:50
+      |
+23224 |                     "runtime_green_report_gate": runtime_green_report_gate.clone(),
+      |                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23225:77
+      |
+23225 |                     "runtime_green_report_badge": runtime_green_report_badge.clone(),
+      |                                                                             ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23225:51
+      |
+23225 |                     "runtime_green_report_badge": runtime_green_report_badge.clone(),
+      |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23746:65
+      |
+23746 |             "managed_chrome_execution": managed_chrome_execution.clone(),
+      |                                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23746:41
+      |
+23746 |             "managed_chrome_execution": managed_chrome_execution.clone(),
+      |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23747:43
+      |
+23747 |             "pc_use_status": pc_use_status.clone(),
+      |                                           ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23747:30
+      |
+23747 |             "pc_use_status": pc_use_status.clone(),
+      |                              ^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23748:65
+      |
+23748 |             "runtime_green_claim_gate": runtime_green_claim_gate.clone()
+      |                                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23748:41
+      |
+23748 |             "runtime_green_claim_gate": runtime_green_claim_gate.clone()
+      |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23765:69
+      |
+23765 |                 "managed_chrome_execution": managed_chrome_execution.clone(),
+      |                                                                     ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23765:45
+      |
+23765 |                 "managed_chrome_execution": managed_chrome_execution.clone(),
+      |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23766:47
+      |
+23766 |                 "pc_use_status": pc_use_status.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23766:34
+      |
+23766 |                 "pc_use_status": pc_use_status.clone(),
+      |                                  ^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:23767:69
+      |
+23767 |                 "runtime_green_claim_gate": runtime_green_claim_gate.clone(),
+      |                                                                     ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:23767:45
+      |
+23767 |                 "runtime_green_claim_gate": runtime_green_claim_gate.clone(),
+      |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:24548:42
+      |
+24548 |             "viewport": previous_viewport.clone(),
+      |                                          ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:24548:25
+      |
+24548 |             "viewport": previous_viewport.clone(),
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:24589:41
+      |
+24589 |             "viewport": applied_viewport.clone(),
+      |                                         ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:24589:25
+      |
+24589 |             "viewport": applied_viewport.clone(),
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:24649:73
+      |
+24649 |                 "responsive_viewport_change": responsive_viewport_change.clone(),
+      |                                                                         ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:24649:47
+      |
+24649 |                 "responsive_viewport_change": responsive_viewport_change.clone(),
+      |                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:24824:49
+      |
+24824 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:24824:33
+      |
+24824 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:24849:49
+      |
+24849 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:24849:33
+      |
+24849 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25446:49
+      |
+25446 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25446:33
+      |
+25446 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25452:47
+      |
+25452 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25452:32
+      |
+25452 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25667:49
+      |
+25667 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25667:33
+      |
+25667 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25668:47
+      |
+25668 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25668:32
+      |
+25668 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25698:47
+      |
+25698 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25698:32
+      |
+25698 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25954:49
+      |
+25954 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25954:33
+      |
+25954 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25955:47
+      |
+25955 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25955:32
+      |
+25955 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:25985:47
+      |
+25985 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:25985:32
+      |
+25985 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26275:49
+      |
+26275 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26275:33
+      |
+26275 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26276:47
+      |
+26276 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26276:32
+      |
+26276 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26277:55
+      |
+26277 |             "text_payload_source": text_payload_source.clone(),
+      |                                                       ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26277:36
+      |
+26277 |             "text_payload_source": text_payload_source.clone(),
+      |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26279:41
+      |
+26279 |             "text_preview": text_preview.clone(),
+      |                                         ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26279:29
+      |
+26279 |             "text_preview": text_preview.clone(),
+      |                             ^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26311:47
+      |
+26311 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26311:32
+      |
+26311 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26349:58
+      |
+26349 |                     serde_json::json!(text_payload_source.clone()),
+      |                                                          ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\web_preview\src\web_preview_view.rs:26349:39
+      |
+26349 |                     serde_json::json!(text_payload_source.clone()),
+      |                                       ^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26352:64
+      |
+26352 |                 ("text_preview", serde_json::json!(text_preview.clone())),
+      |                                                                ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\web_preview\src\web_preview_view.rs:26352:52
+      |
+26352 |                 ("text_preview", serde_json::json!(text_preview.clone())),
+      |                                                    ^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26557:49
+      |
+26557 |             "target_candidate": target_candidate.clone(),
+      |                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26557:33
+      |
+26557 |             "target_candidate": target_candidate.clone(),
+      |                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26558:47
+      |
+26558 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26558:32
+      |
+26558 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26589:47
+      |
+26589 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26589:32
+      |
+26589 |             "coordinate_plan": coordinate_plan.clone(),
+      |                                ^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:26805:41
+      |
+26805 |             "history_plan": history_plan.clone(),
+      |                                         ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:26805:29
+      |
+26805 |             "history_plan": history_plan.clone(),
+      |                             ^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:27220:37
+      |
+27220 |             "scope_plan": scope_plan.clone(),
+      |                                     ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:27220:27
+      |
+27220 |             "scope_plan": scope_plan.clone(),
+      |                           ^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28304:86
+      |
+28304 |                     "current_size_inspection": final_runtime_headroom_size_inspection.clone(),
+      |                                                                                      ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28304:48
+      |
+28304 |                     "current_size_inspection": final_runtime_headroom_size_inspection.clone(),
+      |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28465:68
+      |
+28465 |                     "latest_summary": agent_browser_panel_card_deck.clone(),
+      |                                                                    ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28465:39
+      |
+28465 |                     "latest_summary": agent_browser_panel_card_deck.clone(),
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28501:80
+      |
+28501 |                     "latest_summary": agent_browser_panel_control_result_ledger.clone(),
+      |                                                                                ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28501:39
+      |
+28501 |                     "latest_summary": agent_browser_panel_control_result_ledger.clone(),
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28655:63
+      |
+28655 |                     "latest_summary": runtime_green_claim_gate.clone(),
+      |                                                               ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28655:39
+      |
+28655 |                     "latest_summary": runtime_green_claim_gate.clone(),
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28664:68
+      |
+28664 |                     "latest_summary": runtime_green_claim_readiness.clone(),
+      |                                                                    ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28664:39
+      |
+28664 |                     "latest_summary": runtime_green_claim_readiness.clone(),
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28672:64
+      |
+28672 |                     "latest_summary": runtime_green_report_gate.clone(),
+      |                                                                ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28672:39
+      |
+28672 |                     "latest_summary": runtime_green_report_gate.clone(),
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28673:56
+      |
+28673 |                     "badge": runtime_green_report_badge.clone(),
+      |                                                        ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28673:30
+      |
+28673 |                     "badge": runtime_green_report_badge.clone(),
+      |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:28682:65
+      |
+28682 |                     "latest_summary": runtime_green_report_badge.clone(),
+      |                                                                 ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:28682:39
+      |
+28682 |                     "latest_summary": runtime_green_report_badge.clone(),
+      |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:29718:77
+      |
+29718 | ...                   "current_capacity": final_runtime_proof_capacity.clone(),
+      |                                                                       ^^^^^^^^ help: remove this
+      |
+note: this value is dropped without further use
+     --> crates\web_preview\src\web_preview_view.rs:29718:49
+      |
+29718 | ...                   "current_capacity": final_runtime_proof_capacity.clone(),
+      |                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+     --> crates\web_preview\src\web_preview_view.rs:31156:59
+      |
+31156 |                 "source_digest_after": source_digest_after.clone(),
+      |                                                           ^^^^^^^^ help: remove this
+      |
+note: cloned value is neither consumed nor mutated
+     --> crates\web_preview\src\web_preview_view.rs:31156:40
+      |
+31156 |                 "source_digest_after": source_digest_after.clone(),
+      |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: deref which would be done by auto-deref
+     --> crates\web_preview\src\web_preview_view.rs:34284:50
+      |
+34284 |         .filter(|event| is_bounded_browser_event(*event))
+      |                                                  ^^^^^^ help: try: `event`
+      |
+      = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#explicit_auto_deref
+      = note: requested on the command line with `-W clippy::explicit-auto-deref`
+
+warning: redundant clone
+   --> crates\web_preview\src\server.rs:312:24
+    |
+312 |             let tx = tx.clone();
+    |                        ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\web_preview\src\server.rs:312:22
+    |
+312 |             let tx = tx.clone();
+    |                      ^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+   --> crates\web_preview\src\server.rs:314:78
+    |
+314 |                 ws.on_upgrade(move |socket| handle_agent_cursor_ws(socket, tx.clone()))
+    |                                                                              ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\web_preview\src\server.rs:314:76
+    |
+314 |                 ws.on_upgrade(move |socket| handle_agent_cursor_ws(socket, tx.clone()))
+    |                                                                            ^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: redundant clone
+   --> crates\web_preview\src\server.rs:449:32
+    |
+449 |             let root = root_arc.clone();
+    |                                ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates\web_preview\src\server.rs:449:24
+    |
+449 |             let root = root_arc.clone();
+    |                        ^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+warning: `web_preview` (lib) generated 117 warnings (run `cargo clippy --fix --lib -p web_preview -- -W clippy::redundant_clone -W clippy::needless_lifetimes -W clippy::unnecessary_sort_by -W clippy::manual_contains -W clippy::explicit_auto_deref -W clippy::redundant_guards --no-deps` to apply 115 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3m 31s

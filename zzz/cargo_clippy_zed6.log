@@ -1,0 +1,64 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Checking shadcn_ui v0.1.0 (G:\Dx\code\crates\shadcn_ui)
+    Checking remote_connection v0.1.0 (G:\Dx\code\crates\remote_connection)
+    Checking panel v0.1.0 (G:\Dx\code\crates\panel)
+    Checking copilot_ui v0.1.0 (G:\Dx\code\crates\copilot_ui)
+    Checking platform_title_bar v0.1.0 (G:\Dx\code\crates\platform_title_bar)
+    Checking liquid_glass v0.1.0 (G:\Dx\code\crates\liquid_glass)
+    Checking dev_container v0.1.0 (G:\Dx\code\crates\dev_container)
+    Checking command_palette v0.1.0 (G:\Dx\code\crates\command_palette)
+    Checking edit_prediction v0.1.0 (G:\Dx\code\crates\edit_prediction)
+    Checking language_models v0.1.0 (G:\Dx\code\crates\language_models)
+    Checking editor v0.1.0 (G:\Dx\code\crates\editor)
+    Checking component_preview v0.1.0 (G:\Dx\code\crates\component_preview)
+    Checking which_key v0.1.0 (G:\Dx\code\crates\which_key)
+    Checking etw_tracing v0.1.0 (G:\Dx\code\crates\etw_tracing)
+    Checking feedback v0.1.0 (G:\Dx\code\crates\feedback)
+    Checking miniprofiler_ui v0.1.0 (G:\Dx\code\crates\miniprofiler_ui)
+    Checking settings_profile_selector v0.1.0 (G:\Dx\code\crates\settings_profile_selector)
+    Checking codestral v0.1.0 (G:\Dx\code\crates\codestral)
+    Checking theme_selector v0.1.0 (G:\Dx\code\crates\theme_selector)
+    Checking svg_preview v0.1.0 (G:\Dx\code\crates\svg_preview)
+    Checking install_cli v0.1.0 (G:\Dx\code\crates\install_cli)
+    Checking ui_prompt v0.1.0 (G:\Dx\code\crates\ui_prompt)
+    Checking agent v0.1.0 (G:\Dx\code\crates\agent)
+    Checking picker_preview v0.1.0 (G:\Dx\code\crates\picker_preview)
+    Checking terminal_view v0.1.0 (G:\Dx\code\crates\terminal_view)
+    Checking markdown_preview v0.1.0 (G:\Dx\code\crates\markdown_preview)
+    Checking edit_prediction_ui v0.1.0 (G:\Dx\code\crates\edit_prediction_ui)
+    Checking icon_picker v0.1.0 (G:\Dx\code\crates\icon_picker)
+    Checking tasks_ui v0.1.0 (G:\Dx\code\crates\tasks_ui)
+    Checking search v0.1.0 (G:\Dx\code\crates\search)
+    Checking debugger_tools v0.1.0 (G:\Dx\code\crates\debugger_tools)
+error: redundant clone
+    --> crates\icon_picker\src\icon_picker.rs:1087:34
+     |
+1087 |         let label = payload.label.clone();
+     |                                  ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\icon_picker\src\icon_picker.rs:1087:21
+     |
+1087 |         let label = payload.label.clone();
+     |                     ^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+     = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: redundant clone
+    --> crates\icon_picker\src\icon_picker.rs:1287:34
+     |
+1287 |         let label = payload.label.clone();
+     |                                  ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates\icon_picker\src\icon_picker.rs:1287:21
+     |
+1287 |         let label = payload.label.clone();
+     |                     ^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.95.0/index.html#redundant_clone
+
+    Checking outline v0.1.0 (G:\Dx\code\crates\outline)
+error: could not compile `icon_picker` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...

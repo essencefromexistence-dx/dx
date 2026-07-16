@@ -1298,6 +1298,8 @@ struct LiquidGlassFragmentInput {
 };
 
 StructuredBuffer<LiquidGlass> liquid_glass: register(t1);
+// Bound as PSSetShaderResources slot 2 in liquid glass draw (sprite atlas is t0).
+Texture2D<float4> t_backdrop: register(t2);
 
 float liquid_smoothstep(float edge0, float edge1, float x) {
     float denominator = edge1 - edge0;
