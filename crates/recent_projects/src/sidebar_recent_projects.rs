@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use fuzzy_nucleo::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
@@ -12,7 +12,6 @@ use picker::{
 use remote::RemoteConnectionOptions;
 use settings::Settings;
 use ui::{ButtonLike, KeyBinding, ListItem, ListItemSpacing, Tooltip, prelude::*};
-use ui_input::ErasedEditor;
 use util::{ResultExt, paths::PathExt};
 use workspace::{
     MultiWorkspace, OpenMode, OpenOptions, ProjectGroupKey, RecentWorkspace,
@@ -22,50 +21,6 @@ use workspace::{
 use zed_actions::OpenRemote;
 
 use crate::{highlights_for_path, icon_for_remote_connection, open_remote_project};
-
-const MAX_SIDEBAR_RECENT_PROJECT_CANDIDATES: usize = 2_000;
-const MAX_SIDEBAR_RECENT_PROJECT_MATCHES: usize = 100;
-const MAX_SIDEBAR_RECENT_PROJECT_RENDERED_PATHS: usize = 16;
-const SIDEBAR_RECENT_PROJECT_TRUNCATED_PATH_LABEL: &str = "...";
-
-fn capped_sidebar_recent_project_paths(workspace: &RecentWorkspace) -> (Vec<PathBuf>, bool) {
-    let mut paths = workspace
-        .identity_paths
-        .ordered_paths()
-        .take(MAX_SIDEBAR_RECENT_PROJECT_RENDERED_PATHS.saturating_add(1))
-        .map(|path| path.compact())
-        .collect::<Vec<_>>();
-    let paths_truncated = paths.len() > MAX_SIDEBAR_RECENT_PROJECT_RENDERED_PATHS;
-    paths.truncate(MAX_SIDEBAR_RECENT_PROJECT_RENDERED_PATHS);
-    (paths, paths_truncated)
-}
-
-fn sidebar_recent_project_tooltip_path(
-    rendered_paths: &[PathBuf],
-    paths_truncated: bool,
-    location: &SerializedWorkspaceLocation,
-) -> SharedString {
-    let mut path_labels = rendered_paths
-        .iter()
-        .map(|path| path.to_string_lossy().to_string())
-        .collect::<Vec<_>>();
-    if paths_truncated {
-        path_labels.push(SIDEBAR_RECENT_PROJECT_TRUNCATED_PATH_LABEL.to_string());
-    }
-
-    let path_label = path_labels.join("\n");
-    match location {
-        SerializedWorkspaceLocation::Remote(options) => {
-            let host = options.display_name();
-            if path_labels.len() == 1 {
-                format!("{} ({})", path_labels[0], host).into()
-            } else {
-                format!("{}\n({})", path_label, host).into()
-            }
-        }
-        _ => path_label.into(),
-    }
-}
 
 pub struct SidebarRecentProjects {
     pub picker: Entity<Picker<SidebarRecentProjectsDelegate>>,
@@ -77,7 +32,6 @@ impl SidebarRecentProjects {
         workspace: WeakEntity<Workspace>,
         window_project_groups: Vec<ProjectGroupKey>,
         _focus_handle: FocusHandle,
-        _multi_workspace: Option<WeakEntity<MultiWorkspace>>,
         window: &mut Window,
         cx: &mut App,
     ) -> Entity<Self> {
@@ -100,6 +54,8 @@ impl SidebarRecentProjects {
                 Picker::list(delegate, window, cx)
                     .list_measure_all()
                     .show_scrollbar(true)
+                    .initial_width(rems(18.))
+                    .popover()
             });
 
             let picker_focus_handle = picker.focus_handle(cx);
@@ -172,15 +128,6 @@ impl SidebarRecentProjectsDelegate {
             .any(|workspace| !matches!(workspace.location, SerializedWorkspaceLocation::Local));
         self.workspaces = workspaces;
     }
-
-    fn clamp_selected_index(&mut self) {
-        match self.filtered_workspaces.len().checked_sub(1) {
-            Some(max_index) => {
-                self.selected_index = self.selected_index.min(max_index);
-            }
-            None => self.selected_index = 0,
-        }
-    }
 }
 
 impl EventEmitter<DismissEvent> for SidebarRecentProjectsDelegate {}
@@ -188,24 +135,12 @@ impl EventEmitter<DismissEvent> for SidebarRecentProjectsDelegate {}
 impl PickerDelegate for SidebarRecentProjectsDelegate {
     type ListItem = AnyElement;
 
-    fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
-        "Search projects…".into()
+    fn name() -> &'static str {
+        "sidebar recent projects"
     }
 
-    fn render_editor(
-        &self,
-        editor: &Arc<dyn ErasedEditor>,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Div {
-        h_flex()
-            .flex_none()
-            .h_9()
-            .px_2p5()
-            .justify_between()
-            .border_b_1()
-            .border_color(cx.theme().colors().border_variant)
-            .child(editor.render(window, cx))
+    fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
+        "Search projects…".into()
     }
 
     fn match_count(&self) -> usize {
@@ -223,7 +158,6 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
         _cx: &mut Context<Picker<Self>>,
     ) {
         self.selected_index = ix;
-        self.clamp_selected_index();
     }
 
     fn update_matches(
@@ -252,7 +186,6 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                         .iter()
                         .any(|key| key.matches(&workspace.project_group_key()))
             })
-            .take(MAX_SIDEBAR_RECENT_PROJECT_CANDIDATES)
             .map(|(id, workspace)| {
                 let combined_string = workspace
                     .identity_paths
@@ -264,29 +197,27 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
             })
             .collect();
 
-        self.filtered_workspaces = if is_empty_query {
-            candidates
+        if is_empty_query {
+            self.filtered_workspaces = candidates
                 .into_iter()
-                .take(MAX_SIDEBAR_RECENT_PROJECT_MATCHES)
                 .map(|candidate| StringMatch {
                     candidate_id: candidate.id,
                     score: 0.0,
                     positions: Vec::new(),
                     string: candidate.string,
                 })
-                .collect()
+                .collect();
         } else {
-            match_strings(
+            self.filtered_workspaces = match_strings(
                 &candidates,
                 query,
                 case,
                 fuzzy_nucleo::LengthPenalty::On,
-                MAX_SIDEBAR_RECENT_PROJECT_MATCHES,
-            )
-        };
+                100,
+            );
+        }
 
         self.selected_index = 0;
-        self.clamp_selected_index();
         Task::ready(())
     }
 
@@ -369,16 +300,29 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
         let hit = self.filtered_workspaces.get(ix)?;
         let workspace = self.workspaces.get(hit.candidate_id)?;
 
-        let (rendered_paths, paths_truncated) = capped_sidebar_recent_project_paths(workspace);
-        let tooltip_path = sidebar_recent_project_tooltip_path(
-            &rendered_paths,
-            paths_truncated,
-            &workspace.location,
-        );
+        let ordered_paths: Vec<_> = workspace
+            .identity_paths
+            .ordered_paths()
+            .map(|p| p.compact().to_string_lossy().to_string())
+            .collect();
+
+        let tooltip_path: SharedString = match &workspace.location {
+            SerializedWorkspaceLocation::Remote(options) => {
+                let host = options.display_name();
+                if ordered_paths.len() == 1 {
+                    format!("{} ({})", ordered_paths[0], host).into()
+                } else {
+                    format!("{}\n({})", ordered_paths.join("\n"), host).into()
+                }
+            }
+            _ => ordered_paths.join("\n").into(),
+        };
 
         let mut path_start_offset = 0;
-        let mut match_labels: Vec<_> = rendered_paths
-            .iter()
+        let match_labels: Vec<_> = workspace
+            .identity_paths
+            .ordered_paths()
+            .map(|p| p.compact())
             .map(|path| {
                 let (label, path_match) =
                     highlights_for_path(path.as_ref(), &hit.positions, path_start_offset);
@@ -386,13 +330,6 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                 label
             })
             .collect();
-        if paths_truncated {
-            match_labels.push(Some(HighlightedMatch {
-                text: SIDEBAR_RECENT_PROJECT_TRUNCATED_PATH_LABEL.to_string(),
-                highlight_positions: Vec::new(),
-                color: Color::Default,
-            }));
-        }
 
         let prefix = match &workspace.location {
             SerializedWorkspaceLocation::Remote(options) => {

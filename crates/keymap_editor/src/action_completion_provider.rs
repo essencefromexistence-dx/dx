@@ -6,9 +6,6 @@ use gpui::{Context, Entity, SharedString, Window};
 use language::{self, ToOffset};
 use project::{self, CompletionDisplayOptions};
 
-const MAX_ACTION_COMPLETION_CANDIDATES: usize = 10000;
-const MAX_ACTION_COMPLETION_MATCHES: usize = 50;
-
 pub struct ActionCompletionProvider {
     action_names: Vec<&'static str>,
     humanized_names: HashMap<&'static str, SharedString>,
@@ -61,7 +58,6 @@ impl CompletionProvider for ActionCompletionProvider {
             .action_names
             .iter()
             .enumerate()
-            .take(MAX_ACTION_COMPLETION_CANDIDATES)
             .map(|(ix, &name)| {
                 let humanized = self
                     .humanized_names
@@ -83,7 +79,7 @@ impl CompletionProvider for ActionCompletionProvider {
                 &normalized_query,
                 true,
                 true,
-                MAX_ACTION_COMPLETION_MATCHES.min(candidates.len()),
+                action_names.len(),
                 &Default::default(),
                 executor_for_fuzzy,
             )
@@ -91,15 +87,15 @@ impl CompletionProvider for ActionCompletionProvider {
 
             let completions: Vec<project::Completion> = matches
                 .iter()
-                .take(MAX_ACTION_COMPLETION_MATCHES)
-                .filter_map(|m| {
-                    let action_name = *action_names.get(m.candidate_id)?;
+                .take(50)
+                .map(|m| {
+                    let action_name = action_names[m.candidate_id];
                     let humanized = humanized_names
                         .get(action_name)
                         .cloned()
                         .unwrap_or_else(|| action_name.into());
 
-                    Some(project::Completion {
+                    project::Completion {
                         replace_range: replace_range.clone(),
                         label: language::CodeLabel::plain(humanized.to_string(), None),
                         new_text: action_name.to_string(),
@@ -112,7 +108,7 @@ impl CompletionProvider for ActionCompletionProvider {
                         insert_text_mode: None,
                         confirm: None,
                         group: None,
-                    })
+                    }
                 })
                 .collect();
 

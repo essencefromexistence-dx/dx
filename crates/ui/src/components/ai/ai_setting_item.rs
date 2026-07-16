@@ -21,9 +21,9 @@ impl AiSettingItemStatus {
             Self::Starting => "Server is starting.",
             Self::Running => "Server is active.",
             Self::Error => "Server has an error.",
-            Self::AuthRequired => "Authentication required.",
-            Self::ClientSecretRequired => "Client secret required.",
-            Self::Authenticating => "Waiting for authorization…",
+            Self::AuthRequired => "Authentication Required.",
+            Self::ClientSecretRequired => "Client Secret Required.",
+            Self::Authenticating => "Waiting for Authorization…",
         }
     }
 
@@ -198,6 +198,7 @@ impl RenderOnce for AiSettingItem {
         v_flex()
             .id(id)
             .min_w_0()
+            .py_2()
             .child(
                 h_flex()
                     .min_w_0()
@@ -301,7 +302,7 @@ impl Component for AiSettingItem {
                         )
                         .detail_label("3 tools")
                         .action(
-                            IconButton::new("menu", dx_icon(DxUiIcon::Settings))
+                            IconButton::new("menu", IconName::Settings)
                                 .icon_size(IconSize::Small)
                                 .icon_color(Color::Muted),
                         )
@@ -374,7 +375,7 @@ impl Component for AiSettingItem {
                             AiSettingItemSource::Registry,
                         )
                         .icon(
-                            Icon::new(IconName::Sparkle)
+                            Icon::new(IconName::ZedAssistant)
                                 .size(IconSize::Small)
                                 .color(Color::Muted),
                         ),

@@ -3,8 +3,8 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use ::util::ResultExt;
 use anyhow::{Context, Result};
+use gpui_util::ResultExt;
 use windows::{
     Win32::{
         Foundation::HWND,
@@ -70,6 +70,7 @@ struct DirectXResources {
     swap_chain: IDXGISwapChain1,
     render_target: Option<ID3D11Texture2D>,
     render_target_view: Option<ID3D11RenderTargetView>,
+    // Dx: copy of current RT for liquid-glass backdrop sampling
     liquid_glass_backdrop_texture: ID3D11Texture2D,
     liquid_glass_backdrop_srv: Option<ID3D11ShaderResourceView>,
 
@@ -103,7 +104,10 @@ struct DirectXGlobalElements {
 struct DirectComposition {
     comp_device: IDCompositionDevice,
     comp_target: IDCompositionTarget,
+    /// Root visual that owns both the GPUI swap-chain visual and any
+    /// webview composition visuals layered underneath it.
     root_visual: IDCompositionVisual,
+    /// Visual that hosts the GPUI swap chain content.
     gpui_visual: IDCompositionVisual,
 }
 
@@ -347,8 +351,9 @@ impl DirectXRenderer {
         })?;
 
         self.upload_scene_buffers(scene)?;
-        let mut needs_backdrop_refresh = true;
 
+        // Refresh liquid-glass backdrop only after geometry that writes the RT.
+        let mut needs_backdrop_refresh = true;
         for batch in scene.batches() {
             match batch {
                 PrimitiveBatch::Shadows(range) => {
@@ -421,7 +426,7 @@ impl DirectXRenderer {
             }
             .context(format!(
                 "scene too large:\
-                {} paths, {} shadows, {} quads, {} underlines, {} mono, {} subpixel, {} poly, {} liquid glass, {} surfaces",
+                {} paths, {} shadows, {} quads, {} underlines, {} mono, {} subpixel, {} poly, {} liquid_glass, {} surfaces",
                 scene.paths.len(),
                 scene.shadows.len(),
                 scene.quads.len(),
@@ -869,10 +874,8 @@ impl DirectXRenderer {
             _ => dxgi::get_driver_version(&devices.adapter),
         }
         .context("Failed to get gpu driver info")
-        .unwrap_or_else(|error| {
-            log::debug!("{error:#}");
-            "Unknown Driver".to_string()
-        });
+        .log_err()
+        .unwrap_or("Unknown Driver".to_string());
         Ok(GpuSpecs {
             is_software_emulated,
             device_name,
@@ -1520,39 +1523,6 @@ fn create_render_target_and_its_view(
 }
 
 #[inline]
-fn create_path_intermediate_texture(
-    device: &ID3D11Device,
-    width: u32,
-    height: u32,
-) -> Result<(ID3D11Texture2D, Option<ID3D11ShaderResourceView>)> {
-    let texture = unsafe {
-        let mut output = None;
-        let desc = D3D11_TEXTURE2D_DESC {
-            Width: width,
-            Height: height,
-            MipLevels: 1,
-            ArraySize: 1,
-            Format: RENDER_TARGET_FORMAT,
-            SampleDesc: DXGI_SAMPLE_DESC {
-                Count: 1,
-                Quality: 0,
-            },
-            Usage: D3D11_USAGE_DEFAULT,
-            BindFlags: (D3D11_BIND_RENDER_TARGET.0 | D3D11_BIND_SHADER_RESOURCE.0) as u32,
-            CPUAccessFlags: 0,
-            MiscFlags: 0,
-        };
-        device.CreateTexture2D(&desc, None, Some(&mut output))?;
-        output.unwrap()
-    };
-
-    let mut shader_resource_view = None;
-    unsafe { device.CreateShaderResourceView(&texture, None, Some(&mut shader_resource_view))? };
-
-    Ok((texture, Some(shader_resource_view.unwrap())))
-}
-
-#[inline]
 fn create_liquid_glass_backdrop_texture(
     device: &ID3D11Device,
     width: u32,
@@ -1572,6 +1542,39 @@ fn create_liquid_glass_backdrop_texture(
             },
             Usage: D3D11_USAGE_DEFAULT,
             BindFlags: D3D11_BIND_SHADER_RESOURCE.0 as u32,
+            CPUAccessFlags: 0,
+            MiscFlags: 0,
+        };
+        device.CreateTexture2D(&desc, None, Some(&mut output))?;
+        output.unwrap()
+    };
+
+    let mut shader_resource_view = None;
+    unsafe { device.CreateShaderResourceView(&texture, None, Some(&mut shader_resource_view))? };
+
+    Ok((texture, Some(shader_resource_view.unwrap())))
+}
+
+#[inline]
+fn create_path_intermediate_texture(
+    device: &ID3D11Device,
+    width: u32,
+    height: u32,
+) -> Result<(ID3D11Texture2D, Option<ID3D11ShaderResourceView>)> {
+    let texture = unsafe {
+        let mut output = None;
+        let desc = D3D11_TEXTURE2D_DESC {
+            Width: width,
+            Height: height,
+            MipLevels: 1,
+            ArraySize: 1,
+            Format: RENDER_TARGET_FORMAT,
+            SampleDesc: DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            Usage: D3D11_USAGE_DEFAULT,
+            BindFlags: (D3D11_BIND_RENDER_TARGET.0 | D3D11_BIND_SHADER_RESOURCE.0) as u32,
             CPUAccessFlags: 0,
             MiscFlags: 0,
         };

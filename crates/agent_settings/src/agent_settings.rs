@@ -43,10 +43,10 @@ pub struct PanelLayout {
 impl PanelLayout {
     const AGENT: Self = Self {
         agent_dock: Some(DockPosition::Left),
-        project_panel_dock: Some(DockSide::Left),
-        outline_panel_dock: Some(DockSide::Left),
-        collaboration_panel_dock: Some(DockPosition::Left),
-        git_panel_dock: Some(DockPosition::Left),
+        project_panel_dock: Some(DockSide::Right),
+        outline_panel_dock: Some(DockSide::Right),
+        collaboration_panel_dock: Some(DockPosition::Right),
+        git_panel_dock: Some(DockPosition::Right),
     };
 
     const EDITOR: Self = Self {
@@ -136,6 +136,68 @@ impl WindowLayout {
 
     pub fn editor() -> Self {
         Self::Editor(None)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum AutoCompactThreshold {
+    /// Compact once the context window is at least this full, as a fraction in
+    /// the range `(0.0, 1.0]`.
+    Percentage(f64),
+    /// Compact once at least this many tokens have been used.
+    TokensUsed(u64),
+    /// Compact once fewer than this many tokens remain in the context window.
+    TokensRemaining(u64),
+}
+
+impl AutoCompactThreshold {
+    /// The threshold used when none is configured, or when the configured value
+    /// is invalid (90% of the context window).
+    pub const DEFAULT: Self = Self::Percentage(0.9);
+}
+
+impl fmt::Display for AutoCompactThreshold {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Percentage(percent) => write!(formatter, "{}%", percent * 100.0),
+            Self::TokensUsed(tokens) => write!(formatter, "{tokens}"),
+            Self::TokensRemaining(tokens) => write!(formatter, "-{tokens}"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct AutoCompactSettings {
+    pub enabled: bool,
+    pub threshold: AutoCompactThreshold,
+}
+
+fn parse_auto_compact_threshold(raw: &str) -> anyhow::Result<AutoCompactThreshold> {
+    let trimmed = raw.trim();
+    if let Some(percent) = trimmed.strip_suffix('%') {
+        let value: f64 = percent
+            .trim_end()
+            .parse()
+            .with_context(|| format!("invalid auto_compact threshold percentage {raw:?}"))?;
+        anyhow::ensure!(
+            value > 0.0 && value <= 100.0,
+            "auto_compact threshold percentage must be between 0% and 100%, got {raw:?}"
+        );
+        Ok(AutoCompactThreshold::Percentage(value / 100.0))
+    } else {
+        let tokens: i64 = trimmed.parse().with_context(|| {
+            format!(
+                "invalid auto_compact threshold {raw:?}; \
+                 expected a percentage like \"90%\" or an integer number of tokens"
+            )
+        })?;
+        match tokens.cmp(&0) {
+            Greater => Ok(AutoCompactThreshold::TokensUsed(tokens as u64)),
+            Less => Ok(AutoCompactThreshold::TokensRemaining(tokens.unsigned_abs())),
+            Equal => {
+                anyhow::bail!("auto_compact threshold of 0 is not valid")
+            }
+        }
     }
 }
 
@@ -303,34 +365,6 @@ impl From<settings::AgentLiquidGlassSettingsContent> for AgentLiquidGlassSetting
     }
 }
 
-/// A threshold for when to automatically compact a thread.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum AutoCompactThreshold {
-    /// Compact once the context window is at least this full, as a fraction in
-    /// the range `(0.0, 1.0]`.
-    Percentage(f64),
-    /// Compact once at least this many tokens have been used.
-    TokensUsed(u64),
-    /// Compact once fewer than this many tokens remain in the context window.
-    TokensRemaining(u64),
-}
-
-impl AutoCompactThreshold {
-    /// The threshold used when none is configured, or when the configured value
-    /// is invalid (90% of the context window).
-    pub const DEFAULT: Self = Self::Percentage(0.9);
-}
-
-impl fmt::Display for AutoCompactThreshold {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Percentage(percent) => write!(formatter, "{}%", percent * 100.0),
-            Self::TokensUsed(tokens) => write!(formatter, "{tokens}"),
-            Self::TokensRemaining(tokens) => write!(formatter, "-{tokens}"),
-        }
-    }
-}
-
 fn sanitize_f32(value: Option<f32>, fallback: f32, min: f32, max: f32) -> f32 {
     value
         .filter(|value| value.is_finite())
@@ -360,40 +394,7 @@ fn sanitize_pair(
     ]
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct AutoCompactSettings {
-    pub enabled: bool,
-    pub threshold: AutoCompactThreshold,
-}
 
-fn parse_auto_compact_threshold(raw: &str) -> anyhow::Result<AutoCompactThreshold> {
-    let trimmed = raw.trim();
-    if let Some(percent) = trimmed.strip_suffix('%') {
-        let value: f64 = percent
-            .trim_end()
-            .parse()
-            .with_context(|| format!("invalid auto_compact threshold percentage {raw:?}"))?;
-        anyhow::ensure!(
-            value > 0.0 && value <= 100.0,
-            "auto_compact threshold percentage must be between 0% and 100%, got {raw:?}"
-        );
-        Ok(AutoCompactThreshold::Percentage(value / 100.0))
-    } else {
-        let tokens: i64 = trimmed.parse().with_context(|| {
-            format!(
-                "invalid auto_compact threshold {raw:?}; \
-                 expected a percentage like \"90%\" or an integer number of tokens"
-            )
-        })?;
-        match tokens.cmp(&0) {
-            Greater => Ok(AutoCompactThreshold::TokensUsed(tokens as u64)),
-            Less => Ok(AutoCompactThreshold::TokensRemaining(tokens.unsigned_abs())),
-            Equal => {
-                anyhow::bail!("auto_compact threshold of 0 is not valid")
-            }
-        }
-    }
-}
 
 #[derive(Clone, Debug, RegisterSetting)]
 pub struct AgentSettings {
@@ -410,6 +411,7 @@ pub struct AgentSettings {
     pub inline_assistant_model: Option<LanguageModelSelection>,
     pub inline_assistant_use_streaming_tools: bool,
     pub commit_message_model: Option<LanguageModelSelection>,
+    pub commit_message_include_project_rules: bool,
     pub commit_message_instructions: Option<String>,
     pub thread_summary_model: Option<LanguageModelSelection>,
     pub inline_alternatives: Vec<LanguageModelSelection>,
@@ -425,6 +427,7 @@ pub struct AgentSettings {
     pub enable_feedback: bool,
     pub expand_edit_card: bool,
     pub expand_terminal_card: bool,
+    pub terminal_init_command: Option<String>,
     pub thinking_display: ThinkingBlockDisplay,
     pub cancel_generation_on_terminal_stop: bool,
     pub use_modifier_to_send: bool,
@@ -607,12 +610,42 @@ impl Default for AgentProfileId {
 /// combines them with the in-memory per-thread grants. `write_paths` are
 /// stored as minimal, lexically-normalized subtrees (see
 /// [`compile_sandbox_permissions`]).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SandboxPermissions {
-    pub allow_network: bool,
+    /// Allow sandboxed commands to reach any host over the network.
+    pub allow_all_hosts: bool,
+    /// Hosts sandboxed commands may always reach, in canonical form (exact
+    /// hostnames or leading-`*.` subdomain wildcards). Parsed/validated where
+    /// consumed (`agent::sandboxing`).
+    pub network_hosts: Vec<String>,
     pub allow_fs_write_all: bool,
+    /// Persistently run agent terminal commands outside the OS sandbox. This is
+    /// the model-facing "off switch": when set, the sandboxed terminal tool is
+    /// not exposed and the system prompt omits the sandbox section, so the
+    /// model uses the plain `terminal` tool (on Windows, WSL sandbox setup is
+    /// skipped). Distinct from the model-requested `unsandboxed: true` escape
+    /// approved "once" or "for this thread", which keeps the sandboxed
+    /// tool/prompt in place — see `agent::sandboxing`.
     pub allow_unsandboxed: bool,
     pub write_paths: Vec<PathBuf>,
+    /// Whether sandbox escalation prompts warn about domains or write paths
+    /// that contain potentially confusable Unicode characters (homoglyphs,
+    /// invisible characters, or bidirectional overrides). Enabled by default.
+    pub warn_confusable_unicode: bool,
+}
+
+impl Default for SandboxPermissions {
+    fn default() -> Self {
+        Self {
+            allow_all_hosts: false,
+            network_hosts: Vec::new(),
+            allow_fs_write_all: false,
+            allow_unsandboxed: false,
+            write_paths: Vec::new(),
+            // The confusable-Unicode warning is a safety net, so it defaults on.
+            warn_confusable_unicode: true,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -908,17 +941,6 @@ pub fn normalize_path(raw: &str) -> String {
 impl Settings for AgentSettings {
     fn from_settings(content: &settings::SettingsContent) -> Self {
         let agent = content.agent.clone().unwrap();
-        let profiles: IndexMap<AgentProfileId, AgentProfileSettings> = agent
-            .profiles
-            .unwrap()
-            .into_iter()
-            .map(|(key, val)| (AgentProfileId(key), val.into()))
-            .collect();
-        let default_profile = AgentProfile::normalize_id_from_profiles(
-            AgentProfileId(agent.default_profile.unwrap()),
-            &profiles,
-        );
-
         Self {
             enabled: agent.enabled.unwrap(),
             button: agent.button.unwrap(),
@@ -938,13 +960,21 @@ impl Settings for AgentSettings {
             inline_assistant_use_streaming_tools: agent
                 .inline_assistant_use_streaming_tools
                 .unwrap_or(true),
+            commit_message_include_project_rules: agent
+                .commit_message_include_project_rules
+                .unwrap(),
             commit_message_model: agent.commit_message_model,
             commit_message_instructions: agent.commit_message_instructions,
             thread_summary_model: agent.thread_summary_model,
             inline_alternatives: agent.inline_alternatives.unwrap_or_default(),
             favorite_models: agent.favorite_models,
-            default_profile,
-            profiles,
+            default_profile: AgentProfileId(agent.default_profile.unwrap()),
+            profiles: agent
+                .profiles
+                .unwrap()
+                .into_iter()
+                .map(|(key, val)| (AgentProfileId(key), val.into()))
+                .collect(),
 
             notify_when_agent_waiting: agent.notify_when_agent_waiting.unwrap(),
             play_sound_when_agent_done: agent.play_sound_when_agent_done.unwrap_or_default(),
@@ -963,6 +993,9 @@ impl Settings for AgentSettings {
             enable_feedback: agent.enable_feedback.unwrap(),
             expand_edit_card: agent.expand_edit_card.unwrap(),
             expand_terminal_card: agent.expand_terminal_card.unwrap(),
+            terminal_init_command: agent
+                .terminal_init_command
+                .filter(|command| !command.trim().is_empty()),
             thinking_display: agent.thinking_display.unwrap(),
             cancel_generation_on_terminal_stop: agent.cancel_generation_on_terminal_stop.unwrap(),
             use_modifier_to_send: agent.use_modifier_to_send.unwrap(),
@@ -992,11 +1025,18 @@ fn compile_sandbox_permissions(
         }
     }
 
+    let network_hosts = content
+        .network_hosts
+        .map(|hosts| hosts.0)
+        .unwrap_or_default();
+
     SandboxPermissions {
-        allow_network: content.allow_network.unwrap_or(false),
+        allow_all_hosts: content.allow_all_hosts.unwrap_or(false),
+        network_hosts,
         allow_fs_write_all: content.allow_fs_write_all.unwrap_or(false),
         allow_unsandboxed: content.allow_unsandboxed.unwrap_or(false),
         write_paths,
+        warn_confusable_unicode: content.warn_confusable_unicode.unwrap_or(true),
     }
 }
 
@@ -1169,6 +1209,56 @@ mod tests {
         assert!(result.is_none());
     }
 
+    #[gpui::test]
+    fn test_terminal_init_command_filters_empty_without_trimming(cx: &mut gpui::App) {
+        let store = SettingsStore::test(cx);
+        cx.set_global(store);
+        project::DisableAiSettings::register(cx);
+        AgentSettings::register(cx);
+
+        SettingsStore::update_global(cx, |store, cx| {
+            let new_text = store
+                .new_text_for_update("{}".to_string(), |settings| {
+                    settings.agent.get_or_insert_default().terminal_init_command =
+                        Some(" claude --resume ".to_string());
+                })
+                .unwrap();
+            assert!(
+                new_text.contains(r#""terminal_init_command": " claude --resume ""#),
+                "updated settings JSON should include terminal_init_command, got {new_text}"
+            );
+            store.set_user_settings(&new_text, cx).unwrap();
+        });
+        assert_eq!(
+            AgentSettings::get_global(cx)
+                .terminal_init_command
+                .as_deref(),
+            Some(" claude --resume ")
+        );
+
+        SettingsStore::update_global(cx, |store, cx| {
+            store
+                .set_user_settings(r#"{ "agent": { "terminal_init_command": "   " } }"#, cx)
+                .unwrap();
+        });
+        assert!(
+            AgentSettings::get_global(cx)
+                .terminal_init_command
+                .is_none()
+        );
+
+        SettingsStore::update_global(cx, |store, cx| {
+            store
+                .set_user_settings(r#"{ "agent": { "terminal_init_command": null } }"#, cx)
+                .unwrap();
+        });
+        assert!(
+            AgentSettings::get_global(cx)
+                .terminal_init_command
+                .is_none()
+        );
+    }
+
     #[test]
     fn test_tool_permissions_parsing() {
         let json = json!({
@@ -1224,12 +1314,29 @@ mod tests {
     fn test_sandbox_permissions_empty() {
         let permissions = compile_sandbox_permissions(None);
         assert_eq!(permissions, SandboxPermissions::default());
+        // The confusable-Unicode warning is a safety net, so it's on by default.
+        assert!(permissions.warn_confusable_unicode);
+    }
+
+    #[test]
+    fn test_sandbox_permissions_warn_confusable_unicode_can_be_disabled() {
+        let content: settings::SandboxPermissionsContent =
+            serde_json::from_value(json!({ "warn_confusable_unicode": false })).unwrap();
+        let permissions = compile_sandbox_permissions(Some(content));
+        assert!(!permissions.warn_confusable_unicode);
+
+        // Omitting the key keeps the warning enabled.
+        let content: settings::SandboxPermissionsContent =
+            serde_json::from_value(json!({})).unwrap();
+        let permissions = compile_sandbox_permissions(Some(content));
+        assert!(permissions.warn_confusable_unicode);
     }
 
     #[test]
     fn test_sandbox_permissions_parsing_and_pruning() {
         let json = json!({
-            "allow_network": true,
+            "allow_all_hosts": true,
+            "network_hosts": ["github.com", "*.npmjs.org"],
             "allow_unsandboxed": true,
             "write_paths": [
                 "/tmp/build/cache",
@@ -1241,7 +1348,11 @@ mod tests {
         let content: settings::SandboxPermissionsContent = serde_json::from_value(json).unwrap();
         let permissions = compile_sandbox_permissions(Some(content));
 
-        assert!(permissions.allow_network);
+        assert!(permissions.allow_all_hosts);
+        assert_eq!(
+            permissions.network_hosts,
+            vec!["github.com".to_string(), "*.npmjs.org".to_string()]
+        );
         assert!(!permissions.allow_fs_write_all);
         assert!(permissions.allow_unsandboxed);
         assert_eq!(
@@ -1702,13 +1813,13 @@ mod tests {
         assert_eq!(user_layout.git_panel_dock, None);
 
         // User sets a combination that doesn't match either preset:
-        // agent on the left but project panel on the right.
+        // agent on the left but project panel also on the left.
         SettingsStore::update_global(cx, |store, cx| {
             store
                 .set_user_settings(
                     r#"{
                         "agent": { "dock": "left" },
-                        "project_panel": { "dock": "right" }
+                        "project_panel": { "dock": "left" }
                     }"#,
                     cx,
                 )
@@ -1720,7 +1831,7 @@ mod tests {
             panic!("expected Custom, got {:?}", layout);
         };
         assert_eq!(user_layout.agent_dock, Some(DockPosition::Left));
-        assert_eq!(user_layout.project_panel_dock, Some(DockSide::Right));
+        assert_eq!(user_layout.project_panel_dock, Some(DockSide::Left));
     }
 
     #[gpui::test]
@@ -1807,7 +1918,7 @@ mod tests {
             project::DisableAiSettings::register(cx);
             AgentSettings::register(cx);
 
-            // User has agent=left and project_panel=left, both matching the preset.
+            // User has agent=left (matches preset) and project_panel=left (does not)
             SettingsStore::update_global(cx, |store, cx| {
                 store
                     .set_user_settings(
@@ -1821,7 +1932,7 @@ mod tests {
             });
 
             let layout = AgentSettings::get_layout(cx);
-            assert!(matches!(layout, WindowLayout::Agent(_)));
+            assert!(matches!(layout, WindowLayout::Custom(_)));
 
             AgentSettings::set_layout(WindowLayout::agent(), fs.clone(), cx)
         })
@@ -1836,7 +1947,8 @@ mod tests {
                 store.set_user_settings(&written, cx).unwrap();
             });
 
-            // The user settings should still have agent=left and project_panel=left.
+            // The user settings should still have agent=left (preserved)
+            // and now project_panel=right (changed to match preset).
             let store = cx.global::<SettingsStore>();
             let user_layout = store
                 .raw_user_settings()
@@ -1844,7 +1956,7 @@ mod tests {
                 .unwrap_or_default();
 
             assert_eq!(user_layout.agent_dock, Some(DockPosition::Left));
-            assert_eq!(user_layout.project_panel_dock, Some(DockSide::Left));
+            assert_eq!(user_layout.project_panel_dock, Some(DockSide::Right));
             // Other fields weren't in user settings and didn't need changing.
             assert_eq!(user_layout.outline_panel_dock, None);
 
@@ -1936,3 +2048,5 @@ mod tests {
         });
     }
 }
+
+

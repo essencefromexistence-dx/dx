@@ -136,34 +136,6 @@ impl Editor {
         }
     }
 
-    pub(super) fn defer_completion_on_input(
-        &mut self,
-        text: String,
-        trigger_in_words: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.deferred_completion_on_input = Some(DeferredCompletionOnInput {
-            text,
-            trigger_in_words,
-        });
-
-        if self.deferred_completion_on_input_scheduled {
-            return;
-        }
-
-        self.deferred_completion_on_input_scheduled = true;
-        cx.on_next_frame(window, |this, window, cx| {
-            this.deferred_completion_on_input_scheduled = false;
-            let Some(deferred) = this.deferred_completion_on_input.take() else {
-                return;
-            };
-
-            this.trigger_completion_on_input(&deferred.text, deferred.trigger_in_words, window, cx);
-            this.refresh_edit_prediction(true, false, EditPredictionRequestTrigger::BufferEdit, window, cx);
-        });
-    }
-
     pub(super) fn is_lsp_relevant(&self, file: Option<&Arc<dyn language::File>>, cx: &App) -> bool {
         let Some(project) = self.project() else {
             return false;
@@ -294,14 +266,20 @@ impl Editor {
 
         let multibuffer_snapshot = self.buffer.read(cx).read(cx);
 
-        // Typically `start` == `end`, but with snippet tabstop choices the default choice is
-        // inserted and selected. To handle that case, the start of the selection is used so that
-        // the menu starts with all choices.
-        let position = self
-            .selections
-            .newest_anchor()
-            .start
-            .bias_right(&multibuffer_snapshot);
+        let is_showing_snippet_choices = matches!(
+            completions_source,
+            Some(CompletionsMenuSource::SnippetChoices)
+        );
+
+        let anchor = self.selections.newest_anchor();
+        let position = if is_showing_snippet_choices {
+            // Typically `start` == `end`, but with snippet tabstop choices the default choice is
+            // inserted and selected. To handle that case, the start of the selection is used so that
+            // the menu starts with all choices.
+            anchor.start.bias_right(&multibuffer_snapshot)
+        } else {
+            anchor.head().bias_right(&multibuffer_snapshot)
+        };
 
         if position.diff_base_anchor().is_some() {
             return;
@@ -343,7 +321,7 @@ impl Editor {
 
         // Hide the current completions menu when query is empty. Without this, cached
         // completions from before the trigger char may be reused (#32774).
-        if query.is_none() && menu_is_open {
+        if query.is_none() && menu_is_open && !is_showing_snippet_choices {
             self.hide_context_menu(window, cx);
         }
 
@@ -852,14 +830,19 @@ impl Editor {
         let old_text = buffer
             .text_for_range(replace_range.clone())
             .collect::<String>();
-        let lookbehind = newest_range_buffer
-            .start
-            .to_offset(buffer_snapshot)
-            .saturating_sub(replace_range.start.to_offset(&buffer_snapshot));
-        let lookahead = replace_range
-            .end
-            .to_offset(&buffer_snapshot)
-            .saturating_sub(newest_range_buffer.end.to_offset(&buffer));
+        let (lookbehind, lookahead) = if buffer.remote_id() == buffer_snapshot.remote_id() {
+            let lookbehind = newest_range_buffer
+                .start
+                .to_offset(&buffer)
+                .saturating_sub(replace_range.start.to_offset(&buffer));
+            let lookahead = replace_range
+                .end
+                .to_offset(&buffer)
+                .saturating_sub(newest_range_buffer.end.to_offset(&buffer));
+            (lookbehind, lookahead)
+        } else {
+            (0, 0)
+        };
         let prefix = &old_text[..old_text.len().saturating_sub(lookahead)];
         let suffix = &old_text[lookbehind.min(old_text.len())..];
 
@@ -1328,83 +1311,69 @@ fn snippet_completions(
                 is_incomplete = true;
             }
 
-            completions.extend(
-                matches
-                    .iter()
-                    .filter_map(|(string_match, buffer_window_len)| {
-                        let Some(&(
-                            (snippet_index, prefix_index),
-                            matching_prefix,
-                            _snippet_word_count,
-                        )) = sorted_snippet_candidates.get(string_match.candidate_id)
-                        else {
-                            return None;
-                        };
-                        let Some(snippet) = snippets.get(snippet_index) else {
-                            return None;
-                        };
-                        let start = buffer_offset - buffer_window_len;
-                        let start = snapshot.anchor_before(start);
-                        let range = start..buffer_anchor;
-                        let lsp_start = to_lsp(&start);
-                        let lsp_range = lsp::Range {
-                            start: lsp_start,
-                            end: lsp_end,
-                        };
-                        Some(Completion {
-                            replace_range: range,
-                            new_text: snippet.body.clone(),
-                            source: CompletionSource::Lsp {
-                                insert_range: None,
-                                server_id: LanguageServerId(usize::MAX),
-                                resolved: true,
-                                lsp_completion: Box::new(lsp::CompletionItem {
-                                    label: matching_prefix.clone(),
-                                    kind: Some(CompletionItemKind::SNIPPET),
-                                    label_details: snippet.description.as_ref().map(
-                                        |description| lsp::CompletionItemLabelDetails {
-                                            detail: Some(description.clone()),
-                                            description: None,
-                                        },
-                                    ),
-                                    insert_text_format: Some(InsertTextFormat::SNIPPET),
-                                    text_edit: Some(lsp::CompletionTextEdit::InsertAndReplace(
-                                        lsp::InsertReplaceEdit {
-                                            new_text: snippet.body.clone(),
-                                            insert: lsp_range,
-                                            replace: lsp_range,
-                                        },
-                                    )),
-                                    filter_text: Some(snippet.body.clone()),
-                                    sort_text: Some(char::MAX.to_string()),
-                                    ..lsp::CompletionItem::default()
-                                }),
-                                lsp_defaults: None,
-                            },
-                            label: CodeLabel {
-                                text: matching_prefix.clone(),
-                                runs: Vec::new(),
-                                filter_range: 0..matching_prefix.len(),
-                            },
-                            icon_path: None,
-                            icon_color: None,
-                            documentation: Some(
-                                CompletionDocumentation::SingleLineAndMultiLinePlainText {
-                                    single_line: snippet.name.clone().into(),
-                                    plain_text: snippet
-                                        .description
-                                        .clone()
-                                        .map(|description| description.into()),
+            completions.extend(matches.iter().map(|(string_match, buffer_window_len)| {
+                let ((snippet_index, prefix_index), matching_prefix, _snippet_word_count) =
+                    sorted_snippet_candidates[string_match.candidate_id];
+                let snippet = &snippets[snippet_index];
+                let start = buffer_offset - buffer_window_len;
+                let start = snapshot.anchor_before(start);
+                let range = start..buffer_anchor;
+                let lsp_start = to_lsp(&start);
+                let lsp_range = lsp::Range {
+                    start: lsp_start,
+                    end: lsp_end,
+                };
+                Completion {
+                    replace_range: range,
+                    new_text: snippet.body.clone(),
+                    source: CompletionSource::Lsp {
+                        insert_range: None,
+                        server_id: LanguageServerId(usize::MAX),
+                        resolved: true,
+                        lsp_completion: Box::new(lsp::CompletionItem {
+                            label: matching_prefix.clone(),
+                            kind: Some(CompletionItemKind::SNIPPET),
+                            label_details: snippet.description.as_ref().map(|description| {
+                                lsp::CompletionItemLabelDetails {
+                                    detail: Some(description.clone()),
+                                    description: None,
+                                }
+                            }),
+                            insert_text_format: Some(InsertTextFormat::SNIPPET),
+                            text_edit: Some(lsp::CompletionTextEdit::InsertAndReplace(
+                                lsp::InsertReplaceEdit {
+                                    new_text: snippet.body.clone(),
+                                    insert: lsp_range,
+                                    replace: lsp_range,
                                 },
-                            ),
-                            insert_text_mode: None,
-                            confirm: None,
-                            match_start: Some(start),
-                            snippet_deduplication_key: Some((snippet_index, prefix_index)),
-                            group: None,
-                        })
+                            )),
+                            filter_text: Some(snippet.body.clone()),
+                            sort_text: Some(char::MAX.to_string()),
+                            ..lsp::CompletionItem::default()
+                        }),
+                        lsp_defaults: None,
+                    },
+                    label: CodeLabel {
+                        text: matching_prefix.clone(),
+                        runs: Vec::new(),
+                        filter_range: 0..matching_prefix.len(),
+                    },
+                    icon_path: None,
+                    icon_color: None,
+                    documentation: Some(CompletionDocumentation::SingleLineAndMultiLinePlainText {
+                        single_line: snippet.name.clone().into(),
+                        plain_text: snippet
+                            .description
+                            .clone()
+                            .map(|description| description.into()),
                     }),
-            );
+                    insert_text_mode: None,
+                    confirm: None,
+                    match_start: Some(start),
+                    snippet_deduplication_key: Some((snippet_index, prefix_index)),
+                    group: None,
+                }
+            }));
         }
 
         Ok(CompletionResponse {

@@ -16,9 +16,6 @@ use util::command::new_command;
 use workspace::{ModalView, MultiWorkspace};
 
 const DONT_ASK_AGAIN_KEY: &str = "move_to_applications_dont_ask_again";
-const MAX_COPY_APP_BUNDLE_STDERR_BYTES: usize = 2048;
-const MAX_COPY_APP_BUNDLE_STDERR_CHARS: usize = 500;
-
 static PROMPTED_THIS_SESSION: AtomicBool = AtomicBool::new(false);
 
 pub fn init(cx: &mut App) {
@@ -76,9 +73,9 @@ impl MoveToApplicationsRequest {
         let response = cx
             .prompt(
                 PromptLevel::Info,
-                "Move Dx to Applications?",
+                "Move Zed to Applications?",
                 Some(
-                    "Dx is running from a temporary location. Move it to Applications to finish installing it.",
+                    "Zed is running from a temporary location. Move it to Applications to finish installing it.",
                 ),
                 &[
                     PromptButton::ok("Yes"),
@@ -106,7 +103,7 @@ impl MoveToApplicationsRequest {
                         .ok();
                     cx.prompt(
                         PromptLevel::Critical,
-                        "Failed to move Dx to Applications",
+                        "Failed to move Zed to Applications",
                         Some(&error.to_string()),
                         &["OK"],
                     )
@@ -181,7 +178,7 @@ impl Render for InstallingZedModal {
                     .py_3()
                     .border_b_1()
                     .border_color(theme.colors().border_variant)
-                    .child(Label::new("Installing Dx…")),
+                    .child(Label::new("Installing Zed…")),
             )
             .child(
                 h_flex()
@@ -199,9 +196,9 @@ impl Render for InstallingZedModal {
                     .child(
                         v_flex()
                             .gap_1()
-                            .child(Label::new("Moving Dx to Applications"))
+                            .child(Label::new("Moving Zed to Applications"))
                             .child(
-                                Label::new("Dx will reopen when installation is complete.")
+                                Label::new("Zed will reopen when installation is complete.")
                                     .size(LabelSize::Small)
                                     .color(Color::Muted),
                             ),
@@ -299,31 +296,13 @@ async fn copy_app_bundle(source: &Path, destination: &Path) -> Result<()> {
         .await
         .with_context(|| format!("failed to run rsync for {}", source.display()))?;
 
-    if !output.status.success() {
-        let stderr = copy_app_bundle_stderr_display(&output.stderr);
-        anyhow::bail!("failed to copy app bundle: {stderr}");
-    }
+    anyhow::ensure!(
+        output.status.success(),
+        "failed to copy app bundle: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
 
     Ok(())
-}
-
-fn copy_app_bundle_stderr_display(stderr: &[u8]) -> String {
-    let truncated_bytes = stderr.len() > MAX_COPY_APP_BUNDLE_STDERR_BYTES;
-    let visible_len = stderr.len().min(MAX_COPY_APP_BUNDLE_STDERR_BYTES);
-    let decoded = String::from_utf8_lossy(&stderr[..visible_len]);
-    let compact = decoded.split_whitespace().collect::<Vec<_>>().join(" ");
-    let truncated_chars = compact.chars().count() > MAX_COPY_APP_BUNDLE_STDERR_CHARS;
-
-    if !truncated_bytes && !truncated_chars {
-        return compact;
-    }
-
-    let mut display = compact
-        .chars()
-        .take(MAX_COPY_APP_BUNDLE_STDERR_CHARS.saturating_sub(3))
-        .collect::<String>();
-    display.push_str("...");
-    display
 }
 
 fn restart_into(app_path: PathBuf, cx: &mut AsyncWindowContext) -> Result<()> {

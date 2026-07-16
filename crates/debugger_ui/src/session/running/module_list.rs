@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use dap::Module;
 use gpui::{
-    AnyElement, Empty, Entity, FocusHandle, Focusable, ScrollStrategy, Subscription, Task,
+    AnyElement, Entity, FocusHandle, Focusable, ScrollStrategy, Subscription, Task,
     UniformListScrollHandle, WeakEntity, uniform_list,
 };
 use project::{
@@ -122,9 +122,7 @@ impl ModuleList {
     }
 
     fn render_entry(&mut self, ix: usize, cx: &mut Context<Self>) -> AnyElement {
-        let Some(module) = self.entries.get(ix).cloned() else {
-            return Empty.into_any();
-        };
+        let module = self.entries[ix].clone();
 
         v_flex()
             .rounded_md()

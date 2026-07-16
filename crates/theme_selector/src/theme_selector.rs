@@ -28,20 +28,6 @@ actions!(
     ]
 );
 
-const MAX_THEME_SELECTOR_THEMES: usize = 4_096;
-const MAX_THEME_SELECTOR_MATCHES: usize = 100;
-
-fn cap_theme_selector_themes(themes: &mut Vec<ThemeMeta>) {
-    if themes.len() > MAX_THEME_SELECTOR_THEMES {
-        log::warn!(
-            "truncating theme selector themes from {} to {}",
-            themes.len(),
-            MAX_THEME_SELECTOR_THEMES
-        );
-        themes.truncate(MAX_THEME_SELECTOR_THEMES);
-    }
-}
-
 pub fn init(cx: &mut App) {
     cx.on_action(|action: &zed_actions::theme_selector::Toggle, cx| {
         let action = action.clone();
@@ -186,9 +172,7 @@ impl ThemeSelectorDelegate {
                     true
                 }
             })
-            .take(MAX_THEME_SELECTOR_THEMES + 1)
             .collect::<Vec<_>>();
-        cap_theme_selector_themes(&mut themes);
 
         // Sort by dark vs light, then by name.
         themes.sort_unstable_by(|a, b| {
@@ -394,6 +378,10 @@ fn retain_original_opposing_theme(
 impl PickerDelegate for ThemeSelectorDelegate {
     type ListItem = ui::ListItem;
 
+    fn name() -> &'static str {
+        "theme selector"
+    }
+
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Select Theme...".into()
     }
@@ -459,7 +447,6 @@ impl PickerDelegate for ThemeSelectorDelegate {
         let candidates = self
             .themes
             .iter()
-            .take(MAX_THEME_SELECTOR_THEMES)
             .enumerate()
             .map(|(id, meta)| StringMatchCandidate::new(id, &meta.name))
             .collect::<Vec<_>>();
@@ -482,7 +469,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
                     &query,
                     false,
                     true,
-                    MAX_THEME_SELECTOR_MATCHES,
+                    100,
                     &Default::default(),
                     background,
                 )

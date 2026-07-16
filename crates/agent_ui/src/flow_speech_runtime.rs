@@ -851,14 +851,21 @@ impl KokoroTtsRuntime {
     fn start_server(&self) -> Result<KokoroTtsServer> {
         self.prepare_tts_dirs()?;
         let mut command = self.kokoro_command();
-        command
-            .arg("--server")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null());
-        let mut child = command
-            .spawn()
-            .context("Failed to start Friday Kokoro TTS server")?;
+        // Sync process-tree control (stdin/stdout pipes + kill on cancel) needs std::process.
+        #[allow(
+            clippy::disallowed_methods,
+            reason = "Kokoro TTS server uses sync pipes and process-tree guards"
+        )]
+        let mut child = {
+            command
+                .arg("--server")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null());
+            command
+                .spawn()
+                .context("Failed to start Friday Kokoro TTS server")?
+        };
         let process_tree = match create_flow_speech_process_tree_guard(&child) {
             Ok(process_tree) => process_tree,
             Err(error) => {
@@ -1534,13 +1541,20 @@ fn run_command_with_timeout(
     label: &str,
     cancellation: Option<&FlowSpeechCancellation>,
 ) -> Result<Output> {
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .with_context(|| format!("Failed to start {label}"))?;
+    // Polling + cancel/kill path is intentionally synchronous.
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "Flow speech commands need sync timeout/cancel with process-tree guards"
+    )]
+    let mut child = {
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        command
+            .spawn()
+            .with_context(|| format!("Failed to start {label}"))?
+    };
     let process_tree = create_flow_speech_process_tree_guard(&child)
         .with_context(|| format!("Failed to protect {label} process tree"))?;
     let started_at = Instant::now();

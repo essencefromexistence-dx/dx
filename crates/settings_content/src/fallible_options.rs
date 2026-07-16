@@ -4,9 +4,15 @@ use serde::Deserialize;
 
 use crate::ParseStatus;
 
-thread_local! {
-    static ERRORS: RefCell<Option<Vec<anyhow::Error>>> = const { RefCell::new(None) };
+// Already uses `const { ... }`; some clippy versions still flag this block.
+#[allow(clippy::missing_const_for_thread_local)]
+mod errors_tls {
+    use super::*;
+    thread_local! {
+        pub static ERRORS: RefCell<Option<Vec<anyhow::Error>>> = const { RefCell::new(None) };
+    }
 }
+use errors_tls::ERRORS;
 
 pub fn parse_json<'de, T>(json: &'de str) -> (Option<T>, ParseStatus)
 where

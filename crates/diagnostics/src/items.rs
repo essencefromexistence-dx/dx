@@ -14,8 +14,6 @@ use workspace::{HideStatusItem, StatusItemView, ToolbarItemEvent, Workspace, ite
 
 use crate::{Deploy, IncludeWarnings, ProjectDiagnosticsEditor};
 
-const MAX_STATUS_DIAGNOSTIC_LABEL_CHARS: usize = 240;
-
 /// The status bar item that displays diagnostic counts.
 pub struct DiagnosticIndicator {
     summary: project::DiagnosticSummary,
@@ -62,7 +60,10 @@ impl Render for DiagnosticIndicator {
         };
 
         let status = if let Some(diagnostic) = &self.current_diagnostic {
-            let message = diagnostic_status_message(diagnostic);
+            let message = diagnostic
+                .message
+                .split_once('\n')
+                .map_or(&*diagnostic.message, |(first, _)| first);
             let diagnostics_already_active = self.any_active_diagnostics(cx);
             let tooltip = if !diagnostics_already_active {
                 "Expand Diagnostics"
@@ -70,9 +71,10 @@ impl Render for DiagnosticIndicator {
                 "Next Diagnostic"
             };
             Some(
-                Button::new("diagnostic_message", message)
+                Button::new("diagnostic_message", SharedString::new(message))
                     .label_size(LabelSize::Small)
                     .truncate(true)
+                    .tab_index(0isize)
                     .tooltip(move |_window, cx| {
                         Tooltip::for_action(
                             tooltip,
@@ -88,10 +90,32 @@ impl Render for DiagnosticIndicator {
             None
         };
 
+        let diagnostics_label = match (self.summary.error_count, self.summary.warning_count) {
+            (0, 0) => "Project diagnostics: no problems".to_string(),
+            (errors, warnings) => {
+                let mut parts = Vec::new();
+                if errors > 0 {
+                    parts.push(format!(
+                        "{errors} error{}",
+                        if errors == 1 { "" } else { "s" }
+                    ));
+                }
+                if warnings > 0 {
+                    parts.push(format!(
+                        "{warnings} warning{}",
+                        if warnings == 1 { "" } else { "s" }
+                    ));
+                }
+                format!("Project diagnostics: {}", parts.join(", "))
+            }
+        };
+
         indicator
             .child(
                 ButtonLike::new("diagnostic-indicator")
                     .child(diagnostic_indicator)
+                    .tab_index(0isize)
+                    .aria_label(diagnostics_label)
                     .tooltip(move |_window, cx| {
                         Tooltip::for_action("Project Diagnostics", &Deploy, cx)
                     })
@@ -115,25 +139,6 @@ impl Render for DiagnosticIndicator {
             )
             .children(status)
     }
-}
-
-fn diagnostic_status_message(diagnostic: &Diagnostic) -> SharedString {
-    let message = diagnostic
-        .message
-        .split_once('\n')
-        .map_or(&*diagnostic.message, |(first, _)| first);
-
-    let Some((byte_limit, _)) = message
-        .char_indices()
-        .nth(MAX_STATUS_DIAGNOSTIC_LABEL_CHARS)
-    else {
-        return SharedString::new(message);
-    };
-
-    let mut bounded = String::with_capacity(byte_limit + 3);
-    bounded.push_str(&message[..byte_limit]);
-    bounded.push_str("...");
-    bounded.into()
 }
 
 impl DiagnosticIndicator {

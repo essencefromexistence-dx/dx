@@ -1,10 +1,5 @@
 use super::*;
 
-const MAX_CODE_ACTION_PROVIDERS: usize = 64;
-const MAX_CODE_ACTIONS_FOR_SELECTION: usize = 1_024;
-const MAX_DEBUG_SCENARIO_TASKS: usize = 128;
-const MAX_DEBUG_SCENARIO_RESULTS: usize = 256;
-
 impl Editor {
     /// Toggles an action selection menu for the latest selection.
     /// May show LSP code actions, code lens' command, runnables and potentially more entities applicable as actions.
@@ -364,9 +359,9 @@ impl Editor {
 
                 let (providers, tasks) = editor
                     .update_in(cx, |editor, window, cx| {
-                        let providers =
-                            bounded_code_action_providers(&editor.code_action_providers);
-                        let tasks = providers
+                        let providers = editor.code_action_providers.clone();
+                        let tasks = editor
+                            .code_action_providers
                             .iter()
                             .map(|provider| {
                                 provider.code_actions(&start_buffer, start..end, window, cx)
@@ -381,11 +376,12 @@ impl Editor {
                     providers.into_iter().zip(future::join_all(tasks).await)
                 {
                     if let Some(provider_actions) = provider_actions.log_err() {
-                        push_bounded_code_actions_for_provider(
-                            &mut actions,
-                            &provider,
-                            provider_actions,
-                        );
+                        actions.extend(provider_actions.into_iter().map(|action| {
+                            AvailableCodeAction {
+                                action,
+                                provider: provider.clone(),
+                            }
+                        }));
                     }
                 }
 
@@ -436,18 +432,7 @@ impl Editor {
                 .or_else(|| language.config().debuggers.first().map(SharedString::from))?;
 
             dap_store.update(cx, |dap_store, cx| {
-                if resolved_tasks.templates.len() > MAX_DEBUG_SCENARIO_TASKS {
-                    log::warn!(
-                        "truncating debug scenario task fanout from {} to {} tasks",
-                        resolved_tasks.templates.len(),
-                        MAX_DEBUG_SCENARIO_TASKS
-                    );
-                }
-                for (_, task) in resolved_tasks
-                    .templates
-                    .iter()
-                    .take(MAX_DEBUG_SCENARIO_TASKS)
-                {
+                for (_, task) in &resolved_tasks.templates {
                     let maybe_scenario = dap_store.debug_scenario_for_build_task(
                         task.original_task().clone(),
                         debug_adapter.clone().into(),
@@ -458,78 +443,15 @@ impl Editor {
                 }
             });
             Some(cx.background_spawn(async move {
-                let mut scenario_results = futures::future::join_all(scenarios)
+                futures::future::join_all(scenarios)
                     .await
                     .into_iter()
                     .flatten()
-                    .peekable();
-                let scenarios = scenario_results
-                    .by_ref()
-                    .take(MAX_DEBUG_SCENARIO_RESULTS)
-                    .collect::<Vec<_>>();
-                if scenario_results.peek().is_some() {
-                    log::warn!(
-                        "truncating debug scenario results to {} scenarios",
-                        MAX_DEBUG_SCENARIO_RESULTS
-                    );
-                }
-                scenarios
+                    .collect::<Vec<_>>()
             }))
         })
         .unwrap_or_else(|| Task::ready(vec![]))
     }
-}
-
-fn bounded_code_action_providers(
-    providers: &[Rc<dyn CodeActionProvider>],
-) -> Vec<Rc<dyn CodeActionProvider>> {
-    if providers.len() > MAX_CODE_ACTION_PROVIDERS {
-        log::warn!(
-            "truncating code action provider fanout from {} to {} providers",
-            providers.len(),
-            MAX_CODE_ACTION_PROVIDERS
-        );
-    }
-    providers
-        .iter()
-        .take(MAX_CODE_ACTION_PROVIDERS)
-        .cloned()
-        .collect()
-}
-
-fn push_bounded_code_actions_for_provider(
-    actions: &mut Vec<AvailableCodeAction>,
-    provider: &Rc<dyn CodeActionProvider>,
-    provider_actions: Vec<CodeAction>,
-) {
-    let remaining = MAX_CODE_ACTIONS_FOR_SELECTION.saturating_sub(actions.len());
-    if remaining == 0 {
-        if !provider_actions.is_empty() {
-            log::warn!(
-                "discarding {} code actions from provider {} after reaching the {} action menu limit",
-                provider_actions.len(),
-                provider.id(),
-                MAX_CODE_ACTIONS_FOR_SELECTION
-            );
-        }
-        return;
-    }
-
-    if provider_actions.len() > remaining {
-        log::warn!(
-            "truncating code actions from provider {} from {} to {} actions",
-            provider.id(),
-            provider_actions.len(),
-            remaining
-        );
-    }
-
-    actions.extend(provider_actions.into_iter().take(remaining).map(|action| {
-        AvailableCodeAction {
-            action,
-            provider: provider.clone(),
-        }
-    }));
 }
 
 pub trait CodeActionProvider {

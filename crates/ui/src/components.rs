@@ -12,11 +12,11 @@ mod diff_stat;
 mod disclosure;
 mod divider;
 mod dropdown_menu;
-mod dx_rainbow_glow;
 mod facepile;
 mod gradient_fade;
 mod group;
 mod icon;
+mod dx_rainbow_glow;
 mod image;
 mod indent_guides;
 mod indicator;
@@ -56,14 +56,11 @@ pub use diff_stat::*;
 pub use disclosure::*;
 pub use divider::*;
 pub use dropdown_menu::*;
-pub use dx_rainbow_glow::{
-    DxRainbowGlow, DxRainbowMotion, DxRainbowPaintSample, dx_rainbow_paint_sample,
-    paint_dx_rainbow_caret_glow,
-};
 pub use facepile::*;
 pub use gradient_fade::*;
 pub use group::*;
 pub use icon::*;
+pub use dx_rainbow_glow::{DxRainbowGlow, DxRainbowMotion, DxRainbowPaintSample, dx_rainbow_paint_sample, paint_dx_rainbow_caret_glow};
 pub use image::*;
 pub use indent_guides::*;
 pub use indicator::*;

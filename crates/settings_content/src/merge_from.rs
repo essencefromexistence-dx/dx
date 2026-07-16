@@ -79,6 +79,7 @@ impl<T: Clone> MergeFrom for Vec<T> {
     }
 }
 
+// Needed for Dx liquid-glass settings fields like position: Option<[f32; 2]>.
 impl<T: Clone, const N: usize> MergeFrom for [T; N] {
     fn merge_from(&mut self, other: &Self) {
         *self = other.clone()

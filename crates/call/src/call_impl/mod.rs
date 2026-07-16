@@ -40,25 +40,13 @@ pub fn init(client: Arc<Client>, user_store: Entity<UserStore>, cx: &mut App) {
             &cx.entity(),
             window,
             move |multi_workspace, _, event: &MultiWorkspaceEvent, window, cx| {
-                let workspace = match event {
-                    MultiWorkspaceEvent::ActiveWorkspaceChanged {
-                        active_workspace, ..
-                    }
-                    | MultiWorkspaceEvent::WorkspaceRemoved {
-                        active_workspace, ..
-                    } => active_workspace.upgrade(),
-                    _ => {
-                        if window.is_window_active() {
-                            return;
-                        }
-                        Some(multi_workspace.workspace().clone())
-                    }
-                };
-
-                let Some(workspace) = workspace else {
+                if !matches!(event, MultiWorkspaceEvent::ActiveWorkspaceChanged { .. })
+                    && window.is_window_active()
+                {
                     return;
-                };
-                let project = workspace.read(cx).project().clone();
+                }
+
+                let project = multi_workspace.workspace().read(cx).project().clone();
                 if let Ok(task) = active_call_handle.update(cx, |active_call, cx| {
                     active_call.set_location(Some(&project), cx)
                 }) {

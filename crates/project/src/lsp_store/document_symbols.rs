@@ -20,10 +20,6 @@ use crate::lsp_command::{GetDocumentSymbols, LspCommand as _};
 use crate::lsp_store::LspStore;
 use crate::project_settings::ProjectSettings;
 
-const MAX_DOCUMENT_SYMBOL_LSP_RESPONSES: usize = 64;
-const MAX_DOCUMENT_SYMBOL_TREES_PER_LSP_RESPONSE: usize = 4_096;
-const MAX_DOCUMENT_SYMBOL_OUTLINE_ITEMS_PER_RESPONSE: usize = 20_000;
-
 pub(super) type DocumentSymbolsTask =
     Shared<Task<std::result::Result<Vec<OutlineItem<Anchor>>, Arc<anyhow::Error>>>>;
 
@@ -145,18 +141,7 @@ impl LspStore {
                                 .iter()
                                 .map(|(&server_id, symbols)| {
                                     let mut items = Vec::new();
-                                    let truncated = flatten_document_symbols(
-                                        symbols,
-                                        &snapshot,
-                                        0,
-                                        &mut items,
-                                    );
-                                    if truncated {
-                                        log::warn!(
-                                            "Truncated document symbols for server {server_id} to {} outline items",
-                                            MAX_DOCUMENT_SYMBOL_OUTLINE_ITEMS_PER_RESPONSE
-                                        );
-                                    }
+                                    flatten_document_symbols(symbols, &snapshot, 0, &mut items);
                                     (server_id, items)
                                 })
                                 .collect();
@@ -216,41 +201,26 @@ impl LspStore {
                     return Ok(None);
                 };
 
-                let response_count = responses.payload.len();
-                if response_count > MAX_DOCUMENT_SYMBOL_LSP_RESPONSES {
-                    log::warn!(
-                        "Skipping {} document symbol LSP responses over cap {}",
-                        response_count - MAX_DOCUMENT_SYMBOL_LSP_RESPONSES,
-                        MAX_DOCUMENT_SYMBOL_LSP_RESPONSES
-                    );
-                }
-                let response_tasks = responses
-                    .payload
-                    .into_iter()
-                    .take(MAX_DOCUMENT_SYMBOL_LSP_RESPONSES)
-                    .map(|response| {
-                        let lsp_store = lsp_store.clone();
-                        let buffer = buffer.clone();
-                        let cx = cx.clone();
-                        async move {
-                            (
-                                LanguageServerId::from_proto(response.server_id),
-                                GetDocumentSymbols
-                                    .response_from_proto(response.response, lsp_store, buffer, cx)
-                                    .await,
-                            )
-                        }
-                    });
-                let document_symbols = join_all(response_tasks).await;
+                let document_symbols = join_all(responses.payload.into_iter().map(|response| {
+                    let lsp_store = lsp_store.clone();
+                    let buffer = buffer.clone();
+                    let cx = cx.clone();
+                    async move {
+                        (
+                            LanguageServerId::from_proto(response.server_id),
+                            GetDocumentSymbols
+                                .response_from_proto(response.response, lsp_store, buffer, cx)
+                                .await,
+                        )
+                    }
+                }))
+                .await;
 
                 let mut has_errors = false;
                 let result = document_symbols
                     .into_iter()
                     .filter_map(|(server_id, symbols)| match symbols {
-                        Ok(symbols) => Some((
-                            server_id,
-                            cap_document_symbol_trees_for_response(server_id, symbols),
-                        )),
+                        Ok(symbols) => Some((server_id, symbols)),
                         Err(e) => {
                             has_errors = true;
                             log::error!("Failed to fetch document symbols: {e:#}");
@@ -267,48 +237,9 @@ impl LspStore {
         } else {
             let symbols_task =
                 self.request_multiple_lsp_locally(buffer, None::<usize>, GetDocumentSymbols, cx);
-            cx.background_spawn(async move {
-                let symbols = symbols_task.await;
-                if symbols.len() > MAX_DOCUMENT_SYMBOL_LSP_RESPONSES {
-                    log::warn!(
-                        "Skipping {} local document symbol LSP responses over cap {}",
-                        symbols.len() - MAX_DOCUMENT_SYMBOL_LSP_RESPONSES,
-                        MAX_DOCUMENT_SYMBOL_LSP_RESPONSES
-                    );
-                }
-                Ok(Some(
-                    symbols
-                        .into_iter()
-                        .take(MAX_DOCUMENT_SYMBOL_LSP_RESPONSES)
-                        .map(|(server_id, symbols)| {
-                            (
-                                server_id,
-                                cap_document_symbol_trees_for_response(server_id, symbols),
-                            )
-                        })
-                        .collect(),
-                ))
-            })
+            cx.background_spawn(async move { Ok(Some(symbols_task.await.into_iter().collect())) })
         }
     }
-}
-
-fn cap_document_symbol_trees_for_response(
-    server_id: LanguageServerId,
-    symbols: Vec<DocumentSymbol>,
-) -> Vec<DocumentSymbol> {
-    if symbols.len() > MAX_DOCUMENT_SYMBOL_TREES_PER_LSP_RESPONSE {
-        log::warn!(
-            "Skipping {} top-level document symbols for server {server_id} over cap {}",
-            symbols.len() - MAX_DOCUMENT_SYMBOL_TREES_PER_LSP_RESPONSE,
-            MAX_DOCUMENT_SYMBOL_TREES_PER_LSP_RESPONSE
-        );
-    }
-
-    symbols
-        .into_iter()
-        .take(MAX_DOCUMENT_SYMBOL_TREES_PER_LSP_RESPONSE)
-        .collect()
 }
 
 fn flatten_document_symbols(
@@ -316,12 +247,8 @@ fn flatten_document_symbols(
     snapshot: &BufferSnapshot,
     depth: usize,
     output: &mut Vec<OutlineItem<Anchor>>,
-) -> bool {
+) {
     for symbol in symbols {
-        if output.len() >= MAX_DOCUMENT_SYMBOL_OUTLINE_ITEMS_PER_RESPONSE {
-            return true;
-        }
-
         let name = super::collapse_newlines(&symbol.name, " ");
 
         let start = snapshot.clip_point_utf16(symbol.range.start, Bias::Right);
@@ -353,13 +280,9 @@ fn flatten_document_symbols(
         });
 
         if !symbol.children.is_empty() {
-            if flatten_document_symbols(&symbol.children, snapshot, depth + 1, output) {
-                return true;
-            }
+            flatten_document_symbols(&symbol.children, snapshot, depth + 1, output);
         }
     }
-
-    false
 }
 
 /// Tries to build an enriched label by including buffer text from the symbol
@@ -405,6 +328,7 @@ fn enriched_symbol_text(
 mod tests {
     use super::*;
     use gpui::TestAppContext;
+    use language::lsp_to_symbol_kind;
     use text::{OffsetRangeExt, Point, Unclipped};
 
     fn make_symbol(
@@ -417,7 +341,7 @@ mod tests {
         use text::PointUtf16;
         DocumentSymbol {
             name: name.to_string(),
-            kind,
+            kind: lsp_to_symbol_kind(kind),
             range: Unclipped(PointUtf16::new(range.start.0, range.start.1))
                 ..Unclipped(PointUtf16::new(range.end.0, range.end.1)),
             selection_range: Unclipped(PointUtf16::new(

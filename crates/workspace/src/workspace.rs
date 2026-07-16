@@ -159,7 +159,7 @@ use util::{
 };
 use uuid::Uuid;
 pub use workspace_settings::{
-    AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, FocusFollowsMouse,
+    AccessibleMode, AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, FocusFollowsMouse,
     RestoreOnStartupBehavior, StatusBarSettings, TabBarSettings, WorkspaceSettings,
 };
 use zed_actions::{Spawn, feedback::FileBugReport, theme::ToggleMode};
@@ -1386,6 +1386,7 @@ pub struct Workspace {
     zoomed_is_agent_panel: bool,
     previous_dock_drag_coordinates: Option<Point<Pixels>>,
     zoomed_position: Option<DockPosition>,
+    maximized_pane: Option<WeakEntity<Pane>>,
     center: PaneGroup,
     left_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
@@ -1836,6 +1837,7 @@ impl Workspace {
             zoomed: None,
             zoomed_is_agent_panel: false,
             zoomed_position: None,
+            maximized_pane: None,
             previous_dock_drag_coordinates: None,
             center,
             panes: vec![center_pane.clone()],
@@ -6718,7 +6720,7 @@ impl Workspace {
                     .children(
                         self.notifications
                             .iter()
-                            .map(|(_, notification)| notification.clone().into_any()),
+                            .map(|(_, notification)| notification.clone().into_any_element()),
                     ),
             )
         }
@@ -8553,7 +8555,13 @@ impl Workspace {
 
         let center = self
             .center
-            .render(self.zoomed.as_ref(), pane_render_context, window, cx)
+            .render(
+                self.zoomed.as_ref(),
+                self.maximized_pane.as_ref(),
+                pane_render_context,
+                window,
+                cx,
+            )
             .into_any_element();
         self.render_screen_carousel_center(center, cx)
     }
@@ -8770,8 +8778,8 @@ impl Workspace {
                     .remote_connection_options(cx)
                     .map(RemoteHostLocation::from);
                 let worktree_store = project.worktree_store().downgrade();
-                self.toggle_modal(window, cx, |_, cx| {
-                    SecurityModal::new(worktree_store, remote_host, cx)
+                self.toggle_modal(window, cx, |window, cx| {
+                    SecurityModal::new(worktree_store, remote_host, window, cx)
                 });
             }
         }

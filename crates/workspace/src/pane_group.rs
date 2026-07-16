@@ -98,10 +98,6 @@ impl PaneGroup {
         }
     }
 
-    pub fn width_fraction_for_pane(&self, pane: &Entity<Pane>) -> Option<f32> {
-        self.root.width_fraction_for_pane(pane)
-    }
-
     pub fn full_height_column_count(&self) -> usize {
         self.root.full_height_column_count()
     }
@@ -232,11 +228,14 @@ impl PaneGroup {
     pub fn render(
         &self,
         zoomed: Option<&AnyWeakView>,
+        maximized: Option<&WeakEntity<Pane>>,
         render_cx: &dyn PaneLeaderDecorator,
         window: &mut Window,
         cx: &mut App,
     ) -> impl IntoElement {
-        self.root.render(0, zoomed, render_cx, window, cx).element
+        self.root
+            .render(0, zoomed, maximized, render_cx, window, cx)
+            .element
     }
 
     pub fn panes(&self) -> Vec<&Entity<Pane>> {
@@ -315,13 +314,6 @@ impl Member {
         match self {
             Member::Pane(_) => 1,
             Member::Axis(axis) => axis.full_height_column_count(),
-        }
-    }
-
-    fn width_fraction_for_pane(&self, pane: &Entity<Pane>) -> Option<f32> {
-        match self {
-            Member::Pane(found) => (found == pane).then_some(1.0),
-            Member::Axis(axis) => axis.width_fraction_for_pane(pane),
         }
     }
 }
@@ -415,24 +407,24 @@ impl PaneLeaderDecorator for PaneRenderContext<'_> {
                             is_in_unshared_view.then(|| {
                                 Label::new(format!(
                                     "{} is in an unshared pane",
-                                    leader.user.github_login
+                                    leader.user.username
                                 ))
                             })
                         } else {
                             leader_join_data = Some((leader_project_id, leader.user.legacy_id));
                             Some(Label::new(format!(
                                 "Follow {} to their active project",
-                                leader.user.github_login,
+                                leader.user.username,
                             )))
                         }
                     }
                     ParticipantLocation::UnsharedProject => Some(Label::new(format!(
-                        "{} is viewing an unshared Dx project",
-                        leader.user.github_login
+                        "{} is viewing an unshared Zed project",
+                        leader.user.username
                     ))),
                     ParticipantLocation::External => Some(Label::new(format!(
-                        "{} is viewing a window outside of Dx",
-                        leader.user.github_login
+                        "{} is viewing a window outside of Zed",
+                        leader.user.username
                     ))),
                 };
                 status_box = leader_status_box.map(|status| {
@@ -539,6 +531,7 @@ impl Member {
         &self,
         basis: usize,
         zoomed: Option<&AnyWeakView>,
+        maximized: Option<&WeakEntity<Pane>>,
         render_cx: &dyn PaneLeaderDecorator,
         window: &mut Window,
         cx: &mut App,
@@ -550,6 +543,15 @@ impl Member {
                         element: div().into_any(),
                         contains_active_pane: false,
                     };
+                }
+
+                if let Some(maximized) = maximized {
+                    if maximized.upgrade().as_ref() != Some(pane) {
+                        return PaneRenderResult {
+                            element: div().into_any(),
+                            contains_active_pane: false,
+                        };
+                    }
                 }
 
                 let decoration = render_cx.decorate(pane, cx);
@@ -580,7 +582,17 @@ impl Member {
                     contains_active_pane: is_active,
                 }
             }
-            Member::Axis(axis) => axis.render(basis + 1, zoomed, render_cx, window, cx),
+            Member::Axis(axis) => axis.render(basis + 1, zoomed, maximized, render_cx, window, cx),
+        }
+    }
+
+    pub fn contains_pane(&self, needle: &Entity<Pane>) -> bool {
+        match self {
+            Member::Pane(pane) => pane == needle,
+            Member::Axis(axis) => axis
+                .members
+                .iter()
+                .any(|member| member.contains_pane(needle)),
         }
     }
 
@@ -929,48 +941,32 @@ impl PaneAxis {
         }
     }
 
-    fn width_fraction_for_pane(&self, pane: &Entity<Pane>) -> Option<f32> {
-        let flexes = self.flexes.lock();
-        let total_flex = flexes.iter().copied().sum::<f32>();
-
-        for (index, member) in self.members.iter().enumerate() {
-            let child_fraction = if total_flex > 0.0 {
-                flexes[index] / total_flex
-            } else {
-                1.0 / self.members.len() as f32
-            };
-
-            match member {
-                Member::Pane(found) => {
-                    if found == pane {
-                        return Some(match self.axis {
-                            Axis::Horizontal => child_fraction,
-                            Axis::Vertical => 1.0,
-                        });
-                    }
-                }
-                Member::Axis(axis) => {
-                    if let Some(descendant_fraction) = axis.width_fraction_for_pane(pane) {
-                        return Some(match self.axis {
-                            Axis::Horizontal => child_fraction * descendant_fraction,
-                            Axis::Vertical => descendant_fraction,
-                        });
+    fn render(
+        &self,
+        basis: usize,
+        zoomed: Option<&AnyWeakView>,
+        maximized: Option<&WeakEntity<Pane>>,
+        render_cx: &dyn PaneLeaderDecorator,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> PaneRenderResult {
+        if let Some(maximized) = maximized {
+            if let Some(maximized_pane) = maximized.upgrade() {
+                for member in &self.members {
+                    if member.contains_pane(&maximized_pane) {
+                        return member.render(
+                            basis,
+                            zoomed,
+                            Some(maximized),
+                            render_cx,
+                            window,
+                            cx,
+                        );
                     }
                 }
             }
         }
 
-        None
-    }
-
-    fn render(
-        &self,
-        basis: usize,
-        zoomed: Option<&AnyWeakView>,
-        render_cx: &dyn PaneLeaderDecorator,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> PaneRenderResult {
         debug_assert!(self.members.len() == self.flexes.lock().len());
         let mut active_pane_ix = None;
         let mut contains_active_pane = false;
@@ -994,7 +990,7 @@ impl PaneAxis {
                     }
                 }
 
-                let result = member.render((basis + ix) * 10, zoomed, render_cx, window, cx);
+                let result = member.render((basis + ix) * 10, zoomed, None, render_cx, window, cx);
                 if result.contains_active_pane {
                     contains_active_pane = true;
                 }

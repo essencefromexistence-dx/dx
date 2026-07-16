@@ -192,7 +192,7 @@ impl AutomationCatalogEntry {
             .any(|value| value.to_lowercase().contains(query))
     }
 
-    fn automation<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentAutomation> {
+    fn automation(self, snapshot: &DxAgentBridgeSnapshot) -> Option<&DxAgentAutomation> {
         match self {
             AutomationCatalogEntry::Automation(index) => snapshot.automations.get(index),
             _ => None,

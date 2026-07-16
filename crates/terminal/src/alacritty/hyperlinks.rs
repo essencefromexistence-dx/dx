@@ -23,10 +23,6 @@ const URL_REGEX: &str = r#"(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|http
 const WIDE_CHAR_SPACERS: Flags =
     Flags::from_bits(Flags::LEADING_WIDE_CHAR_SPACER.bits() | Flags::WIDE_CHAR_SPACER.bits())
         .unwrap();
-const TERMINAL_HYPERLINK_LINE_CELL_LIMIT: usize = 65_536;
-const TERMINAL_HYPERLINK_LINE_BYTE_LIMIT: usize = 262_144;
-const TERMINAL_HYPERLINK_REGEX_MATCH_LIMIT: usize = 2_048;
-const TERMINAL_HYPERLINK_OSC8_PATH_BYTE_LIMIT: usize = 16 * 1024;
 
 pub(crate) struct RegexSearches {
     url_regex: Option<RegexSearch>,
@@ -126,24 +122,14 @@ pub(crate) fn find_from_grid_point<T: EventListener>(
         Some((url, true, url_match))
     } else {
         let (line_start, line_end) = (term.line_search_left(point), term.line_search_right(point));
-        let line_cells = line_cell_count(term, line_start, line_end);
-        let url_match = if line_cells > TERMINAL_HYPERLINK_LINE_CELL_LIMIT {
-            log::warn!(
-                "Skipping terminal hyperlink search: logical line has {} cells, limit is {}",
-                line_cells,
-                TERMINAL_HYPERLINK_LINE_CELL_LIMIT
-            );
-            None
-        } else {
-            regex_searches.url_regex.as_mut().and_then(|url_regex| {
-                RegexIter::new(line_start, line_end, AlacDirection::Right, term, url_regex)
-                    .find(|rm| rm.contains(&point))
-                    .map(|url_match| {
-                        let url = term.bounds_to_string(*url_match.start(), *url_match.end());
-                        sanitize_url_punctuation(url, url_match, term)
-                    })
-            })
-        };
+        let url_match = regex_searches.url_regex.as_mut().and_then(|url_regex| {
+            RegexIter::new(line_start, line_end, AlacDirection::Right, term, url_regex)
+                .find(|rm| rm.contains(&point))
+                .map(|url_match| {
+                    let url = term.bounds_to_string(*url_match.start(), *url_match.end());
+                    sanitize_url_punctuation(url, url_match, term)
+                })
+        });
 
         if let Some((url, url_match)) = url_match {
             Some((url, true, url_match))
@@ -239,19 +225,11 @@ fn try_osc8_url_to_path(url: url::Url) -> Option<String> {
         return None;
     }
 
-    let mut bytes = Vec::new();
-    for segment in url.path_segments()?.skip(1) {
-        for byte in percent_decode(segment.as_bytes()) {
-            if bytes.len() >= TERMINAL_HYPERLINK_OSC8_PATH_BYTE_LIMIT {
-                log::warn!(
-                    "Skipping terminal hyperlink OSC8 path: decoded path exceeds {} bytes",
-                    TERMINAL_HYPERLINK_OSC8_PATH_BYTE_LIMIT
-                );
-                return None;
-            }
-            bytes.push(byte);
-        }
-    }
+    let bytes = url
+        .path_segments()?
+        .skip(1)
+        .flat_map(|segment| percent_decode(segment.as_bytes()))
+        .collect::<Vec<u8>>();
     bytes.try_into().ok()
 }
 
@@ -333,7 +311,7 @@ fn first_unbalanced_open_paren(s: &str) -> Option<usize> {
     first_unmatched.filter(|_| balance > 0)
 }
 
-fn path_match<T: EventListener>(
+fn path_match<T>(
     term: &Term<T>,
     line_start: AlacPoint,
     line_end: AlacPoint,
@@ -353,26 +331,17 @@ fn path_match<T: EventListener>(
         (elapsed_time > path_hyperlink_timeout)
             .then_some((elapsed_time.as_millis(), path_hyperlink_timeout.as_millis()))
     };
-    let line_cells = line_cell_count(term, line_start, line_end);
-    if line_cells > TERMINAL_HYPERLINK_LINE_CELL_LIMIT {
-        log::warn!(
-            "Skipping terminal hyperlink search: logical line has {} cells, limit is {}",
-            line_cells,
-            TERMINAL_HYPERLINK_LINE_CELL_LIMIT
-        );
-        return None;
-    }
 
     // This used to be: `let line = term.bounds_to_string(line_start, line_end)`, however, that
     // api compresses tab characters into a single space, whereas we require a cell accurate
     // string representation of the line. The below algorithm does this, but seems a bit odd.
     // Maybe there is a clean api for doing this, but I couldn't find it.
-    let mut line = String::with_capacity(line_cells.min(TERMINAL_HYPERLINK_LINE_BYTE_LIMIT));
+    let mut line = String::with_capacity(
+        (line_end.line.0 - line_start.line.0 + 1) as usize * term.grid().columns(),
+    );
     let first_cell = &term.grid()[line_start];
     let mut prev_len = 0;
-    if !push_hyperlink_line_char(&mut line, first_cell.c) {
-        return None;
-    }
+    line.push(first_cell.c);
     let mut hovered_point_byte_offset = None;
 
     if line_start == hovered {
@@ -387,16 +356,8 @@ fn path_match<T: EventListener>(
         if !cell.flags.intersects(WIDE_CHAR_SPACERS) {
             prev_len = line.len();
             match cell.c {
-                ' ' | '\t' => {
-                    if !push_hyperlink_line_char(&mut line, ' ') {
-                        return None;
-                    }
-                }
-                c => {
-                    if !push_hyperlink_line_char(&mut line, c) {
-                        return None;
-                    }
-                }
+                ' ' | '\t' => line.push(' '),
+                c => line.push(c),
             }
         }
 
@@ -454,25 +415,11 @@ fn path_match<T: EventListener>(
 
     for regex in path_hyperlink_regexes {
         let mut path_found = false;
-        let mut captures_seen = 0usize;
 
         for (line_start_offset, captures) in regex
             .captures_iter(&line)
             .map(|captures| (0usize, captures))
         {
-            if captures_seen >= TERMINAL_HYPERLINK_REGEX_MATCH_LIMIT {
-                log::warn!(
-                    "Terminal hyperlink regex match limit reached at {} matches",
-                    TERMINAL_HYPERLINK_REGEX_MATCH_LIMIT
-                );
-                return None;
-            }
-            captures_seen += 1;
-            if let Some((timed_out_ms, timeout_ms)) = timed_out() {
-                warn!("Timed out processing path hyperlink regexes after {timed_out_ms}ms");
-                info!("{timeout_ms}ms time out specified in `terminal.path_hyperlink_timeout_ms`");
-                return None;
-            }
             path_found = true;
             let match_range = captures.get(0).unwrap().range();
             let (mut path_range, line_column) = if let Some(path) = captures.name("path") {
@@ -531,50 +478,6 @@ fn path_match<T: EventListener>(
     }
 
     None
-}
-
-fn line_cell_count<T: EventListener>(
-    term: &Term<T>,
-    line_start: AlacPoint,
-    line_end: AlacPoint,
-) -> usize {
-    if line_end < line_start {
-        return 0;
-    }
-
-    let columns = term.grid().columns();
-    if line_start.line == line_end.line {
-        return line_end
-            .column
-            .0
-            .saturating_sub(line_start.column.0)
-            .saturating_add(1);
-    }
-
-    let first_line_cells = columns.saturating_sub(line_start.column.0);
-    let middle_line_count = line_end
-        .line
-        .0
-        .saturating_sub(line_start.line.0)
-        .saturating_sub(1)
-        .max(0) as usize;
-
-    first_line_cells
-        .saturating_add(middle_line_count.saturating_mul(columns))
-        .saturating_add(line_end.column.0.saturating_add(1))
-}
-
-fn push_hyperlink_line_char(line: &mut String, c: char) -> bool {
-    if line.len().saturating_add(c.len_utf8()) > TERMINAL_HYPERLINK_LINE_BYTE_LIMIT {
-        log::warn!(
-            "Skipping terminal hyperlink search: logical line exceeds {} bytes",
-            TERMINAL_HYPERLINK_LINE_BYTE_LIMIT
-        );
-        return false;
-    }
-
-    line.push(c);
-    true
 }
 
 #[cfg(test)]

@@ -7,10 +7,6 @@ use settings::{ActiveSettingsProfileName, SettingsStore};
 use ui::{HighlightedLabel, ListItem, ListItemSpacing, prelude::*};
 use workspace::{ModalView, Workspace};
 
-const MAX_SETTINGS_PROFILE_SELECTOR_CONFIGURED_PROFILES: usize = 100;
-const MAX_SETTINGS_PROFILE_SELECTOR_MATCHES: usize =
-    MAX_SETTINGS_PROFILE_SELECTOR_CONFIGURED_PROFILES + 1;
-
 pub fn init(cx: &mut App) {
     cx.on_action(|_: &zed_actions::settings_profile_selector::Toggle, cx| {
         workspace::with_active_or_new_workspace(cx, |workspace, window, cx| {
@@ -30,58 +26,6 @@ fn toggle_settings_profile_selector(
     });
 }
 
-fn capped_settings_profile_names(
-    settings_store: &SettingsStore,
-    active_profile_name: Option<&str>,
-) -> Vec<Option<String>> {
-    let mut configured_profiles = settings_store
-        .configured_settings_profiles()
-        .take(MAX_SETTINGS_PROFILE_SELECTOR_CONFIGURED_PROFILES)
-        .map(|profile_name| Some(profile_name.to_string()))
-        .collect::<Vec<_>>();
-
-    let overflow_active_profile = active_profile_name.and_then(|active_profile_name| {
-        settings_store
-            .configured_settings_profiles()
-            .skip(MAX_SETTINGS_PROFILE_SELECTOR_CONFIGURED_PROFILES)
-            .find(|profile_name| *profile_name == active_profile_name)
-    });
-
-    if let Some(active_profile_name) = overflow_active_profile {
-        configured_profiles.pop();
-        configured_profiles.push(Some(active_profile_name.to_string()));
-    }
-
-    let mut profile_names = Vec::with_capacity(configured_profiles.len() + 1);
-    profile_names.push(None);
-    profile_names.extend(configured_profiles);
-    profile_names
-}
-
-fn profile_match_candidates(profile_names: &[Option<String>]) -> Vec<StringMatchCandidate> {
-    profile_names
-        .iter()
-        .enumerate()
-        .take(MAX_SETTINGS_PROFILE_SELECTOR_MATCHES)
-        .map(|(candidate_id, profile_name)| {
-            StringMatchCandidate::new(candidate_id, &display_name(profile_name))
-        })
-        .collect()
-}
-
-fn empty_profile_matches(candidates: Vec<StringMatchCandidate>) -> Vec<StringMatch> {
-    candidates
-        .into_iter()
-        .take(MAX_SETTINGS_PROFILE_SELECTOR_MATCHES)
-        .map(|candidate| StringMatch {
-            candidate_id: candidate.id,
-            string: candidate.string,
-            positions: Vec::new(),
-            score: 0.0,
-        })
-        .collect()
-}
-
 pub struct SettingsProfileSelector {
     picker: Entity<Picker<SettingsProfileSelectorDelegate>>,
 }
@@ -98,7 +42,7 @@ impl Focusable for SettingsProfileSelector {
 
 impl Render for SettingsProfileSelector {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        v_flex().w(rems(22.)).child(self.picker.clone())
+        v_flex().child(self.picker.clone())
     }
 }
 
@@ -108,7 +52,8 @@ impl SettingsProfileSelector {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx));
+        let picker =
+            cx.new(|cx| Picker::uniform_list(delegate, window, cx).initial_width(rems(22.)));
         Self { picker }
     }
 }
@@ -130,11 +75,26 @@ impl SettingsProfileSelectorDelegate {
         cx: &mut Context<SettingsProfileSelector>,
     ) -> Self {
         let settings_store = cx.global::<SettingsStore>();
+        let mut profile_names: Vec<Option<String>> = settings_store
+            .configured_settings_profiles()
+            .map(|s| Some(s.to_string()))
+            .collect();
+        profile_names.insert(0, None);
+
+        let matches = profile_names
+            .iter()
+            .enumerate()
+            .map(|(ix, profile_name)| StringMatch {
+                candidate_id: ix,
+                score: 0.0,
+                positions: Default::default(),
+                string: display_name(profile_name),
+            })
+            .collect();
+
         let profile_name = cx
             .try_global::<ActiveSettingsProfileName>()
             .map(|p| p.0.clone());
-        let profile_names = capped_settings_profile_names(settings_store, profile_name.as_deref());
-        let matches = empty_profile_matches(profile_match_candidates(&profile_names));
 
         let mut this = Self {
             matches,
@@ -157,42 +117,17 @@ impl SettingsProfileSelectorDelegate {
         self.selected_index = self
             .matches
             .iter()
-            .position(|mat| {
-                self.profile_name_for_match(mat)
-                    .and_then(|profile_name| profile_name.as_deref())
-                    == Some(profile_name)
-            })
+            .position(|mat| mat.string == profile_name)
             .unwrap_or(self.selected_index);
-    }
-
-    fn profile_name_for_match(&self, mat: &StringMatch) -> Option<&Option<String>> {
-        self.profile_names.get(mat.candidate_id)
-    }
-
-    fn selected_profile_for_update(&self) -> Option<Option<String>> {
-        self.matches
-            .get(self.selected_index)
-            .and_then(|mat| self.profile_name_for_match(mat))
-            .cloned()
     }
 
     fn set_selected_profile(
         &self,
         cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>,
     ) -> Option<String> {
-        let profile_name = self.selected_profile_for_update()?;
-        Self::update_active_profile_name_global(profile_name, cx)
-    }
-
-    fn clamped_match_index(&self, ix: usize) -> usize {
-        self.matches
-            .len()
-            .checked_sub(1)
-            .map_or(0, |last_index| ix.min(last_index))
-    }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_index = self.clamped_match_index(self.selected_index);
+        let mat = self.matches.get(self.selected_index)?;
+        let profile_name = self.profile_names.get(mat.candidate_id)?;
+        Self::update_active_profile_name_global(profile_name.clone(), cx)
     }
 
     fn update_active_profile_name_global(
@@ -215,6 +150,10 @@ impl SettingsProfileSelectorDelegate {
 impl PickerDelegate for SettingsProfileSelectorDelegate {
     type ListItem = ListItem;
 
+    fn name() -> &'static str {
+        "settings profile selector"
+    }
+
     fn placeholder_text(&self, _: &mut Window, _: &mut App) -> std::sync::Arc<str> {
         "Select a settings profile...".into()
     }
@@ -233,7 +172,7 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
         _: &mut Window,
         cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>,
     ) {
-        self.selected_index = self.clamped_match_index(ix);
+        self.selected_index = ix;
         self.selected_profile_name = self.set_selected_profile(cx);
     }
 
@@ -244,18 +183,32 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
         cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>,
     ) -> Task<()> {
         let background = cx.background_executor().clone();
-        let candidates = profile_match_candidates(&self.profile_names);
+        let candidates = self
+            .profile_names
+            .iter()
+            .enumerate()
+            .map(|(id, profile_name)| StringMatchCandidate::new(id, &display_name(profile_name)))
+            .collect::<Vec<_>>();
 
         cx.spawn_in(window, async move |this, cx| {
             let matches = if query.is_empty() {
-                empty_profile_matches(candidates)
+                candidates
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, candidate)| StringMatch {
+                        candidate_id: index,
+                        string: candidate.string,
+                        positions: Vec::new(),
+                        score: 0.0,
+                    })
+                    .collect()
             } else {
                 match_strings(
                     &candidates,
                     &query,
                     false,
                     true,
-                    MAX_SETTINGS_PROFILE_SELECTOR_MATCHES,
+                    100,
                     &Default::default(),
                     background,
                 )
@@ -264,7 +217,10 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
 
             this.update_in(cx, |this, _, cx| {
                 this.delegate.matches = matches;
-                this.delegate.clamp_selected_index_to_matches();
+                this.delegate.selected_index = this
+                    .delegate
+                    .selected_index
+                    .min(this.delegate.matches.len().saturating_sub(1));
                 this.delegate.selected_profile_name = this.delegate.set_selected_profile(cx);
             })
             .ok();
@@ -306,8 +262,8 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
         _: &mut Window,
         _: &mut Context<Picker<Self>>,
     ) -> Option<Self::ListItem> {
-        let mat = self.matches.get(ix)?;
-        let profile_name = self.profile_name_for_match(mat)?;
+        let mat = &self.matches.get(ix)?;
+        let profile_name = &self.profile_names.get(mat.candidate_id)?;
 
         Some(
             ListItem::new(ix)

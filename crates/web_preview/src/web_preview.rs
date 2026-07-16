@@ -1,5 +1,16 @@
 #![recursion_limit = "1024"]
-#![allow(dead_code, unused)]
+// Large mid-merge Dx web preview surface: keep intentional dead code, and silence
+// high-volume clippy lints where auto-fix rolled back (false-positive clones / elisions).
+#![allow(
+    dead_code,
+    unused,
+    clippy::redundant_clone,
+    clippy::needless_lifetimes,
+    clippy::unnecessary_sort_by,
+    clippy::manual_contains,
+    clippy::explicit_auto_deref,
+    clippy::redundant_guards
+)]
 
 #[cfg(target_os = "windows")]
 use gpui::{App, actions};

@@ -1,9 +1,9 @@
 use crate::scroll::ScrollAmount;
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
-    AnyElement, Entity, Focusable, FontWeight, ListSizingBehavior, ScrollHandle, ScrollStrategy,
-    SharedString, Size, StrikethroughStyle, StyledText, Task, TaskExt, UniformListScrollHandle,
-    div, px, uniform_list,
+    AnyElement, Entity, Focusable, FontWeight, HighlightStyle, ListSizingBehavior, ScrollHandle,
+    ScrollStrategy, SharedString, Size, StrikethroughStyle, StyledText, Task, TaskExt,
+    UniformListScrollHandle, div, px, uniform_list,
 };
 use itertools::Itertools;
 use language::CodeLabel;
@@ -67,8 +67,6 @@ const MARKDOWN_CACHE_AFTER_ITEMS: usize = 2;
 // Number of items beyond the visible items to resolve documentation.
 const RESOLVE_BEFORE_ITEMS: usize = 4;
 const RESOLVE_AFTER_ITEMS: usize = 4;
-const MAX_COMPLETION_RESOLVE_CANDIDATES: usize = 256;
-const MAX_COMPLETION_MARKDOWN_PARSE_CANDIDATES: usize = 16;
 
 #[derive(Clone, Debug)]
 pub enum CompletionMenuEntry {
@@ -546,17 +544,16 @@ impl CompletionsMenu {
         } else {
             len - 1
         };
-        index = index.min(len - 1);
-        for _ in 0..len {
-            if entries
-                .get(index)
-                .is_some_and(CompletionMenuEntry::is_selectable)
-            {
+        let start = index;
+        loop {
+            if entries[index].is_selectable() {
                 return index;
             }
             index = if index > 0 { index - 1 } else { len - 1 };
+            if index == start {
+                return self.selected_item;
+            }
         }
-        self.selected_item.min(len - 1)
     }
 
     fn next_match_index(&self) -> usize {
@@ -565,18 +562,21 @@ impl CompletionsMenu {
         if len == 0 {
             return 0;
         }
-        let next_index = self.selected_item.saturating_add(1);
-        let mut index = if next_index < len { next_index } else { 0 };
-        for _ in 0..len {
-            if entries
-                .get(index)
-                .is_some_and(CompletionMenuEntry::is_selectable)
-            {
+        let mut index = if self.selected_item + 1 < len {
+            self.selected_item + 1
+        } else {
+            0
+        };
+        let start = index;
+        loop {
+            if entries[index].is_selectable() {
                 return index;
             }
             index = if index + 1 < len { index + 1 } else { 0 };
+            if index == start {
+                return self.selected_item;
+            }
         }
-        self.selected_item.min(len - 1)
     }
 
     fn find_selectable_entry(&self, start: usize, forward: bool) -> Option<usize> {
@@ -585,13 +585,9 @@ impl CompletionsMenu {
         if len == 0 {
             return None;
         }
-        entries.get(start)?;
         let mut index = start;
-        for _ in 0..len {
-            if entries
-                .get(index)
-                .is_some_and(CompletionMenuEntry::is_selectable)
-            {
+        loop {
+            if entries[index].is_selectable() {
                 return Some(index);
             }
             if forward {
@@ -599,8 +595,10 @@ impl CompletionsMenu {
             } else {
                 index = if index > 0 { index - 1 } else { len - 1 };
             }
+            if index == start {
+                return None;
+            }
         }
-        None
     }
 
     fn handle_selection_changed(
@@ -613,9 +611,11 @@ impl CompletionsMenu {
             .scroll_to_item(self.selected_item, ScrollStrategy::Nearest);
         if let Some(provider) = provider {
             let entries = self.entries.borrow();
-            let entry = entries
-                .get(self.selected_item)
-                .and_then(CompletionMenuEntry::as_match);
+            let entry = if self.selected_item < entries.len() {
+                entries[self.selected_item].as_match()
+            } else {
+                None
+            };
             provider.selection_changed(entry, window, cx);
         }
         self.resolve_visible_completions(provider, cx);
@@ -682,41 +682,23 @@ impl CompletionsMenu {
         // This filtering doesn't happen if the completions are currently being updated.
         let completions = self.completions.borrow();
         let candidate_ids = entry_indices
-            .filter_map(|i| entries.get(i).and_then(CompletionMenuEntry::as_match))
-            .map(|m| m.candidate_id)
-            .filter(|i| {
-                completions
-                    .get(*i)
-                    .is_some_and(|completion| completion.documentation.is_none())
-            });
+            .filter_map(|i| entries[i].as_match().map(|m| m.candidate_id))
+            .filter(|i| completions[*i].documentation.is_none());
 
         // Current selection is always resolved even if it already has documentation, to handle
         // out-of-spec language servers that return more results later.
-        let Some(selected_candidate_id) = entries
-            .get(self.selected_item)
-            .and_then(CompletionMenuEntry::as_match)
+        let Some(selected_candidate_id) = entries[self.selected_item]
+            .as_match()
             .map(|m| m.candidate_id)
-            .filter(|candidate_id| completions.get(*candidate_id).is_some())
         else {
             drop(entries);
             drop(completions);
             return;
         };
-        let mut candidate_id_iter = iter::once(selected_candidate_id)
+        let candidate_ids = iter::once(selected_candidate_id)
             .chain(candidate_ids.filter(|id| *id != selected_candidate_id))
-            .peekable();
-        let candidate_ids = candidate_id_iter
-            .by_ref()
-            .take(MAX_COMPLETION_RESOLVE_CANDIDATES)
             .collect::<Vec<usize>>();
-        if candidate_id_iter.peek().is_some() {
-            log::warn!(
-                "truncating completion resolve fanout to {} candidates",
-                MAX_COMPLETION_RESOLVE_CANDIDATES
-            );
-        }
         drop(entries);
-        drop(completions);
 
         if candidate_ids.is_empty() {
             return;
@@ -754,25 +736,15 @@ impl CompletionsMenu {
         // TODO: This means that the nearer items will actually be further back in the cache, which
         // is not ideal. In practice this is fine because `get_or_create_markdown` moves the current
         // selection to the front (when `is_render = true`).
-        let mut entry_indices = util::wrapped_usize_outward_from(
+        let entry_indices = util::wrapped_usize_outward_from(
             self.selected_item,
             MARKDOWN_CACHE_BEFORE_ITEMS,
             MARKDOWN_CACHE_AFTER_ITEMS,
             self.entries.borrow().len(),
-        )
-        .peekable();
+        );
 
-        for index in entry_indices
-            .by_ref()
-            .take(MAX_COMPLETION_MARKDOWN_PARSE_CANDIDATES)
-        {
+        for index in entry_indices {
             self.get_or_create_entry_markdown(index, cx);
-        }
-        if entry_indices.peek().is_some() {
-            log::warn!(
-                "truncating completion markdown parse fanout to {} candidates",
-                MAX_COMPLETION_MARKDOWN_PARSE_CANDIDATES
-            );
         }
     }
 
@@ -782,13 +754,12 @@ impl CompletionsMenu {
         cx: &mut Context<Editor>,
     ) -> Option<Entity<Markdown>> {
         let entries = self.entries.borrow();
-        let candidate_id = entries
-            .get(index)
-            .and_then(CompletionMenuEntry::as_match)?
-            .candidate_id;
+        if index >= entries.len() {
+            return None;
+        }
+        let candidate_id = entries[index].as_match()?.candidate_id;
         let completions = self.completions.borrow();
-        let completion = completions.get(candidate_id)?;
-        match &completion.documentation {
+        match &completions[candidate_id].documentation {
             Some(CompletionDocumentation::MultiLineMarkdown(source)) if !source.is_empty() => self
                 .get_or_create_markdown(candidate_id, Some(source), false, &completions, cx)
                 .map(|(_, markdown)| markdown),
@@ -826,7 +797,7 @@ impl CompletionsMenu {
                 // Heuristic guess that documentation can be reused when new_text matches. This is
                 // to mitigate documentation flicker while typing. If this is wrong, then resolution
                 // should cause the correct documentation to be displayed soon.
-                let completion = completions.get(candidate_id)?;
+                let completion = &completions[candidate_id];
                 matching_entry = markdown_cache.iter().find_position(|(key, _)| {
                     matches!(key, MarkdownCacheKey::ForCompletionMatch { new_text, .. }
                                 if new_text == &completion.new_text)
@@ -835,24 +806,18 @@ impl CompletionsMenu {
         }
 
         if let Some((cache_index, (key, markdown))) = matching_entry {
-            let promote_to_candidate =
-                source.is_some() && matches!(key, MarkdownCacheKey::ForCompletionMatch { .. });
             let markdown = markdown.clone();
 
             // Since the markdown source matches, the key can now be ForCandidate.
-            if promote_to_candidate {
-                if let Some((cache_key, _)) = markdown_cache.get_mut(cache_index) {
-                    *cache_key = MarkdownCacheKey::ForCandidate { candidate_id };
-                }
+            if source.is_some() && matches!(key, MarkdownCacheKey::ForCompletionMatch { .. }) {
+                markdown_cache[cache_index].0 = MarkdownCacheKey::ForCandidate { candidate_id };
             }
 
             if is_render && cache_index != 0 {
                 // Move the current selection's cache entry to the front.
+                markdown_cache.rotate_right(1);
                 let cache_len = markdown_cache.len();
-                if cache_index < cache_len {
-                    markdown_cache.rotate_right(1);
-                    markdown_cache.swap(0, (cache_index + 1) % cache_len);
-                }
+                markdown_cache.swap(0, (cache_index + 1) % cache_len);
             }
 
             let is_parsing = markdown.update(cx, |markdown, cx| {
@@ -926,9 +891,9 @@ impl CompletionsMenu {
                 .borrow()
                 .iter()
                 .enumerate()
-                .filter_map(|(ix, entry)| {
-                    let mat = entry.as_match()?;
-                    let completion = completions.get(mat.candidate_id)?;
+                .filter_map(|(ix, entry)| entry.as_match().map(|m| (ix, m)))
+                .max_by_key(|(_, mat)| {
+                    let completion = &completions[mat.candidate_id];
                     let documentation = &completion.documentation;
 
                     let mut len = completion.label.text.chars().count();
@@ -947,9 +912,8 @@ impl CompletionsMenu {
                         }
                     }
 
-                    Some((ix, len))
+                    len
                 })
-                .max_by_key(|(_, len)| *len)
                 .map(|(ix, _)| ix);
             drop(completions);
             widest_completion_ix
@@ -990,9 +954,7 @@ impl CompletionsMenu {
                             };
                         };
 
-                        let Some(completion) = completions_guard.get(mat.candidate_id) else {
-                            return div().into_any_element();
-                        };
+                        let completion = &completions_guard[mat.candidate_id];
                         let documentation = if show_completion_documentation {
                             &completion.documentation
                         } else {
@@ -1044,43 +1006,18 @@ impl CompletionsMenu {
 
                         let highlights: Vec<_> = highlights.collect();
 
-                        let filter_range = &completion.label.filter_range;
-                        let full_text = &completion.label.text;
-
-                        let main_text: String = full_text[filter_range.clone()].to_string();
-                        let main_highlights: Vec<_> = highlights
-                            .iter()
-                            .filter_map(|(range, highlight)| {
-                                if range.end <= filter_range.start
-                                    || range.start >= filter_range.end
-                                {
-                                    return None;
-                                }
-                                let clamped_start =
-                                    range.start.max(filter_range.start) - filter_range.start;
-                                let clamped_end =
-                                    range.end.min(filter_range.end) - filter_range.start;
-                                Some((clamped_start..clamped_end, (*highlight)))
-                            })
-                            .collect();
-                        let main_label = StyledText::new(main_text)
+                        let ((main_text, main_highlights), (suffix_text, suffix_highlights)) =
+                            split_completion_label(
+                                &completion.label.text,
+                                &completion.label.filter_range,
+                                &highlights,
+                            );
+                        let main_label = StyledText::new(main_text.to_string())
                             .with_default_highlights(&style.text, main_highlights);
 
-                        let suffix_text: String = full_text[filter_range.end..].to_string();
-                        let suffix_highlights: Vec<_> = highlights
-                            .iter()
-                            .filter_map(|(range, highlight)| {
-                                if range.end <= filter_range.end {
-                                    return None;
-                                }
-                                let shifted_start = range.start.saturating_sub(filter_range.end);
-                                let shifted_end = range.end - filter_range.end;
-                                Some((shifted_start..shifted_end, (*highlight)))
-                            })
-                            .collect();
                         let suffix_label = if !suffix_text.is_empty() {
                             Some(
-                                StyledText::new(suffix_text)
+                                StyledText::new(suffix_text.to_string())
                                     .with_default_highlights(&style.text, suffix_highlights),
                             )
                         } else {
@@ -1240,17 +1177,11 @@ impl CompletionsMenu {
         }
 
         let entries = self.entries.borrow();
-        let Some(mat) = entries
-            .get(self.selected_item)
-            .and_then(CompletionMenuEntry::as_match)
-        else {
+        let Some(mat) = entries[self.selected_item].as_match() else {
             return None;
         };
         let completions = self.completions.borrow();
-        let Some(completion) = completions.get(mat.candidate_id) else {
-            return None;
-        };
-        let multiline_docs = match completion.documentation.as_ref() {
+        let multiline_docs = match completions[mat.candidate_id].documentation.as_ref() {
             Some(CompletionDocumentation::MultiLinePlainText(text)) => div().child(text.clone()),
             Some(CompletionDocumentation::SingleLineAndMultiLinePlainText {
                 plain_text: Some(text),
@@ -1429,10 +1360,7 @@ impl CompletionsMenu {
             // the text "c c" in two places; we should only show the longer one)
             let mut snippets_seen = HashSet::<(usize, usize)>::default();
             matches.retain(|result| {
-                let Some(completion) = completions_ref.get(result.candidate_id) else {
-                    return false;
-                };
-                match completion.snippet_deduplication_key {
+                match completions_ref[result.candidate_id].snippet_deduplication_key {
                     Some(key) => snippets_seen.insert(key),
                     None => true,
                 }
@@ -1453,10 +1381,7 @@ impl CompletionsMenu {
         let mut entries: Vec<CompletionMenuEntry> = Vec::with_capacity(matches.len());
         let mut last_group: Option<&CompletionGroup> = None;
         for mat in matches {
-            let Some(completion) = completions.get(mat.candidate_id) else {
-                continue;
-            };
-            let group = completion.group.as_ref();
+            let group = completions[mat.candidate_id].group.as_ref();
             if group != last_group {
                 if group.is_some() || last_group.is_some() {
                     if !entries.is_empty() {
@@ -1484,13 +1409,6 @@ impl CompletionsMenu {
     ) -> Vec<StringMatch> {
         let mut matches = matches;
 
-        matches.retain(|string_match| {
-            let Some(completion) = completions.get(string_match.candidate_id) else {
-                return false;
-            };
-            snippet_sort_order != SnippetSortOrder::None || !completion.is_snippet_kind()
-        });
-
         #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
         enum MatchTier<'a> {
             WordStartMatch {
@@ -1513,12 +1431,13 @@ impl CompletionsMenu {
             .and_then(|q| q.chars().next())
             .and_then(|c| c.to_lowercase().next());
 
+        if snippet_sort_order == SnippetSortOrder::None {
+            matches
+                .retain(|string_match| !completions[string_match.candidate_id].is_snippet_kind());
+        }
+
         matches.sort_unstable_by_key(|string_match| {
-            let score = string_match.score;
-            let sort_score = Reverse(OrderedFloat(score));
-            let Some(completion) = completions.get(string_match.candidate_id) else {
-                return MatchTier::OtherMatch { sort_score };
-            };
+            let completion = &completions[string_match.candidate_id];
 
             let sort_text = match &completion.source {
                 CompletionSource::Lsp { lsp_completion, .. } => lsp_completion.sort_text.as_deref(),
@@ -1527,6 +1446,9 @@ impl CompletionsMenu {
             };
 
             let (sort_kind, sort_label) = completion.sort_key();
+
+            let score = string_match.score;
+            let sort_score = Reverse(OrderedFloat(score));
 
             // Snippets do their own first-letter matching logic elsewhere.
             let is_snippet = completion.is_snippet_kind();
@@ -1742,6 +1664,42 @@ fn completion_kind_highlight_name(kind: CompletionItemKind) -> Option<&'static s
         CompletionItemKind::SNIPPET => "string",
         _ => return None,
     })
+}
+
+fn split_completion_label<'a>(
+    text: &'a str,
+    filter_range: &Range<usize>,
+    highlights: &[(Range<usize>, HighlightStyle)],
+) -> (
+    (&'a str, Vec<(Range<usize>, HighlightStyle)>),
+    (&'a str, Vec<(Range<usize>, HighlightStyle)>),
+) {
+    let (main_text, suffix_text) = text.split_at(filter_range.end);
+    let main_highlights = highlights
+        .iter()
+        .filter_map(|(range, highlight)| {
+            if range.start >= filter_range.end {
+                return None;
+            }
+            let clamped_end = range.end.min(filter_range.end);
+            Some((range.start..clamped_end, *highlight))
+        })
+        .collect();
+    let suffix_highlights = highlights
+        .iter()
+        .filter_map(|(range, highlight)| {
+            if range.end <= filter_range.end {
+                return None;
+            }
+            let shifted_start = range.start.saturating_sub(filter_range.end);
+            let shifted_end = range.end - filter_range.end;
+            Some((shifted_start..shifted_end, *highlight))
+        })
+        .collect();
+    (
+        (main_text, main_highlights),
+        (suffix_text, suffix_highlights),
+    )
 }
 
 fn exact_case_match_count(query: &str, string_match: &StringMatch) -> usize {
@@ -2089,5 +2047,47 @@ impl CodeActionsMenu {
                 )
                 .into_any_element(),
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn bold() -> HighlightStyle {
+        FontWeight::BOLD.into()
+    }
+
+    fn colored() -> HighlightStyle {
+        HighlightStyle {
+            fade_out: Some(0.5),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_split_completion_label_keeps_prefix_before_filter_range() {
+        let ((main_text, main_highlights), (suffix_text, suffix_highlights)) =
+            split_completion_label("&some_str: String", &(1..9), &[(11..17, colored())]);
+
+        assert_eq!(main_text, "&some_str");
+        assert_eq!(suffix_text, ": String");
+        assert_eq!(main_highlights, vec![]);
+        assert_eq!(suffix_highlights, vec![(2..8, colored())]);
+    }
+
+    #[test]
+    fn test_split_completion_label_splits_boundary_spanning_highlight() {
+        let ((main_text, main_highlights), (suffix_text, suffix_highlights)) =
+            split_completion_label(
+                "await.as_deref_mut(&mut self)",
+                &(6..18),
+                &[(0..29, bold())],
+            );
+
+        assert_eq!(main_text, "await.as_deref_mut");
+        assert_eq!(suffix_text, "(&mut self)");
+        assert_eq!(main_highlights, vec![(0..18, bold())]);
+        assert_eq!(suffix_highlights, vec![(0..11, bold())]);
     }
 }

@@ -1,5 +1,4 @@
 use super::*;
-use audio::{Audio, DxSoundEvent};
 
 const ORDERED_LIST_MAX_MARKER_LEN: usize = 16;
 
@@ -72,16 +71,10 @@ impl Editor {
 
     pub fn handle_input(&mut self, text: &str, window: &mut Window, cx: &mut Context<Self>) {
         let text: Arc<str> = text.into();
-        let is_bulk_input = text.len() > 1 || text.contains('\n');
 
         if self.read_only(cx) {
             return;
         }
-
-        let is_composing_input = self.ime_transaction.is_some()
-            || self
-                .text_highlights(HighlightKey::InputComposition, cx)
-                .is_some();
 
         self.unfold_buffers_with_selections(cx);
 
@@ -92,7 +85,7 @@ impl Editor {
         let mut new_selections = Vec::with_capacity(selections.len());
         let mut new_autoclose_regions = Vec::new();
         let snapshot = self.buffer.read(cx).read(cx);
-        let mut clear_linked_edit_ranges = is_bulk_input && !self.linked_edit_ranges.is_empty();
+        let mut clear_linked_edit_ranges = false;
         let mut all_selections_read_only = true;
         let mut has_adjacent_edits = false;
         let mut in_adjacent_group = false;
@@ -117,7 +110,7 @@ impl Editor {
             }
             all_selections_read_only = false;
 
-            if !is_bulk_input && let Some(scope) = snapshot.language_scope_at(selection.head()) {
+            if let Some(scope) = snapshot.language_scope_at(selection.head()) {
                 // Determine if the inserted text matches the opening or closing
                 // bracket of any of this language's bracket pairs.
                 let mut bracket_pair = None;
@@ -328,8 +321,7 @@ impl Editor {
                 }
             }
 
-            if !is_bulk_input
-                && self.auto_replace_emoji_shortcode
+            if self.auto_replace_emoji_shortcode
                 && selection.is_empty()
                 && text.as_ref().ends_with(':')
                 && let Some(possible_emoji_short_code) =
@@ -381,7 +373,7 @@ impl Editor {
                 snapshot.anchor_after(selection.end)
             };
 
-            if !is_bulk_input && !self.linked_edit_ranges.is_empty() {
+            if !self.linked_edit_ranges.is_empty() {
                 let start_anchor = snapshot.anchor_before(selection.start);
                 let classifier = snapshot
                     .char_classifier_at(start_anchor)
@@ -424,17 +416,8 @@ impl Editor {
             if clear_linked_edit_ranges {
                 this.linked_edit_ranges.clear();
             }
-            let should_queue_power_mode_effect = !is_bulk_input
-                && !is_composing_input
-                && !text.is_empty()
-                && edits
-                    .iter()
-                    .any(|(_, inserted_text)| !inserted_text.is_empty());
-            let initial_buffer_versions = if is_bulk_input {
-                jsx_tag_auto_close::InitialBufferVersionsMap::default()
-            } else {
-                jsx_tag_auto_close::construct_initial_buffer_versions_map(this, &edits, cx)
-            };
+            let initial_buffer_versions =
+                jsx_tag_auto_close::construct_initial_buffer_versions_map(this, &edits, cx);
 
             this.buffer.update(cx, |buffer, cx| {
                 if has_adjacent_edits {
@@ -493,18 +476,15 @@ impl Editor {
                 );
             }
 
-            let had_active_edit_prediction = !is_bulk_input && this.has_active_edit_prediction();
+            let had_active_edit_prediction = this.has_active_edit_prediction();
             this.change_selections(
-                SelectionEffects::scroll(Autoscroll::fit())
-                    .completions(false)
-                    .defer_noncritical_refreshes(true),
+                SelectionEffects::scroll(Autoscroll::fit()).completions(false),
                 window,
                 cx,
                 |s| s.select(new_selections),
             );
 
-            if !is_bulk_input
-                && !bracket_inserted
+            if !bracket_inserted
                 && let Some(on_type_format_task) =
                     this.trigger_on_type_formatting(text.to_string(), window, cx)
             {
@@ -512,14 +492,15 @@ impl Editor {
             }
 
             let editor_settings = EditorSettings::get_global(cx);
-            if !is_bulk_input
-                && bracket_inserted
+            if bracket_inserted
                 && (editor_settings.auto_signature_help
                     || editor_settings.show_signature_help_after_edits)
             {
                 this.show_signature_help(&ShowSignatureHelp, window, cx);
             }
 
+            let trigger_in_words =
+                this.show_edit_predictions_in_menu() || !had_active_edit_prediction;
             if this.hard_wrap.is_some() {
                 let latest: Range<Point> = this.selections.newest(&map).range();
                 if latest.is_empty()
@@ -540,17 +521,16 @@ impl Editor {
                     )
                 }
             }
-            if !is_bulk_input {
-                let trigger_in_words =
-                    this.show_edit_predictions_in_menu() || !had_active_edit_prediction;
-                this.defer_completion_on_input(text.to_string(), trigger_in_words, window, cx);
-                refresh_linked_ranges(this, window, cx);
-                jsx_tag_auto_close::handle_from(this, initial_buffer_versions, window, cx);
-            }
-            if should_queue_power_mode_effect {
-                this.queue_power_mode_insert_effect(cx);
-                Audio::play_dx_sound(DxSoundEvent::TypingKey, cx);
-            }
+            this.trigger_completion_on_input(&text, trigger_in_words, window, cx);
+            refresh_linked_ranges(this, window, cx);
+            this.refresh_edit_prediction(
+                true,
+                false,
+                EditPredictionRequestTrigger::BufferEdit,
+                window,
+                cx,
+            );
+            jsx_tag_auto_close::handle_from(this, initial_buffer_versions, window, cx);
         });
     }
 
@@ -791,13 +771,14 @@ impl Editor {
                 })
                 .collect();
 
-            this.change_selections(
-                SelectionEffects::default().defer_noncritical_refreshes(true),
+            this.change_selections(Default::default(), window, cx, |s| s.select(new_selections));
+            this.refresh_edit_prediction(
+                true,
+                false,
+                EditPredictionRequestTrigger::BufferEdit,
                 window,
                 cx,
-                |s| s.select(new_selections),
             );
-            this.defer_completion_on_input("\n".to_string(), true, window, cx);
             if let Some(task) = this.trigger_on_type_formatting("\n".to_owned(), window, cx) {
                 task.detach_and_log_err(cx);
             }
@@ -837,10 +818,8 @@ impl Editor {
 
             editor.change_selections(Default::default(), window, cx, |s| {
                 let mut index = 0;
-                s.move_cursors_with(&mut |map, cursor, goal| {
-                    let Some(row) = rows.get(index).copied() else {
-                        return (cursor, goal);
-                    };
+                s.move_cursors_with(&mut |map, _, _| {
+                    let row = rows[index];
                     index += 1;
 
                     let point = Point::new(row, 0);
@@ -926,9 +905,8 @@ impl Editor {
                 s.maybe_move_cursors_with(&mut |map, _, _| {
                     let row = rows.get(index).copied().flatten();
                     index += 1;
-                    let row = row?;
 
-                    let point = Point::new(row, 0);
+                    let point = Point::new(row?, 0);
                     let boundary = map.next_line_boundary(point).1;
                     let clipped = map.clip_point(boundary, Bias::Left);
 
@@ -1163,6 +1141,12 @@ impl Editor {
             return;
         }
         self.transact(window, cx, |this, window, cx| {
+            this.change_selections(Default::default(), window, cx, |s| {
+                s.move_with(&mut |_, selection| {
+                    selection.reversed = false;
+                });
+            });
+
             this.select_to_end_of_line(
                 &SelectToEndOfLine {
                     stop_at_soft_wraps: false,
@@ -1184,6 +1168,12 @@ impl Editor {
             return;
         }
         self.transact(window, cx, |this, window, cx| {
+            this.change_selections(Default::default(), window, cx, |s| {
+                s.move_with(&mut |_, selection| {
+                    selection.reversed = false;
+                });
+            });
+
             this.select_to_end_of_line(
                 &SelectToEndOfLine {
                     stop_at_soft_wraps: false,
@@ -1676,10 +1666,8 @@ impl Editor {
             this.change_selections(Default::default(), window, cx, |s| s.select(selections));
 
             let selections = this.selections.all::<Point>(&this.display_snapshot(cx));
-            let selections_on_single_row = selections.windows(2).all(|selections| {
-                selections[0].start.row == selections[1].start.row
-                    && selections[0].end.row == selections[1].end.row
-                    && selections[0].start.row == selections[0].end.row
+            let selections_on_single_row = selections.array_windows::<2>().all(|[a, b]| {
+                a.start.row == b.start.row && a.end.row == b.end.row && a.start.row == a.end.row
             });
             let selections_selecting = selections
                 .iter()

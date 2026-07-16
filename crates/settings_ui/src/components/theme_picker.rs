@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
-use fuzzy::StringMatch;
+use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{AnyElement, App, Context, DismissEvent, SharedString, Task, Window};
 use picker::{Picker, PickerDelegate};
 use theme::ThemeRegistry;
 use ui::{ListItem, ListItemSpacing, prelude::*};
-
-use super::{bounded_picker_matches, bounded_picker_options};
 
 type ThemePicker = Picker<ThemePickerDelegate>;
 
@@ -27,13 +25,21 @@ impl ThemePickerDelegate {
         let theme_registry = ThemeRegistry::global(cx);
 
         let themes = theme_registry.list_names();
-        let themes = bounded_picker_options(themes, &current_theme);
         let selected_index = themes
             .iter()
             .position(|theme| *theme == current_theme)
             .unwrap_or(0);
 
-        let filtered_themes = bounded_picker_matches(themes.iter().enumerate());
+        let filtered_themes = themes
+            .iter()
+            .enumerate()
+            .map(|(index, theme)| StringMatch {
+                candidate_id: index,
+                string: theme.to_string(),
+                positions: Vec::new(),
+                score: 0.0,
+            })
+            .collect();
 
         Self {
             themes,
@@ -47,6 +53,10 @@ impl ThemePickerDelegate {
 
 impl PickerDelegate for ThemePickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "theme picker"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_themes.len()
@@ -73,17 +83,36 @@ impl PickerDelegate for ThemePickerDelegate {
     ) -> Task<()> {
         let themes = self.themes.clone();
         let current_theme = self.current_theme.clone();
-        let query_lower = query.to_lowercase();
 
         let matches: Vec<StringMatch> = if query.is_empty() {
-            bounded_picker_matches(themes.iter().enumerate())
+            themes
+                .iter()
+                .enumerate()
+                .map(|(index, theme)| StringMatch {
+                    candidate_id: index,
+                    string: theme.to_string(),
+                    positions: Vec::new(),
+                    score: 0.0,
+                })
+                .collect()
         } else {
-            bounded_picker_matches(
-                themes
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, theme)| theme.to_lowercase().contains(&query_lower)),
-            )
+            let _candidates: Vec<StringMatchCandidate> = themes
+                .iter()
+                .enumerate()
+                .map(|(id, theme)| StringMatchCandidate::new(id, theme.as_ref()))
+                .collect();
+
+            themes
+                .iter()
+                .enumerate()
+                .filter(|(_, theme)| theme.to_lowercase().contains(&query.to_lowercase()))
+                .map(|(index, theme)| StringMatch {
+                    candidate_id: index,
+                    string: theme.to_string(),
+                    positions: Vec::new(),
+                    score: 0.0,
+                })
+                .collect()
         };
 
         let selected_index = if query.is_empty() {
@@ -94,11 +123,7 @@ impl PickerDelegate for ThemePickerDelegate {
         } else {
             matches
                 .iter()
-                .position(|m| {
-                    themes
-                        .get(m.candidate_id)
-                        .is_some_and(|theme| *theme == current_theme)
-                })
+                .position(|m| themes[m.candidate_id] == current_theme)
                 .unwrap_or(0)
         };
 
@@ -153,6 +178,7 @@ pub fn theme_picker(
 
     Picker::uniform_list(delegate, window, cx)
         .show_scrollbar(true)
-        .width(rems_from_px(210.))
-        .max_height(Some(rems(18.).into()))
+        .initial_width(rems_from_px(210.))
+        .max_height(rems(18.))
+        .popover()
 }

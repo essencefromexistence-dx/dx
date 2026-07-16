@@ -69,6 +69,8 @@ actions!(
         OpenLicenses,
         /// Opens the Zed status page.
         OpenStatusPage,
+        /// Opens the Zed merch store.
+        GetMerch,
         /// Opens the telemetry log.
         OpenTelemetryLog,
         /// Opens the performance profiler.
@@ -149,8 +151,24 @@ pub struct OpenSettingsAt {
     pub target: Option<OpenSettingsAtTarget>,
 }
 
+#[derive(PartialEq, Clone, Debug, Deserialize, JsonSchema, Action)]
+#[action(namespace = zed)]
+#[serde(deny_unknown_fields)]
+pub struct OpenSettingsPage {
+    /// A settings page title (e.g. `AI`).
+    pub page: String,
+    /// The settings file to select before opening `page`. When omitted, the
+    /// existing settings file selection is preserved.
+    #[serde(default)]
+    pub target: Option<OpenSettingsAtTarget>,
+}
+
 /// `OpenSettingsAt` path of the agent skills page in the settings UI.
 pub const AGENT_SKILLS_SETTINGS_PATH: &str = "agent.skills";
+
+/// `OpenSettingsAt` path of the agent sandbox permissions page in the settings
+/// UI.
+pub const AGENT_SANDBOX_SETTINGS_PATH: &str = "agent.sandbox_permissions";
 
 #[derive(PartialEq, Clone, Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -334,6 +352,12 @@ pub mod git {
             /// Opens the git branch selector.
             #[action(deprecated_aliases = ["branches::OpenRecent"])]
             Branch,
+            /// Shows uncommitted changes across the project.
+            ViewUncommittedChanges,
+            /// Shows unstaged changes across the project.
+            ViewUnstagedChanges,
+            /// Shows staged changes across the project.
+            ViewStagedChanges,
             /// Opens the git stash selector.
             ViewStash,
             /// Opens the git worktree selector.
@@ -363,6 +387,18 @@ pub mod command_palette {
         command_palette,
         [
             /// Toggles the command palette.
+            Toggle,
+        ]
+    );
+}
+
+pub mod text_finder {
+    use gpui::actions;
+
+    actions!(
+        text_finder,
+        [
+            /// Opens the Project Search Picker.
             Toggle,
         ]
     );
@@ -511,7 +547,7 @@ pub mod agent {
     actions!(
         agent,
         [
-            /// Opens the agent settings panel.
+            /// Opens the agent settings UI.
             #[action(deprecated_aliases = ["agent::OpenConfiguration"])]
             OpenSettings,
             /// Opens the agent onboarding modal.
@@ -536,6 +572,17 @@ pub mod agent {
             PasteRaw,
         ]
     );
+
+    /// Selects the agent used for new threads in the agent panel, without
+    /// opening the panel. The selected agent is launched the next time the
+    /// panel is opened.
+    #[derive(Clone, PartialEq, Deserialize, JsonSchema, Action)]
+    #[action(namespace = agent)]
+    #[serde(deny_unknown_fields)]
+    pub struct SelectAgent {
+        /// The id of the agent to select.
+        pub agent: String,
+    }
 
     /// Opens a new agent thread with the provided branch diff for review.
     #[derive(Clone, PartialEq, Deserialize, JsonSchema, Action)]
@@ -757,32 +804,6 @@ pub mod debug_panel {
     );
 }
 
-pub mod dx_check_panel {
-    use gpui::actions;
-    actions!(
-        dx_check_panel,
-        [
-            /// Toggles the DX Check panel.
-            Toggle,
-            /// Toggles focus on the DX Check panel.
-            ToggleFocus
-        ]
-    );
-}
-
-pub mod dx_skill_panel {
-    use gpui::actions;
-    actions!(
-        dx_skill_panel,
-        [
-            /// Toggles the DX Skill panel (AI skills marketplace/fetch from API).
-            Toggle,
-            /// Toggles focus on the DX Skill panel.
-            ToggleFocus
-        ]
-    );
-}
-
 actions!(
     debugger,
     [
@@ -868,42 +889,6 @@ pub mod preview {
     }
 }
 
-pub mod dx_style {
-    use gpui::{Action, actions};
-    use schemars::JsonSchema;
-    use serde::{Deserialize, Serialize};
-
-    /// Opens the DX Style visual generator surface with read-only active editor context.
-    #[derive(PartialEq, Clone, Debug, Deserialize, Serialize, JsonSchema, Action)]
-    #[action(namespace = dx_style)]
-    #[serde(deny_unknown_fields)]
-    pub struct OpenGeneratorPreviewForContext {
-        pub source_context_json: String,
-    }
-
-    actions!(
-        dx_style,
-        [
-            /// Toggles the DX Style dock panel.
-            TogglePanel,
-            /// Opens the DX Style visual generator surface in Web Preview.
-            OpenGeneratorPreview,
-        ]
-    );
-}
-
-pub mod dx_forge {
-    use gpui::actions;
-
-    actions!(
-        dx_forge,
-        [
-            /// Toggles the DX Forge dock panel.
-            TogglePanel,
-        ]
-    );
-}
-
 pub mod agents_sidebar {
     use gpui::{Action, actions};
     use schemars::JsonSchema;
@@ -963,6 +948,80 @@ pub mod notebook {
             EnterEditMode,
             /// Exits the cell editor and returns to cell command mode.
             EnterCommandMode,
+        ]
+    );
+}
+
+pub mod git_panel {
+    use gpui::actions;
+
+    actions!(
+        git_panel,
+        [
+            /// Toggles focus on the git panel.
+            ToggleFocus,
+        ]
+    );
+}
+
+pub mod dx_check_panel {
+    use gpui::actions;
+    actions!(
+        dx_check_panel,
+        [
+            /// Toggles the DX Check panel.
+            Toggle,
+            /// Toggles focus on the DX Check panel.
+            ToggleFocus
+        ]
+    );
+}
+
+pub mod dx_skill_panel {
+    use gpui::actions;
+    actions!(
+        dx_skill_panel,
+        [
+            /// Toggles the DX Skill panel (AI skills marketplace/fetch from API).
+            Toggle,
+            /// Toggles focus on the DX Skill panel.
+            ToggleFocus
+        ]
+    );
+}
+
+pub mod dx_forge {
+    use gpui::actions;
+
+    actions!(
+        dx_forge,
+        [
+            /// Toggles the DX Forge dock panel.
+            TogglePanel,
+        ]
+    );
+}
+
+pub mod dx_style {
+    use gpui::{Action, actions};
+    use schemars::JsonSchema;
+    use serde::{Deserialize, Serialize};
+
+    /// Opens the DX Style visual generator surface with read-only active editor context.
+    #[derive(PartialEq, Clone, Debug, Deserialize, Serialize, JsonSchema, Action)]
+    #[action(namespace = dx_style)]
+    #[serde(deny_unknown_fields)]
+    pub struct OpenGeneratorPreviewForContext {
+        pub source_context_json: String,
+    }
+
+    actions!(
+        dx_style,
+        [
+            /// Toggles the DX Style dock panel.
+            TogglePanel,
+            /// Opens the DX Style visual generator surface in Web Preview.
+            OpenGeneratorPreview,
         ]
     );
 }

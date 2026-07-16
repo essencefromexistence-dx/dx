@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -28,16 +26,9 @@ use crate::{
     theme_preview::{ThemePreviewStyle, ThemePreviewTile},
 };
 
-const LIGHT_THEMES: [&str; 4] = ["Dx Light", "One Light", "Ayu Light", "Gruvbox Light"];
-const DARK_THEMES: [&str; 4] = ["Dx Dark", "One Dark", "Ayu Dark", "Gruvbox Dark"];
-const LIGHT_FAMILY_NAMES: [SharedString; 4] = [
-    SharedString::new_static("Dx"),
-    SharedString::new_static("One"),
-    SharedString::new_static("Ayu"),
-    SharedString::new_static("Gruvbox"),
-];
-const DARK_FAMILY_NAMES: [SharedString; 4] = [
-    SharedString::new_static("Dx"),
+const LIGHT_THEMES: [&str; 3] = ["One Light", "Ayu Light", "Gruvbox Light"];
+const DARK_THEMES: [&str; 3] = ["One Dark", "Ayu Dark", "Gruvbox Dark"];
+const FAMILY_NAMES: [SharedString; 3] = [
     SharedString::new_static("One"),
     SharedString::new_static("Ayu"),
     SharedString::new_static("Gruvbox"),
@@ -112,7 +103,7 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
         tab_index: &mut isize,
         theme_selection: &ThemeSelection,
         cx: &mut App,
-    ) -> Vec<AnyElement> {
+    ) -> [impl IntoElement; 3] {
         let system_appearance = SystemAppearance::global(cx);
         let theme_registry = ThemeRegistry::global(cx);
 
@@ -130,99 +121,83 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
         };
         let current_theme_name: SharedString = theme_selection.name(appearance).0.into();
 
-        let (theme_names, family_names): (&[&str], &[SharedString]) = match appearance {
-            Appearance::Light => (&LIGHT_THEMES, &LIGHT_FAMILY_NAMES),
-            Appearance::Dark => (&DARK_THEMES, &DARK_FAMILY_NAMES),
+        let theme_names = match appearance {
+            Appearance::Light => LIGHT_THEMES,
+            Appearance::Dark => DARK_THEMES,
         };
 
-        let themes = theme_names
-            .iter()
-            .map(|theme| theme_registry.get(theme).unwrap())
-            .collect::<Vec<_>>();
+        let themes = theme_names.map(|theme| theme_registry.get(theme).unwrap());
 
-        theme_names
-            .iter()
-            .enumerate()
-            .map(|(index, _)| {
-                let theme = &themes[index];
-                let is_selected = theme.name == current_theme_name;
-                let name = theme.name.clone();
-                let colors = cx.theme().colors();
+        [0, 1, 2].map(|index| {
+            let theme = &themes[index];
+            let is_selected = theme.name == current_theme_name;
+            let name = theme.name.clone();
+            let colors = cx.theme().colors();
 
-                v_flex()
-                    .w_full()
-                    .items_center()
-                    .gap_1()
-                    .child(
-                        h_flex()
-                            .id(name)
-                            .relative()
-                            .w_full()
-                            .border_2()
-                            .border_color(colors.border_transparent)
-                            .rounded(ThemePreviewTile::ROOT_RADIUS)
-                            .map(|this| {
-                                if is_selected {
-                                    this.border_color(colors.border_selected)
-                                } else {
-                                    this.opacity(0.8).hover(|s| s.border_color(colors.border))
-                                }
-                            })
-                            .tab_index({
-                                *tab_index += 1;
-                                *tab_index - 1
-                            })
-                            .focus(|mut style| {
-                                style.border_color = Some(colors.border_focused);
-                                style
-                            })
-                            .on_click({
-                                let theme_name = theme.name.clone();
-                                let current_theme_name = current_theme_name.clone();
+            v_flex()
+                .w_full()
+                .items_center()
+                .gap_1()
+                .child(
+                    h_flex()
+                        .id(name)
+                        .relative()
+                        .w_full()
+                        .border_2()
+                        .border_color(colors.border_transparent)
+                        .rounded(ThemePreviewTile::ROOT_RADIUS)
+                        .map(|this| {
+                            if is_selected {
+                                this.border_color(colors.border_selected)
+                            } else {
+                                this.opacity(0.8).hover(|s| s.border_color(colors.border))
+                            }
+                        })
+                        .tab_index({
+                            *tab_index += 1;
+                            *tab_index - 1
+                        })
+                        .focus(|mut style| {
+                            style.border_color = Some(colors.border_focused);
+                            style
+                        })
+                        .on_click({
+                            let theme_name = theme.name.clone();
+                            let current_theme_name = current_theme_name.clone();
 
-                                move |_, _, cx| {
-                                    write_theme_change(theme_name.clone(), theme_mode, cx);
-                                    telemetry::event!(
-                                        "Welcome Theme Changed",
-                                        from = current_theme_name,
-                                        to = theme_name
-                                    );
-                                }
-                            })
-                            .map(|this| {
-                                if theme_mode == ThemeAppearanceMode::System {
-                                    if let Some(light_theme_name) = LIGHT_THEMES.get(index).copied()
-                                    {
-                                        let (light, dark) = (
-                                            theme_registry.get(light_theme_name).unwrap(),
-                                            theme_registry.get(DARK_THEMES[index]).unwrap(),
-                                        );
-                                        this.child(
-                                            ThemePreviewTile::new(light, theme_seed)
-                                                .style(ThemePreviewStyle::SideBySide(dark)),
-                                        )
-                                    } else {
-                                        this.child(
-                                            ThemePreviewTile::new(theme.clone(), theme_seed)
-                                                .style(ThemePreviewStyle::Bordered),
-                                        )
-                                    }
-                                } else {
-                                    this.child(
-                                        ThemePreviewTile::new(theme.clone(), theme_seed)
-                                            .style(ThemePreviewStyle::Bordered),
-                                    )
-                                }
-                            }),
-                    )
-                    .child(
-                        Label::new(family_names[index].clone())
-                            .color(Color::Muted)
-                            .size(LabelSize::Small),
-                    )
-                    .into_any_element()
-            })
-            .collect()
+                            move |_, _, cx| {
+                                write_theme_change(theme_name.clone(), theme_mode, cx);
+                                telemetry::event!(
+                                    "Welcome Theme Changed",
+                                    from = current_theme_name,
+                                    to = theme_name
+                                );
+                            }
+                        })
+                        .map(|this| {
+                            if theme_mode == ThemeAppearanceMode::System {
+                                let (light, dark) = (
+                                    theme_registry.get(LIGHT_THEMES[index]).unwrap(),
+                                    theme_registry.get(DARK_THEMES[index]).unwrap(),
+                                );
+                                this.child(
+                                    ThemePreviewTile::new(light, theme_seed)
+                                        .style(ThemePreviewStyle::SideBySide(dark)),
+                                )
+                            } else {
+                                this.child(
+                                    ThemePreviewTile::new(theme.clone(), theme_seed)
+                                        .style(ThemePreviewStyle::Bordered),
+                                )
+                            }
+                        }),
+                )
+                .child(
+                    Label::new(FAMILY_NAMES[index].clone())
+                        .color(Color::Muted)
+                        .size(LabelSize::Small),
+                )
+        })
     }
 
     fn write_mode_change(mode: ThemeAppearanceMode, cx: &mut App) {
@@ -275,7 +250,7 @@ fn render_telemetry_section(tab_index: &mut isize, cx: &App) -> impl IntoElement
             SwitchField::new(
                 "onboarding-telemetry-metrics",
                 None::<&str>,
-                Some("Help improve Dx by sending anonymous usage data".into()),
+                Some("Help improve Zed by sending anonymous usage data".into()),
                 if TelemetrySettings::get_global(cx).metrics {
                     ui::ToggleState::Selected
                 } else {
@@ -315,7 +290,7 @@ fn render_telemetry_section(tab_index: &mut isize, cx: &App) -> impl IntoElement
                 "onboarding-telemetry-crash-reports",
                 None::<&str>,
                 Some(
-                    "Help fix Dx by sending crash reports so we can fix critical issues fast"
+                    "Help fix Zed by sending crash reports so we can fix critical issues fast"
                         .into(),
                 ),
                 if TelemetrySettings::get_global(cx).diagnostics {
@@ -456,12 +431,12 @@ fn render_worktree_auto_trust_switch(tab_index: &mut isize, cx: &mut App) -> imp
         ui::ToggleState::Unselected
     };
 
-    let tooltip_description = "Dx can only allow services like language servers, project settings, and MCP servers to run after you mark a new project as trusted.";
+    let tooltip_description = "Zed can only allow services like language servers, project settings, and MCP servers to run after you mark a new project as trusted.";
 
     SwitchField::new(
         "onboarding-auto-trust-worktrees",
         Some("Trust All Projects By Default"),
-        Some("Automatically mark all new projects as trusted to unlock all Dx features".into()),
+        Some("Automatically mark all new projects as trusted to unlock all Zed's features".into()),
         toggle_state,
         {
             let fs = <dyn Fs>::global(cx);
@@ -590,20 +565,28 @@ fn render_registry_agent_button(
         .name(agent.name().clone())
         .state(state_element)
         .disabled(installed)
-        .on_click(move |_, _, cx| {
+        .on_click(move |_, window, cx| {
             telemetry::event!("Welcome Agent Install Clicked", agent = agent_id.as_str());
-            let agent_id = agent_id.clone();
-            update_settings_file(fs.clone(), cx, move |settings, _| {
-                let agent_servers = settings.agent_servers.get_or_insert_default();
-                agent_servers.entry(agent_id).or_insert_with(|| {
-                    CustomAgentServerSettings::Registry {
-                        env: Default::default(),
-                        default_mode: None,
-                        default_config_options: HashMap::default(),
-                        favorite_config_option_values: HashMap::default(),
-                    }
-                });
+            update_settings_file(fs.clone(), cx, {
+                let agent_id = agent_id.clone();
+                move |settings, _| {
+                    let agent_servers = settings.agent_servers.get_or_insert_default();
+                    agent_servers.entry(agent_id).or_insert_with(|| {
+                        CustomAgentServerSettings::Registry {
+                            env: Default::default(),
+                            default_mode: None,
+                            default_config_options: HashMap::default(),
+                            favorite_config_option_values: HashMap::default(),
+                        }
+                    });
+                }
             });
+            window.dispatch_action(
+                Box::new(zed_actions::agent::SelectAgent {
+                    agent: agent_id.clone(),
+                }),
+                cx,
+            );
         })
 }
 
@@ -659,7 +642,7 @@ fn render_zed_agent_button(user_store: &Entity<UserStore>, cx: &mut App) -> impl
                 .size(IconSize::XSmall)
                 .color(Color::Muted),
         )
-        .name("Dx Agent")
+        .name("Zed Agent")
         .state(state_element)
         .disabled(is_trial || is_pro)
         .map(|this| {

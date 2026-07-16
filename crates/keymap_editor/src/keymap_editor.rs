@@ -56,10 +56,6 @@ use crate::{
 
 const NO_ACTION_ARGUMENTS_TEXT: SharedString = SharedString::new_static("<no arguments>");
 const COLS: usize = 6;
-const MAX_KEYMAP_BINDINGS: usize = 10000;
-const MAX_KEYMAP_ACTIONS: usize = 10000;
-const MAX_KEYMAP_MATCHES: usize = 5000;
-const MAX_KEYMAP_CONFLICT_SCAN: usize = 1000;
 
 actions!(
     keymap_editor,
@@ -413,7 +409,7 @@ impl ConflictState {
                         .filter(|&conflict| Some(conflict.index) != keybind_idx);
                     indices.next().map(|origin| KeybindConflict {
                         first_conflict_index: origin.index,
-                        remaining_conflict_amount: indices.take(MAX_KEYMAP_CONFLICT_SCAN).count(),
+                        remaining_conflict_amount: indices.count(),
                     })
                 })
         })
@@ -722,16 +718,15 @@ impl KeymapEditor {
             &action_query,
             true,
             true,
-            MAX_KEYMAP_MATCHES.min(keybind_count),
+            keybind_count,
             &Default::default(),
             executor,
         )
         .await;
         this.update(cx, |this, cx| {
             matches.retain(|candidate| {
-                this.keybindings
-                    .get(candidate.candidate_id)
-                    .is_some_and(|binding| this.source_filters.allows(binding.keybind_source()))
+                this.source_filters
+                    .allows(this.keybindings[candidate.candidate_id].keybind_source())
             });
 
             match this.filter_state {
@@ -747,9 +742,8 @@ impl KeymapEditor {
             match this.search_mode {
                 SearchMode::KeyStroke { exact_match } => {
                     matches.retain(|item| {
-                        this.keybindings
-                            .get(item.candidate_id)
-                            .and_then(|binding| binding.keystrokes())
+                        this.keybindings[item.candidate_id]
+                            .keystrokes()
                             .is_some_and(|keystrokes| {
                                 if exact_match {
                                     keystrokes_match_exactly(&keystroke_query, keystrokes)
@@ -794,24 +788,15 @@ impl KeymapEditor {
             }
 
             if !this.show_no_action_bindings {
-                matches.retain(|item| {
-                    this.keybindings
-                        .get(item.candidate_id)
-                        .is_some_and(|binding| !binding.is_no_action())
-                });
+                matches.retain(|item| !this.keybindings[item.candidate_id].is_no_action());
             }
 
             if action_query.is_empty() {
                 matches.sort_by(|item1, item2| {
-                    match (
-                        this.keybindings.get(item1.candidate_id),
-                        this.keybindings.get(item2.candidate_id),
-                    ) {
-                        (Some(binding1), Some(binding2)) => binding1.cmp(binding2),
-                        (Some(_), None) => std::cmp::Ordering::Less,
-                        (None, Some(_)) => std::cmp::Ordering::Greater,
-                        (None, None) => item1.candidate_id.cmp(&item2.candidate_id),
-                    }
+                    let binding1 = &this.keybindings[item1.candidate_id];
+                    let binding2 = &this.keybindings[item2.candidate_id];
+
+                    binding1.cmp(binding2)
                 });
             }
             this.selected_index.take();
@@ -840,24 +825,14 @@ impl KeymapEditor {
     ) {
         let key_bindings_ptr = cx.key_bindings();
         let lock = key_bindings_ptr.borrow();
-        let key_bindings = lock
-            .bindings()
-            .take(MAX_KEYMAP_BINDINGS)
-            .collect::<Vec<_>>();
-        let action_names = cx
-            .all_action_names()
-            .iter()
-            .copied()
-            .take(MAX_KEYMAP_ACTIONS);
-        let mut unmapped_action_names = HashSet::from_iter(action_names);
+        let key_bindings = lock.bindings().collect::<Vec<_>>();
+        let mut unmapped_action_names = HashSet::from_iter(cx.all_action_names().iter().copied());
         let action_documentation = cx.action_documentation();
         let mut generator = KeymapFile::action_schema_generator();
-        let action_schema_entries = cx
-            .action_schemas(&mut generator)
-            .into_iter()
-            .take(MAX_KEYMAP_ACTIONS);
         let actions_with_schemas = HashSet::from_iter(
-            action_schema_entries.filter_map(|(name, schema)| schema.is_some().then_some(name)),
+            cx.action_schemas(&mut generator)
+                .into_iter()
+                .filter_map(|(name, schema)| schema.is_some().then_some(name)),
         );
 
         let mut processed_bindings = Vec::new();
@@ -965,7 +940,6 @@ impl KeymapEditor {
                     .string_match_candidates
                     .iter()
                     .enumerate()
-                    .take(MAX_KEYMAP_MATCHES)
                     .map(|(ix, candidate)| StringMatch {
                         candidate_id: ix,
                         score: 0.0,
@@ -996,7 +970,7 @@ impl KeymapEditor {
                         } => {
                             let scroll_position =
                                 this.matches.iter().enumerate().find_map(|(index, item)| {
-                                    let binding = this.keybindings.get(item.candidate_id)?;
+                                    let binding = &this.keybindings[item.candidate_id];
                                     if binding.get_action_mapping().is_some_and(|binding_mapping| {
                                         binding_mapping == action_mapping
                                     }) && binding.action().name == action_name
@@ -1069,11 +1043,8 @@ impl KeymapEditor {
     }
 
     fn selected_keybind_and_index(&self) -> Option<(&ProcessedBinding, usize)> {
-        self.selected_keybind_index().and_then(|keybind_index| {
-            self.keybindings
-                .get(keybind_index)
-                .map(|binding| (binding, keybind_index))
-        })
+        self.selected_keybind_index()
+            .map(|keybind_index| (&self.keybindings[keybind_index], keybind_index))
     }
 
     fn selected_binding(&self) -> Option<&ProcessedBinding> {
@@ -1465,8 +1436,15 @@ impl KeymapEditor {
             self.table_interaction_state.read(cx).scroll_offset(),
         ));
         let keyboard_mapper = cx.keyboard_mapper().clone();
+        let deprecated_aliases = cx.deprecated_actions_to_preferred_actions().clone();
         cx.spawn(async move |_, _| {
-            remove_keybinding(to_remove, &fs, keyboard_mapper.as_ref()).await
+            remove_keybinding(
+                to_remove,
+                &fs,
+                keyboard_mapper.as_ref(),
+                &deprecated_aliases,
+            )
+            .await
         })
         .detach_and_notify_err(self.workspace.clone(), window, cx);
     }
@@ -1700,7 +1678,7 @@ impl KeymapEditor {
                 y: px(2.0),
             })
             .trigger_with_tooltip(
-                IconButton::new("KeymapEditorFilterMenuButton", IconName::Sliders)
+                IconButton::new("KeymapEditorFilterMenuButton", IconName::Filter)
                     .icon_size(IconSize::Small)
                     .when(
                         self.keybinding_conflict_state.any_user_binding_conflicts(),
@@ -1723,7 +1701,7 @@ impl KeymapEditor {
                 menu.toggleable_entry(
                     name,
                     toggled,
-                    IconPosition::End,
+                    IconPosition::Start,
                     action.as_ref().map(|a| a.boxed_clone()),
                     move |window, cx| {
                         window.focus(&focus_handle, cx);
@@ -1745,12 +1723,7 @@ struct HumanizedActionNameCache {
 
 impl HumanizedActionNameCache {
     fn new(cx: &App) -> Self {
-        let action_names = cx
-            .all_action_names()
-            .iter()
-            .copied()
-            .take(MAX_KEYMAP_ACTIONS);
-        let cache = HashMap::from_iter(action_names.map(|action_name| {
+        let cache = HashMap::from_iter(cx.all_action_names().iter().map(|&action_name| {
             (
                 action_name,
                 command_palette::humanize_action_name(action_name).into(),
@@ -2045,7 +2018,6 @@ impl Render for KeymapEditor {
                     .child(
                         h_flex()
                             .gap_2()
-                            .items_center()
                             .child(
                                 h_flex()
                                     .key_context({
@@ -2056,9 +2028,7 @@ impl Render for KeymapEditor {
                                     .flex_1()
                                     .min_w_0()
                                     .h_8()
-                                    .pl_2()
-                                    .pr_1()
-                                    .py_1()
+                                    .px_2()
                                     .border_1()
                                     .border_color(theme.colors().border)
                                     .rounded_md()
@@ -2068,7 +2038,9 @@ impl Render for KeymapEditor {
                                 h_flex()
                                     .gap_1()
                                     .flex_none()
-                                    .items_center()
+                                    // Make sure this min-width value aligns with the spacer
+                                    // div in the keystroke search input
+                                    .min_w_80()
                                     .child(
                                         IconButton::new(
                                             "KeymapEditorKeystrokeSearchButton",
@@ -2102,7 +2074,6 @@ impl Render for KeymapEditor {
                                     )
                                     .child(
                                         Button::new("edit-in-json", "Edit in JSON")
-                                            .style(ButtonStyle::Subtle)
                                             .key_binding(
                                                 ui::KeyBinding::for_action_in(&zed_actions::OpenKeymapFile, &focus_handle, cx)
                                                     .map(|kb| kb.size(rems_from_px(10.))),
@@ -2137,7 +2108,7 @@ impl Render for KeymapEditor {
                                 h_flex()
                                     .gap_2()
                                     .child(self.keystroke_editor.clone())
-                                    .child(div().min_w_96()), // Spacer div to align with the search input
+                                    .child(div().min_w_80()), // Spacer div to align with the search input
                             )
                         },
                     ),
@@ -2162,7 +2133,7 @@ impl Render for KeymapEditor {
                             range
                                 .filter_map(|index| {
                                     let candidate_id = this.matches.get(index)?.candidate_id;
-                                    let binding = this.keybindings.get(candidate_id)?;
+                                    let binding = &this.keybindings[candidate_id];
                                     let action_name = binding.action().name;
                                     let conflict = this.get_conflict(index);
                                     let is_unbound_by_unbind = binding.is_unbound_by_unbind();
@@ -2574,12 +2545,7 @@ impl KeybindingEditorModal {
         let has_action_editor = create && editing_keybind.action().name == gpui::NoAction.name();
 
         let (action_editor, action_name_to_static) = if has_action_editor {
-            let actions: Vec<&'static str> = cx
-                .all_action_names()
-                .iter()
-                .copied()
-                .take(MAX_KEYMAP_ACTIONS)
-                .collect();
+            let actions: Vec<&'static str> = cx.all_action_names().to_vec();
 
             let humanized_names: HashMap<&'static str, SharedString> = actions
                 .iter()
@@ -2878,6 +2844,7 @@ impl KeybindingEditorModal {
 
         let create = self.creating;
         let keyboard_mapper = cx.keyboard_mapper().clone();
+        let deprecated_aliases = cx.deprecated_actions_to_preferred_actions().clone();
 
         let action_name = self
             .get_selected_action_name(cx)
@@ -2908,6 +2875,7 @@ impl KeybindingEditorModal {
                 new_action_args.as_deref(),
                 &fs,
                 keyboard_mapper.as_ref(),
+                &deprecated_aliases,
             )
             .await
             {
@@ -3646,6 +3614,7 @@ async fn save_keybinding_update(
     new_args: Option<&str>,
     fs: &Arc<dyn Fs>,
     keyboard_mapper: &dyn PlatformKeyboardMapper,
+    deprecated_aliases: &HashMap<&'static str, &'static str>,
 ) -> anyhow::Result<()> {
     let keymap_contents = settings::KeymapFile::load_keymap_file(fs)
         .await
@@ -3695,8 +3664,9 @@ async fn save_keybinding_update(
         keymap_contents,
         tab_size,
         keyboard_mapper,
+        deprecated_aliases,
     )
-    .map_err(|err| anyhow::anyhow!("Could not save updated keybinding: {}", err))?;
+    .map_err(|err| err.context("Could not save updated keybinding"))?;
     fs.write(
         paths::keymap_file().as_path(),
         updated_keymap_contents.as_bytes(),
@@ -3717,6 +3687,7 @@ async fn remove_keybinding(
     existing: ProcessedBinding,
     fs: &Arc<dyn Fs>,
     keyboard_mapper: &dyn PlatformKeyboardMapper,
+    deprecated_aliases: &HashMap<&'static str, &'static str>,
 ) -> anyhow::Result<()> {
     let Some(keystrokes) = existing.keystrokes() else {
         anyhow::bail!("Cannot remove a keybinding that does not exist");
@@ -3746,6 +3717,7 @@ async fn remove_keybinding(
         keymap_contents,
         tab_size,
         keyboard_mapper,
+        deprecated_aliases,
     )
     .context("Failed to update keybinding")?;
     fs.write(
@@ -4054,6 +4026,204 @@ mod persistence {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use fs::FakeFs;
+    use gpui::{TestAppContext, VisualTestContext};
+    use project::Project;
+    use serde_json::json;
+    use settings::KeymapFileLoadResult;
+    use workspace::{AppState, MultiWorkspace};
+
+    async fn reload_keymap_from_file(fs: &Arc<FakeFs>, cx: &mut TestAppContext) {
+        let content = fs.load(paths::keymap_file().as_path()).await.unwrap();
+        cx.update(|cx| {
+            let mut key_bindings = match KeymapFile::load(&content, cx) {
+                KeymapFileLoadResult::Success { key_bindings } => key_bindings,
+                KeymapFileLoadResult::SomeFailedToLoad { error_message, .. } => {
+                    panic!("keymap failed to load: {error_message:?}")
+                }
+                KeymapFileLoadResult::JsonParseFailure { error } => {
+                    panic!("keymap json parse failure: {error}")
+                }
+            };
+            cx.clear_key_bindings();
+            for key_binding in &mut key_bindings {
+                key_binding.set_meta(KeybindSource::User.meta());
+            }
+            cx.bind_keys(key_bindings);
+            KeymapEventChannel::trigger_keymap_changed(cx);
+        });
+    }
+
+    async fn setup_keymap_editor(
+        cx: &mut TestAppContext,
+        keymap_content: &str,
+    ) -> (Arc<FakeFs>, Entity<KeymapEditor>, VisualTestContext) {
+        cx.update(|cx| {
+            let _state = AppState::test(cx);
+            editor::init(cx);
+            cx.set_global(KeymapEventChannel::new());
+        });
+
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            paths::config_dir(),
+            json!({ "keymap.json": keymap_content }),
+        )
+        .await;
+
+        reload_keymap_from_file(&fs, cx).await;
+
+        let project = Project::test(fs.clone(), [], cx).await;
+        let window_handle =
+            cx.add_window(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
+        let workspace = window_handle
+            .read_with(cx, |multi_workspace, _| multi_workspace.workspace().clone())
+            .unwrap();
+        let mut cx = VisualTestContext::from_window(window_handle.into(), cx);
+        let keymap_editor = cx
+            .update(|window, cx| cx.new(|cx| KeymapEditor::new(workspace.downgrade(), window, cx)));
+        cx.run_until_parked();
+        (fs, keymap_editor, cx)
+    }
+
+    fn visible_rows_for_action(editor: &KeymapEditor, action_name: &str) -> Vec<usize> {
+        editor
+            .matches
+            .iter()
+            .enumerate()
+            .filter(|(_, string_match)| {
+                let binding = &editor.keybindings[string_match.candidate_id];
+                binding.action().name == action_name && binding.keystrokes().is_some()
+            })
+            .map(|(index, _)| index)
+            .collect()
+    }
+
+    #[gpui::test]
+    async fn test_delete_one_of_two_identical_user_bindings(cx: &mut TestAppContext) {
+        let keymap_content = r#"[
+    {
+        "bindings": {
+            "alt-cmd-shift-c": "zed::OpenKeymap"
+        }
+    },
+    {
+        "bindings": {
+            "alt-cmd-shift-c": "zed::OpenKeymap"
+        }
+    }
+]"#;
+        let (fs, keymap_editor, mut cx) = setup_keymap_editor(cx, keymap_content).await;
+        let cx = &mut cx;
+
+        let rows = keymap_editor.read_with(cx, |editor, _| {
+            visible_rows_for_action(editor, "zed::OpenKeymap")
+        });
+        assert_eq!(
+            rows.len(),
+            2,
+            "expected the two duplicate bindings to show as two rows"
+        );
+
+        keymap_editor.update_in(cx, |editor, window, cx| {
+            editor.selected_index = Some(rows[1]);
+            editor.delete_binding(&DeleteBinding, window, cx);
+        });
+        cx.run_until_parked();
+
+        let content = fs.load(paths::keymap_file().as_path()).await.unwrap();
+        assert_eq!(
+            content.matches("alt-cmd-shift-c").count(),
+            1,
+            "expected exactly one binding remaining in the keymap file, got:\n{content}"
+        );
+
+        // Simulate the keymap file watcher reacting to the change.
+        reload_keymap_from_file(&fs, cx).await;
+        cx.run_until_parked();
+
+        let rows = keymap_editor.read_with(cx, |editor, _| {
+            visible_rows_for_action(editor, "zed::OpenKeymap")
+        });
+        assert_eq!(rows.len(), 1, "expected one row remaining after deletion");
+    }
+
+    // Regression test: one of the two entries in the keymap file uses a
+    // deprecated alias of the action (`editor::CopyRelativePath` instead of
+    // `workspace::CopyRelativePath`). Both rows display identically in the
+    // keymap editor (aliases resolve to the canonical action on load), but
+    // deletion targets the canonical action name, so `KeymapFile::update_keybinding`
+    // used to never find the alias entry, making it impossible to delete.
+    #[gpui::test]
+    async fn test_delete_binding_with_deprecated_action_alias(cx: &mut TestAppContext) {
+        let keymap_content = r#"[
+    {
+        "bindings": {
+            "alt-cmd-shift-c": "editor::CopyRelativePath"
+        }
+    },
+    {
+        "bindings": {
+            "alt-cmd-shift-c": "workspace::CopyRelativePath"
+        }
+    }
+]"#;
+        let (fs, keymap_editor, mut cx) = setup_keymap_editor(cx, keymap_content).await;
+        let cx = &mut cx;
+
+        let rows = keymap_editor.read_with(cx, |editor, _| {
+            visible_rows_for_action(editor, "workspace::CopyRelativePath")
+        });
+        assert_eq!(
+            rows.len(),
+            2,
+            "both the alias and the canonical entry should show as (identical) rows"
+        );
+
+        // Delete the first row. Both rows report the canonical action name, so
+        // `find_binding` matches the canonical file entry and removes it.
+        keymap_editor.update_in(cx, |editor, window, cx| {
+            editor.selected_index = Some(rows[0]);
+            editor.delete_binding(&DeleteBinding, window, cx);
+        });
+        cx.run_until_parked();
+
+        let content = fs.load(paths::keymap_file().as_path()).await.unwrap();
+        assert_eq!(
+            content.matches("alt-cmd-shift-c").count(),
+            1,
+            "first deletion should remove one of the two entries, got:\n{content}"
+        );
+
+        // Simulate the keymap file watcher reacting to the change.
+        reload_keymap_from_file(&fs, cx).await;
+        cx.run_until_parked();
+
+        let rows = keymap_editor.read_with(cx, |editor, _| {
+            visible_rows_for_action(editor, "workspace::CopyRelativePath")
+        });
+        assert_eq!(
+            rows.len(),
+            1,
+            "one row should remain after the first deletion"
+        );
+
+        // Delete the remaining row (the alias entry). `find_binding` must
+        // resolve the deprecated alias in the file to the canonical action
+        // name to find and remove it.
+        keymap_editor.update_in(cx, |editor, window, cx| {
+            editor.selected_index = Some(rows[0]);
+            editor.delete_binding(&DeleteBinding, window, cx);
+        });
+        cx.run_until_parked();
+
+        let content = fs.load(paths::keymap_file().as_path()).await.unwrap();
+        assert_eq!(
+            content.matches("alt-cmd-shift-c").count(),
+            0,
+            "second deletion should remove the remaining (alias) entry, got:\n{content}"
+        );
+    }
 
     #[test]
     fn normalized_ctx_cmp() {

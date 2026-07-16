@@ -3308,10 +3308,10 @@ impl ExportReference {
     }
 }
 
-fn primary_registry_file<'a>(
-    summary: &'a RegistryManifestSummary,
+fn primary_registry_file(
+    summary: &RegistryManifestSummary,
     source: CatalogSource,
-) -> Option<&'a RegistryManifestFileSummary> {
+) -> Option<&RegistryManifestFileSummary> {
     match source {
         CatalogSource::ShadcnComponent => summary
             .files

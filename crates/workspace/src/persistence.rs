@@ -60,44 +60,6 @@ use self::model::{DockStructure, SerializedWorkspaceLocation, SessionWorkspace};
 // > <..> the maximum value of a host parameter number is SQLITE_MAX_VARIABLE_NUMBER,
 // > which defaults to <..> 32766 for SQLite versions after 3.32.0.
 const MAX_QUERY_PLACEHOLDERS: usize = 32000;
-const MAX_DEFAULT_WINDOW_BOUNDS_JSON_BYTES: usize = 16 * 1024;
-const MAX_MULTI_WORKSPACE_STATE_JSON_BYTES: usize = 64 * 1024;
-const MAX_DEFAULT_DOCK_STATE_JSON_BYTES: usize = 64 * 1024;
-const MAX_USER_TOOLCHAIN_JSON_BYTES: usize = 64 * 1024;
-const MAX_REMOTE_ENV_JSON_BYTES: usize = 64 * 1024;
-const MAX_PANE_GROUP_FLEXES_JSON_BYTES: usize = 16 * 1024;
-
-type SerializedRecentWorkspaceRow = (
-    WorkspaceId,
-    String,
-    String,
-    Option<String>,
-    Option<String>,
-    Option<u64>,
-    Option<String>,
-    String,
-);
-
-type RecentWorkspaceRecord = (
-    WorkspaceId,
-    PathList,
-    Option<PathList>,
-    Option<RemoteConnectionId>,
-    Option<String>,
-    DateTime<Utc>,
-);
-
-fn ensure_persisted_json_within_limit(json: &str, max_bytes: usize, label: &str) -> Result<()> {
-    if json.len() > max_bytes {
-        bail!(
-            "{label} persisted JSON is too large ({} bytes; max {} bytes)",
-            json.len(),
-            max_bytes
-        );
-    }
-
-    Ok(())
-}
 
 fn parse_timestamp(text: &str) -> DateTime<Utc> {
     NaiveDateTime::parse_from_str(text, "%Y-%m-%d %H:%M:%S")
@@ -229,15 +191,8 @@ pub fn read_default_window_bounds(kvp: &KeyValueStore) -> Option<(Uuid, WindowBo
         .log_err()
         .flatten()?;
 
-    ensure_persisted_json_within_limit(
-        &json_str,
-        MAX_DEFAULT_WINDOW_BOUNDS_JSON_BYTES,
-        "default window bounds",
-    )
-    .log_err()?;
-    let (display_uuid, persisted) = serde_json::from_str::<(Uuid, WindowBoundsJson)>(&json_str)
-        .context("deserialize persisted default window bounds")
-        .log_err()?;
+    let (display_uuid, persisted) =
+        serde_json::from_str::<(Uuid, WindowBoundsJson)>(&json_str).ok()?;
     Some((display_uuid, persisted.into()))
 }
 
@@ -352,17 +307,7 @@ fn read_multi_workspace_state(window_id: WindowId, cx: &App) -> model::MultiWork
         .read(&window_id.as_u64().to_string())
         .log_err()
         .flatten()
-        .and_then(|json| {
-            ensure_persisted_json_within_limit(
-                &json,
-                MAX_MULTI_WORKSPACE_STATE_JSON_BYTES,
-                "multi-workspace state",
-            )
-            .log_err()?;
-            serde_json::from_str(&json)
-                .context("deserialize persisted multi-workspace state")
-                .log_err()
-        })
+        .and_then(|json| serde_json::from_str(&json).ok())
         .unwrap_or_default()
 }
 
@@ -393,9 +338,7 @@ pub fn read_serialized_multi_workspaces(
                     window_groups.push(Vec::new());
                     window_groups.len() - 1
                 });
-                if let Some(window_group) = window_groups.get_mut(group_index) {
-                    window_group.push(session_workspace);
-                }
+                window_groups[group_index].push(session_workspace);
             }
             None => {
                 window_groups.push(vec![session_workspace]);
@@ -435,15 +378,7 @@ const DEFAULT_DOCK_STATE_KEY: &str = "default_dock_state";
 pub fn read_default_dock_state(kvp: &KeyValueStore) -> Option<DockStructure> {
     let json_str = kvp.read_kvp(DEFAULT_DOCK_STATE_KEY).log_err().flatten()?;
 
-    ensure_persisted_json_within_limit(
-        &json_str,
-        MAX_DEFAULT_DOCK_STATE_JSON_BYTES,
-        "default dock state",
-    )
-    .log_err()?;
-    serde_json::from_str::<DockStructure>(&json_str)
-        .context("deserialize persisted default dock state")
-        .log_err()
+    serde_json::from_str::<DockStructure>(&json_str).ok()
 }
 
 pub async fn write_default_dock_state(
@@ -459,12 +394,13 @@ pub async fn write_default_dock_state(
 #[derive(Debug)]
 pub struct Bookmark {
     pub row: u32,
+    pub label: String,
 }
 
 impl sqlez::bindable::StaticColumnCount for Bookmark {
     fn column_count() -> usize {
-        // row
-        1
+        // row, label
+        2
     }
 }
 
@@ -474,7 +410,8 @@ impl sqlez::bindable::Bind for Bookmark {
         statement: &sqlez::statement::Statement,
         start_index: i32,
     ) -> anyhow::Result<i32> {
-        statement.bind(&self.row, start_index)
+        let next_index = statement.bind(&self.row, start_index)?;
+        statement.bind(&self.label, next_index)
     }
 }
 
@@ -485,7 +422,9 @@ impl Column for Bookmark {
             .with_context(|| format!("Failed to read bookmark at index {start_index}"))?
             as u32;
 
-        Ok((Bookmark { row }, start_index + 1))
+        let (label, next_index) = String::column(statement, start_index + 1)?;
+
+        Ok((Bookmark { row, label }, next_index))
     }
 }
 
@@ -1109,6 +1048,9 @@ impl Domain for WorkspaceDb {
             ALTER TABLE workspaces ADD COLUMN identity_paths TEXT;
             ALTER TABLE workspaces ADD COLUMN identity_paths_order TEXT;
         ),
+        sql!(
+            ALTER TABLE bookmarks ADD COLUMN label TEXT NOT NULL DEFAULT "";
+        ),
     ];
 
     // Allow recovering from bad migration that was initially shipped to nightly
@@ -1370,7 +1312,7 @@ impl WorkspaceDb {
     fn bookmarks(&self, workspace_id: WorkspaceId) -> BTreeMap<Arc<Path>, Vec<SerializedBookmark>> {
         let bookmarks: Result<Vec<(PathBuf, Bookmark)>> = self
             .select_bound(sql! {
-                SELECT path, row
+                SELECT path, row, label
                 FROM bookmarks
                 WHERE workspace_id = ?
                 ORDER BY path, row
@@ -1389,7 +1331,10 @@ impl WorkspaceDb {
                     let path: Arc<Path> = path.into();
                     map.entry(path.clone())
                         .or_default()
-                        .push(SerializedBookmark(bookmark.row))
+                        .push(SerializedBookmark {
+                            row: bookmark.row,
+                            label: bookmark.label,
+                        })
                 }
 
                 map
@@ -1490,7 +1435,8 @@ impl WorkspaceDb {
                     relative_worktree_path == String::default()
                 );
 
-                let Some(relative_path) = RelPath::unix(&relative_worktree_path).log_err() else {
+                let Some(relative_path) = RelPath::from_unix_str(&relative_worktree_path).log_err()
+                else {
                     continue;
                 };
                 if worktree_root_path != String::default()
@@ -1504,20 +1450,7 @@ impl WorkspaceDb {
                     ToolchainScope::Project
                 }
             };
-            if ensure_persisted_json_within_limit(
-                &raw_json,
-                MAX_USER_TOOLCHAIN_JSON_BYTES,
-                "user toolchain raw_json",
-            )
-            .log_err()
-            .is_none()
-            {
-                continue;
-            }
-            let Some(as_json) = serde_json::from_str::<serde_json::Value>(&raw_json)
-                .context("deserialize persisted user toolchain JSON")
-                .log_err()
-            else {
+            let Ok(as_json) = serde_json::from_str(&raw_json) else {
                 continue;
             };
             let toolchain = Toolchain {
@@ -1563,9 +1496,9 @@ impl WorkspaceDb {
                 for (path, bookmarks) in workspace.bookmarks {
                     for bookmark in bookmarks {
                         conn.exec_bound(sql!(
-                            INSERT INTO bookmarks (workspace_id, path, row)
-                            VALUES (?1, ?2, ?3);
-                        ))?((workspace.id, path.as_ref(), bookmark.0)).context("Inserting bookmark")?;
+                            INSERT INTO bookmarks (workspace_id, path, row, label)
+                            VALUES (?1, ?2, ?3, ?4);
+                        ))?((workspace.id, path.as_ref(), bookmark.row, bookmark.label)).context("Inserting bookmark")?;
                     }
                 }
 
@@ -1862,10 +1795,21 @@ impl WorkspaceDb {
         }
     }
 
-    fn deserialize_recent_workspaces(
-        rows: Vec<SerializedRecentWorkspaceRow>,
-    ) -> Vec<RecentWorkspaceRecord> {
-        rows.into_iter()
+    fn recent_workspaces(
+        &self,
+    ) -> Result<
+        Vec<(
+            WorkspaceId,
+            PathList,
+            Option<PathList>,
+            Option<RemoteConnectionId>,
+            Option<String>,
+            DateTime<Utc>,
+        )>,
+    > {
+        Ok(self
+            .recent_workspaces_query()?
+            .into_iter()
             .map(
                 |(
                     id,
@@ -1892,19 +1836,7 @@ impl WorkspaceDb {
                     )
                 },
             )
-            .collect()
-    }
-
-    fn recent_workspaces(&self) -> Result<Vec<RecentWorkspaceRecord>> {
-        Ok(Self::deserialize_recent_workspaces(
-            self.recent_workspaces_query()?,
-        ))
-    }
-
-    fn recent_workspaces_limited(&self, max_rows: usize) -> Result<Vec<RecentWorkspaceRecord>> {
-        Ok(Self::deserialize_recent_workspaces(
-            self.recent_workspaces_limited_query(max_rows.min(i64::MAX as usize) as i64)?,
-        ))
+            .collect())
     }
 
     query! {
@@ -1915,18 +1847,6 @@ impl WorkspaceDb {
                 paths IS NOT NULL OR
                 remote_connection_id IS NOT NULL
             ORDER BY timestamp DESC
-        }
-    }
-
-    query! {
-        fn recent_workspaces_limited_query(max_rows: i64) -> Result<Vec<(WorkspaceId, String, String, Option<String>, Option<String>, Option<u64>, Option<String>, String)>> {
-            SELECT workspace_id, paths, paths_order, identity_paths, identity_paths_order, remote_connection_id, session_id, timestamp
-            FROM workspaces
-            WHERE
-                paths IS NOT NULL OR
-                remote_connection_id IS NOT NULL
-            ORDER BY timestamp DESC
-            LIMIT ?1
         }
     }
 
@@ -2058,16 +1978,8 @@ impl WorkspaceDb {
                 ..Default::default()
             })),
             RemoteConnectionKind::Docker => {
-                let remote_env_json = remote_env?;
-                ensure_persisted_json_within_limit(
-                    &remote_env_json,
-                    MAX_REMOTE_ENV_JSON_BYTES,
-                    "Docker remote_env",
-                )
-                .log_err()?;
-                let remote_env: BTreeMap<String, String> = serde_json::from_str(&remote_env_json)
-                    .context("deserialize persisted Docker remote_env")
-                    .log_err()?;
+                let remote_env: BTreeMap<String, String> =
+                    serde_json::from_str(&remote_env?).ok()?;
                 Some(RemoteConnectionOptions::Docker(DockerConnectionOptions {
                     container_id: container_id?,
                     name: name?,
@@ -2108,19 +2020,10 @@ impl WorkspaceDb {
         &self,
         fs: &dyn Fs,
     ) -> Result<Vec<RecentWorkspace>> {
-        self.recent_project_workspaces_ungrouped_from_records(fs, self.recent_workspaces()?)
-            .await
-    }
-
-    async fn recent_project_workspaces_ungrouped_from_records(
-        &self,
-        fs: &dyn Fs,
-        workspaces: Vec<RecentWorkspaceRecord>,
-    ) -> Result<Vec<RecentWorkspace>> {
         let remote_connections = self.remote_connections()?;
         let mut result = Vec::new();
         for (id, paths, identity_paths_hint, remote_connection_id, _session_id, timestamp) in
-            workspaces
+            self.recent_workspaces()?
         {
             if let Some(remote_connection_id) = remote_connection_id {
                 if let Some(connection_options) = remote_connections.get(&remote_connection_id) {
@@ -2155,20 +2058,6 @@ impl WorkspaceDb {
         }
 
         Ok(result)
-    }
-
-    pub async fn recent_project_workspaces_limited(
-        &self,
-        fs: &dyn Fs,
-        max_rows: usize,
-    ) -> Result<Vec<RecentWorkspace>> {
-        Ok(dedupe_recent_workspaces(
-            self.recent_project_workspaces_ungrouped_from_records(
-                fs,
-                self.recent_workspaces_limited(max_rows)?,
-            )
-            .await?,
-        ))
     }
 
     // Returns the recent project workspaces suitable for recent-project UIs.
@@ -2397,15 +2286,7 @@ impl WorkspaceDb {
             let maybe_pane = maybe!({ Some((pane_id?, active?, pinned_count?)) });
             if let Some((group_id, axis)) = group_id.zip(axis) {
                 let flexes = flexes
-                    .map(|flexes: String| {
-                        ensure_persisted_json_within_limit(
-                            &flexes,
-                            MAX_PANE_GROUP_FLEXES_JSON_BYTES,
-                            "pane-group flexes",
-                        )?;
-                        serde_json::from_str::<Vec<f32>>(&flexes)
-                            .context("deserialize persisted pane-group flexes")
-                    })
+                    .map(|flexes: String| serde_json::from_str::<Vec<f32>>(&flexes))
                     .transpose()?;
 
                 Ok(SerializedPaneGroup::Group {
@@ -2616,7 +2497,7 @@ impl WorkspaceDb {
                                 as_json: serde_json::Value::from_str(&json).ok()?,
                             },
                            Arc::from(worktree_root_path.as_ref()),
-                            RelPath::from_proto(&relative_worktree_path).log_err()?,
+                            RelPath::from_unix_str(&relative_worktree_path).log_err()?.into(),
                         ))
                     },
                 )
@@ -2837,13 +2718,8 @@ fn dedupe_recent_workspaces(
         };
         let key = (location_identity, workspace.identity_paths.paths().to_vec());
         if let Some(&existing_index) = indices_by_key.get(&key) {
-            if result
-                .get(existing_index)
-                .is_some_and(|existing| workspace.timestamp > existing.timestamp)
-            {
-                if let Some(existing) = result.get_mut(existing_index) {
-                    *existing = workspace;
-                }
+            if workspace.timestamp > result[existing_index].timestamp {
+                result[existing_index] = workspace;
             }
         } else {
             indices_by_key.insert(key, result.len());

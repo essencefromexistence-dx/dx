@@ -28,13 +28,6 @@ use crate::{
     display_map::{HighlightStyleInterner, SemanticTokenHighlight},
 };
 
-const MAX_SEMANTIC_TOKEN_VISIBLE_BUFFERS: usize = 512;
-const MAX_SEMANTIC_TOKEN_FETCH_TASKS: usize = 512;
-const MAX_SEMANTIC_DISABLED_BUFFER_INVALIDATIONS: usize = 4_096;
-const MAX_SEMANTIC_TOKEN_SERVERS_PER_BUFFER: usize = 64;
-const MAX_SEMANTIC_TOKENS_PER_SERVER: usize = 250_000;
-const MAX_SEMANTIC_HIGHLIGHTS_PER_BUFFER: usize = 250_000;
-
 pub(super) struct SemanticTokenState {
     rules: SemanticTokenRules,
     enabled: bool,
@@ -157,85 +150,46 @@ impl Editor {
             return;
         };
 
-        let mut buffers_to_query = HashMap::default();
-        if let Some(editor_buffer) =
-            buffer_id.and_then(|buffer_id| self.buffer.read(cx).buffer(buffer_id))
-        {
-            let editor_buffer_id = editor_buffer.read(cx).remote_id();
-            if self.registered_buffers.contains_key(&editor_buffer_id)
-                && LanguageSettings::for_buffer(editor_buffer.read(cx), cx)
-                    .semantic_tokens
-                    .enabled()
-            {
-                if !buffers_to_query.contains_key(&editor_buffer_id)
-                    && buffers_to_query.len() >= MAX_SEMANTIC_TOKEN_VISIBLE_BUFFERS
+        let buffers_to_query = self
+            .visible_buffers(cx)
+            .into_iter()
+            .filter(|buffer| self.is_lsp_relevant(buffer.read(cx).file(), cx))
+            .chain(buffer_id.and_then(|buffer_id| self.buffer.read(cx).buffer(buffer_id)))
+            .filter_map(|editor_buffer| {
+                let editor_buffer_id = editor_buffer.read(cx).remote_id();
+                if self.registered_buffers.contains_key(&editor_buffer_id)
+                    && LanguageSettings::for_buffer(editor_buffer.read(cx), cx)
+                        .semantic_tokens
+                        .enabled()
                 {
-                    log::warn!(
-                        "skipping semantic token refresh for buffer {editor_buffer_id:?}; visible buffer cap {} reached",
-                        MAX_SEMANTIC_TOKEN_VISIBLE_BUFFERS
-                    );
+                    Some((editor_buffer_id, editor_buffer))
                 } else {
-                    buffers_to_query.insert(editor_buffer_id, editor_buffer);
+                    None
                 }
-            }
-        }
-        for editor_buffer in self.visible_buffers(cx) {
-            if !self.is_lsp_relevant(editor_buffer.read(cx).file(), cx) {
-                continue;
-            }
-            let editor_buffer_id = editor_buffer.read(cx).remote_id();
-            if !self.registered_buffers.contains_key(&editor_buffer_id)
-                || !LanguageSettings::for_buffer(editor_buffer.read(cx), cx)
-                    .semantic_tokens
-                    .enabled()
-            {
-                continue;
-            }
-            if !buffers_to_query.contains_key(&editor_buffer_id)
-                && buffers_to_query.len() >= MAX_SEMANTIC_TOKEN_VISIBLE_BUFFERS
-            {
-                log::warn!(
-                    "skipping semantic token refresh for buffer {editor_buffer_id:?}; visible buffer cap {} reached",
-                    MAX_SEMANTIC_TOKEN_VISIBLE_BUFFERS
-                );
-                continue;
-            }
-            buffers_to_query.insert(editor_buffer_id, editor_buffer);
-        }
+            })
+            .collect::<HashMap<_, _>>();
 
-        let mut disabled_buffer_invalidations = Vec::new();
-        for buffer_id in self
+        for buffer_with_disabled_tokens in self
             .display_map
             .read(cx)
             .semantic_token_highlights
             .keys()
             .copied()
-        {
-            if buffers_to_query.contains_key(&buffer_id)
-                || self
+            .filter(|buffer_id| !buffers_to_query.contains_key(buffer_id))
+            .filter(|buffer_id| {
+                !self
                     .buffer
                     .read(cx)
-                    .buffer(buffer_id)
+                    .buffer(*buffer_id)
                     .is_some_and(|buffer| {
                         let buffer = buffer.read(cx);
                         LanguageSettings::for_buffer(&buffer, cx)
                             .semantic_tokens
                             .enabled()
                     })
-            {
-                continue;
-            }
-            if disabled_buffer_invalidations.len() >= MAX_SEMANTIC_DISABLED_BUFFER_INVALIDATIONS {
-                log::warn!(
-                    "truncating semantic token disabled-buffer invalidations at {}",
-                    MAX_SEMANTIC_DISABLED_BUFFER_INVALIDATIONS
-                );
-                break;
-            }
-            disabled_buffer_invalidations.push(buffer_id);
-        }
-
-        for buffer_with_disabled_tokens in disabled_buffer_invalidations {
+            })
+            .collect::<Vec<_>>()
+        {
             self.semantic_token_state
                 .invalidate_buffer(&buffer_with_disabled_tokens);
             self.display_map.update(cx, |display_map, _| {
@@ -247,41 +201,34 @@ impl Editor {
             cx.background_executor()
                 .timer(Duration::from_millis(50))
                 .await;
-            let Some(semantic_token_tasks) = editor
+            let Some(all_semantic_tokens_task) = editor
                 .update(cx, |editor, cx| {
-                    let mut semantic_token_tasks = Vec::new();
-                    for (buffer_id, buffer) in buffers_to_query {
-                        let known_version = editor
-                            .semantic_token_state
-                            .fetched_for_buffers
-                            .get(&buffer_id);
-                        let query_version = buffer.read(cx).version();
-                        if known_version
-                            .is_some_and(|known_version| !query_version.changed_since(known_version))
-                        {
-                            continue;
-                        }
-                        if semantic_token_tasks.len() >= MAX_SEMANTIC_TOKEN_FETCH_TASKS {
-                            log::warn!(
-                                "truncating semantic token fetch tasks at {} before join_all",
-                                MAX_SEMANTIC_TOKEN_FETCH_TASKS
-                            );
-                            break;
-                        }
-                        if let Some(task) = sema.semantic_tokens(buffer, for_server, cx) {
-                            semantic_token_tasks
-                                .push(async move { (buffer_id, query_version, task.await) });
-                        }
-                    }
-                    semantic_token_tasks
+                    buffers_to_query
+                        .into_iter()
+                        .filter_map(|(buffer_id, buffer)| {
+                            let known_version = editor
+                                .semantic_token_state
+                                .fetched_for_buffers
+                                .get(&buffer_id);
+                            let query_version = buffer.read(cx).version();
+                            if known_version.is_some_and(|known_version| {
+                                !query_version.changed_since(known_version)
+                            }) {
+                                None
+                            } else {
+                                sema.semantic_tokens(buffer, for_server, cx).map(
+                                    |task| async move { (buffer_id, query_version, task.await) },
+                                )
+                            }
+                        })
+                        .collect::<Vec<_>>()
                 })
                 .ok()
             else {
                 return;
             };
 
-            let semantic_token_tasks = cap_semantic_token_tasks_for_join(semantic_token_tasks);
-            let all_semantic_tokens = join_all(semantic_token_tasks).await;
+            let all_semantic_tokens = join_all(all_semantic_tokens_task).await;
             editor
                 .update(cx, |editor, cx| {
                     editor.display_map.update(cx, |display_map, _| {
@@ -346,16 +293,7 @@ impl Editor {
                             project.read(cx).lsp_store().update(cx, |lsp_store, cx| {
                                 let mut token_highlights = Vec::new();
                                 let mut interner = HighlightStyleInterner::default();
-                                for (server_index, (server_id, server_tokens)) in
-                                    tokens.into_iter().enumerate()
-                                {
-                                    if server_index >= MAX_SEMANTIC_TOKEN_SERVERS_PER_BUFFER {
-                                        log::warn!(
-                                            "truncating semantic token server responses for buffer {buffer_id:?} at {}",
-                                            MAX_SEMANTIC_TOKEN_SERVERS_PER_BUFFER
-                                        );
-                                        break;
-                                    }
+                                for (server_id, server_tokens) in tokens {
                                     let Some(stylizer) = lsp_store.get_or_create_token_stylizer(
                                         server_id,
                                         language_name.as_ref(),
@@ -364,45 +302,14 @@ impl Editor {
                                         continue;
                                     };
                                     let theme = cx.theme().syntax();
-                                    let capped_server_token_len =
-                                        server_tokens.len().min(MAX_SEMANTIC_TOKENS_PER_SERVER);
-                                    if server_tokens.len() > capped_server_token_len {
-                                        log::warn!(
-                                            "truncating semantic tokens for buffer {buffer_id:?} server {server_id:?} from {} to {}",
-                                            server_tokens.len(),
-                                            capped_server_token_len
-                                        );
-                                    }
-                                    let remaining_highlights =
-                                        MAX_SEMANTIC_HIGHLIGHTS_PER_BUFFER
-                                            .saturating_sub(token_highlights.len());
-                                    if remaining_highlights == 0 {
-                                        log::warn!(
-                                            "truncating semantic token highlights for buffer {buffer_id:?} at {}",
-                                            MAX_SEMANTIC_HIGHLIGHTS_PER_BUFFER
-                                        );
-                                        break;
-                                    }
-                                    token_highlights
-                                        .reserve(capped_server_token_len.min(remaining_highlights));
-                                    token_highlights.extend(
-                                        buffer_into_editor_highlights(
-                                            &server_tokens[..capped_server_token_len],
-                                            stylizer,
-                                            &multi_buffer_snapshot,
-                                            &mut interner,
-                                            theme,
-                                        )
-                                        .take(remaining_highlights),
-                                    );
-                                    if token_highlights.len() >= MAX_SEMANTIC_HIGHLIGHTS_PER_BUFFER
-                                    {
-                                        log::warn!(
-                                            "truncating semantic token highlights for buffer {buffer_id:?} at {}",
-                                            MAX_SEMANTIC_HIGHLIGHTS_PER_BUFFER
-                                        );
-                                        break;
-                                    }
+                                    token_highlights.reserve(2 * server_tokens.len());
+                                    token_highlights.extend(buffer_into_editor_highlights(
+                                        &server_tokens,
+                                        stylizer,
+                                        &multi_buffer_snapshot,
+                                        &mut interner,
+                                        theme,
+                                    ));
                                 }
 
                                 token_highlights.sort_by(|a, b| {
@@ -421,18 +328,6 @@ impl Editor {
                 .ok();
         });
     }
-}
-
-fn cap_semantic_token_tasks_for_join<T>(mut semantic_token_tasks: Vec<T>) -> Vec<T> {
-    if semantic_token_tasks.len() > MAX_SEMANTIC_TOKEN_FETCH_TASKS {
-        log::warn!(
-            "truncating semantic token fetch tasks from {} to {} before join_all",
-            semantic_token_tasks.len(),
-            MAX_SEMANTIC_TOKEN_FETCH_TASKS
-        );
-        semantic_token_tasks.truncate(MAX_SEMANTIC_TOKEN_FETCH_TASKS);
-    }
-    semantic_token_tasks
 }
 
 fn buffer_into_editor_highlights<'a, 'b>(
@@ -675,6 +570,107 @@ mod tests {
         );
 
         assert_eq!(full_counter.load(atomic::Ordering::Acquire), 2);
+    }
+
+    #[gpui::test]
+    async fn lsp_semantic_tokens_dynamic_registration_requeries_open_document(
+        cx: &mut TestAppContext,
+    ) {
+        init_test(cx, |_| {});
+
+        update_test_language_settings(cx, &|language_settings| {
+            language_settings.languages.0.insert(
+                "Rust".into(),
+                LanguageSettingsContent {
+                    semantic_tokens: Some(SemanticTokens::Full),
+                    ..LanguageSettingsContent::default()
+                },
+            );
+        });
+
+        // The server advertises no semantic tokens capability up front; it only
+        // registers `textDocument/semanticTokens` dynamically, after the document
+        // is already open (as Roslyn does).
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities::default(), cx).await;
+
+        let full_counter = Arc::new(AtomicUsize::new(0));
+        let _full_request = cx
+            .set_request_handler::<lsp::request::SemanticTokensFullRequest, _, _>({
+                let full_counter = full_counter.clone();
+                move |_, _, _| {
+                    full_counter.fetch_add(1, atomic::Ordering::Release);
+                    async move {
+                        Ok(Some(lsp::SemanticTokensResult::Tokens(
+                            lsp::SemanticTokens {
+                                data: vec![0, 3, 4, 0, 0],
+                                result_id: None,
+                            },
+                        )))
+                    }
+                }
+            });
+
+        cx.set_state("ˇfn main() {}");
+        // Drain the refresh scheduled on open (while no capability exists yet), so a
+        // later request can only come from the dynamic-registration refresh itself.
+        cx.executor().advance_clock(Duration::from_millis(200));
+        cx.run_until_parked();
+        assert_eq!(
+            full_counter.load(atomic::Ordering::Acquire),
+            0,
+            "no semantic tokens should be requested before the capability is registered"
+        );
+        assert!(
+            extract_semantic_highlights(&cx.editor, &cx).is_empty(),
+            "no semantic highlights before the capability is registered"
+        );
+
+        cx.lsp
+            .request::<lsp::request::RegisterCapability>(
+                lsp::RegistrationParams {
+                    registrations: vec![lsp::Registration {
+                        id: "semantic-tokens".to_string(),
+                        method: "textDocument/semanticTokens".to_string(),
+                        register_options: Some(
+                            serde_json::to_value(lsp::SemanticTokensRegistrationOptions {
+                                text_document_registration_options:
+                                    lsp::TextDocumentRegistrationOptions {
+                                        document_selector: None,
+                                    },
+                                semantic_tokens_options: lsp::SemanticTokensOptions {
+                                    legend: lsp::SemanticTokensLegend {
+                                        token_types: vec!["function".into()],
+                                        token_modifiers: Vec::new(),
+                                    },
+                                    full: Some(lsp::SemanticTokensFullOptions::Bool(true)),
+                                    ..lsp::SemanticTokensOptions::default()
+                                },
+                                static_registration_options: lsp::StaticRegistrationOptions {
+                                    id: None,
+                                },
+                            })
+                            .unwrap(),
+                        ),
+                    }],
+                },
+                lsp::DEFAULT_LSP_REQUEST_TIMEOUT,
+            )
+            .await
+            .into_response()
+            .expect("register capability request failed");
+
+        cx.executor().advance_clock(Duration::from_millis(200));
+        cx.run_until_parked();
+        assert!(
+            full_counter.load(atomic::Ordering::Acquire) >= 1,
+            "dynamic registration should re-query semantic tokens for the open document"
+        );
+
+        assert_eq!(
+            extract_semantic_highlights(&cx.editor, &cx),
+            vec![MultiBufferOffset(3)..MultiBufferOffset(7)],
+            "the open document should display semantic tokens after dynamic registration"
+        );
     }
 
     #[gpui::test]

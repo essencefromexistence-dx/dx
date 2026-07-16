@@ -1,53 +1,11 @@
 use crate::git_status_icon;
 use git::status::{FileStatus, StatusCode, TrackedStatus, UnmergedStatus, UnmergedStatusCode};
 use gpui::{App, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Task, WeakEntity};
-use itertools::Itertools;
 use picker::{Picker, PickerDelegate, PickerEditorPosition};
 use project::{Project, git_store::Repository};
 use std::sync::Arc;
 use ui::{ListItem, ListItemSpacing, prelude::*};
-use util::truncate_and_trailoff;
 use workspace::{ModalView, Workspace};
-
-const MAX_REPOSITORY_SELECTOR_ENTRIES: usize = 1_024;
-const MAX_REPOSITORY_SELECTOR_MATCHES: usize = 256;
-const MAX_REPOSITORY_SELECTOR_LABEL_CHARS: usize = 512;
-
-fn bounded_repository_label(label: &str) -> String {
-    truncate_and_trailoff(label, MAX_REPOSITORY_SELECTOR_LABEL_CHARS)
-}
-
-fn sort_repository_entries(repos: &mut [Entity<Repository>], cx: &App) {
-    repos.sort_by(|a, b| {
-        bounded_repository_label(a.read(cx).display_name().as_ref())
-            .to_lowercase()
-            .cmp(&bounded_repository_label(b.read(cx).display_name().as_ref()).to_lowercase())
-    });
-}
-
-fn bounded_repository_entries(
-    repositories: impl IntoIterator<Item = Entity<Repository>>,
-    active_repository: Option<&Entity<Repository>>,
-    cx: &App,
-) -> Vec<Entity<Repository>> {
-    let mut repos = Vec::new();
-
-    for repo in repositories {
-        if active_repository.is_some_and(|active| active == &repo) {
-            if !repos.iter().any(|existing| existing == &repo) {
-                if repos.len() >= MAX_REPOSITORY_SELECTOR_ENTRIES {
-                    repos.pop();
-                }
-                repos.push(repo);
-            }
-        } else if repos.len() < MAX_REPOSITORY_SELECTOR_ENTRIES {
-            repos.push(repo);
-        }
-    }
-
-    sort_repository_entries(&mut repos, cx);
-    repos
-}
 
 pub fn register(workspace: &mut Workspace) {
     workspace.register_action(open);
@@ -66,7 +24,6 @@ pub fn open(
 }
 
 pub struct RepositorySelector {
-    width: Rems,
     picker: Entity<Picker<RepositorySelectorDelegate>>,
 }
 
@@ -78,22 +35,21 @@ impl RepositorySelector {
         cx: &mut Context<Self>,
     ) -> Self {
         let git_store = project_handle.read(cx).git_store().clone();
-        let active_repository = git_store.read(cx).active_repository();
         let repository_entries = git_store.update(cx, |git_store, _cx| {
-            bounded_repository_entries(
-                git_store.repositories().values().cloned(),
-                active_repository.as_ref(),
-                _cx,
-            )
+            let mut repos: Vec<_> = git_store.repositories().values().cloned().collect();
+
+            repos.sort_by(|a, b| {
+                a.read(_cx)
+                    .display_name()
+                    .to_lowercase()
+                    .cmp(&b.read(_cx).display_name().to_lowercase())
+            });
+
+            repos
         });
         let filtered_repositories = repository_entries.clone();
 
-        let widest_item_ix = repository_entries.iter().position_max_by(|a, b| {
-            bounded_repository_label(a.read(cx).display_name().as_ref())
-                .len()
-                .cmp(&bounded_repository_label(b.read(cx).display_name().as_ref()).len())
-        });
-
+        let active_repository = git_store.read(cx).active_repository();
         let selected_index = active_repository
             .as_ref()
             .and_then(|active| filtered_repositories.iter().position(|repo| repo == active))
@@ -108,12 +64,11 @@ impl RepositorySelector {
 
         let picker = cx.new(|cx| {
             Picker::uniform_list(delegate, window, cx)
-                .widest_item(widest_item_ix)
-                .max_height(Some(rems(20.).into()))
+                .initial_width(width)
                 .show_scrollbar(true)
         });
 
-        RepositorySelector { picker, width }
+        RepositorySelector { picker }
     }
 }
 
@@ -160,7 +115,6 @@ impl Render for RepositorySelector {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .key_context("GitRepositorySelector")
-            .w(self.width)
             .child(self.picker.clone())
     }
 }
@@ -176,8 +130,7 @@ pub struct RepositorySelectorDelegate {
 }
 
 impl RepositorySelectorDelegate {
-    pub fn update_repository_entries(&mut self, mut all_repositories: Vec<Entity<Repository>>) {
-        all_repositories.truncate(MAX_REPOSITORY_SELECTOR_ENTRIES);
+    pub fn update_repository_entries(&mut self, all_repositories: Vec<Entity<Repository>>) {
         self.repository_entries = all_repositories.clone();
         self.filtered_repositories = all_repositories;
         self.selected_index = self
@@ -194,6 +147,10 @@ impl RepositorySelectorDelegate {
 
 impl PickerDelegate for RepositorySelectorDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "repository selector"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_repositories.len()
@@ -231,13 +188,7 @@ impl PickerDelegate for RepositorySelectorDelegate {
 
         let repo_names: Vec<(Entity<Repository>, String)> = all_repositories
             .iter()
-            .take(MAX_REPOSITORY_SELECTOR_MATCHES)
-            .map(|repo| {
-                (
-                    repo.clone(),
-                    bounded_repository_label(repo.read(cx).display_name().as_ref()).to_lowercase(),
-                )
-            })
+            .map(|repo| (repo.clone(), repo.read(cx).display_name().to_lowercase()))
             .collect();
 
         cx.spawn_in(window, async move |this, cx| {
@@ -245,24 +196,25 @@ impl PickerDelegate for RepositorySelectorDelegate {
                 .background_spawn(async move {
                     if query.is_empty() {
                         all_repositories
-                            .into_iter()
-                            .take(MAX_REPOSITORY_SELECTOR_MATCHES)
-                            .collect::<Vec<_>>()
                     } else {
                         let query_lower = query.to_lowercase();
                         repo_names
                             .into_iter()
                             .filter(|(_, display_name)| display_name.contains(&query_lower))
-                            .take(MAX_REPOSITORY_SELECTOR_MATCHES)
                             .map(|(repo, _)| repo)
-                            .collect::<Vec<_>>()
+                            .collect()
                     }
                 })
                 .await;
 
             this.update_in(cx, |this, window, cx| {
                 let mut sorted_repositories = filtered_repositories;
-                sort_repository_entries(&mut sorted_repositories, cx);
+                sorted_repositories.sort_by(|a, b| {
+                    a.read(cx)
+                        .display_name()
+                        .to_lowercase()
+                        .cmp(&b.read(cx).display_name().to_lowercase())
+                });
                 let selected_index = this
                     .delegate
                     .active_repository
@@ -316,7 +268,7 @@ impl PickerDelegate for RepositorySelectorDelegate {
             .child(
                 h_flex()
                     .gap_1()
-                    .child(Label::new(bounded_repository_label(display_name.as_ref())))
+                    .child(Label::new(display_name))
                     .when(is_active, |this| {
                         this.child(
                             Icon::new(IconName::Check)

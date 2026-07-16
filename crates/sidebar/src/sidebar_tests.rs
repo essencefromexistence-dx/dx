@@ -28,6 +28,9 @@ fn init_test(cx: &mut TestAppContext) {
     cx.update(|cx| {
         let settings_store = SettingsStore::test(cx);
         cx.set_global(settings_store);
+        // Use an isolated DB so parallel tests can't see each other's
+        // persisted records (e.g. created-worktree records).
+        cx.set_global(db::AppDatabase::test_new());
         theme_settings::init(theme::LoadThemes::JustBase, cx);
         editor::init(cx);
         ThreadStore::init_global(cx);
@@ -805,17 +808,7 @@ async fn test_restore_serialized_archive_view_does_not_panic(cx: &mut TestAppCon
 
     let serialized = serde_json::to_string(&SerializedSidebar {
         width: Some(400.0),
-        collapsed_groups: Vec::new(),
-        expanded_groups: Vec::new(),
-        space_labels: Vec::new(),
-        space_order: Vec::new(),
-        next_space_number: 1,
-        active_view: SerializedSidebarView::Archive,
-        activity_bar_expanded: true,
-        grid_shortcuts: Vec::new(),
-        thread_sort_mode: SidebarThreadSortMode::default(),
-        manual_thread_order: Vec::new(),
-        thread_icon_overrides: Vec::new(),
+        active_view: SerializedSidebarView::History,
     })
     .expect("serialization should succeed");
 
@@ -1113,7 +1106,7 @@ async fn test_visible_entries_as_strings(cx: &mut TestAppContext) {
                     archived: false,
                     remote_connection: None,
                 },
-                icon: IconName::Sparkle,
+                icon: IconName::ZedAgent,
                 icon_from_external_svg: None,
                 status: AgentThreadStatus::Completed,
                 workspace: ThreadEntryWorkspace::Open(workspace.clone()),
@@ -1140,7 +1133,7 @@ async fn test_visible_entries_as_strings(cx: &mut TestAppContext) {
                     archived: false,
                     remote_connection: None,
                 },
-                icon: IconName::Sparkle,
+                icon: IconName::ZedAgent,
                 icon_from_external_svg: None,
                 status: AgentThreadStatus::Running,
                 workspace: ThreadEntryWorkspace::Open(workspace.clone()),
@@ -1167,7 +1160,7 @@ async fn test_visible_entries_as_strings(cx: &mut TestAppContext) {
                     archived: false,
                     remote_connection: None,
                 },
-                icon: IconName::Sparkle,
+                icon: IconName::ZedAgent,
                 icon_from_external_svg: None,
                 status: AgentThreadStatus::Error,
                 workspace: ThreadEntryWorkspace::Open(workspace.clone()),
@@ -1195,7 +1188,7 @@ async fn test_visible_entries_as_strings(cx: &mut TestAppContext) {
                     archived: false,
                     remote_connection: None,
                 },
-                icon: IconName::Sparkle,
+                icon: IconName::ZedAgent,
                 icon_from_external_svg: None,
                 status: AgentThreadStatus::WaitingForConfirmation,
                 workspace: ThreadEntryWorkspace::Open(workspace.clone()),
@@ -1223,7 +1216,7 @@ async fn test_visible_entries_as_strings(cx: &mut TestAppContext) {
                     archived: false,
                     remote_connection: None,
                 },
-                icon: IconName::Sparkle,
+                icon: IconName::ZedAgent,
                 icon_from_external_svg: None,
                 status: AgentThreadStatus::Completed,
                 workspace: ThreadEntryWorkspace::Open(workspace.clone()),
@@ -1808,7 +1801,7 @@ async fn test_closing_last_agent_panel_terminal_restores_empty_header(cx: &mut T
     // placeholder row, so the header reports having threads.
     assert_eq!(
         visible_entries_as_strings(&sidebar, cx),
-        vec!["v [my-project]", "  New Dx Agent Thread"]
+        vec!["v [my-project]", "  New Zed Agent Thread"]
     );
     assert_project_header_has_threads(&sidebar, "my-project", true, cx);
 
@@ -2055,6 +2048,13 @@ async fn test_terminal_close_event_on_archived_linked_worktree_removes_workspace
             is_main: false,
             is_bare: false,
         },
+    )
+    .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
     )
     .await;
     cx.update(|cx| <dyn fs::Fs>::set_global(fs.clone(), cx));
@@ -2543,6 +2543,13 @@ async fn test_archive_selected_draft_archives_linked_worktree_after_last_draft(
         },
     )
     .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
+    )
+    .await;
     cx.update(|cx| <dyn fs::Fs>::set_global(fs.clone(), cx));
 
     let main_project = project::Project::test(fs.clone(), ["/project".as_ref()], cx).await;
@@ -2759,6 +2766,13 @@ async fn test_archive_selected_draft_archives_closed_linked_worktree(cx: &mut Te
             is_main: false,
             is_bare: false,
         },
+    )
+    .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
     )
     .await;
     cx.update(|cx| <dyn fs::Fs>::set_global(fs.clone(), cx));
@@ -3306,6 +3320,13 @@ async fn test_archive_selected_terminal_archives_closed_linked_worktree(cx: &mut
         },
     )
     .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
+    )
+    .await;
     cx.update(|cx| <dyn fs::Fs>::set_global(fs.clone(), cx));
 
     let main_project = project::Project::test(fs.clone(), ["/project".as_ref()], cx).await;
@@ -3472,6 +3493,13 @@ async fn test_archive_selected_thread_archives_closed_linked_worktree(cx: &mut T
             is_main: false,
             is_bare: false,
         },
+    )
+    .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
     )
     .await;
     cx.update(|cx| <dyn fs::Fs>::set_global(fs.clone(), cx));
@@ -8138,6 +8166,13 @@ async fn test_archive_last_worktree_thread_removes_workspace(cx: &mut TestAppCon
             is_main: false,
             is_bare: false,
         },
+    )
+    .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
     )
     .await;
 
@@ -13498,6 +13533,13 @@ async fn test_archive_removes_worktree_even_when_workspace_paths_diverge(cx: &mu
         },
     )
     .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        None,
+        cx,
+    )
+    .await;
 
     cx.update(|cx| <dyn fs::Fs>::set_global(fs.clone(), cx));
 
@@ -13648,6 +13690,13 @@ async fn test_archive_mixed_workspace_closes_only_archived_worktree_items(cx: &m
             is_main: false,
             is_bare: false,
         },
+    )
+    .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/main-repo/feature-b/main-repo"),
+        None,
+        cx,
     )
     .await;
 
@@ -13869,6 +13918,13 @@ async fn test_discard_mixed_workspace_draft_closes_only_archived_worktree_items(
             is_main: false,
             is_bare: false,
         },
+    )
+    .await;
+    agent_ui::test_support::record_zed_created_worktree(
+        fs.as_ref(),
+        Path::new("/worktrees/main-repo/feature-b/main-repo"),
+        None,
+        cx,
     )
     .await;
 
@@ -14212,6 +14268,18 @@ async fn test_remote_archive_thread_with_active_connection(
     // parent repo, so `build_root_plan` targets the linked worktree
     // specifically and knows which main repo owns it.
     let remote_connection = project.read_with(cx, |p, cx| p.remote_connection_options(cx));
+
+    // Record the worktree as Zed-created on the client, keyed by the remote
+    // connection identity, with the creation time of the gitdir on the
+    // *remote* filesystem (where the archive flow will re-stat it).
+    agent_ui::test_support::record_zed_created_worktree(
+        server_fs.as_ref(),
+        Path::new("/worktrees/project/feature-a/project"),
+        remote_connection.as_ref(),
+        cx,
+    )
+    .await;
+
     let wt_thread_id = acp::SessionId::new(Arc::from("worktree-thread"));
     cx.update(|_window, cx| {
         let metadata = ThreadMetadata {

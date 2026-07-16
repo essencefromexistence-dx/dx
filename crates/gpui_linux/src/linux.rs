@@ -23,8 +23,6 @@ pub(crate) use wayland::*;
 #[cfg(feature = "x11")]
 pub(crate) use x11::*;
 
-#[cfg(feature = "wayland")]
-use std::ffi::c_void;
 use std::rc::Rc;
 
 /// Returns the default platform implementation for the current OS.
@@ -54,11 +52,8 @@ pub fn current_platform(headless: bool) -> Rc<dyn gpui::Platform> {
         "Headless" => Rc::new(LinuxPlatform {
             inner: HeadlessClient::new(),
         }),
-        _ => unreachable!(),
+        _ => unreachable!(
+            r#"At least one of the "wayland" or "x11" features must be enabled on gpui_linux or gpui_platform."#
+        ),
     }
-}
-
-#[cfg(feature = "wayland")]
-pub fn exported_wayland_window_handle(surface: *mut c_void) -> Option<String> {
-    wayland::window::exported_wayland_window_handle_from_surface_ptr(surface)
 }

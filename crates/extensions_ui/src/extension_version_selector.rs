@@ -14,11 +14,6 @@ use ui::{HighlightedLabel, ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt;
 use workspace::ModalView;
 
-const MAX_EXTENSION_VERSION_SELECTOR_ROWS: usize = 256;
-const MAX_EXTENSION_VERSION_SELECTOR_QUERY_CHARS: usize = 128;
-const MAX_EXTENSION_VERSION_SELECTOR_FUZZY_MATCHES: usize = 100;
-const MAX_EXTENSION_VERSION_SELECTOR_LABEL_CHARS: usize = 64;
-
 pub struct ExtensionVersionSelector {
     picker: Entity<Picker<ExtensionVersionSelectorDelegate>>,
 }
@@ -35,7 +30,7 @@ impl Focusable for ExtensionVersionSelector {
 
 impl Render for ExtensionVersionSelector {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        v_flex().w(rems(34.)).child(self.picker.clone())
+        v_flex().child(self.picker.clone())
     }
 }
 
@@ -50,47 +45,6 @@ impl ExtensionVersionSelector {
     }
 }
 
-fn bounded_extension_version_selector_text(value: impl AsRef<str>, max_chars: usize) -> String {
-    let value = value.as_ref();
-    if max_chars == 0 {
-        return String::new();
-    }
-
-    if let Some((truncate_at, _)) = value.char_indices().nth(max_chars) {
-        let mut bounded = value[..truncate_at].to_string();
-        bounded.push('…');
-        bounded
-    } else {
-        value.to_string()
-    }
-}
-
-fn bounded_extension_version_selector_label(version: &str) -> String {
-    bounded_extension_version_selector_text(
-        format!("v{version}"),
-        MAX_EXTENSION_VERSION_SELECTOR_LABEL_CHARS,
-    )
-}
-
-fn bounded_extension_version_selector_query(query: String) -> String {
-    if let Some((truncate_at, _)) = query
-        .char_indices()
-        .nth(MAX_EXTENSION_VERSION_SELECTOR_QUERY_CHARS)
-    {
-        query[..truncate_at].to_string()
-    } else {
-        query
-    }
-}
-
-fn cap_extension_version_selector_rows(extension_versions: &mut Vec<ExtensionMetadata>) {
-    extension_versions.truncate(MAX_EXTENSION_VERSION_SELECTOR_ROWS);
-}
-
-fn clamp_extension_version_selector_index(selected_index: usize, match_count: usize) -> usize {
-    selected_index.min(match_count.saturating_sub(1))
-}
-
 pub struct ExtensionVersionSelectorDelegate {
     fs: Arc<dyn Fs>,
     selector: WeakEntity<ExtensionVersionSelector>,
@@ -103,9 +57,8 @@ impl ExtensionVersionSelectorDelegate {
     pub fn new(
         fs: Arc<dyn Fs>,
         selector: WeakEntity<ExtensionVersionSelector>,
-        extension_versions: Vec<ExtensionMetadata>,
+        mut extension_versions: Vec<ExtensionMetadata>,
     ) -> Self {
-        let mut extension_versions = extension_versions;
         extension_versions.sort_unstable_by(|a, b| {
             let a_version = Version::from_str(&a.manifest.version);
             let b_version = Version::from_str(&b.manifest.version);
@@ -115,16 +68,14 @@ impl ExtensionVersionSelectorDelegate {
                 _ => b.published_at.cmp(&a.published_at),
             }
         });
-        cap_extension_version_selector_rows(&mut extension_versions);
 
         let matches = extension_versions
             .iter()
-            .enumerate()
-            .map(|(index, extension)| StringMatch {
-                candidate_id: index,
+            .map(|extension| StringMatch {
+                candidate_id: 0,
                 score: 0.0,
                 positions: Default::default(),
-                string: bounded_extension_version_selector_label(&extension.manifest.version),
+                string: format!("v{}", extension.manifest.version),
             })
             .collect();
 
@@ -140,6 +91,10 @@ impl ExtensionVersionSelectorDelegate {
 
 impl PickerDelegate for ExtensionVersionSelectorDelegate {
     type ListItem = ui::ListItem;
+
+    fn name() -> &'static str {
+        "extension version selector"
+    }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Select extension version...".into()
@@ -159,7 +114,7 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
         _window: &mut Window,
         _cx: &mut Context<Picker<Self>>,
     ) {
-        self.selected_index = clamp_extension_version_selector_index(ix, self.matches.len());
+        self.selected_index = ix;
     }
 
     fn update_matches(
@@ -169,17 +124,12 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
         cx: &mut Context<Picker<Self>>,
     ) -> Task<()> {
         let background_executor = cx.background_executor().clone();
-        let query = bounded_extension_version_selector_query(query);
         let candidates = self
             .extension_versions
             .iter()
-            .take(MAX_EXTENSION_VERSION_SELECTOR_ROWS)
             .enumerate()
             .map(|(id, extension)| {
-                StringMatchCandidate::new(
-                    id,
-                    &bounded_extension_version_selector_label(&extension.manifest.version),
-                )
+                StringMatchCandidate::new(id, &format!("v{}", extension.manifest.version))
             })
             .collect::<Vec<_>>();
 
@@ -201,7 +151,7 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
                     &query,
                     false,
                     true,
-                    MAX_EXTENSION_VERSION_SELECTOR_FUZZY_MATCHES,
+                    100,
                     &Default::default(),
                     background_executor,
                 )
@@ -210,10 +160,10 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
 
             this.update(cx, |this, _cx| {
                 this.delegate.matches = matches;
-                this.delegate.selected_index = clamp_extension_version_selector_index(
-                    this.delegate.selected_index,
-                    this.delegate.matches.len(),
-                );
+                this.delegate.selected_index = this
+                    .delegate
+                    .selected_index
+                    .min(this.delegate.matches.len().saturating_sub(1));
             })
             .log_err();
         })
@@ -225,14 +175,8 @@ impl PickerDelegate for ExtensionVersionSelectorDelegate {
             return;
         }
 
-        let Some(version_match) = self.matches.get(self.selected_index) else {
-            self.dismissed(window, cx);
-            return;
-        };
-        let candidate_id = version_match.candidate_id;
-        let Some(extension_version) = self.extension_versions.get(candidate_id) else {
-            return;
-        };
+        let candidate_id = self.matches[self.selected_index].candidate_id;
+        let extension_version = &self.extension_versions[candidate_id];
 
         if !extension_host::is_version_compatible(ReleaseChannel::global(cx), extension_version) {
             return;

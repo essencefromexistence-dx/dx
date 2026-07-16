@@ -14,6 +14,7 @@ use crate::traits::transformable::Transformable;
 #[strum(serialize_all = "snake_case")]
 pub enum VectorName {
     BusinessStamp,
+    VipStamp,
     Grid,
     ProTrialStamp,
     ProUserStamp,
@@ -157,7 +158,7 @@ impl Component for Vector {
                 example_group_with_title(
                     "Different Vectors",
                     vec![single_example(
-                        "Dx X Copilot",
+                        "Zed X Copilot",
                         Vector::square(VectorName::ZedXCopilot, rems_from_px(100.))
                             .into_any_element(),
                     )],

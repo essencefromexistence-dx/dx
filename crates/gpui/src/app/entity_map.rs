@@ -153,20 +153,15 @@ impl EntityMap {
         self.entities.insert(lease.id, lease.entity.take().unwrap());
     }
 
-    #[track_caller]
     pub fn read<T: 'static>(&self, entity: &Entity<T>) -> &T {
         self.assert_valid_context(entity);
         let mut accessed_entities = self.accessed_entities.borrow_mut();
         accessed_entities.insert(entity.entity_id);
 
-        let Some(entity) = self
-            .entities
+        self.entities
             .get(entity.entity_id)
             .and_then(|entity| entity.downcast_ref())
-        else {
-            double_lease_panic::<T>("read");
-        };
-        entity
+            .unwrap_or_else(|| double_lease_panic::<T>("read"))
     }
 
     fn assert_valid_context(&self, entity: &AnyEntity) {
@@ -466,7 +461,6 @@ impl<T: 'static> Entity<T> {
 
     /// Grab a reference to this entity from the context.
     #[inline]
-    #[track_caller]
     pub fn read<'a>(&self, cx: &'a App) -> &'a T {
         cx.entities.read(self)
     }
@@ -479,7 +473,6 @@ impl<T: 'static> Entity<T> {
 
     /// Updates the entity referenced by this handle with the given function.
     #[inline]
-    #[track_caller]
     pub fn update<R, C: AppContext>(
         &self,
         cx: &mut C,
@@ -506,7 +499,6 @@ impl<T: 'static> Entity<T> {
     /// the referenced entity still exists, within a visual context that has a window.
     /// Returns an error if the window has been closed.
     #[inline]
-    #[track_caller]
     pub fn update_in<R, C: VisualContext>(
         &self,
         cx: &mut C,
@@ -782,7 +774,6 @@ impl<T: 'static> WeakEntity<T> {
     /// Updates the entity referenced by this handle with the given function if
     /// the referenced entity still exists. Returns an error if the entity has
     /// been released.
-    #[track_caller]
     pub fn update<C, R>(
         &self,
         cx: &mut C,
@@ -798,7 +789,6 @@ impl<T: 'static> WeakEntity<T> {
     /// Updates the entity referenced by this handle with the given function if
     /// the referenced entity still exists, within a visual context that has a window.
     /// Returns an error if the entity has been released.
-    #[track_caller]
     pub fn update_in<C, R>(
         &self,
         cx: &mut C,

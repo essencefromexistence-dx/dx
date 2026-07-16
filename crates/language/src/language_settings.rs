@@ -19,53 +19,13 @@ pub use settings::{
     AutoIndentMode, CompletionSettingsContent, EditPredictionDataCollectionChoice,
     EditPredictionPromptFormatContent, EditPredictionProvider, EditPredictionsMode, FormatOnSave,
     Formatter, FormatterList, InlayHintKind, LanguageSettingsContent, LineEndingSetting,
-    LspInsertMode, RewrapBehavior, ShowWhitespaceSetting, SoftWrap, WordsCompletionMode,
+    LspInsertMode, REST_OF_LANGUAGE_SERVERS, RewrapBehavior, ShowWhitespaceSetting, SoftWrap,
+    WordsCompletionMode,
 };
 use settings::{RegisterSetting, Settings, SettingsLocation, SettingsStore, merge_from::MergeFrom};
 use shellexpand;
 use std::{borrow::Cow, num::NonZeroU32, path::Path, sync::Arc};
 use text::ToOffset;
-
-const MAX_LANGUAGE_SETTINGS_ENTRIES: usize = 4096;
-const MAX_LANGUAGE_FILE_TYPE_ENTRIES: usize = 4096;
-const MAX_LANGUAGE_FILE_TYPE_PATTERNS_PER_LANGUAGE: usize = 4096;
-const MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES: usize = 4096;
-const MAX_EDIT_PREDICTION_DISABLED_GLOBS: usize = 4096;
-
-fn warn_truncated_language_settings_collection(label: &str, actual: usize, max: usize) {
-    if actual > max {
-        log::warn!("truncating {label} from {actual} to {max} entries");
-    }
-}
-
-fn cap_language_settings_array<T>(mut entries: Vec<T>, max: usize, label: &str) -> Vec<T> {
-    warn_truncated_language_settings_collection(label, entries.len(), max);
-    entries.truncate(max);
-    entries
-}
-
-fn cap_language_settings_set<T: Eq + std::hash::Hash>(
-    entries: HashSet<T>,
-    max: usize,
-    label: &str,
-) -> HashSet<T> {
-    warn_truncated_language_settings_collection(label, entries.len(), max);
-    entries.into_iter().take(max).collect()
-}
-
-fn capped_language_file_type_patterns(language: &Arc<str>, patterns: &[String]) -> Vec<String> {
-    warn_truncated_language_settings_collection(
-        &format!("file type patterns for language {language}"),
-        patterns.len(),
-        MAX_LANGUAGE_FILE_TYPE_PATTERNS_PER_LANGUAGE,
-    );
-
-    patterns
-        .iter()
-        .take(MAX_LANGUAGE_FILE_TYPE_PATTERNS_PER_LANGUAGE)
-        .cloned()
-        .collect::<Vec<_>>()
-}
 
 /// Returns the settings for all languages from the provided file.
 pub fn all_language_settings<'a>(
@@ -317,9 +277,6 @@ pub struct PrettierSettings {
 }
 
 impl LanguageSettings {
-    /// A token representing the rest of the available language servers.
-    const REST_OF_LANGUAGE_SERVERS: &'static str = "...";
-
     pub fn for_buffer<'a>(buffer: &'a Buffer, cx: &'a App) -> Cow<'a, LanguageSettings> {
         Self::resolve(Some(buffer), None, cx)
     }
@@ -401,30 +358,18 @@ impl LanguageSettings {
         configured_language_servers: &[String],
         available_language_servers: &[LanguageServerName],
     ) -> Vec<LanguageServerName> {
-        warn_truncated_language_settings_collection(
-            "configured language servers",
-            configured_language_servers.len(),
-            MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
-        );
         let (disabled_language_servers, enabled_language_servers): (
             Vec<LanguageServerName>,
             Vec<LanguageServerName>,
-        ) = configured_language_servers
-            .iter()
-            .take(MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES)
-            .partition_map(|language_server| match language_server.strip_prefix('!') {
+        ) = configured_language_servers.iter().partition_map(
+            |language_server| match language_server.strip_prefix('!') {
                 Some(disabled) => Either::Left(LanguageServerName(disabled.to_string().into())),
                 None => Either::Right(LanguageServerName(language_server.clone().into())),
-            });
-
-        warn_truncated_language_settings_collection(
-            "available language servers",
-            available_language_servers.len(),
-            MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
+            },
         );
+
         let rest = available_language_servers
             .iter()
-            .take(MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES)
             .filter(|&available_language_server| {
                 !disabled_language_servers.contains(available_language_server)
                     && !enabled_language_servers.contains(available_language_server)
@@ -432,26 +377,16 @@ impl LanguageSettings {
             .cloned()
             .collect::<Vec<_>>();
 
-        let mut resolved_language_servers = enabled_language_servers
+        enabled_language_servers
             .into_iter()
             .flat_map(|language_server| {
-                if language_server.0.as_ref() == Self::REST_OF_LANGUAGE_SERVERS {
+                if language_server.0.as_ref() == REST_OF_LANGUAGE_SERVERS {
                     rest.clone()
                 } else {
                     vec![language_server]
                 }
             })
-            .take(MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES + 1)
-            .collect::<Vec<_>>();
-        if resolved_language_servers.len() > MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES {
-            log::warn!(
-                "truncating resolved language servers from at least {} to {} entries",
-                resolved_language_servers.len(),
-                MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES
-            );
-            resolved_language_servers.truncate(MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES);
-        }
-        resolved_language_servers
+            .collect::<Vec<_>>()
     }
 }
 
@@ -787,11 +722,7 @@ impl settings::Settings for AllLanguageSettings {
                 soft_wrap: settings.soft_wrap.unwrap(),
                 preferred_line_length: settings.preferred_line_length.unwrap(),
                 show_wrap_guides: settings.show_wrap_guides.unwrap(),
-                wrap_guides: cap_language_settings_array(
-                    settings.wrap_guides.unwrap(),
-                    MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
-                    "language.wrap_guides",
-                ),
+                wrap_guides: settings.wrap_guides.unwrap(),
                 indent_guides: IndentGuideSettings {
                     enabled: indent_guides.enabled.unwrap(),
                     line_width: indent_guides.line_width.unwrap(),
@@ -809,30 +740,18 @@ impl settings::Settings for AllLanguageSettings {
                 prettier: PrettierSettings {
                     allowed: prettier.allowed.unwrap(),
                     parser: prettier.parser.filter(|parser| !parser.is_empty()),
-                    plugins: cap_language_settings_set(
-                        prettier.plugins.unwrap_or_default(),
-                        MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
-                        "language.prettier.plugins",
-                    ),
+                    plugins: prettier.plugins.unwrap_or_default(),
                     options: prettier.options.unwrap_or_default(),
                 },
                 jsx_tag_auto_close: settings.jsx_tag_auto_close.unwrap().enabled.unwrap(),
                 enable_language_server: settings.enable_language_server.unwrap(),
-                language_servers: cap_language_settings_array(
-                    settings.language_servers.unwrap(),
-                    MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
-                    "language.language_servers",
-                ),
+                language_servers: settings.language_servers.unwrap(),
                 semantic_tokens: settings.semantic_tokens.unwrap(),
                 document_folding_ranges: settings.document_folding_ranges.unwrap(),
                 document_symbols: settings.document_symbols.unwrap(),
                 allow_rewrap: settings.allow_rewrap.unwrap(),
                 show_edit_predictions: settings.show_edit_predictions.unwrap(),
-                edit_predictions_disabled_in: cap_language_settings_array(
-                    settings.edit_predictions_disabled_in.unwrap(),
-                    MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
-                    "language.edit_predictions_disabled_in",
-                ),
+                edit_predictions_disabled_in: settings.edit_predictions_disabled_in.unwrap(),
                 show_whitespaces: settings.show_whitespaces.unwrap(),
                 whitespace_map: WhitespaceMap {
                     space: SharedString::new(whitespace_map.space.unwrap().to_string()),
@@ -879,11 +798,7 @@ impl settings::Settings for AllLanguageSettings {
                     lsp_fetch_timeout_ms: completions.lsp_fetch_timeout_ms.unwrap(),
                     lsp_insert_mode: completions.lsp_insert_mode.unwrap(),
                 },
-                debuggers: cap_language_settings_array(
-                    settings.debuggers.unwrap(),
-                    MAX_LANGUAGE_SETTINGS_ARRAY_ENTRIES,
-                    "language.debuggers",
-                ),
+                debuggers: settings.debuggers.unwrap(),
                 word_diff_enabled: settings.word_diff_enabled.unwrap(),
             }
         }
@@ -891,17 +806,7 @@ impl settings::Settings for AllLanguageSettings {
         let default_language_settings = load_from_content(all_languages.defaults.clone());
 
         let mut languages = HashMap::default();
-        warn_truncated_language_settings_collection(
-            "language settings entries",
-            all_languages.languages.0.len(),
-            MAX_LANGUAGE_SETTINGS_ENTRIES,
-        );
-        for (language_name, settings) in all_languages
-            .languages
-            .0
-            .iter()
-            .take(MAX_LANGUAGE_SETTINGS_ENTRIES)
-        {
+        for (language_name, settings) in &all_languages.languages.0 {
             let mut language_settings = all_languages.defaults.clone();
             settings::merge_from::MergeFrom::merge_from(&mut language_settings, settings);
             languages.insert(
@@ -918,15 +823,11 @@ impl settings::Settings for AllLanguageSettings {
         let edit_predictions = all_languages.edit_predictions.clone().unwrap();
         let edit_predictions_mode = edit_predictions.mode.unwrap();
 
-        let configured_disabled_globs = edit_predictions.disabled_globs.as_ref().unwrap();
-        warn_truncated_language_settings_collection(
-            "edit prediction disabled globs",
-            configured_disabled_globs.len(),
-            MAX_EDIT_PREDICTION_DISABLED_GLOBS,
-        );
-        let disabled_globs: HashSet<&String> = configured_disabled_globs
+        let disabled_globs: HashSet<&String> = edit_predictions
+            .disabled_globs
+            .as_ref()
+            .unwrap()
             .iter()
-            .take(MAX_EDIT_PREDICTION_DISABLED_GLOBS)
             .collect();
 
         let copilot = edit_predictions.copilot.unwrap();
@@ -972,27 +873,17 @@ impl settings::Settings for AllLanguageSettings {
 
         let mut file_types: FxHashMap<Arc<str>, (GlobSet, Vec<String>)> = FxHashMap::default();
 
-        if let Some(file_type_settings) = all_languages.file_types.as_ref() {
-            warn_truncated_language_settings_collection(
-                "language file type entries",
-                file_type_settings.len(),
-                MAX_LANGUAGE_FILE_TYPE_ENTRIES,
-            );
-        }
-        for (language, patterns) in all_languages
-            .file_types
-            .iter()
-            .flatten()
-            .take(MAX_LANGUAGE_FILE_TYPE_ENTRIES)
-        {
-            let patterns = capped_language_file_type_patterns(language, &patterns.0);
+        for (language, patterns) in all_languages.file_types.iter().flatten() {
             let mut builder = GlobSetBuilder::new();
 
-            for pattern in &patterns {
+            for pattern in &patterns.0 {
                 builder.add(Glob::new(pattern).unwrap());
             }
 
-            file_types.insert(language.clone(), (builder.build().unwrap(), patterns));
+            file_types.insert(
+                language.clone(),
+                (builder.build().unwrap(), patterns.0.clone()),
+            );
         }
 
         Self {
@@ -1197,7 +1088,7 @@ mod tests {
         // A value of just `["..."]` is the same as taking all of the available language servers.
         assert_eq!(
             LanguageSettings::resolve_language_servers(
-                &[LanguageSettings::REST_OF_LANGUAGE_SERVERS.into()],
+                &[REST_OF_LANGUAGE_SERVERS.into()],
                 &available_language_servers,
             ),
             available_language_servers
@@ -1208,7 +1099,7 @@ mod tests {
             LanguageSettings::resolve_language_servers(
                 &[
                     "biome".into(),
-                    LanguageSettings::REST_OF_LANGUAGE_SERVERS.into(),
+                    REST_OF_LANGUAGE_SERVERS.into(),
                     "deno".into()
                 ],
                 &available_language_servers
@@ -1229,7 +1120,7 @@ mod tests {
                     "deno".into(),
                     "!typescript-language-server".into(),
                     "!biome".into(),
-                    LanguageSettings::REST_OF_LANGUAGE_SERVERS.into()
+                    REST_OF_LANGUAGE_SERVERS.into()
                 ],
                 &available_language_servers
             ),
@@ -1241,7 +1132,7 @@ mod tests {
             LanguageSettings::resolve_language_servers(
                 &[
                     "my-cool-language-server".into(),
-                    LanguageSettings::REST_OF_LANGUAGE_SERVERS.into()
+                    REST_OF_LANGUAGE_SERVERS.into()
                 ],
                 &available_language_servers
             ),

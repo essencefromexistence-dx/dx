@@ -10,7 +10,7 @@ pub struct BlinkManager {
     blinking_paused: bool,
     /// Whether the cursor should be visibly rendered or not.
     visible: bool,
-    /// Whether the blinking currently enabled.
+    /// Whether the blinking is currently enabled.
     enabled: bool,
     /// Whether the blinking is enabled in the settings.
     blink_enabled_in_settings: fn(&App) -> bool,
@@ -45,10 +45,6 @@ impl BlinkManager {
 
     pub fn pause_blinking(&mut self, cx: &mut Context<Self>) {
         self.show_cursor(cx);
-
-        if !(self.blink_enabled_in_settings)(cx) {
-            return;
-        }
 
         let epoch = self.next_blink_epoch();
         let interval = Duration::from_millis(500);

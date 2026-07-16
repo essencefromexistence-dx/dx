@@ -37,8 +37,6 @@ actions!(
     ]
 );
 
-const MAX_CONSOLE_DAP_COMPLETIONS: usize = 2_048;
-
 pub struct Console {
     console: Entity<Editor>,
     query_bar: Entity<Editor>,
@@ -741,16 +739,7 @@ impl ConsoleQueryBarCompletionProvider {
         });
         let snapshot = buffer.read(cx).text_snapshot();
         cx.background_executor().spawn(async move {
-            let mut completions = completion_task.await?;
-            let is_incomplete = completions.len() > MAX_CONSOLE_DAP_COMPLETIONS;
-            if is_incomplete {
-                log::warn!(
-                    "Debug adapter returned {} console completions; showing first {}",
-                    completions.len(),
-                    MAX_CONSOLE_DAP_COMPLETIONS
-                );
-                completions.truncate(MAX_CONSOLE_DAP_COMPLETIONS);
-            }
+            let completions = completion_task.await?;
 
             let buffer_text = snapshot.text();
 
@@ -791,7 +780,7 @@ impl ConsoleQueryBarCompletionProvider {
             Ok(vec![project::CompletionResponse {
                 completions,
                 display_options: CompletionDisplayOptions::default(),
-                is_incomplete,
+                is_incomplete: false,
             }])
         })
     }

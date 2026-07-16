@@ -820,7 +820,7 @@ impl FontPanel {
                             .gap_0p5()
                             .font_family(font.name.clone())
                             .child(
-                                Label::new(font.name.clone())
+                                Label::new(font.name)
                                     .size(LabelSize::Small)
                                     .truncate(),
                             )

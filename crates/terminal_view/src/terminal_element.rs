@@ -29,13 +29,6 @@ use std::{fmt::Debug, rc::Rc};
 
 use crate::{BlockContext, BlockProperties, ContentMode, TerminalMode, TerminalView};
 
-const MAX_TERMINAL_ELEMENT_VISIBLE_ROWS: usize = 10_000;
-const MAX_TERMINAL_ELEMENT_RENDER_CELLS: usize = 1_000_000;
-const MAX_TERMINAL_ELEMENT_BACKGROUND_REGIONS: usize = 1_000_000;
-const MAX_TERMINAL_ELEMENT_LAYOUT_RECTS: usize = 1_000_000;
-const MAX_TERMINAL_ELEMENT_HIGHLIGHT_RANGES: usize = 20_000;
-const MAX_TERMINAL_ELEMENT_HIGHLIGHT_LINES: usize = 10_000;
-
 /// The information generated during layout that is necessary for painting.
 pub struct LayoutState {
     hitbox: Hitbox,
@@ -76,21 +69,6 @@ impl DisplayCursor {
     pub fn col(&self) -> usize {
         self.col
     }
-}
-
-fn bounded_terminal_element_search_matches(matches: &[Range]) -> Vec<Range> {
-    if matches.len() > MAX_TERMINAL_ELEMENT_HIGHLIGHT_RANGES {
-        log::warn!(
-            "Capping terminal element search highlights from {} to {}",
-            matches.len(),
-            MAX_TERMINAL_ELEMENT_HIGHLIGHT_RANGES
-        );
-    }
-    matches
-        .iter()
-        .take(MAX_TERMINAL_ELEMENT_HIGHLIGHT_RANGES)
-        .cloned()
-        .collect()
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -403,30 +381,20 @@ impl TerminalElement {
         let theme = cx.theme();
 
         // Pre-allocate with estimated capacity to reduce reallocations
-        let estimated_cells = grid.size_hint().0.min(MAX_TERMINAL_ELEMENT_RENDER_CELLS);
+        let estimated_cells = grid.size_hint().0;
         let estimated_runs = estimated_cells / 10; // Estimate ~10 cells per run
         let estimated_regions = estimated_cells / 20; // Estimate ~20 cells per background region
 
         let mut batched_runs = Vec::with_capacity(estimated_runs);
-        let mut processed_cells = 0;
         let mut cell_count = 0;
 
         // Collect background regions for efficient merging
-        let mut background_regions: Vec<BackgroundRegion> =
-            Vec::with_capacity(estimated_regions.min(MAX_TERMINAL_ELEMENT_BACKGROUND_REGIONS));
-        let mut background_regions_truncated = false;
+        let mut background_regions: Vec<BackgroundRegion> = Vec::with_capacity(estimated_regions);
         let mut current_batch: Option<BatchedTextRun> = None;
 
         // First pass: collect all cells and their backgrounds
         let linegroups = grid.into_iter().chunk_by(|cell| cell.point().line);
-        'linegroups: for (line_index, (_, line)) in linegroups.into_iter().enumerate() {
-            if line_index >= MAX_TERMINAL_ELEMENT_VISIBLE_ROWS {
-                log::warn!(
-                    "Capping terminal element layout rows at {}",
-                    MAX_TERMINAL_ELEMENT_VISIBLE_ROWS
-                );
-                break;
-            }
+        for (line_index, (_, line)) in linegroups.into_iter().enumerate() {
             let display_line = start_line_offset + line_index as i32;
 
             // Flush any existing batch at line boundaries
@@ -437,15 +405,6 @@ impl TerminalElement {
             let mut previous_cell_had_extras = false;
 
             for cell in line {
-                if processed_cells >= MAX_TERMINAL_ELEMENT_RENDER_CELLS {
-                    log::warn!(
-                        "Capping terminal element render cells at {}",
-                        MAX_TERMINAL_ELEMENT_RENDER_CELLS
-                    );
-                    break 'linegroups;
-                }
-                processed_cells += 1;
-
                 let point = cell.point();
                 let cell = cell.cell();
                 let mut fg = cell.foreground();
@@ -467,14 +426,6 @@ impl TerminalElement {
                         && last_region.end_col + 1 == col
                     {
                         last_region.end_col = col;
-                    } else if background_regions.len() >= MAX_TERMINAL_ELEMENT_BACKGROUND_REGIONS {
-                        if !background_regions_truncated {
-                            log::warn!(
-                                "Capping terminal element background regions at {}",
-                                MAX_TERMINAL_ELEMENT_BACKGROUND_REGIONS
-                            );
-                            background_regions_truncated = true;
-                        }
                     } else {
                         background_regions.push(BackgroundRegion::new(display_line, col, color));
                     }
@@ -563,20 +514,12 @@ impl TerminalElement {
         // Second pass: merge background regions and convert to layout rects
         let region_count = background_regions.len();
         let merged_regions = merge_background_regions(background_regions);
-        let mut rects =
-            Vec::with_capacity((merged_regions.len() * 2).min(MAX_TERMINAL_ELEMENT_LAYOUT_RECTS));
+        let mut rects = Vec::with_capacity(merged_regions.len() * 2); // Estimate 2 rects per merged region
 
         // Convert merged regions to layout rects
         // Since LayoutRect only supports single-line rectangles, we need to split multi-line regions
-        'regions: for region in merged_regions {
+        for region in merged_regions {
             for line in region.start_line..=region.end_line {
-                if rects.len() >= MAX_TERMINAL_ELEMENT_LAYOUT_RECTS {
-                    log::warn!(
-                        "Capping terminal element layout rects at {}",
-                        MAX_TERMINAL_ELEMENT_LAYOUT_RECTS
-                    );
-                    break 'regions;
-                }
                 rects.push(LayoutRect::new(
                     LayoutPoint::new(line, region.start_col),
                     (region.end_col - region.start_col + 1) as usize,
@@ -1090,6 +1033,10 @@ impl Element for TerminalElement {
                     origin.x += gutter;
 
                     if matches!(self.terminal_view.read(cx).mode, TerminalMode::Standalone) {
+                        let should_anchor_to_bottom = {
+                            let content = self.terminal.read(cx).last_content();
+                            content.scrolled_to_bottom && content.bottom_row_occupied
+                        };
                         let scale_factor = window.scale_factor();
                         let line_height_pixels = px(line_height);
                         let line_height_device_px = (f32::from(line_height_pixels) * scale_factor)
@@ -1111,7 +1058,7 @@ impl Element for TerminalElement {
                         let padding = px(padding_device_px as f32 / scale_factor.max(1.0));
 
                         size.height = snapped_height;
-                        if self.terminal.read(cx).scrolled_to_bottom() {
+                        if should_anchor_to_bottom {
                             origin.y += padding;
                         }
                     }
@@ -1132,8 +1079,7 @@ impl Element for TerminalElement {
                     )
                 };
 
-                let search_matches =
-                    bounded_terminal_element_search_matches(&self.terminal.read(cx).matches);
+                let search_matches = self.terminal.read(cx).matches.clone();
 
                 let background_color = theme.colors().terminal_background;
 
@@ -1187,22 +1133,8 @@ impl Element for TerminalElement {
                 let display_offset = *display_offset;
 
                 // searches, highlights to a single range representations
-                let max_search_highlights = MAX_TERMINAL_ELEMENT_HIGHLIGHT_RANGES
-                    .saturating_sub(usize::from(selection.is_some()));
-                if search_matches.len() > max_search_highlights {
-                    log::warn!(
-                        "Capping terminal element search highlights from {} to {}",
-                        search_matches.len(),
-                        max_search_highlights
-                    );
-                }
-                let mut relative_highlighted_ranges = Vec::with_capacity(
-                    search_matches
-                        .len()
-                        .min(max_search_highlights)
-                        .saturating_add(usize::from(selection.is_some())),
-                );
-                for search_match in search_matches.into_iter().take(max_search_highlights) {
+                let mut relative_highlighted_ranges = Vec::new();
+                for search_match in search_matches {
                     relative_highlighted_ranges.push((search_match, match_color))
                 }
                 if let Some(selection) = selection {
@@ -1258,15 +1190,6 @@ impl Element for TerminalElement {
                     ) as usize;
                     let visible_row_count =
                         f32::from((intersection.size.height / line_height_px).ceil()) as usize + 1;
-                    let capped_visible_row_count =
-                        visible_row_count.min(MAX_TERMINAL_ELEMENT_VISIBLE_ROWS);
-                    if capped_visible_row_count < visible_row_count {
-                        log::warn!(
-                            "Capping terminal element visible rows from {} to {}",
-                            visible_row_count,
-                            capped_visible_row_count
-                        );
-                    }
 
                     TerminalElement::layout_grid(
                         // Group cells by line and filter to only the visible screen rows.
@@ -1277,7 +1200,7 @@ impl Element for TerminalElement {
                             .chunk_by(|c| c.point.line)
                             .into_iter()
                             .skip(rows_above_viewport)
-                            .take(capped_visible_row_count)
+                            .take(visible_row_count)
                             .flat_map(|(_, line_cells)| line_cells),
                         rows_above_viewport as i32,
                         &text_style,
@@ -1430,7 +1353,6 @@ impl Element for TerminalElement {
             };
 
             let terminal_input_handler = TerminalInputHandler {
-                terminal: self.terminal.clone(),
                 terminal_view: self.terminal_view.clone(),
                 cursor_bounds: layout.ime_cursor_bounds.map(|bounds| bounds + origin),
                 workspace: self.workspace.clone(),
@@ -1557,7 +1479,7 @@ impl Element for TerminalElement {
                         && marked_text_cloned.is_none()
                         && let Some(mut cursor) = original_cursor
                     {
-                        cursor.paint(origin, window, cx, None);
+                        cursor.paint(origin, window, cx);
                     }
 
                     if let Some(mut element) = block_below_cursor_element {
@@ -1591,7 +1513,6 @@ impl IntoElement for TerminalElement {
 }
 
 struct TerminalInputHandler {
-    terminal: Entity<Terminal>,
     terminal_view: Entity<TerminalView>,
     workspace: WeakEntity<Workspace>,
     cursor_bounds: Option<Bounds<Pixels>>,
@@ -1602,22 +1523,15 @@ impl InputHandler for TerminalInputHandler {
         &mut self,
         _ignore_disabled_input: bool,
         _: &mut Window,
-        cx: &mut App,
+        _cx: &mut App,
     ) -> Option<UTF16Selection> {
-        if self
-            .terminal
-            .read(cx)
-            .last_content
-            .mode
-            .contains(Modes::ALT_SCREEN)
-        {
-            None
-        } else {
-            Some(UTF16Selection {
-                range: 0..0,
-                reversed: false,
-            })
-        }
+        // Always return a valid selection for IME positioning,
+        // even in ALT_SCREEN mode (fullscreen TUI apps like opencode, vim, etc.)
+        // The terminal still has a cursor position that should be used for IME candidate window placement.
+        Some(UTF16Selection {
+            range: 0..0,
+            reversed: false,
+        })
     }
 
     fn marked_text_range(
@@ -1771,24 +1685,8 @@ fn to_highlighted_range_lines(
 
     // Step 3. Expand ranges that cross lines into a collection of single-line ranges.
     //  (also convert to pixels)
-    let highlighted_line_count = clamped_end_line
-        .saturating_sub(clamped_start_line)
-        .saturating_add(1);
-    if highlighted_line_count > MAX_TERMINAL_ELEMENT_HIGHLIGHT_LINES {
-        log::warn!(
-            "Capping terminal highlight lines from {} to {}",
-            highlighted_line_count,
-            MAX_TERMINAL_ELEMENT_HIGHLIGHT_LINES
-        );
-    }
-
-    let mut highlighted_range_lines =
-        Vec::with_capacity(highlighted_line_count.min(MAX_TERMINAL_ELEMENT_HIGHLIGHT_LINES));
+    let mut highlighted_range_lines = Vec::new();
     for line in clamped_start_line..=clamped_end_line {
-        if highlighted_range_lines.len() >= MAX_TERMINAL_ELEMENT_HIGHLIGHT_LINES {
-            break;
-        }
-
         let mut line_start = 0;
         let mut line_end = layout.dimensions.num_columns();
 

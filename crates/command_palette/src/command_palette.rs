@@ -125,7 +125,10 @@ impl CommandPalette {
         );
 
         let picker = cx.new(|cx| {
-            let picker = Picker::uniform_list(delegate, window, cx);
+            // One-shot action; there's nothing to reopen.
+            let picker = Picker::uniform_list(delegate, window, cx)
+                .reopenable(false, cx)
+                .show_scrollbar(true);
             picker.set_query(query, window, cx);
             picker
         });
@@ -150,7 +153,6 @@ impl Render for CommandPalette {
     fn render(&mut self, _window: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         v_flex()
             .key_context("CommandPalette")
-            .w(rems(34.))
             .child(self.picker.clone())
     }
 }
@@ -310,11 +312,10 @@ impl CommandPaletteDelegate {
             positions,
         } in intercept_result.results
         {
-            if let Some(idx) = matches.iter().position(|m| {
-                commands
-                    .get(m.candidate_id)
-                    .is_some_and(|command| command.action.partial_eq(&*action))
-            }) {
+            if let Some(idx) = matches
+                .iter()
+                .position(|m| commands[m.candidate_id].action.partial_eq(&*action))
+            {
                 matches.remove(idx);
             }
             commands.push(Command {
@@ -333,14 +334,10 @@ impl CommandPaletteDelegate {
         }
         self.commands = commands;
         self.matches = new_matches;
-        self.clamp_selected_index();
-    }
-
-    fn clamp_selected_index(&mut self) {
-        if let Some(max_ix) = self.matches.len().checked_sub(1) {
-            self.selected_ix = cmp::min(self.selected_ix, max_ix);
-        } else {
+        if self.matches.is_empty() {
             self.selected_ix = 0;
+        } else {
+            self.selected_ix = cmp::min(self.selected_ix, self.matches.len() - 1);
         }
     }
 
@@ -380,6 +377,10 @@ impl CommandPaletteDelegate {
 
 impl PickerDelegate for CommandPaletteDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "command palette"
+    }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Execute a command...".into()
@@ -436,7 +437,6 @@ impl PickerDelegate for CommandPaletteDelegate {
         _: &mut Context<Picker<Self>>,
     ) {
         self.selected_ix = ix;
-        self.clamp_selected_index();
     }
 
     fn update_matches(
@@ -590,15 +590,8 @@ impl PickerDelegate for CommandPaletteDelegate {
             self.query_history.reset_cursor();
         }
 
-        let Some(matching_command) = self.matches.get(self.selected_ix) else {
-            return;
-        };
-        let action_ix = matching_command.candidate_id;
-        let Some(command) =
-            (action_ix < self.commands.len()).then(|| self.commands.remove(action_ix))
-        else {
-            return;
-        };
+        let action_ix = self.matches[self.selected_ix].candidate_id;
+        let command = self.commands.swap_remove(action_ix);
         telemetry::event!(
             "Action Invoked",
             source = "command palette",

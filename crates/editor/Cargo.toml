@@ -33,6 +33,7 @@ test-support = [
 [dependencies]
 aho-corasick.workspace = true
 anyhow.workspace = true
+pathdiff.workspace = true
 assets.workspace = true
 audio.workspace = true
 base64.workspace = true
@@ -65,7 +66,6 @@ menu.workspace = true
 multi_buffer.workspace = true
 ordered-float.workspace = true
 parking_lot.workspace = true
-pathdiff.workspace = true
 pretty_assertions.workspace = true
 project.workspace = true
 proptest = { workspace = true, optional = true }
@@ -101,6 +101,7 @@ unindent = { workspace = true, optional = true }
 ui.workspace = true
 ui_input.workspace = true
 url.workspace = true
+urlencoding.workspace = true
 util.workspace = true
 uuid.workspace = true
 vim_mode_setting.workspace = true

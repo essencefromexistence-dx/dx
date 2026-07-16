@@ -18,7 +18,7 @@ use workspace::{
 use crate::dx_check_panel::{
     DxCheckPanelSnapshot, dx_check_panel_snapshot, invalidate_dx_check_panel_snapshot_cache,
 };
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use crate::dx_check_panel_view::view_rows::{
     adapter_plan_row, config_label, count_label, detail_row, duration_label, empty_row, notice_row,
     notice_title, outcome_label, overflow_row, quick_fix_row, section, section_row, status_color,

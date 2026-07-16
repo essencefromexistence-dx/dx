@@ -7,7 +7,6 @@ use settings::SettingsStore;
 use ui::{ListItem, ListItemSpacing, PopoverMenu, prelude::*};
 use util::ResultExt;
 
-use super::{bounded_picker_matches, bounded_picker_options};
 use crate::{
     SettingField, SettingsFieldMetadata, SettingsUiFile, render_picker_trigger_button,
     update_settings_file,
@@ -34,14 +33,22 @@ impl OllamaModelPickerDelegate {
         if !current_model.is_empty() && !current_in_list {
             models.insert(0, current_model.clone());
         }
-        let models = bounded_picker_options(models, &current_model);
 
         let selected_index = models
             .iter()
             .position(|model| *model == current_model)
             .unwrap_or(0);
 
-        let filtered_models = bounded_picker_matches(models.iter().enumerate());
+        let filtered_models = models
+            .iter()
+            .enumerate()
+            .map(|(index, model)| StringMatch {
+                candidate_id: index,
+                string: model.to_string(),
+                positions: Vec::new(),
+                score: 0.0,
+            })
+            .collect();
 
         Self {
             models,
@@ -54,6 +61,10 @@ impl OllamaModelPickerDelegate {
 
 impl PickerDelegate for OllamaModelPickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "ollama model picker"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_models.len()
@@ -85,10 +96,18 @@ impl PickerDelegate for OllamaModelPickerDelegate {
     ) -> Task<()> {
         let query_lower = query.to_lowercase();
 
-        self.filtered_models =
-            bounded_picker_matches(self.models.iter().enumerate().filter(|(_, model)| {
-                query.is_empty() || model.to_lowercase().contains(&query_lower)
-            }));
+        self.filtered_models = self
+            .models
+            .iter()
+            .enumerate()
+            .filter(|(_, model)| query.is_empty() || model.to_lowercase().contains(&query_lower))
+            .map(|(index, model)| StringMatch {
+                candidate_id: index,
+                string: model.to_string(),
+                positions: Vec::new(),
+                score: 0.0,
+            })
+            .collect();
 
         self.selected_index = 0;
         cx.notify();
@@ -141,6 +160,8 @@ pub fn render_ollama_model_picker(
     field: SettingField<settings::OllamaModelName>,
     file: SettingsUiFile,
     _metadata: Option<&SettingsFieldMetadata>,
+    title: &'static str,
+    description: &'static str,
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
@@ -149,15 +170,20 @@ pub fn render_ollama_model_picker(
         .map(|m| m.0.clone().into())
         .unwrap_or_else(|| "".into());
 
+    let trigger_value: SharedString = if current_value.is_empty() {
+        "Select a model…".into()
+    } else {
+        current_value.clone()
+    };
+
     PopoverMenu::new("ollama-model-picker")
-        .trigger(render_picker_trigger_button(
-            "ollama_model_picker_trigger".into(),
-            if current_value.is_empty() {
-                "Select a model…".into()
-            } else {
-                current_value.clone()
-            },
-        ))
+        .trigger(
+            render_picker_trigger_button("ollama_model_picker_trigger".into(), trigger_value)
+                .aria_label(title)
+                .when(!description.is_empty(), |this| {
+                    this.aria_description(description)
+                }),
+        )
         .menu(move |window, cx| {
             Some(cx.new(|cx| {
                 let file = file.clone();
@@ -185,8 +211,9 @@ pub fn render_ollama_model_picker(
 
                 Picker::uniform_list(delegate, window, cx)
                     .show_scrollbar(true)
-                    .width(rems_from_px(210.))
-                    .max_height(Some(rems(18.).into()))
+                    .initial_width(rems_from_px(210.))
+                    .max_height(rems(18.))
+                    .popover()
             }))
         })
         .anchor(gpui::Anchor::TopLeft)

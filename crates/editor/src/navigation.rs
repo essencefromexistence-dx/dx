@@ -1,54 +1,5 @@
 use super::*;
 
-const MAX_NAVIGATION_HOVER_LINKS: usize = 4_096;
-const MAX_NAVIGATION_LOCATION_TASKS: usize = 4_096;
-const MAX_NAVIGATION_LOCATIONS: usize = 20_000;
-const MAX_NAVIGATION_RANGES_PER_BUFFER: usize = 10_000;
-const MAX_NAVIGATION_EXCERPT_ANCHORS: usize = 20_000;
-const MAX_DOCUMENT_HIGHLIGHTS_TO_NAVIGATE: usize = 20_000;
-
-fn cap_hover_links_for_navigation(
-    definitions: impl IntoIterator<Item = HoverLink>,
-) -> impl Iterator<Item = HoverLink> {
-    definitions.into_iter().take(MAX_NAVIGATION_HOVER_LINKS)
-}
-
-fn cap_reference_locations_for_navigation(
-    locations: Vec<Location>,
-) -> impl Iterator<Item = Location> {
-    if locations.len() > MAX_NAVIGATION_LOCATIONS {
-        log::warn!(
-            "capping navigation locations from {} to {}",
-            locations.len(),
-            MAX_NAVIGATION_LOCATIONS
-        );
-    }
-    locations.into_iter().take(MAX_NAVIGATION_LOCATIONS)
-}
-
-fn push_navigation_location(locations: &mut Vec<Location>, location: Location) {
-    if locations.len() < MAX_NAVIGATION_LOCATIONS {
-        locations.push(location);
-    } else if locations.len() == MAX_NAVIGATION_LOCATIONS {
-        log::warn!(
-            "dropping navigation locations beyond cap {}",
-            MAX_NAVIGATION_LOCATIONS
-        );
-    }
-}
-
-fn cap_navigation_ranges_for_buffer(mut ranges: Vec<Range<Point>>) -> Vec<Range<Point>> {
-    if ranges.len() > MAX_NAVIGATION_RANGES_PER_BUFFER {
-        log::warn!(
-            "capping navigation ranges for buffer from {} to {}",
-            ranges.len(),
-            MAX_NAVIGATION_RANGES_PER_BUFFER
-        );
-        ranges.truncate(MAX_NAVIGATION_RANGES_PER_BUFFER);
-    }
-    ranges
-}
-
 impl Editor {
     pub fn move_left(&mut self, _: &MoveLeft, window: &mut Window, cx: &mut Context<Self>) {
         self.change_selections(Default::default(), window, cx, |s| {
@@ -657,6 +608,68 @@ impl Editor {
         })
     }
 
+    pub fn move_to_next_comment_paragraph(
+        &mut self,
+        _: &MoveToNextCommentParagraph,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if matches!(self.mode, EditorMode::SingleLine) {
+            cx.propagate();
+            return;
+        }
+        // Keep the destination paragraph near the top of the viewport so the
+        // whole paragraph below the caret stays visible after a jump.
+        self.change_selections(
+            SelectionEffects::scroll(Autoscroll::top_relative(5.0)),
+            window,
+            cx,
+            |s| {
+                s.move_with(&mut |map, selection| {
+                    selection.collapse_to(
+                        movement::comment_paragraph(
+                            map,
+                            selection.head(),
+                            workspace::searchable::Direction::Next,
+                        ),
+                        SelectionGoal::None,
+                    )
+                });
+            },
+        )
+    }
+
+    pub fn move_to_previous_comment_paragraph(
+        &mut self,
+        _: &MoveToPreviousCommentParagraph,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if matches!(self.mode, EditorMode::SingleLine) {
+            cx.propagate();
+            return;
+        }
+        // Keep the destination paragraph near the top of the viewport so the
+        // whole paragraph below the caret stays visible after a jump.
+        self.change_selections(
+            SelectionEffects::scroll(Autoscroll::top_relative(5.0)),
+            window,
+            cx,
+            |s| {
+                s.move_with(&mut |map, selection| {
+                    selection.collapse_to(
+                        movement::comment_paragraph(
+                            map,
+                            selection.head(),
+                            workspace::searchable::Direction::Prev,
+                        ),
+                        SelectionGoal::None,
+                    )
+                });
+            },
+        )
+    }
+
     pub fn select_to_start_of_paragraph(
         &mut self,
         _: &SelectToStartOfParagraph,
@@ -1218,7 +1231,8 @@ impl Editor {
             let (locations, current_location_index) =
                 multi_buffer.update(cx, |multi_buffer, cx| {
                     let multi_buffer_snapshot = multi_buffer.snapshot(cx);
-                    let mut locations = cap_reference_locations_for_navigation(locations)
+                    let mut locations = locations
+                        .into_iter()
                         .filter_map(|loc| {
                             let start = multi_buffer_snapshot.anchor_in_excerpt(loc.range.start)?;
                             let end = multi_buffer_snapshot.anchor_in_excerpt(loc.range.end)?;
@@ -1266,16 +1280,7 @@ impl Editor {
                 return Ok(());
             }
 
-            let Some(Range { start, end }) =
-                locations.get(destination_location_index).cloned()
-            else {
-                log::error!(
-                    "failed to find destination reference. Destination index: {}, Total references: {}",
-                    destination_location_index,
-                    locations.len()
-                );
-                return Ok(());
-            };
+            let Range { start, end } = locations[destination_location_index];
 
             editor.update_in(cx, |editor, window, cx| {
                 let effects = SelectionEffects::scroll(Autoscroll::for_go_to_definition(
@@ -1291,6 +1296,62 @@ impl Editor {
 
             Ok(())
         }))
+    }
+
+    /// Runs the LSP go-to query for `kind` (definition / declaration / type /
+    /// implementation) against the symbol under the cursor and returns the raw
+    /// target [`Location`]s. The go-to counterpart to
+    /// [`Self::find_all_references_locations`]; used by the LSP location pickers.
+    pub fn definition_locations_of_kind(
+        &mut self,
+        kind: GotoDefinitionKind,
+        cx: &mut Context<Self>,
+    ) -> Option<Task<Result<Vec<Location>>>> {
+        let provider = self.semantics_provider.clone()?;
+        let selection = self.selections.newest_anchor();
+        let multi_buffer = self.buffer.read(cx);
+        let multi_buffer_snapshot = multi_buffer.snapshot(cx);
+        let head = selection
+            .map(|anchor| anchor.to_offset(&multi_buffer_snapshot))
+            .head();
+
+        let (buffer, head) = multi_buffer.text_anchor_for_position(head, cx)?;
+        let definitions = provider.definitions(&buffer, head, kind, cx)?;
+        Some(cx.spawn(async move |editor, cx| {
+            let definitions = definitions.await?.unwrap_or_default();
+            // Drop a result that points back at the cursor, matching
+            // `go_to_definition_of_kind` (otherwise the picker lists the symbol
+            // you invoked it on).
+            editor.update(cx, |_, cx| {
+                definitions
+                    .into_iter()
+                    .filter(|link| hover_links::exclude_link_to_position(&buffer, &head, link, cx))
+                    .map(|link| link.target)
+                    .collect()
+            })
+        }))
+    }
+
+    /// Runs an LSP "find all references" query for the symbol under the cursor
+    /// and returns the raw [`Location`]s. Unlike [`Self::find_all_references`],
+    /// this does not group the results or open any UI
+    pub fn find_all_references_locations(
+        &mut self,
+        project: &Entity<Project>,
+        cx: &mut Context<Self>,
+    ) -> Option<Task<Result<Vec<Location>>>> {
+        let selection = self.selections.newest_anchor();
+        let multi_buffer = self.buffer.read(cx);
+        let multi_buffer_snapshot = multi_buffer.snapshot(cx);
+        let head = selection
+            .map(|anchor| anchor.to_offset(&multi_buffer_snapshot))
+            .head();
+
+        let (buffer, head) = multi_buffer.text_anchor_for_position(head, cx)?;
+        let references = project.update(cx, |project, cx| project.references(&buffer, head, cx));
+        // Keep every reference, including the one under the cursor, to match the
+        // default `find_all_references` multibuffer (`always_open_multibuffer`).
+        Some(cx.spawn(async move |_, _| Ok(references.await?.unwrap_or_default())))
     }
 
     pub fn find_all_references(
@@ -1349,7 +1410,7 @@ impl Editor {
                 return anyhow::Ok(Navigated::No);
             };
             let mut locations = cx.update(|_, cx| {
-                cap_reference_locations_for_navigation(locations)
+                locations
                     .into_iter()
                     .map(|location| {
                         let buffer = location.buffer.read(cx);
@@ -1370,13 +1431,11 @@ impl Editor {
                 return anyhow::Ok(Navigated::No);
             }
             for ranges in locations.values_mut() {
-                *ranges = cap_navigation_ranges_for_buffer(std::mem::take(ranges));
                 ranges.sort_unstable_by_key(|range| (range.start, Reverse(range.end)));
                 ranges.dedup();
             }
             let mut num_locations = 0;
             for ranges in locations.values_mut() {
-                *ranges = cap_navigation_ranges_for_buffer(std::mem::take(ranges));
                 ranges.sort_unstable_by_key(|range| (range.start, Reverse(range.end)));
                 ranges.dedup();
                 num_locations += ranges.len();
@@ -1612,7 +1671,7 @@ impl Editor {
     pub(super) fn go_to_line<T: 'static>(
         &mut self,
         position: Anchor,
-        highlight_color: Option<Hsla>,
+        highlight_color: fn(&App) -> Hsla,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -1625,13 +1684,7 @@ impl Editor {
         let start = snapshot.buffer_snapshot().anchor_before(start);
         let end = snapshot.buffer_snapshot().anchor_before(end);
 
-        self.highlight_rows::<T>(
-            start..end,
-            highlight_color
-                .unwrap_or_else(|| cx.theme().colors().editor_highlighted_line_background),
-            Default::default(),
-            cx,
-        );
+        self.highlight_rows::<T>(start..end, highlight_color, Default::default(), cx);
 
         if self.buffer.read(cx).is_singleton() {
             self.request_autoscroll(Autoscroll::center().for_anchor(start), cx);
@@ -1649,14 +1702,8 @@ impl Editor {
     ) -> Task<Result<Navigated>> {
         // Separate out url and file links, we can only handle one of them at most or an arbitrary number of locations
         let mut first_url_or_file = None;
-        if definitions.len() > MAX_NAVIGATION_HOVER_LINKS {
-            log::warn!(
-                "capping hover navigation links from {} to {}",
-                definitions.len(),
-                MAX_NAVIGATION_HOVER_LINKS
-            );
-        }
-        let definitions: Vec<_> = cap_hover_links_for_navigation(definitions)
+        let definitions: Vec<_> = definitions
+            .into_iter()
             .filter_map(|def| match def {
                 HoverLink::Text(link) => Some(Task::ready(anyhow::Ok(Some(link.target)))),
                 HoverLink::LspLocation(lsp_location, server_id) => {
@@ -1673,14 +1720,7 @@ impl Editor {
                     None
                 }
             })
-            .take(MAX_NAVIGATION_LOCATION_TASKS)
             .collect();
-        if definitions.len() == MAX_NAVIGATION_LOCATION_TASKS {
-            log::warn!(
-                "capping hover navigation location tasks at {}",
-                MAX_NAVIGATION_LOCATION_TASKS
-            );
-        }
 
         let workspace = self.workspace();
 
@@ -1692,12 +1732,8 @@ impl Editor {
                 .filter_map(|location| location.transpose())
                 .collect::<Result<_>>()
                 .context("location tasks")?;
-            let mut bounded_locations = Vec::new();
-            for location in locations {
-                push_navigation_location(&mut bounded_locations, location);
-            }
             let mut locations = cx.update(|_, cx| {
-                bounded_locations
+                locations
                     .into_iter()
                     .map(|location| {
                         let buffer = location.buffer.read(cx);
@@ -1707,7 +1743,6 @@ impl Editor {
             })?;
             let mut num_locations = 0;
             for ranges in locations.values_mut() {
-                *ranges = cap_navigation_ranges_for_buffer(std::mem::take(ranges));
                 ranges.sort_unstable_by_key(|range| (range.start, Reverse(range.end)));
                 ranges.dedup();
                 // Merge overlapping or contained ranges. After sorting by
@@ -1848,7 +1883,6 @@ impl Editor {
                 editor.update_in(cx, |editor, window, cx| {
                     let target_ranges = target_ranges
                         .into_iter()
-                        .take(MAX_NAVIGATION_RANGES_PER_BUFFER)
                         .map(|r| editor.range_for_match(&r))
                         .map(collapse_multiline_range)
                         .collect::<Vec<_>>();
@@ -1858,7 +1892,6 @@ impl Editor {
                         let multibuffer = editor.buffer.read(cx);
                         let target_ranges = target_ranges
                             .into_iter()
-                            .take(MAX_NAVIGATION_RANGES_PER_BUFFER)
                             .filter_map(|r| {
                                 let start = multibuffer.buffer_point_to_anchor(
                                     &target_buffer,
@@ -2124,6 +2157,25 @@ impl Editor {
         self.go_to_symbol_by_offset(window, cx, -1).detach();
     }
 
+    /// Opens `location` and jumps to it through the same path as
+    /// go-to-definition, so selection, autoscroll, and jumplist tagging all
+    /// match. `split` opens it in the adjacent pane. Called on the editor the
+    /// jump originates from.
+    pub fn open_location(
+        &mut self,
+        location: Location,
+        split: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<Navigated>> {
+        let origin = self.navigation_entry(self.selections.newest_anchor().head(), cx);
+        let link = HoverLink::Text(LocationLink {
+            origin: None,
+            target: location,
+        });
+        self.navigate_to_hover_links(None, vec![link], origin, split, window, cx)
+    }
+
     /// Opens a multibuffer with the given project locations in it.
     pub(super) fn open_locations_in_multibuffer(
         workspace: &mut Workspace,
@@ -2150,10 +2202,6 @@ impl Editor {
             let key = &mut key.1;
             let mut multibuffer = MultiBuffer::new(capability);
             for (buffer, mut ranges_for_buffer) in locations {
-                ranges_for_buffer = cap_navigation_ranges_for_buffer(ranges_for_buffer);
-                if ranges_for_buffer.is_empty() {
-                    continue;
-                }
                 ranges_for_buffer.sort_by_key(|range| (range.start, Reverse(range.end)));
                 key.push((buffer.read(cx).remote_id(), ranges_for_buffer.clone()));
                 multibuffer.set_excerpts_for_path(
@@ -2297,14 +2345,7 @@ impl Editor {
                         snapshot.anchor_in_excerpt(buffer_snapshot.anchor_after(range.start))
                     })
             })
-            .take(MAX_NAVIGATION_EXCERPT_ANCHORS)
             .collect::<Vec<_>>();
-        if excerpt_anchors.len() == MAX_NAVIGATION_EXCERPT_ANCHORS {
-            log::warn!(
-                "capping excerpt expansion anchors at {}",
-                MAX_NAVIGATION_EXCERPT_ANCHORS
-            );
-        }
 
         if self.delegate_expand_excerpts {
             cx.emit(EditorEvent::ExpandExcerptsRequested {
@@ -2352,17 +2393,13 @@ impl Editor {
                 .update_in(cx, |editor, window, cx| {
                     editor.navigate_to_hover_links(
                         Some(kind),
-                        cap_hover_links_for_navigation(
-                            definitions
-                                .into_iter()
-                                .filter(|location| {
-                                    hover_links::exclude_link_to_position(
-                                        &buffer, &head, location, cx,
-                                    )
-                                })
-                                .map(HoverLink::Text),
-                        )
-                        .collect::<Vec<_>>(),
+                        definitions
+                            .into_iter()
+                            .filter(|location| {
+                                hover_links::exclude_link_to_position(&buffer, &head, location, cx)
+                            })
+                            .map(HoverLink::Text)
+                            .collect::<Vec<_>>(),
                         nav_entry,
                         split,
                         window,
@@ -2455,27 +2492,14 @@ impl Editor {
             .background_highlights
             .get(&HighlightKey::DocumentHighlightRead)
         {
-            all_highlights.extend(
-                read_highlights
-                    .iter()
-                    .take(MAX_DOCUMENT_HIGHLIGHTS_TO_NAVIGATE),
-            );
+            all_highlights.extend(read_highlights.iter());
         }
 
         if let Some((_, write_highlights)) = self
             .background_highlights
             .get(&HighlightKey::DocumentHighlightWrite)
         {
-            let remaining =
-                MAX_DOCUMENT_HIGHLIGHTS_TO_NAVIGATE.saturating_sub(all_highlights.len());
-            all_highlights.extend(write_highlights.iter().take(remaining));
-        }
-
-        if all_highlights.len() == MAX_DOCUMENT_HIGHLIGHTS_TO_NAVIGATE {
-            log::warn!(
-                "capping document highlights considered for navigation at {}",
-                MAX_DOCUMENT_HIGHLIGHTS_TO_NAVIGATE
-            );
+            all_highlights.extend(write_highlights.iter());
         }
 
         if all_highlights.is_empty() {

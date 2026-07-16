@@ -3,7 +3,7 @@ use csv_preview::{
     TabularDataPreviewFeatureFlag,
 };
 use feature_flags::FeatureFlagAppExt as _;
-use gpui::{AnyElement, Modifiers};
+use gpui::{AnyElement, Modifiers, WeakEntity};
 use markdown_preview::{
     OpenPreview as MarkdownOpenPreview, OpenPreviewToTheSide as MarkdownOpenPreviewToTheSide,
     markdown_preview_view::MarkdownPreviewView,
@@ -13,6 +13,7 @@ use svg_preview::{
     svg_preview_view::SvgPreviewView,
 };
 use ui::{Tooltip, prelude::*, text_for_keystroke};
+use workspace::Workspace;
 
 use super::QuickActionBar;
 
@@ -26,7 +27,7 @@ enum PreviewType {
 impl QuickActionBar {
     pub fn render_preview_button(
         &self,
-        workspace_handle: gpui::WeakEntity<workspace::Workspace>,
+        workspace_handle: WeakEntity<Workspace>,
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
         let mut preview_type = None;

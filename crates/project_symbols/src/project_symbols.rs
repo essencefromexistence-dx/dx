@@ -2,13 +2,13 @@ use editor::{Bias, Editor, SelectionEffects, scroll::Autoscroll, styled_runs_for
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
     App, Context, DismissEvent, Entity, HighlightStyle, ParentElement, StyledText, Task, TaskExt,
-    TextStyle, WeakEntity, Window, relative, rems,
+    TextStyle, WeakEntity, Window, relative,
 };
 use ordered_float::OrderedFloat;
-use picker::{Picker, PickerDelegate};
+use picker::{Picker, PickerDelegate, PreviewUpdate};
 use project::{Project, Symbol, lsp_store::SymbolLocation};
 use settings::Settings;
-use std::{cmp::Reverse, ops::Range, sync::Arc};
+use std::{cmp::Reverse, sync::Arc};
 use theme::ActiveTheme;
 use theme_settings::ThemeSettings;
 use util::ResultExt;
@@ -25,8 +25,9 @@ pub fn init(cx: &mut App) {
                     let project = workspace.project().clone();
                     let handle = cx.entity().downgrade();
                     workspace.toggle_modal(window, cx, move |window, cx| {
-                        let delegate = ProjectSymbolsDelegate::new(handle, project);
-                        Picker::uniform_list(delegate, window, cx).width(rems(34.))
+                        let delegate = ProjectSymbolsDelegate::new(handle, project.clone());
+                        let preview = picker_preview::editor_preview(project, window, cx);
+                        Picker::uniform_list_with_preview(delegate, preview, window, cx)
                     })
                 },
             );
@@ -36,19 +37,6 @@ pub fn init(cx: &mut App) {
 }
 
 pub type ProjectSymbols = Entity<Picker<ProjectSymbolsDelegate>>;
-
-fn fuzzy_highlight_range(label: &str, position: usize) -> Option<Range<usize>> {
-    if position >= label.len() || !label.is_char_boundary(position) {
-        return None;
-    }
-
-    let end = label[position..]
-        .char_indices()
-        .nth(1)
-        .map(|(next, _)| position + next)
-        .unwrap_or(label.len());
-    Some(position..end)
-}
 
 pub struct ProjectSymbolsDelegate {
     workspace: WeakEntity<Workspace>,
@@ -78,7 +66,7 @@ impl ProjectSymbolsDelegate {
     // Note if you make changes to this, also change `agent_ui::completion_provider::search_symbols`
     fn filter(&mut self, query: &str, window: &mut Window, cx: &mut Context<Picker<Self>>) {
         const MAX_MATCHES: usize = 100;
-        let visible_matches = cx.foreground_executor().block_on(fuzzy::match_strings(
+        let mut visible_matches = cx.foreground_executor().block_on(fuzzy::match_strings(
             &self.visible_match_candidates,
             query,
             false,
@@ -87,7 +75,7 @@ impl ProjectSymbolsDelegate {
             &Default::default(),
             cx.background_executor().clone(),
         ));
-        let external_matches = cx.foreground_executor().block_on(fuzzy::match_strings(
+        let mut external_matches = cx.foreground_executor().block_on(fuzzy::match_strings(
             &self.external_match_candidates,
             query,
             false,
@@ -96,33 +84,23 @@ impl ProjectSymbolsDelegate {
             &Default::default(),
             cx.background_executor().clone(),
         ));
-        let prepare_matches = |matches: Vec<StringMatch>| -> Vec<StringMatch> {
-            matches
-                .into_iter()
-                .filter_map(|mut mat| {
-                    let symbol = self.symbols.get(mat.candidate_id)?;
-                    let filter_start = symbol.label.filter_range.start;
-                    for position in &mut mat.positions {
-                        *position += filter_start;
-                    }
-                    Some(mat)
-                })
-                .collect()
-        };
-        let mut visible_matches = prepare_matches(visible_matches);
-        let mut external_matches = prepare_matches(external_matches);
         let sort_key_for_match = |mat: &StringMatch| {
-            let symbol_filter_text = self
-                .symbols
-                .get(mat.candidate_id)
-                .map(|symbol| symbol.label.filter_text());
-            (Reverse(OrderedFloat(mat.score)), symbol_filter_text)
+            let symbol = &self.symbols[mat.candidate_id];
+            (Reverse(OrderedFloat(mat.score)), symbol.label.filter_text())
         };
 
         visible_matches.sort_unstable_by_key(sort_key_for_match);
         external_matches.sort_unstable_by_key(sort_key_for_match);
         let mut matches = visible_matches;
         matches.append(&mut external_matches);
+
+        for mat in &mut matches {
+            let symbol = &self.symbols[mat.candidate_id];
+            let filter_start = symbol.label.filter_range.start;
+            for position in &mut mat.positions {
+                *position += filter_start;
+            }
+        }
 
         self.matches = matches;
         self.set_selected_index(0, window, cx);
@@ -131,6 +109,10 @@ impl ProjectSymbolsDelegate {
 
 impl PickerDelegate for ProjectSymbolsDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "project symbols"
+    }
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Search project symbols...".into()
     }
@@ -139,8 +121,7 @@ impl PickerDelegate for ProjectSymbolsDelegate {
         if let Some(symbol) = self
             .matches
             .get(self.selected_match_index)
-            .and_then(|mat| self.symbols.get(mat.candidate_id))
-            .cloned()
+            .map(|mat| self.symbols[mat.candidate_id].clone())
         {
             let buffer = self.project.update(cx, |project, cx| {
                 project.open_buffer_for_symbol(&symbol, cx)
@@ -207,6 +188,12 @@ impl PickerDelegate for ProjectSymbolsDelegate {
         self.selected_match_index = ix;
     }
 
+    fn try_get_preview_data_for_match(&self, _cx: &App) -> Option<PreviewUpdate> {
+        let candidate_id = self.matches.get(self.selected_match_index)?.candidate_id;
+        let symbol = self.symbols.get(candidate_id)?.clone();
+        Some(PreviewUpdate::from_symbol(symbol))
+    }
+
     fn update_matches(
         &mut self,
         query: String,
@@ -267,7 +254,7 @@ impl PickerDelegate for ProjectSymbolsDelegate {
     ) -> Option<Self::ListItem> {
         let path_style = self.project.read(cx).path_style(cx);
         let string_match = &self.matches.get(ix)?;
-        let symbol = self.symbols.get(string_match.candidate_id)?;
+        let symbol = &self.symbols.get(string_match.candidate_id)?;
         let theme = cx.theme();
         let local_player = theme.players().local();
         let syntax_runs = styled_runs_for_code_label(&symbol.label, theme.syntax(), &local_player);
@@ -275,7 +262,7 @@ impl PickerDelegate for ProjectSymbolsDelegate {
         let path = match &symbol.path {
             SymbolLocation::InProject(project_path) => {
                 let project = self.project.read(cx);
-                let mut path = project_path.path.clone();
+                let mut path = project_path.path.to_rel_path_buf();
                 if self.show_worktree_root_name
                     && let Some(worktree) = project.worktree_for_id(project_path.worktree_id, cx)
                 {
@@ -312,8 +299,7 @@ impl PickerDelegate for ProjectSymbolsDelegate {
         let custom_highlights = string_match
             .positions
             .iter()
-            .filter_map(|pos| fuzzy_highlight_range(&label, *pos))
-            .map(|range| (range, highlight_style));
+            .map(|pos| (*pos..label.ceil_char_boundary(pos + 1), highlight_style));
 
         let highlights = gpui::combine_highlights(custom_highlights, syntax_runs);
 
@@ -441,7 +427,7 @@ mod tests {
                     Ok(Some(lsp::WorkspaceSymbolResponse::Flat(
                         matches
                             .into_iter()
-                            .filter_map(|mat| fake_symbols.get(mat.candidate_id).cloned())
+                            .map(|mat| fake_symbols[mat.candidate_id].clone())
                             .collect(),
                     )))
                 }
@@ -577,7 +563,7 @@ mod tests {
                     Ok(Some(lsp::WorkspaceSymbolResponse::Flat(
                         matches
                             .into_iter()
-                            .filter_map(|mat| fake_symbols.get(mat.candidate_id).cloned())
+                            .map(|mat| fake_symbols[mat.candidate_id].clone())
                             .collect(),
                     )))
                 }

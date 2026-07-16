@@ -7,9 +7,9 @@ use crate::provider::{
     anthropic, anthropic::AnthropicSettings, anthropic_compatible::AnthropicCompatibleSettings,
     bedrock, bedrock::AmazonBedrockSettings, cloud::ZedDotDevSettings, deepseek::DeepSeekSettings,
     google::GoogleSettings, llama_cpp::LlamaCppSettings, lmstudio::LmStudioSettings, mistral,
-    mistral::MistralSettings, nara_router::NaraRouterSettings, ollama::OllamaSettings,
-    open_ai::OpenAiSettings, open_ai_compatible::OpenAiCompatibleSettings, open_router,
-    open_router::OpenRouterSettings, opencode, opencode::OpenCodeSettings, resolve_custom_headers,
+    mistral::MistralSettings, ollama::OllamaSettings, open_ai::OpenAiSettings,
+    open_ai_compatible::OpenAiCompatibleSettings, open_router, open_router::OpenRouterSettings,
+    opencode, opencode::OpenCodeSettings, resolve_custom_headers,
     vercel_ai_gateway::VercelAiGatewaySettings, x_ai::XAiSettings,
 };
 
@@ -23,7 +23,6 @@ pub struct AllLanguageModelSettings {
     pub llama_cpp: LlamaCppSettings,
     pub lmstudio: LmStudioSettings,
     pub mistral: MistralSettings,
-    pub nara_router: NaraRouterSettings,
     pub ollama: OllamaSettings,
     pub opencode: OpenCodeSettings,
     pub open_router: OpenRouterSettings,
@@ -54,7 +53,6 @@ impl settings::Settings for AllLanguageModelSettings {
         let anthropic_compatible = language_models.anthropic_compatible.unwrap();
         let bedrock = language_models.bedrock.unwrap();
         let deepseek = language_models.deepseek.unwrap();
-        let nara_router = language_models.nara_router.unwrap();
         let google = language_models.google.unwrap();
         let llama_cpp = language_models.llama_cpp.unwrap();
         let lmstudio = language_models.lmstudio.unwrap();
@@ -97,6 +95,7 @@ impl settings::Settings for AllLanguageModelSettings {
                 .collect(),
             bedrock: AmazonBedrockSettings {
                 available_models: bedrock.available_models.unwrap_or_default(),
+                mantle_available_models: bedrock.mantle_available_models.unwrap_or_default(),
                 custom_headers: custom_headers_from(
                     "Amazon Bedrock",
                     bedrock.custom_headers,
@@ -116,11 +115,6 @@ impl settings::Settings for AllLanguageModelSettings {
                 available_models: deepseek.available_models.unwrap_or_default(),
                 custom_headers: custom_headers_from("DeepSeek", deepseek.custom_headers, &[]),
             },
-            nara_router: NaraRouterSettings {
-                api_url: nara_router.api_url.unwrap(),
-                available_models: nara_router.available_models.unwrap_or_default(),
-                custom_headers: custom_headers_from("NaraRouter", nara_router.custom_headers, &[]),
-            },
             google: GoogleSettings {
                 api_url: google.api_url.unwrap(),
                 available_models: google.available_models.unwrap_or_default(),
@@ -128,22 +122,10 @@ impl settings::Settings for AllLanguageModelSettings {
             },
             llama_cpp: LlamaCppSettings {
                 api_url: llama_cpp.api_url.unwrap(),
-                host: llama_cpp.host.unwrap(),
-                port: llama_cpp.port.unwrap(),
-                server_path: llama_cpp.server_path,
-                models_dir: llama_cpp.models_dir,
-                cache_dir: llama_cpp.cache_dir,
-                tools_dir: llama_cpp.tools_dir,
-                auto_start: llama_cpp.auto_start.unwrap_or(true),
-                auto_download_models: llama_cpp.auto_download_models.unwrap_or(true),
-                auto_install_server: llama_cpp.auto_install_server.unwrap_or(true),
-                auto_discover_local_models: llama_cpp.auto_discover_local_models.unwrap_or(true),
-                context_window: llama_cpp.context_window.unwrap_or(8192),
-                threads: llama_cpp.threads,
-                gpu_layers: llama_cpp.gpu_layers,
-                normal_model: llama_cpp.normal_model.unwrap(),
-                low_spec_model: llama_cpp.low_spec_model.unwrap(),
+                auto_discover: llama_cpp.auto_discover.unwrap_or(true),
                 available_models: llama_cpp.available_models.unwrap_or_default(),
+                context_window: llama_cpp.context_window,
+                custom_headers: custom_headers_from("llama.cpp", llama_cpp.custom_headers, &[]),
             },
             lmstudio: LmStudioSettings {
                 api_url: lmstudio.api_url.unwrap(),

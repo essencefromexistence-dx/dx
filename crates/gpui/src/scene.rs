@@ -22,6 +22,20 @@ pub type PathVertex_ScaledPixels = PathVertex<ScaledPixels>;
 #[expect(missing_docs)]
 pub type DrawOrder = u32;
 
+/// A boolean stored as a `u32` so that GPU-facing structs contain no
+/// compiler-inserted padding bytes, which would be undefined behavior to
+/// reinterpret as `&[u8]` when writing instance buffers. Guaranteed to be
+/// `0` or `1` by construction; shaders read it as a `u32`/`uint`.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct PaddedBool32(u32);
+
+impl From<bool> for PaddedBool32 {
+    fn from(value: bool) -> Self {
+        PaddedBool32(value as u32)
+    }
+}
+
 #[derive(Default)]
 #[expect(missing_docs)]
 pub struct Scene {
@@ -35,6 +49,7 @@ pub struct Scene {
     pub monochrome_sprites: Vec<MonochromeSprite>,
     pub subpixel_sprites: Vec<SubpixelSprite>,
     pub polychrome_sprites: Vec<PolychromeSprite>,
+    /// Dx Liquid Glass instances for the GPUI glass renderer.
     pub liquid_glass: Vec<LiquidGlass>,
     pub surfaces: Vec<PaintSurface>,
 }
@@ -519,6 +534,7 @@ pub enum PrimitiveBatch {
         texture_id: AtlasTextureId,
         range: Range<usize>,
     },
+    /// Dx Liquid Glass batch.
     LiquidGlass {
         texture_id: AtlasTextureId,
         range: Range<usize>,
@@ -556,7 +572,7 @@ pub struct Underline {
     pub content_mask: ContentMask<ScaledPixels>,
     pub color: Hsla,
     pub thickness: ScaledPixels,
-    pub wavy: u32,
+    pub wavy: PaddedBool32,
 }
 
 impl From<Underline> for Primitive {
@@ -746,7 +762,7 @@ impl From<SubpixelSprite> for Primitive {
 pub struct PolychromeSprite {
     pub order: DrawOrder,
     pub pad: u32,
-    pub grayscale: bool,
+    pub grayscale: PaddedBool32,
     pub opacity: f32,
     pub bounds: Bounds<ScaledPixels>,
     pub content_mask: ContentMask<ScaledPixels>,
@@ -760,6 +776,7 @@ impl From<PolychromeSprite> for Primitive {
     }
 }
 
+/// Parameters for painting a Liquid Glass surface (Dx).
 #[derive(Clone, Debug)]
 #[expect(missing_docs)]
 pub struct LiquidGlassParams {
@@ -783,6 +800,7 @@ pub struct LiquidGlassParams {
     pub blur_downscale: f32,
 }
 
+/// GPU instance data for a Liquid Glass primitive (Dx).
 #[derive(Clone, Debug)]
 #[repr(C)]
 #[expect(missing_docs)]

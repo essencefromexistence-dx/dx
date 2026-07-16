@@ -1,4 +1,4 @@
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use agent_ui::AgentPanel;
 use anyhow::{Context as _, Result, anyhow, bail};
 use base64::Engine as _;
@@ -31,8 +31,8 @@ use std::{
 #[cfg(target_os = "windows")]
 use std::{io::Cursor, num::NonZeroIsize};
 use ui::{
-    Color, ContextMenu, ContextMenuEntry, IconButton, IconName, IconSize, Label, LabelSize,
-    PopoverMenu, Tooltip, prelude::*,
+    Color, CommonAnimationExt, ContextMenu, ContextMenuEntry, IconButton, IconName, IconSize, Label,
+    LabelSize, PopoverMenu, Tooltip, prelude::*,
 };
 use uuid::Uuid;
 use workspace::item::{

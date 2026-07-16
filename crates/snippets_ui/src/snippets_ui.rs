@@ -33,8 +33,6 @@ impl ScopeFileName {
 
 const GLOBAL_SCOPE_NAME: &str = "global";
 const GLOBAL_SCOPE_FILE_NAME: &str = "snippets";
-const MAX_SNIPPET_SCOPE_CANDIDATES: usize = 2_000;
-const MAX_EXISTING_SNIPPET_SCOPE_FILES: usize = 4_000;
 
 impl From<ScopeName> for ScopeFileName {
     fn from(value: ScopeName) -> Self {
@@ -131,7 +129,7 @@ impl Focusable for ScopeSelector {
 
 impl Render for ScopeSelector {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        v_flex().w(rems(34.)).child(self.picker.clone())
+        v_flex().child(self.picker.clone())
     }
 }
 
@@ -151,10 +149,7 @@ impl ScopeSelectorDelegate {
         scope_selector: WeakEntity<ScopeSelector>,
         language_registry: Arc<LanguageRegistry>,
     ) -> Self {
-        let languages = language_registry
-            .language_names()
-            .into_iter()
-            .take(MAX_SNIPPET_SCOPE_CANDIDATES.saturating_sub(1));
+        let languages = language_registry.language_names().into_iter();
 
         let candidates = std::iter::once(LanguageName::new(GLOBAL_SCOPE_NAME))
             .chain(languages)
@@ -165,7 +160,7 @@ impl ScopeSelectorDelegate {
         let mut existing_scopes = HashSet::new();
 
         if let Some(read_dir) = fs::read_dir(snippets_dir()).log_err() {
-            for entry in read_dir.take(MAX_EXISTING_SNIPPET_SCOPE_FILES) {
+            for entry in read_dir {
                 if let Some(entry) = entry.log_err() {
                     let path = entry.path();
                     if let (Some(stem), Some(extension)) = (path.file_stem(), path.extension())
@@ -204,6 +199,10 @@ impl ScopeSelectorDelegate {
 impl PickerDelegate for ScopeSelectorDelegate {
     type ListItem = ListItem;
 
+    fn name() -> &'static str {
+        "snippet scope selector"
+    }
+
     fn placeholder_text(&self, _window: &mut Window, _: &mut App) -> Arc<str> {
         "Select snippet scope...".into()
     }
@@ -213,46 +212,38 @@ impl PickerDelegate for ScopeSelectorDelegate {
     }
 
     fn confirm(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
-        let Some(mat) = self.matches.get(self.selected_index) else {
-            self.dismissed(window, cx);
-            return;
-        };
+        if let Some(mat) = self.matches.get(self.selected_index) {
+            let scope_name = self.candidates[mat.candidate_id].string.clone();
+            let language = self.language_registry.language_for_name(&scope_name);
 
-        let Some(candidate) = self.candidates.get(mat.candidate_id) else {
-            self.dismissed(window, cx);
-            return;
-        };
+            if let Some(workspace) = self.workspace.upgrade() {
+                cx.spawn_in(window, async move |_, cx| {
+                    let scope_file_name = ScopeFileName(match scope_name.to_lowercase().as_str() {
+                        GLOBAL_SCOPE_NAME => Cow::Borrowed(GLOBAL_SCOPE_FILE_NAME),
+                        _ => Cow::Owned(language.await?.lsp_id()),
+                    });
 
-        let scope_name = candidate.string.clone();
-        let language = self.language_registry.language_for_name(&scope_name);
-
-        if let Some(workspace) = self.workspace.upgrade() {
-            cx.spawn_in(window, async move |_, cx| {
-                let scope_file_name = ScopeFileName(match scope_name.to_lowercase().as_str() {
-                    GLOBAL_SCOPE_NAME => Cow::Borrowed(GLOBAL_SCOPE_FILE_NAME),
-                    _ => Cow::Owned(language.await?.lsp_id()),
-                });
-
-                workspace.update_in(cx, |workspace, window, cx| {
-                    workspace
-                        .with_local_workspace(window, cx, |workspace, window, cx| {
-                            workspace
-                                .open_abs_path(
-                                    snippets_dir().join(scope_file_name.with_extension()),
-                                    OpenOptions {
-                                        visible: Some(OpenVisible::None),
-                                        ..Default::default()
-                                    },
-                                    window,
-                                    cx,
-                                )
-                                .detach();
-                        })
-                        .detach();
+                    workspace.update_in(cx, |workspace, window, cx| {
+                        workspace
+                            .with_local_workspace(window, cx, |workspace, window, cx| {
+                                workspace
+                                    .open_abs_path(
+                                        snippets_dir().join(scope_file_name.with_extension()),
+                                        OpenOptions {
+                                            visible: Some(OpenVisible::None),
+                                            ..Default::default()
+                                        },
+                                        window,
+                                        cx,
+                                    )
+                                    .detach();
+                            })
+                            .detach();
+                    })
                 })
-            })
-            .detach_and_log_err(cx);
-        };
+                .detach_and_log_err(cx);
+            };
+        }
         self.dismissed(window, cx);
     }
 
@@ -328,10 +319,11 @@ impl PickerDelegate for ScopeSelectorDelegate {
         cx: &mut Context<Picker<Self>>,
     ) -> Option<Self::ListItem> {
         let mat = &self.matches.get(ix)?;
-        let candidate = self.candidates.get(mat.candidate_id)?;
         let name_label = mat.string.clone();
 
-        let scope_name = ScopeName(Cow::Owned(LanguageName::new(&candidate.string).lsp_id()));
+        let scope_name = ScopeName(Cow::Owned(
+            LanguageName::new(&self.candidates[mat.candidate_id].string).lsp_id(),
+        ));
         let file_label = if self.existing_scopes.contains(&scope_name) {
             Some(ScopeFileName::from(scope_name).with_extension())
         } else {

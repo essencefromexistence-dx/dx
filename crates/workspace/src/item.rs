@@ -35,24 +35,6 @@ use ui::{Color, Icon, IntoElement, Label, LabelCommon};
 use util::ResultExt;
 
 pub const LEADER_UPDATE_THROTTLE: Duration = Duration::from_millis(200);
-const MAX_PROJECT_ITEMS_PER_ITEM: usize = 512;
-
-fn should_collect_project_item(visited: &mut usize, truncated: &mut bool) -> bool {
-    if *visited >= MAX_PROJECT_ITEMS_PER_ITEM {
-        *truncated = true;
-        return false;
-    }
-
-    *visited += 1;
-    true
-}
-
-fn log_project_item_collection_truncated(collection_name: &str) {
-    Err::<(), _>(anyhow::anyhow!(
-        "{collection_name} project item collection exceeded cap (max {MAX_PROJECT_ITEMS_PER_ITEM})"
-    ))
-    .log_err();
-}
 
 #[derive(Clone, Copy, Debug)]
 pub struct SaveOptions {
@@ -173,6 +155,12 @@ impl TabContentParams {
     }
 }
 
+pub enum TabTooltipContent {
+    Text(SharedString),
+    Custom(Box<dyn Fn(&mut Window, &mut App) -> AnyView>),
+}
+
+/// Dx: optional custom start/end slots for a pane tab bar when this item is active.
 pub struct PaneTabBarControls {
     pub start: Option<AnyElement>,
     pub end: Option<AnyElement>,
@@ -184,6 +172,7 @@ impl PaneTabBarControls {
     }
 }
 
+/// Dx workspace carousel / screen model (editor, browser preview, agent, etc.).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum WorkspaceScreenKind {
     Agent,
@@ -195,11 +184,6 @@ pub enum WorkspaceScreenKind {
     Terminal,
     Onboarding,
     Other,
-}
-
-pub enum TabTooltipContent {
-    Text(SharedString),
-    Custom(Box<dyn Fn(&mut Window, &mut App) -> AnyView>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -272,10 +256,12 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         None
     }
 
+    /// Dx: which workspace screen this item belongs to (carousel / routing).
     fn screen_kind(&self) -> WorkspaceScreenKind {
         WorkspaceScreenKind::Other
     }
 
+    /// Dx: optional overlay drawn over the workspace when this item is active.
     fn workspace_overlay(
         &mut self,
         _window: &mut Window,
@@ -284,6 +270,7 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         None
     }
 
+    /// Dx: web preview / glass items may need a transparent workspace background.
     fn requires_transparent_workspace_background() -> bool
     where
         Self: Sized,
@@ -430,6 +417,7 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         true
     }
 
+    /// Dx: optional custom controls for the pane tab bar while this item is active.
     fn pane_tab_bar_controls(
         &self,
         _window: &mut Window,
@@ -438,7 +426,7 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         None
     }
 
-    /// Called when the item's tab is clicked.
+    /// Dx: called when the item's tab is clicked.
     /// Return `true` to consume the click and suppress the pane's default tab activation logic.
     fn on_tab_click(
         &mut self,
@@ -450,7 +438,7 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         false
     }
 
-    /// Called when the pane receives `menu::Confirm` while the item's tab content owns focus.
+    /// Dx: called when the pane receives `menu::Confirm` while the item's tab content owns focus.
     /// Return `true` to consume the action.
     fn on_tab_confirm(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> bool {
         false
@@ -576,6 +564,7 @@ pub trait ItemHandle: 'static + Send {
     fn tab_tooltip_text(&self, cx: &App) -> Option<SharedString>;
     fn tab_tooltip_content(&self, cx: &App) -> Option<TabTooltipContent>;
     fn telemetry_event_text(&self, cx: &App) -> Option<&'static str>;
+    /// Dx screen routing for carousel / multi-screen workspace.
     fn screen_kind(&self, cx: &App) -> WorkspaceScreenKind;
     fn workspace_overlay(&self, window: &mut Window, cx: &mut App) -> Option<AnyElement>;
     fn dragged_tab_content(
@@ -672,6 +661,7 @@ pub trait ItemHandle: 'static + Send {
     fn downgrade_item(&self) -> Box<dyn WeakItemHandle>;
     fn workspace_settings<'a>(&self, cx: &'a App) -> &'a WorkspaceSettings;
     fn preserve_preview(&self, cx: &App) -> bool;
+    fn requires_transparent_workspace_background(&self) -> bool;
     fn include_in_nav_history(&self) -> bool;
     fn relay_action(&self, action: Box<dyn Action>, window: &mut Window, cx: &mut App);
     fn handle_drop(
@@ -681,12 +671,12 @@ pub trait ItemHandle: 'static + Send {
         window: &mut Window,
         cx: &mut App,
     ) -> bool;
+    // ItemHandle keeps &self; the Entity update path supplies &mut Self to Item::handle_drop.
     fn tab_extra_context_menu_actions(
         &self,
         window: &mut Window,
         cx: &mut App,
     ) -> Vec<(SharedString, Box<dyn Action>)>;
-    fn requires_transparent_workspace_background(&self) -> bool;
     fn can_autosave(&self, cx: &App) -> bool {
         let is_deleted = self.project_entry_ids(cx).is_empty();
         self.is_dirty(cx) && !self.has_conflict(cx) && self.can_save(cx) && !is_deleted
@@ -797,53 +787,29 @@ impl<T: Item> ItemHandle for Entity<T> {
 
     fn project_entry_ids(&self, cx: &App) -> SmallVec<[ProjectEntryId; 3]> {
         let mut result = SmallVec::new();
-        let mut visited = 0;
-        let mut truncated = false;
         self.read(cx).for_each_project_item(cx, &mut |_, item| {
-            if !should_collect_project_item(&mut visited, &mut truncated) {
-                return;
-            }
             if let Some(id) = item.entry_id(cx) {
                 result.push(id);
             }
         });
-        if truncated {
-            log_project_item_collection_truncated("project_entry_ids");
-        }
         result
     }
 
     fn project_paths(&self, cx: &App) -> SmallVec<[ProjectPath; 3]> {
         let mut result = SmallVec::new();
-        let mut visited = 0;
-        let mut truncated = false;
         self.read(cx).for_each_project_item(cx, &mut |_, item| {
-            if !should_collect_project_item(&mut visited, &mut truncated) {
-                return;
-            }
             if let Some(id) = item.project_path(cx) {
                 result.push(id);
             }
         });
-        if truncated {
-            log_project_item_collection_truncated("project_paths");
-        }
         result
     }
 
     fn project_item_model_ids(&self, cx: &App) -> SmallVec<[EntityId; 3]> {
         let mut result = SmallVec::new();
-        let mut visited = 0;
-        let mut truncated = false;
         self.read(cx).for_each_project_item(cx, &mut |id, _| {
-            if !should_collect_project_item(&mut visited, &mut truncated) {
-                return;
-            }
             result.push(id);
         });
-        if truncated {
-            log_project_item_collection_truncated("project_item_model_ids");
-        }
         result
     }
 
@@ -1304,6 +1270,10 @@ impl<T: Item> ItemHandle for Entity<T> {
         self.read(cx).preserve_preview(cx)
     }
 
+    fn requires_transparent_workspace_background(&self) -> bool {
+        T::requires_transparent_workspace_background()
+    }
+
     fn include_in_nav_history(&self) -> bool {
         T::include_in_nav_history()
     }
@@ -1337,10 +1307,6 @@ impl<T: Item> ItemHandle for Entity<T> {
         self.update(cx, |this, cx| {
             this.tab_extra_context_menu_actions(window, cx)
         })
-    }
-
-    fn requires_transparent_workspace_background(&self) -> bool {
-        T::requires_transparent_workspace_background()
     }
 }
 

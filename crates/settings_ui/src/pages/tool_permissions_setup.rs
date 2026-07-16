@@ -63,12 +63,6 @@ const TOOLS: &[ToolInfo] = &[
         regex_explanation: "Patterns are matched against the directory path being created.",
     },
     ToolInfo {
-        id: "prepare_agent_plugin_runtime",
-        name: "Agent Plugin Runtime",
-        description: "Managed browser/plugin runtime setup paths",
-        regex_explanation: "Patterns are matched against managed plugin, Playwright, DX extension, browser profile, and manifest paths.",
-    },
-    ToolInfo {
         id: "fetch",
         name: "Fetch",
         description: "HTTP requests to URLs",
@@ -294,6 +288,7 @@ fn render_tool_list_item(
                         tool_name,
                         "Tool Permissions",
                         None,
+                        true,
                         render_fn,
                         window,
                         cx,
@@ -314,9 +309,9 @@ fn get_tool_render_fn(
         "copy_path" => render_copy_path_tool_config,
         "move_path" => render_move_path_tool_config,
         "create_directory" => render_create_directory_tool_config,
-        "prepare_agent_plugin_runtime" => render_agent_plugin_runtime_tool_config,
         "fetch" => render_fetch_tool_config,
         "search_web" => render_web_search_tool_config,
+        "skill" => render_skill_tool_config,
         _ => render_terminal_tool_config, // fallback
     }
 }
@@ -480,7 +475,7 @@ fn render_verification_section(
 
     cx.observe(&editor, |_, _, cx| cx.notify()).detach();
 
-    let focus_handle = editor.focus_handle(cx).tab_index(0_isize).tab_stop(true);
+    let focus_handle = editor.focus_handle(cx).tab_index(0).tab_stop(true);
 
     let current_text = editor.read(cx).text(cx);
     let (decision, matched_patterns) = if current_text.is_empty() {
@@ -983,10 +978,9 @@ fn render_user_pattern_row(
     let delete_id = format!("{}-{:?}-delete-{}", tool_id, rule_type, index);
     let settings_window = cx.entity().downgrade();
 
-    SettingsInputField::new()
-        .with_id(input_id)
+    SettingsInputField::new(input_id)
         .with_initial_text(pattern)
-        .tab_index(0_isize)
+        .tab_index(0)
         .with_buffer_font()
         .color(Color::Default)
         .action_slot(
@@ -1044,10 +1038,9 @@ fn render_add_pattern_input(
     let input_id = format!("{}-{:?}-new-pattern", tool_id, rule_type);
     let settings_window = cx.entity().downgrade();
 
-    SettingsInputField::new()
-        .with_id(input_id)
+    SettingsInputField::new(input_id)
         .with_placeholder("Add regex pattern…")
-        .tab_index(0_isize)
+        .tab_index(0)
         .with_buffer_font()
         .display_clear_button()
         .display_confirm_button()
@@ -1394,12 +1387,9 @@ tool_config_page_fn!(render_delete_path_tool_config, "delete_path");
 tool_config_page_fn!(render_copy_path_tool_config, "copy_path");
 tool_config_page_fn!(render_move_path_tool_config, "move_path");
 tool_config_page_fn!(render_create_directory_tool_config, "create_directory");
-tool_config_page_fn!(
-    render_agent_plugin_runtime_tool_config,
-    "prepare_agent_plugin_runtime"
-);
 tool_config_page_fn!(render_fetch_tool_config, "fetch");
 tool_config_page_fn!(render_web_search_tool_config, "search_web");
+tool_config_page_fn!(render_skill_tool_config, "skill");
 
 #[cfg(test)]
 mod tests {
@@ -1420,7 +1410,6 @@ mod tests {
             "get_code_actions",
             "go_to_definition",
             "grep",
-            "list_agent_plugins",
             "list_agents_and_models",
             "list_directory",
             "open",

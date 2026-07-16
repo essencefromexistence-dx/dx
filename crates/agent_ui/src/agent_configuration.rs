@@ -957,7 +957,6 @@ impl AgentConfiguration {
                         .disabled(!save_draft_available)
                         .tooltip(Tooltip::text(save_draft_tooltip))
                         .on_click({
-                            let save_draft_command = save_draft_command.clone();
                             cx.listener(move |this, _, _window, cx| {
                                 if let Some(command) = save_draft_command.clone() {
                                     this.run_dx_agents_public_action(command, cx);
@@ -972,7 +971,6 @@ impl AgentConfiguration {
                         .disabled(!enable_available)
                         .tooltip(Tooltip::text(enable_tooltip))
                         .on_click({
-                            let enable_command = enable_command.clone();
                             cx.listener(move |this, _, _window, cx| {
                                 if let Some(command) = enable_command.clone() {
                                     this.run_dx_agents_public_action(command, cx);
@@ -2062,6 +2060,7 @@ impl AgentConfiguration {
                 Plan::ZedPro => ("Pro", Color::Accent, pro_chip_bg),
                 Plan::ZedBusiness => ("Business", Color::Accent, pro_chip_bg),
                 Plan::ZedStudent => ("Student", Color::Accent, pro_chip_bg),
+                Plan::ZedVip => ("VIP", Color::Accent, pro_chip_bg),
             };
 
             Chip::new(plan_name.to_string())

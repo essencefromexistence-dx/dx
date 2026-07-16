@@ -4,23 +4,22 @@ use x11rb::connection::RequestConnection;
 use crate::linux::X11ClientStatePtr;
 use gpui::{
     AnyWindowHandle, Bounds, Decorations, DevicePixels, ForegroundExecutor, GpuSpecs, Modifiers,
-    MousePassthroughSnapshot, Pixels, PlatformAtlas, PlatformDisplay, PlatformInput,
-    PlatformInputHandler, PlatformWindow, Point, PromptButton, PromptLevel, RequestFrameOptions,
-    ResizeEdge, ScaledPixels, Scene, Size, Tiling, WindowAppearance, WindowBackgroundAppearance,
-    WindowBounds, WindowControlArea, WindowDecorations, WindowKind, WindowParams, px,
+    Pixels, PlatformAtlas, PlatformDisplay, PlatformInput, PlatformInputHandler, PlatformWindow,
+    Point, PromptButton, PromptLevel, RequestFrameOptions, ResizeEdge, ScaledPixels, Scene, Size,
+    Tiling, WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControlArea,
+    WindowDecorations, WindowKind, WindowParams, popup::PopupNotSupportedError, px,
 };
 use gpui_wgpu::{CompositorGpuHint, WgpuRenderer, WgpuSurfaceConfig};
 
 use collections::FxHashSet;
+use gpui_util::{ResultExt, maybe};
 use raw_window_handle as rwh;
-use util::{ResultExt, maybe};
 use x11rb::{
     connection::Connection,
     cookie::{Cookie, VoidCookie},
     errors::ConnectionError,
-    properties::WmSizeHints,
+    properties::{WmHints, WmSizeHints},
     protocol::{
-        shape::{ConnectionExt as _, SK, SO},
         sync,
         xinput::{self, ConnectionExt as _},
         xproto::{self, ClientMessageEvent, ConnectionExt, TranslateCoordinatesReply},
@@ -274,7 +273,6 @@ pub struct X11WindowState {
     input_handler: Option<PlatformInputHandler>,
     appearance: WindowAppearance,
     background_appearance: WindowBackgroundAppearance,
-    mouse_passthrough_snapshot: MousePassthroughSnapshot,
     maximized_vertical: bool,
     maximized_horizontal: bool,
     hidden: bool,
@@ -294,100 +292,6 @@ impl X11WindowState {
     fn is_transparent(&self) -> bool {
         self.background_appearance != WindowBackgroundAppearance::Opaque
     }
-}
-
-fn x11_rectangle_from_bounds(bounds: Bounds<Pixels>, scale_factor: f32) -> xproto::Rectangle {
-    let x = (f32::from(bounds.origin.x) * scale_factor).floor() as i16;
-    let y = (f32::from(bounds.origin.y) * scale_factor).floor() as i16;
-    let width = (f32::from(bounds.size.width) * scale_factor)
-        .ceil()
-        .max(1.0) as u16;
-    let height = (f32::from(bounds.size.height) * scale_factor)
-        .ceil()
-        .max(1.0) as u16;
-    xproto::Rectangle {
-        x,
-        y,
-        width,
-        height,
-    }
-}
-
-fn update_input_shape(window: &X11WindowStatePtr) {
-    let (background, scale_factor, window_bounds, passthrough_regions, blocker_rects) = {
-        let state = window.state.borrow();
-        let blocker_rects = state
-            .mouse_passthrough_snapshot
-            .hitboxes
-            .iter()
-            .filter(|hitbox| {
-                state
-                    .mouse_passthrough_snapshot
-                    .interactive_hitbox_ids
-                    .contains(&hitbox.id)
-            })
-            .map(|hitbox| hitbox.bounds.intersect(&hitbox.content_mask.bounds))
-            .collect::<Vec<_>>();
-
-        (
-            state.background_appearance,
-            state.scale_factor,
-            state.bounds,
-            state.mouse_passthrough_snapshot.regions.clone(),
-            blocker_rects,
-        )
-    };
-
-    let full_rect = xproto::Rectangle {
-        x: 0,
-        y: 0,
-        width: (f32::from(window_bounds.size.width) * scale_factor)
-            .ceil()
-            .max(1.0) as u16,
-        height: (f32::from(window_bounds.size.height) * scale_factor)
-            .ceil()
-            .max(1.0) as u16,
-    };
-
-    let _ = window.xcb.shape_rectangles(
-        SO::SET,
-        SK::INPUT,
-        xproto::ClipOrdering::UNSORTED,
-        window.x_window,
-        0,
-        0,
-        &[full_rect],
-    );
-
-    if background != WindowBackgroundAppearance::Opaque {
-        for region in passthrough_regions {
-            let rect = x11_rectangle_from_bounds(region.bounds, scale_factor);
-            let _ = window.xcb.shape_rectangles(
-                SO::SUBTRACT,
-                SK::INPUT,
-                xproto::ClipOrdering::UNSORTED,
-                window.x_window,
-                0,
-                0,
-                &[rect],
-            );
-        }
-
-        for bounds in blocker_rects {
-            let rect = x11_rectangle_from_bounds(bounds, scale_factor);
-            let _ = window.xcb.shape_rectangles(
-                SO::UNION,
-                SK::INPUT,
-                xproto::ClipOrdering::UNSORTED,
-                window.x_window,
-                0,
-                0,
-                &[rect],
-            );
-        }
-    }
-
-    xcb_flush(&window.xcb);
 }
 
 #[derive(Clone)]
@@ -524,6 +428,12 @@ impl X11WindowState {
         supports_xinput_gestures: bool,
         is_bgr: bool,
     ) -> anyhow::Result<Self> {
+        // Native popups are not implemented on X11 yet. Rejecting lets callers fall back to
+        // gpui's in-window popovers.
+        if let WindowKind::AnchoredPopup(_) = params.kind {
+            return Err(PopupNotSupportedError.into());
+        }
+
         let x_screen_index = params
             .display_id
             .map_or(x_main_screen_index, |did| u64::from(did) as usize);
@@ -893,7 +803,6 @@ impl X11WindowState {
                 appearance,
                 handle,
                 background_appearance: WindowBackgroundAppearance::Opaque,
-                mouse_passthrough_snapshot: MousePassthroughSnapshot::default(),
                 destroyed: false,
                 client_side_decorations_supported,
                 decorations: WindowDecorations::Server,
@@ -1367,8 +1276,6 @@ impl X11WindowStatePtr {
             fun();
         }
 
-        update_input_shape(self);
-
         Ok(())
     }
 
@@ -1509,7 +1416,11 @@ impl PlatformWindow for X11Window {
         )
         .log_err()
         .map_or(Point::new(Pixels::ZERO, Pixels::ZERO), |reply| {
-            Point::new((reply.root_x as u32).into(), (reply.root_y as u32).into())
+            let scale_factor = self.0.state.borrow().scale_factor;
+            Point::new(
+                px(reply.win_x as f32 / scale_factor),
+                px(reply.win_y as f32 / scale_factor),
+            )
         })
     }
 
@@ -1581,6 +1492,33 @@ impl PlatformWindow for X11Window {
         xcb_flush(&self.0.xcb);
     }
 
+    fn request_attention(&self) {
+        if self.is_active() {
+            return;
+        }
+
+        let mut hints = WmHints::new();
+        match WmHints::get(&*self.0.xcb, self.0.x_window) {
+            Ok(cookie) => match cookie.reply() {
+                Ok(Some(existing_hints)) => hints = existing_hints,
+                Ok(None) => {}
+                Err(error) => {
+                    log::debug!("failed to read X11 WM_HINTS before setting urgency: {error}")
+                }
+            },
+            Err(error) => {
+                log::debug!("failed to request X11 WM_HINTS before setting urgency: {error}")
+            }
+        }
+        hints.urgent = true;
+        check_reply(
+            || "X11 ChangeProperty for WM_HINTS urgency failed.",
+            hints.set(&*self.0.xcb, self.0.x_window),
+        )
+        .log_err();
+        xcb_flush(&self.0.xcb);
+    }
+
     fn is_active(&self) -> bool {
         self.0.state.borrow().active
     }
@@ -1648,17 +1586,10 @@ impl PlatformWindow for X11Window {
         state.background_appearance = background_appearance;
         let transparent = state.is_transparent();
         state.renderer.update_transparency(transparent);
-        drop(state);
-        update_input_shape(&self.0);
     }
 
     fn background_appearance(&self) -> WindowBackgroundAppearance {
         self.0.state.borrow().background_appearance
-    }
-
-    fn set_mouse_passthrough_snapshot(&self, snapshot: MousePassthroughSnapshot) {
-        self.0.state.borrow_mut().mouse_passthrough_snapshot = snapshot;
-        update_input_shape(&self.0);
     }
 
     fn is_subpixel_rendering_supported(&self) -> bool {

@@ -46,22 +46,6 @@ actions!(
     ]
 );
 
-const MAX_DEBUG_SCENARIO_CANDIDATES: usize = 2_000;
-const MAX_DEBUG_SCENARIO_FUZZY_ROWS: usize = 1_000;
-const MAX_DEBUG_SCENARIO_CUSTOM_COMMAND_CHARS: usize = 16_384;
-
-fn debug_prompt_within_command_cap(prompt: &str) -> Option<&str> {
-    if prompt
-        .char_indices()
-        .nth(MAX_DEBUG_SCENARIO_CUSTOM_COMMAND_CHARS)
-        .is_some()
-    {
-        None
-    } else {
-        Some(prompt)
-    }
-}
-
 pub(super) struct NewProcessModal {
     workspace: WeakEntity<Workspace>,
     debug_panel: WeakEntity<DebugPanel>,
@@ -122,7 +106,7 @@ impl NewProcessModal {
                         let delegate =
                             DebugDelegate::new(debug_panel.downgrade(), task_store.clone());
                         Picker::list(delegate, window, cx)
-                            .modal(false)
+                            .embedded()
                             .list_measure_all()
                     });
 
@@ -538,7 +522,7 @@ impl NewProcessModal {
             }),
         )
         .style(ui::DropdownStyle::Outlined)
-        .tab_index(0_isize)
+        .tab_index(0)
         .attach(gpui::Anchor::BottomLeft)
         .offset(gpui::Point {
             x: px(0.0),
@@ -1054,14 +1038,6 @@ impl DebugDelegate {
         }
     }
 
-    fn clamped_match_index(&self, ix: usize) -> usize {
-        ix.min(self.matches.len().saturating_sub(1))
-    }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_index = self.clamped_match_index(self.selected_index);
-    }
-
     fn get_task_subtitle(
         &self,
         task_kind: &Option<TaskSourceKind>,
@@ -1093,10 +1069,10 @@ impl DebugDelegate {
 
                     match path.components().next_back() {
                         Some(".zed") => {
-                            path.push(RelPath::unix("debug.json").unwrap());
+                            path.push(RelPath::from_unix_str("debug.json").unwrap());
                         }
                         Some(".vscode") => {
-                            path.push(RelPath::unix("launch.json").unwrap());
+                            path.push(RelPath::from_unix_str("launch.json").unwrap());
                         }
                         _ => {}
                     }
@@ -1179,10 +1155,9 @@ impl DebugDelegate {
             };
 
             this.update(cx, |this, cx| {
-                let recent_candidate_count = recent.len().min(MAX_DEBUG_SCENARIO_CANDIDATES);
-                let scenario_candidate_slots =
-                    MAX_DEBUG_SCENARIO_CANDIDATES.saturating_sub(recent_candidate_count);
-                this.delegate.last_used_candidate_index = recent_candidate_count.checked_sub(1);
+                if !recent.is_empty() {
+                    this.delegate.last_used_candidate_index = Some(recent.len() - 1);
+                }
 
                 let dap_registry = cx.global::<DapRegistry>();
                 let hide_vscode = scenarios.iter().any(|(kind, _)| match kind {
@@ -1190,13 +1165,12 @@ impl DebugDelegate {
                         id: _,
                         directory_in_worktree: dir,
                         id_base: _,
-                    } => dir.ends_with(RelPath::unix(".zed").unwrap()),
+                    } => dir.ends_with(RelPath::from_unix_str(".zed").unwrap()),
                     _ => false,
                 });
 
                 this.delegate.candidates = recent
                     .into_iter()
-                    .take(MAX_DEBUG_SCENARIO_CANDIDATES)
                     .map(|(scenario, context)| {
                         let (language_name, scenario) =
                             Self::get_scenario_language(&languages, dap_registry, scenario);
@@ -1212,12 +1186,12 @@ impl DebugDelegate {
                                     id_base: _,
                                 } => {
                                     !(hide_vscode
-                                        && dir.ends_with(RelPath::unix(".vscode").unwrap()))
+                                        && dir
+                                            .ends_with(RelPath::from_unix_str(".vscode").unwrap()))
                                 }
                                 _ => true,
                             })
                             .filter(|(_, scenario)| valid_adapters.contains(&scenario.adapter))
-                            .take(scenario_candidate_slots)
                             .map(|(kind, scenario)| {
                                 let (language_name, scenario) =
                                     Self::get_scenario_language(&languages, dap_registry, scenario);
@@ -1234,6 +1208,10 @@ impl DebugDelegate {
 impl PickerDelegate for DebugDelegate {
     type ListItem = ui::ListItem;
 
+    fn name() -> &'static str {
+        "debug scenario picker"
+    }
+
     fn match_count(&self) -> usize {
         self.matches.len()
     }
@@ -1248,7 +1226,7 @@ impl PickerDelegate for DebugDelegate {
         _window: &mut Window,
         _cx: &mut Context<picker::Picker<Self>>,
     ) {
-        self.selected_index = self.clamped_match_index(ix);
+        self.selected_index = ix;
     }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> std::sync::Arc<str> {
@@ -1266,7 +1244,6 @@ impl PickerDelegate for DebugDelegate {
         cx.spawn_in(window, async move |picker, cx| {
             let candidates: Vec<_> = candidates
                 .into_iter()
-                .take(MAX_DEBUG_SCENARIO_CANDIDATES)
                 .enumerate()
                 .map(|(index, (_, _, candidate, _))| {
                     StringMatchCandidate::new(index, candidate.label.as_ref())
@@ -1278,7 +1255,7 @@ impl PickerDelegate for DebugDelegate {
                 &query,
                 true,
                 true,
-                MAX_DEBUG_SCENARIO_FUZZY_ROWS,
+                1000,
                 &Default::default(),
                 cx.background_executor().clone(),
             )
@@ -1298,7 +1275,12 @@ impl PickerDelegate for DebugDelegate {
                         Some(index).and_then(|index| (index != 0).then(|| index - 1))
                     });
 
-                    delegate.clamp_selected_index_to_matches();
+                    if delegate.matches.is_empty() {
+                        delegate.selected_index = 0;
+                    } else {
+                        delegate.selected_index =
+                            delegate.selected_index.min(delegate.matches.len() - 1);
+                    }
                 })
                 .log_err();
         })
@@ -1313,9 +1295,7 @@ impl PickerDelegate for DebugDelegate {
     }
 
     fn confirm_input(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
-        let Some(text) = debug_prompt_within_command_cap(&self.prompt) else {
-            return;
-        };
+        let text = self.prompt.clone();
         let (task_context, worktree_id) = self
             .task_contexts
             .as_ref()
@@ -1328,7 +1308,7 @@ impl PickerDelegate for DebugDelegate {
             .unwrap_or_default();
 
         let mut args = ShellKind::Posix
-            .split(text)
+            .split(&text)
             .into_iter()
             .flatten()
             .peekable();
@@ -1343,7 +1323,7 @@ impl PickerDelegate for DebugDelegate {
             program
         } else {
             env = HashMap::default();
-            text.to_owned()
+            text
         };
 
         let args = args.collect::<Vec<_>>();
@@ -1561,8 +1541,7 @@ impl PickerDelegate for DebugDelegate {
         cx: &mut Context<picker::Picker<Self>>,
     ) -> Option<Self::ListItem> {
         let hit = &self.matches.get(ix)?;
-        let (task_kind, language_name, _scenario, context) =
-            self.candidates.get(hit.candidate_id)?;
+        let (task_kind, language_name, _scenario, context) = &self.candidates[hit.candidate_id];
 
         let highlighted_location = HighlightedMatch {
             text: hit.string.clone(),
@@ -1580,7 +1559,7 @@ impl PickerDelegate for DebugDelegate {
 
         let (icon, indicator) = match task_kind {
             Some(TaskSourceKind::UserInput) => (Some(Icon::new(IconName::Terminal)), None),
-            Some(TaskSourceKind::AbsPath { .. }) => (Some(Icon::new(IconName::DxCog)), None),
+            Some(TaskSourceKind::AbsPath { .. }) => (Some(Icon::new(IconName::Settings)), None),
             Some(TaskSourceKind::Worktree { .. }) => (Some(Icon::new(IconName::FileTree)), None),
             Some(TaskSourceKind::Lsp { language_name, .. }) => (
                 file_icons::FileIcons::get(cx)

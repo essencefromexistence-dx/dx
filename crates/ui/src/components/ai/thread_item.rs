@@ -1,4 +1,4 @@
-use crate::{DiffStat, GradientFade, HighlightedLabel, Tooltip, prelude::*};
+use crate::{CommonAnimationExt, DiffStat, GradientFade, HighlightedLabel, Tooltip, prelude::*};
 
 use gpui::{
     Animation, AnimationExt, ClickEvent, Hsla, MouseButton, SharedString,
@@ -264,7 +264,7 @@ impl RenderOnce for ThreadItem {
         let apparent_bg = color.background.blend(raw_bg);
 
         let base_bg = if self.selected {
-            apparent_bg.blend(color.element_selected)
+            apparent_bg.blend(color.element_active)
         } else {
             apparent_bg
         };
@@ -339,7 +339,12 @@ impl RenderOnce for ThreadItem {
 
         let icon = if self.status == AgentThreadStatus::Running {
             icon_container()
-                .child(dx_loading_icon(IconSize::Small, Color::Muted).with_rotate_animation(2))
+                .child(
+                    Icon::new(IconName::LoadCircle)
+                        .size(IconSize::Small)
+                        .color(Color::Muted)
+                        .with_rotate_animation(2),
+                )
                 .into_any_element()
         } else if let Some(status_icon) = status_icon {
             icon_container().child(status_icon).into_any_element()
@@ -398,14 +403,6 @@ impl RenderOnce for ThreadItem {
         let has_project_paths = project_paths.is_some();
         let has_timestamp = !self.timestamp.is_empty();
         let timestamp = self.timestamp;
-        let timestamp_color = if self.selected || self.hovered {
-            Color::Default
-        } else {
-            // Use the theme's primary/accent color so the timestamp on the right
-            // of draggable chat-item rows is clearly visible. Previously this was
-            // a faint text_muted/text blend that was hard to read.
-            Color::Accent
-        };
 
         let show_tooltip = matches!(
             self.status,
@@ -421,7 +418,11 @@ impl RenderOnce for ThreadItem {
 
         let has_worktree = !linked_worktrees.is_empty();
 
-        let has_metadata = has_project_name || has_project_paths || has_worktree || has_diff_stats;
+        let has_metadata = has_project_name
+            || has_project_paths
+            || has_worktree
+            || has_diff_stats
+            || has_timestamp;
 
         v_flex()
             .id(self.id.clone())
@@ -433,10 +434,7 @@ impl RenderOnce for ThreadItem {
             .w_full()
             .py_1()
             .px_1p5()
-            .when(self.selected, |s| {
-                s.bg(color.element_selected)
-                    .border_color(color.border_selected)
-            })
+            .when(self.selected, |s| s.bg(color.element_active))
             .border_1()
             .border_color(gpui::transparent_black())
             .when(self.focused, |s| s.border_color(color.border_focused))
@@ -459,16 +457,10 @@ impl RenderOnce for ThreadItem {
                             .child(icon)
                             .child(title_label),
                     )
-                    .when(has_timestamp, |this| {
-                        this.child(
-                            Label::new(timestamp.clone())
-                                .size(LabelSize::Small)
-                                .color(timestamp_color)
-                                .flex_shrink_0(),
-                        )
+                    .when(self.is_truncated && opaque_window, |this| {
+                        this.child(gradient_overlay)
                     })
-                    .when(self.is_truncated && opaque_window, |this| this.child(gradient_overlay))
-                    .when(self.hovered || self.focused, |this| {
+                    .when(self.hovered, |this| {
                         this.when_some(self.action_slot, |this, slot| {
                             this.child(
                                 h_flex()
@@ -596,11 +588,21 @@ impl RenderOnce for ThreadItem {
                         )
                         .when(
                             (has_project_name || has_project_paths || has_worktree)
-                                && has_diff_stats,
+                                && (has_diff_stats || has_timestamp),
                             |this| this.child(dot_separator()),
                         )
                         .when(has_diff_stats, |this| {
                             this.child(DiffStat::new(diff_stat_id, added_count, removed_count))
+                        })
+                        .when(has_diff_stats && has_timestamp, |this| {
+                            this.child(dot_separator())
+                        })
+                        .when(has_timestamp, |this| {
+                            this.child(
+                                Label::new(timestamp.clone())
+                                    .size(LabelSize::Small)
+                                    .color(Color::Muted),
+                            )
                         }),
                 )
             })
@@ -789,7 +791,7 @@ impl Component for ThreadItem {
                 container()
                     .child(
                         ThreadItem::new("ti-5e", "Main worktree branch with diff stats")
-                            .icon(IconName::Sparkle)
+                            .icon(IconName::ZedAgent)
                             .worktrees(vec![ThreadItemWorktreeInfo {
                                 worktree_name: Some("zed".into()),
                                 full_path: "/projects/zed".into(),
@@ -870,7 +872,7 @@ impl Component for ThreadItem {
                 container()
                     .child(
                         ThreadItem::new("ti-5i", "Multi-root with per-worktree branches")
-                            .icon(IconName::Sparkle)
+                            .icon(IconName::ZedAgent)
                             .worktrees(vec![
                                 ThreadItemWorktreeInfo {
                                     worktree_name: Some("jade-glen".into()),
@@ -935,7 +937,7 @@ impl Component for ThreadItem {
                 container()
                     .child(
                         ThreadItem::new("ti-5l", "Thread with every metadata field populated")
-                            .icon(IconName::Sparkle)
+                            .icon(IconName::ZedAgent)
                             .project_name("remote-dev")
                             .worktrees(vec![ThreadItemWorktreeInfo {
                                 worktree_name: Some("my-worktree".into()),

@@ -44,20 +44,11 @@ impl RenderOnce for LinuxWindowControls {
 
         h_flex()
             .id(self.id)
-            .h_full() // Take full height of parent
-            .items_center() // Center vertically
             .when(!button_elements.is_empty(), |el| {
                 el.gap_3()
                     .px_3()
                     .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                    .child(
-                        // Wrapper with fixed height for buttons
-                        h_flex()
-                            .h(px(32.)) // Fixed height for buttons
-                            .gap_3()
-                            .items_center()
-                            .children(button_elements),
-                    )
+                    .children(button_elements)
             })
     }
 }

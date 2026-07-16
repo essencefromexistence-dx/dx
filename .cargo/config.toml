@@ -1,7 +1,7 @@
 [build]
 # v0 mangling scheme provides more detailed backtraces around closures
 rustflags = ["-C", "symbol-mangling-version=v0", "--cfg", "tokio_unstable"]
-# Keep Zed build artifacts on the G: drive for this active checkout.
+# Dx: keep build artifacts on the active checkout drive (G: via justfile/target).
 target-dir = "target"
 
 [alias]
@@ -10,6 +10,7 @@ perf-test = ["test", "--profile", "release-fast", "--lib", "--bins", "--tests", 
 # Keep similar flags here to share some ccache
 perf-compare = ["run", "--profile", "release-fast", "-p", "perf", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]", "--", "compare"]
 
+# Dx Windows fast-link + slim-error settings, with upstream's windows_slim_errors / crt-static intent.
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"
 rustflags = [

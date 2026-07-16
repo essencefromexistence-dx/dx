@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
-use fuzzy::StringMatch;
+use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{AnyElement, App, Context, DismissEvent, SharedString, Task, Window};
 use picker::{Picker, PickerDelegate};
 use theme::FontFamilyCache;
 use ui::{ListItem, ListItemSpacing, prelude::*};
-
-use super::{bounded_picker_matches, bounded_picker_options};
 
 type FontPicker = Picker<FontPickerDelegate>;
 
@@ -29,13 +27,21 @@ impl FontPickerDelegate {
         let fonts = font_family_cache
             .try_list_font_families()
             .unwrap_or_else(|| vec![current_font.clone()]);
-        let fonts = bounded_picker_options(fonts, &current_font);
         let selected_index = fonts
             .iter()
             .position(|font| *font == current_font)
             .unwrap_or(0);
 
-        let filtered_fonts = bounded_picker_matches(fonts.iter().enumerate());
+        let filtered_fonts = fonts
+            .iter()
+            .enumerate()
+            .map(|(index, font)| StringMatch {
+                candidate_id: index,
+                string: font.to_string(),
+                positions: Vec::new(),
+                score: 0.0,
+            })
+            .collect();
 
         Self {
             fonts,
@@ -49,6 +55,10 @@ impl FontPickerDelegate {
 
 impl PickerDelegate for FontPickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "font picker"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_fonts.len()
@@ -75,17 +85,36 @@ impl PickerDelegate for FontPickerDelegate {
     ) -> Task<()> {
         let fonts = self.fonts.clone();
         let current_font = self.current_font.clone();
-        let query_lower = query.to_lowercase();
 
         let matches: Vec<StringMatch> = if query.is_empty() {
-            bounded_picker_matches(fonts.iter().enumerate())
+            fonts
+                .iter()
+                .enumerate()
+                .map(|(index, font)| StringMatch {
+                    candidate_id: index,
+                    string: font.to_string(),
+                    positions: Vec::new(),
+                    score: 0.0,
+                })
+                .collect()
         } else {
-            bounded_picker_matches(
-                fonts
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, font)| font.to_lowercase().contains(&query_lower)),
-            )
+            let _candidates: Vec<StringMatchCandidate> = fonts
+                .iter()
+                .enumerate()
+                .map(|(id, font)| StringMatchCandidate::new(id, font.as_ref()))
+                .collect();
+
+            fonts
+                .iter()
+                .enumerate()
+                .filter(|(_, font)| font.to_lowercase().contains(&query.to_lowercase()))
+                .map(|(index, font)| StringMatch {
+                    candidate_id: index,
+                    string: font.to_string(),
+                    positions: Vec::new(),
+                    score: 0.0,
+                })
+                .collect()
         };
 
         let selected_index = if query.is_empty() {
@@ -96,11 +125,7 @@ impl PickerDelegate for FontPickerDelegate {
         } else {
             matches
                 .iter()
-                .position(|m| {
-                    fonts
-                        .get(m.candidate_id)
-                        .is_some_and(|font| *font == current_font)
-                })
+                .position(|m| fonts[m.candidate_id] == current_font)
                 .unwrap_or(0)
         };
 
@@ -155,6 +180,7 @@ pub fn font_picker(
 
     Picker::uniform_list(delegate, window, cx)
         .show_scrollbar(true)
-        .width(rems_from_px(210.))
-        .max_height(Some(rems(18.).into()))
+        .initial_width(rems_from_px(210.))
+        .max_height(rems(18.))
+        .popover()
 }

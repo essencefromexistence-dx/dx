@@ -5,24 +5,6 @@ use gpui::{App, SharedString};
 use theme::{GlobalTheme, IconTheme, ThemeRegistry};
 use util::paths::PathExt;
 
-const MAX_FILE_ICON_SUFFIX_BYTES: usize = 1_024;
-const MAX_FILE_ICON_SUFFIX_SEGMENTS: usize = 32;
-
-fn bounded_icon_suffix(suffix: &str) -> Option<&str> {
-    (suffix.len() <= MAX_FILE_ICON_SUFFIX_BYTES).then_some(suffix)
-}
-
-fn bounded_multiple_extensions(path: &Path) -> Option<String> {
-    let file_name = path.file_name()?.to_str()?;
-    bounded_icon_suffix(file_name)?;
-    let suffix = path.multiple_extensions()?;
-    if suffix.len() <= MAX_FILE_ICON_SUFFIX_BYTES {
-        Some(suffix)
-    } else {
-        None
-    }
-}
-
 #[derive(Debug)]
 pub struct FileIcons {
     icon_theme: Arc<IconTheme>,
@@ -48,11 +30,7 @@ impl FileIcons {
         // TODO: Associate a type with the languages and have the file's language
         //       override these associations
 
-        if let Some(mut typ) = path
-            .file_name()
-            .and_then(|typ| typ.to_str())
-            .and_then(bounded_icon_suffix)
-        {
+        if let Some(mut typ) = path.file_name().and_then(|typ| typ.to_str()) {
             // check if file name is in suffixes
             // e.g. catch file named `eslint.config.js` instead of `.eslint.config.js`
             let maybe_path = get_icon_from_suffix(typ);
@@ -62,13 +40,7 @@ impl FileIcons {
 
             // check if suffix based on first dot is in suffixes
             // e.g. consider `module.js` as suffix to angular's module file named `auth.module.js`
-            for _ in 0..MAX_FILE_ICON_SUFFIX_SEGMENTS {
-                let Some((_, suffix)) = typ.split_once('.') else {
-                    break;
-                };
-                let Some(suffix) = bounded_icon_suffix(suffix) else {
-                    break;
-                };
+            while let Some((_, suffix)) = typ.split_once('.') {
                 let maybe_path = get_icon_from_suffix(suffix);
                 if maybe_path.is_some() {
                     return maybe_path;
@@ -79,7 +51,7 @@ impl FileIcons {
 
         // handle cases where the file extension is made up of multiple important
         // parts (e.g Component.stories.tsx) that refer to an alternative icon style
-        if let Some(suffix) = bounded_multiple_extensions(path) {
+        if let Some(suffix) = path.multiple_extensions() {
             let maybe_path = get_icon_from_suffix(suffix.as_str());
             if maybe_path.is_some() {
                 return maybe_path;
@@ -88,10 +60,7 @@ impl FileIcons {
 
         // primary case: check if the files extension or the hidden file name
         // matches some icon path
-        if let Some(suffix) = path
-            .extension_or_hidden_file_name()
-            .and_then(bounded_icon_suffix)
-        {
+        if let Some(suffix) = path.extension_or_hidden_file_name() {
             let maybe_path = get_icon_from_suffix(suffix);
             if maybe_path.is_some() {
                 return maybe_path;
@@ -102,10 +71,7 @@ impl FileIcons {
         // and is not a "special" file we have an icon (e.g. not `.eslint.config.js`)
         // that should be caught above. In the remaining cases, we want to check
         // for a normal supported extension e.g. `.data.json` -> `json`
-        let extension = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .and_then(bounded_icon_suffix);
+        let extension = path.extension().and_then(|ext| ext.to_str());
         if let Some(extension) = extension {
             let maybe_path = get_icon_from_suffix(extension);
             if maybe_path.is_some() {

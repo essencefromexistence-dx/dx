@@ -303,6 +303,10 @@ impl TemplatePickerDelegate {
 impl PickerDelegate for TemplatePickerDelegate {
     type ListItem = AnyElement;
 
+    fn name() -> &'static str {
+        "dev container template picker"
+    }
+
     fn match_count(&self) -> usize {
         self.matching_indices.len()
     }
@@ -397,11 +401,7 @@ impl PickerDelegate for TemplatePickerDelegate {
         _window: &mut Window,
         _cx: &mut Context<picker::Picker<Self>>,
     ) -> Option<Self::ListItem> {
-        let Some(template_entry) = self
-            .matching_indices
-            .get(ix)
-            .and_then(|ix| self.candidate_templates.get(*ix))
-        else {
+        let Some(template_entry) = self.candidate_templates.get(self.matching_indices[ix]) else {
             return None;
         };
         Some(
@@ -489,6 +489,10 @@ impl FeaturePickerDelegate {
 
 impl PickerDelegate for FeaturePickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "dev container feature picker"
+    }
 
     fn match_count(&self) -> usize {
         self.matching_indices.len()
@@ -593,14 +597,7 @@ impl PickerDelegate for FeaturePickerDelegate {
         _window: &mut Window,
         _cx: &mut Context<Picker<Self>>,
     ) -> Option<Self::ListItem> {
-        let Some(feature_entry) = self
-            .matching_indices
-            .get(ix)
-            .and_then(|ix| self.candidate_features.get(*ix))
-            .cloned()
-        else {
-            return None;
-        };
+        let feature_entry = self.candidate_features[self.matching_indices[ix]].clone();
 
         Some(
             ListItem::new("li-what")
@@ -1187,8 +1184,7 @@ impl StatefulModal for DevContainerModal {
                         }),
                     );
 
-                    let picker =
-                        cx.new(|cx| Picker::uniform_list(delegate, window, cx).modal(false));
+                    let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).embedded());
                     self.picker = Some(picker);
                     Some(DevContainerState::TemplateQueryReturned(Ok(items)))
                 } else {
@@ -1319,8 +1315,7 @@ impl StatefulModal for DevContainerModal {
                         }),
                     );
 
-                    let picker =
-                        cx.new(|cx| Picker::uniform_list(delegate, window, cx).modal(false));
+                    let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).embedded());
                     self.features_picker = Some(picker);
                     Some(DevContainerState::FeaturesQueryReturned(template_entry))
                 } else {
@@ -1584,11 +1579,12 @@ fn dispatch_apply_templates(
             };
 
             if files.project_files.contains(&Arc::from(
-                RelPath::unix(".devcontainer/devcontainer.json").unwrap(),
+                RelPath::from_unix_str(".devcontainer/devcontainer.json").unwrap(),
             )) {
                 let Some(workspace_task) = workspace
                     .update_in(cx, |workspace, window, cx| {
-                        let Ok(path) = RelPath::unix(".devcontainer/devcontainer.json") else {
+                        let Ok(path) = RelPath::from_unix_str(".devcontainer/devcontainer.json")
+                        else {
                             return Task::ready(Err(anyhow!(
                                 "Couldn't create path for .devcontainer/devcontainer.json"
                             )));

@@ -1,13 +1,11 @@
 use std::rc::Rc;
 
-use gpui::{App, ElementId, IntoElement, RenderOnce};
+use gpui::{App, ElementId, IntoElement, RenderOnce, SharedString};
 use heck::ToTitleCase as _;
 use ui::{
     ButtonSize, ContextMenu, Disableable as _, DropdownMenu, DropdownStyle, FluentBuilder as _,
     IconPosition, px,
 };
-
-const MAX_ENUM_DROPDOWN_VARIANTS: usize = 256;
 
 #[derive(IntoElement)]
 pub struct EnumVariantDropdown<T>
@@ -21,6 +19,8 @@ where
     should_do_title_case: bool,
     tab_index: Option<isize>,
     disabled: bool,
+    aria_label: Option<SharedString>,
+    aria_description: Option<SharedString>,
     on_change: Rc<dyn Fn(T, &mut ui::Window, &mut App) + 'static>,
 }
 
@@ -43,6 +43,8 @@ where
             should_do_title_case: true,
             tab_index: None,
             disabled: false,
+            aria_label: None,
+            aria_description: None,
             on_change: Rc::new(on_change),
         }
     }
@@ -61,6 +63,20 @@ where
         self.disabled = disabled;
         self
     }
+
+    /// Sets the label announced by assistive technology.
+    /// Defaults to the currently selected value's label.
+    pub fn aria_label(mut self, label: impl Into<SharedString>) -> Self {
+        self.aria_label = Some(label.into());
+        self
+    }
+
+    /// Sets the supplementary description announced by assistive technology
+    /// after the combobox's name, role, and value (e.g. a setting subtitle).
+    pub fn aria_description(mut self, description: impl Into<SharedString>) -> Self {
+        self.aria_description = Some(description.into());
+        self
+    }
 }
 
 impl<T> RenderOnce for EnumVariantDropdown<T>
@@ -76,9 +92,7 @@ where
 
         let context_menu = window.use_keyed_state(current_value_label, cx, |window, cx| {
             ContextMenu::new(window, cx, move |mut menu, _, _| {
-                for (&value, &label) in
-                    std::iter::zip(self.variants, self.labels).take(MAX_ENUM_DROPDOWN_VARIANTS)
-                {
+                for (&value, &label) in std::iter::zip(self.variants, self.labels) {
                     let on_change = self.on_change.clone();
                     let current_value = self.current_value;
                     menu = menu.toggleable_entry(
@@ -108,6 +122,10 @@ where
             },
             context_menu,
         )
+        .when_some(self.aria_label, |this, label| this.aria_label(label))
+        .when_some(self.aria_description, |this, description| {
+            this.aria_description(description)
+        })
         .disabled(self.disabled)
         .when_some(self.tab_index, |elem, tab_index| elem.tab_index(tab_index))
         .trigger_size(ButtonSize::Medium)

@@ -7,8 +7,8 @@ use editor::{MultiBufferOffset, RowHighlightOptions, SelectionEffects};
 use fuzzy_nucleo::StringMatch;
 use gpui::{
     App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, HighlightStyle,
-    ParentElement, Point, Render, Styled, StyledText, Task, TextStyle, WeakEntity, Window, div,
-    rems,
+    ParentElement, Point, Rems, Render, Styled, StyledText, Task, TextStyle, WeakEntity, Window,
+    div, rems,
 };
 use language::{Outline, OutlineItem, OutlineSearchEntry};
 use picker::{Picker, PickerDelegate};
@@ -18,8 +18,6 @@ use theme_settings::ThemeSettings;
 use ui::{ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt;
 use workspace::{DismissDecision, ModalView};
-
-const MAX_OUTLINE_VIEW_ITEMS: usize = language::MAX_OUTLINE_ITEMS;
 
 pub fn init(cx: &mut App) {
     cx.observe_new(OutlineView::register).detach();
@@ -87,7 +85,6 @@ fn outline_for_editor(
     Some(cx.background_executor().spawn(async move {
         task.await
             .into_iter()
-            .take(MAX_OUTLINE_VIEW_ITEMS)
             .filter_map(|item| {
                 Some(OutlineItem {
                     depth: item.depth,
@@ -146,7 +143,6 @@ impl ModalView for OutlineView {
 impl Render for OutlineView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         v_flex()
-            .w(rems(34.))
             .on_action(cx.listener(
                 |_this: &mut OutlineView,
                  _: &zed_actions::outline::ToggleOutline,
@@ -183,7 +179,10 @@ impl OutlineView {
         let delegate = OutlineViewDelegate::new(cx.entity().downgrade(), outline, editor, cx);
         let picker = cx.new(|cx| {
             Picker::uniform_list(delegate, window, cx)
-                .max_height(Some(vh(0.75, window)))
+                .max_height(Rems::from_pixels(
+                    window.viewport_size().height * 0.75,
+                    window,
+                ))
                 .show_scrollbar(true)
         });
         OutlineView { picker }
@@ -228,14 +227,6 @@ impl OutlineViewDelegate {
         })
     }
 
-    fn clamped_match_index(&self, ix: usize) -> usize {
-        ix.min(self.matches.len().saturating_sub(1))
-    }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_match_index = self.clamped_match_index(self.selected_match_index);
-    }
-
     fn set_selected_index(
         &mut self,
         ix: usize,
@@ -243,11 +234,12 @@ impl OutlineViewDelegate {
 
         cx: &mut Context<Picker<OutlineViewDelegate>>,
     ) {
-        self.selected_match_index = self.clamped_match_index(ix);
-
-        let Some(selected_match) = self.matches.get(self.selected_match_index) else {
+        let Some(selected_match) = self.matches.get(ix) else {
+            self.selected_match_index = self.matches.len();
             return;
         };
+
+        self.selected_match_index = ix;
 
         if navigate {
             let outline_item = &self.outline.items[selected_match.candidate_id()];
@@ -256,7 +248,7 @@ impl OutlineViewDelegate {
                 active_editor.clear_row_highlights::<OutlineRowHighlights>();
                 active_editor.highlight_rows::<OutlineRowHighlights>(
                     outline_item.range.start..outline_item.range.end,
-                    cx.theme().colors().editor_highlighted_line_background,
+                    |cx| cx.theme().colors().editor_highlighted_line_background,
                     RowHighlightOptions {
                         autoscroll: true,
                         ..Default::default()
@@ -271,6 +263,10 @@ impl OutlineViewDelegate {
 
 impl PickerDelegate for OutlineViewDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "outline view"
+    }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Search buffer symbols...".into()
@@ -314,7 +310,6 @@ impl PickerDelegate for OutlineViewDelegate {
                 outline
                     .items
                     .iter()
-                    .take(MAX_OUTLINE_VIEW_ITEMS)
                     .enumerate()
                     .map(|(index, _)| {
                         OutlineSearchEntry::Match(StringMatch {
@@ -333,7 +328,6 @@ impl PickerDelegate for OutlineViewDelegate {
 
             let _ = this.update(cx, |this, cx| {
                 this.delegate.matches = matches;
-                this.delegate.clamp_selected_index_to_matches();
                 let selected_index = if is_query_empty {
                     let (buffer, cursor_offset) =
                         this.delegate.active_editor.update(cx, |editor, cx| {
@@ -389,7 +383,7 @@ impl PickerDelegate for OutlineViewDelegate {
 
         self.active_editor.update(cx, |active_editor, cx| {
             let highlight = active_editor
-                .highlighted_rows::<OutlineRowHighlights>()
+                .highlighted_rows::<OutlineRowHighlights>(cx)
                 .next();
             if let Some((rows, _)) = highlight {
                 active_editor.change_selections(
@@ -681,7 +675,8 @@ mod tests {
         let (selected_candidate_id, expected_deepest_containing_candidate_id) = outline_view
             .update(cx, |outline_view, cx| {
                 let delegate = &outline_view.delegate;
-                let selected_candidate_id = delegate.matches[delegate.selected_match_index].candidate_id();
+                let selected_candidate_id =
+                    delegate.matches[delegate.selected_match_index].candidate_id();
                 let (buffer, cursor_offset) = delegate.active_editor.update(cx, |editor, cx| {
                     let buffer = editor.buffer().read(cx).snapshot(cx);
                     let cursor_offset = editor
@@ -861,10 +856,7 @@ mod tests {
                          cx: &mut VisualTestContext| {
             outline_view.read_with(cx, |outline_view, _| {
                 let delegate = &outline_view.delegate;
-                let selected_match = delegate
-                    .matches
-                    .get(delegate.selected_match_index)
-                    .expect("selected match should exist");
+                let selected_match = &delegate.matches[delegate.selected_match_index];
                 let scored_ids = delegate
                     .matches
                     .iter()

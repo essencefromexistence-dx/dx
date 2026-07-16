@@ -10,7 +10,6 @@ cbuffer GlobalParams: register(b0) {
 };
 
 Texture2D<float4> t_sprite: register(t0);
-Texture2D<float4> t_backdrop: register(t2);
 SamplerState s_sprite: register(s0);
 
 struct SubpixelSpriteFragmentOutput {
@@ -1250,7 +1249,7 @@ float4 polychrome_sprite_fragment(PolychromeSpriteFragmentInput input): SV_Targe
     float distance = quad_sdf(input.position.xy, sprite.bounds, sprite.corner_radii);
 
     float4 color = sample;
-    if ((sprite.grayscale & 0xFFu) != 0u) {
+    if (sprite.grayscale != 0u) {
         float3 grayscale = dot(color.rgb, GRAYSCALE_FACTORS);
         color = float4(grayscale, sample.a);
     }
@@ -1258,11 +1257,6 @@ float4 polychrome_sprite_fragment(PolychromeSpriteFragmentInput input): SV_Targe
     return color;
 }
 
-/*
-**
-**              Liquid glass
-**
-*/
 
 struct LiquidGlass {
     uint order;

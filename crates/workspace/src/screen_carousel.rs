@@ -4,7 +4,7 @@ use gpui::{
     AnyElement, App, Bounds, Context, IntoElement, MouseButton, Pixels, Point, SharedString,
     canvas, div, relative,
 };
-use ui::{Window, prelude::*};
+use ui::{DxUiIcon, Window, dx_icon, prelude::*};
 
 use crate::{ItemHandle, Workspace, WorkspaceScreenKind};
 

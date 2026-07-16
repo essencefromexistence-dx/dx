@@ -126,6 +126,15 @@ struct WgpuResources {
     liquid_glass_backdrop_view: Option<wgpu::TextureView>,
 }
 
+impl WgpuResources {
+    fn invalidate_intermediate_textures(&mut self) {
+        self.path_intermediate_texture = None;
+        self.path_intermediate_view = None;
+        self.path_msaa_texture = None;
+        self.path_msaa_view = None;
+    }
+}
+
 pub struct WgpuRenderer {
     /// Shared GPU context for device recovery coordination (unused on WASM).
     #[allow(dead_code)]
@@ -152,6 +161,7 @@ pub struct WgpuRenderer {
     failed_frame_count: u32,
     device_lost: std::sync::Arc<std::sync::atomic::AtomicBool>,
     surface_configured: bool,
+    needs_redraw: bool,
 }
 
 impl WgpuRenderer {
@@ -483,6 +493,7 @@ impl WgpuRenderer {
             failed_frame_count: 0,
             device_lost: context.device_lost_flag(),
             surface_configured: true,
+            needs_redraw: false,
         })
     }
 
@@ -1029,7 +1040,9 @@ impl WgpuRenderer {
             self.surface_config.height = clamped_height.max(1);
             let surface_config = self.surface_config.clone();
 
-            let resources = self.resources_mut();
+            let Some(resources) = self.resources.as_mut() else {
+                return;
+            };
 
             // Wait for any in-flight GPU work to complete before destroying textures
             if let Err(e) = resources.device.poll(wgpu::PollType::Wait {
@@ -1057,10 +1070,7 @@ impl WgpuRenderer {
             // Invalidate intermediate textures - they will be lazily recreated
             // in draw() after we confirm the surface is healthy. This avoids
             // panics when the device/surface is in an invalid state during resize.
-            resources.path_intermediate_texture = None;
-            resources.path_intermediate_view = None;
-            resources.path_msaa_texture = None;
-            resources.path_msaa_view = None;
+            resources.invalidate_intermediate_textures();
             resources.liquid_glass_backdrop_texture = None;
             resources.liquid_glass_backdrop_view = None;
         }
@@ -1115,7 +1125,9 @@ impl WgpuRenderer {
             let surface_config = self.surface_config.clone();
             let path_sample_count = self.rendering_params.path_sample_count;
             let dual_source_blending = self.dual_source_blending;
-            let resources = self.resources_mut();
+            let Some(resources) = self.resources.as_mut() else {
+                return;
+            };
             resources
                 .surface
                 .configure(&resources.device, &surface_config);
@@ -1172,11 +1184,12 @@ impl WgpuRenderer {
         if let Some(error) = last_error {
             self.failed_frame_count += 1;
             log::error!(
-                "GPU error during frame (failure {} of 20): {error}",
+                "GPU error during frame (failure {} of 10): {error}",
                 self.failed_frame_count
             );
+
             // TBD. Does retrying more actually help?
-            if self.failed_frame_count > 20 {
+            if self.failed_frame_count > 10 {
                 panic!("Too many consecutive GPU errors. Last error: {error}");
             } else if self.failed_frame_count > 5 {
                 if let Some(res) = self.resources.as_mut() {
@@ -1963,10 +1976,7 @@ impl WgpuRenderer {
         self.surface_configured = false;
         // Drop intermediate textures since they reference the old surface size.
         if let Some(res) = self.resources.as_mut() {
-            res.path_intermediate_texture = None;
-            res.path_intermediate_view = None;
-            res.path_msaa_texture = None;
-            res.path_msaa_view = None;
+            res.invalidate_intermediate_textures();
         }
     }
 
@@ -2016,10 +2026,7 @@ impl WgpuRenderer {
             res.surface = surface;
 
             // Invalidate intermediate textures — they'll be recreated lazily.
-            res.path_intermediate_texture = None;
-            res.path_intermediate_view = None;
-            res.path_msaa_texture = None;
-            res.path_msaa_view = None;
+            res.invalidate_intermediate_textures();
         }
 
         self.surface_configured = true;
@@ -2036,6 +2043,12 @@ impl WgpuRenderer {
     /// Returns true if the GPU device was lost and recovery is needed.
     pub fn device_lost(&self) -> bool {
         self.device_lost.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Returns true if a redraw is needed because GPU state was cleared.
+    /// Calling this method clears the flag.
+    pub fn needs_redraw(&mut self) -> bool {
+        std::mem::take(&mut self.needs_redraw)
     }
 
     /// Recovers from a lost GPU device by recreating the renderer with a new context.

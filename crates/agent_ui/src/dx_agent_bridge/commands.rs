@@ -212,6 +212,11 @@ fn run_bridge_command(
         command.env("DX_HOME", dx_home);
     }
 
+    // Synchronous CLI bridge; no async runtime is available on this path.
+    #[allow(
+        clippy::disallowed_methods,
+        reason = "sync DX Agents bridge helper has no async executor"
+    )]
     let output = command
         .output()
         .with_context(|| format!("failed to run `{}`", bridge_command_label(&cli_path, &args)))?;

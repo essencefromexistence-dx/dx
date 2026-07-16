@@ -42,6 +42,7 @@ handlebars = { workspace = true, features = ["rust-embed"] }
 heck.workspace = true
 html_to_markdown.workspace = true
 http_client.workspace = true
+http_proxy.workspace = true
 indoc.workspace = true
 itertools.workspace = true
 language.workspace = true
@@ -55,11 +56,11 @@ prompt_store.workspace = true
 quick-xml.workspace = true
 regex.workspace = true
 rust-embed.workspace = true
+sandbox.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
-sha2.workspace = true
 shell_command_parser.workspace = true
 smallvec.workspace = true
 sqlez.workspace = true
@@ -79,8 +80,10 @@ web_search.workspace = true
 zed_env_vars.workspace = true
 zstd.workspace = true
 
+# Used only on Windows to resolve the running release channel/version so the WSL
+# sandbox helper can fetch a matching Linux `zed`.
 [target.'cfg(target_os = "windows")'.dependencies]
-windows.workspace = true
+release_channel.workspace = true
 
 [dev-dependencies]
 assets.workspace = true

@@ -48,15 +48,14 @@ impl Render for ApiKeysWithProviders {
                 .map(|(icon, name)| {
                     h_flex()
                         .gap_1p5()
-                        .child(match icon {
-                            IconOrSvg::Icon(icon_name) => Icon::new(icon_name)
-                                .size(IconSize::XSmall)
-                                .color(Color::Muted),
-                            IconOrSvg::Svg(icon_path) => {
-                                Icon::from_external_svg_with_original_colors(icon_path)
-                                    .size(IconSize::XSmall)
+                        .child(
+                            match icon {
+                                IconOrSvg::Icon(icon_name) => Icon::new(icon_name),
+                                IconOrSvg::Svg(icon_path) => Icon::from_external_svg(icon_path),
                             }
-                        })
+                            .size(IconSize::XSmall)
+                            .color(Color::Muted),
+                        )
                         .child(Label::new(name))
                 });
         div()

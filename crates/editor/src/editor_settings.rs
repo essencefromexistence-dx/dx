@@ -7,8 +7,8 @@ pub use settings::{
     CodeLens, CompletionDetailAlignment, CompletionMenuItemKind, CurrentLineHighlight, DelayMs,
     DiffViewStyle, DisplayIn, DocumentColorsRenderMode, DoubleClickInMultibuffer,
     GoToDefinitionFallback, GoToDefinitionScrollStrategy, MinimapThumb, MinimapThumbBorder,
-    MultiCursorModifier, ScrollBeyondLastLine, ScrollbarDiagnostics, SeedQuerySetting, ShowMinimap,
-    SnippetSortOrder,
+    MultiCursorModifier, OpenResultsIn, ScrollBeyondLastLine, ScrollbarDiagnostics,
+    SeedQuerySetting, ShowMinimap, SnippetSortOrder,
 };
 use settings::{RegisterSetting, RelativeLineNumbers, Settings};
 use ui::scrollbars::ShowScrollbar;
@@ -18,9 +18,7 @@ use ui::scrollbars::ShowScrollbar;
 #[derive(Clone, RegisterSetting)]
 pub struct EditorSettings {
     pub cursor_blink: bool,
-    pub rainbow_caret_animation: bool,
     pub cursor_shape: Option<CursorShape>,
-    pub power_mode: PowerMode,
     pub current_line_highlight: CurrentLineHighlight,
     pub selection_highlight: bool,
     pub rounded_selection: bool,
@@ -56,6 +54,7 @@ pub struct EditorSettings {
     pub show_signature_help_after_edits: bool,
     pub go_to_definition_fallback: GoToDefinitionFallback,
     pub go_to_definition_scroll_strategy: GoToDefinitionScrollStrategy,
+    pub lsp_results_location: OpenResultsIn,
     pub jupyter: Jupyter,
     pub snippet_sort_order: SnippetSortOrder,
     pub diagnostics_max_severity: Option<DiagnosticSeverity>,
@@ -76,11 +75,6 @@ pub struct Jupyter {
     /// Whether the Jupyter feature is enabled.
     ///
     /// Default: true
-    pub enabled: bool,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct PowerMode {
     pub enabled: bool,
 }
 
@@ -208,16 +202,11 @@ impl Settings for EditorSettings {
         let axes = scrollbar.axes.unwrap();
         let toolbar = editor.toolbar.unwrap();
         let search = editor.search.unwrap();
-        let power_mode = editor.power_mode.unwrap();
         let drag_and_drop_selection = editor.drag_and_drop_selection.unwrap();
         let sticky_scroll = editor.sticky_scroll.unwrap();
         Self {
             cursor_blink: editor.cursor_blink.unwrap(),
-            rainbow_caret_animation: editor.rainbow_caret_animation.unwrap(),
             cursor_shape: editor.cursor_shape.map(Into::into),
-            power_mode: PowerMode {
-                enabled: power_mode.enabled.unwrap(),
-            },
             current_line_highlight: editor.current_line_highlight.unwrap(),
             selection_highlight: editor.selection_highlight.unwrap(),
             rounded_selection: editor.rounded_selection.unwrap(),
@@ -301,6 +290,7 @@ impl Settings for EditorSettings {
             show_signature_help_after_edits: editor.show_signature_help_after_edits.unwrap(),
             go_to_definition_fallback: editor.go_to_definition_fallback.unwrap(),
             go_to_definition_scroll_strategy: editor.go_to_definition_scroll_strategy.unwrap(),
+            lsp_results_location: editor.lsp_results_location.unwrap(),
             jupyter: Jupyter {
                 enabled: editor.jupyter.unwrap().enabled.unwrap(),
             },

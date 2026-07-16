@@ -270,17 +270,17 @@ impl ConnectionCatalogEntry {
             .any(|value| value.to_lowercase().contains(query))
     }
 
-    fn provider<'a>(self, snapshot: &'a DxAgentBridgeSnapshot) -> Option<&'a DxAgentProvider> {
+    fn provider(self, snapshot: &DxAgentBridgeSnapshot) -> Option<&DxAgentProvider> {
         match self {
             ConnectionCatalogEntry::Provider(index) => snapshot.providers.get(index),
             _ => None,
         }
     }
 
-    fn social_account<'a>(
+    fn social_account(
         self,
-        snapshot: &'a DxAgentBridgeSnapshot,
-    ) -> Option<&'a DxAgentSocialAccount> {
+        snapshot: &DxAgentBridgeSnapshot,
+    ) -> Option<&DxAgentSocialAccount> {
         match self {
             ConnectionCatalogEntry::SocialAccount(index) => snapshot.social_accounts.get(index),
             _ => None,

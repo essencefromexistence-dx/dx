@@ -21,7 +21,7 @@ use rpc::{AnyProtoClient, TypedEnvelope, proto};
 use schemars::JsonSchema;
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use settings::{RegisterSetting, SettingsStore, update_settings_file};
+use settings::{AgentConfigOptionValue, RegisterSetting, SettingsStore, update_settings_file};
 use sha2::{Digest, Sha256};
 use url::Url;
 use util::{ResultExt as _, debug_panic};
@@ -192,11 +192,6 @@ pub struct AgentServersUpdated;
 
 impl EventEmitter<AgentServersUpdated> for AgentServerStore {}
 
-const MAX_AGENT_SERVER_REGISTRY_DISCOVERY_ENTRIES: usize = 1024;
-const MAX_AGENT_SERVER_SETTINGS_DISCOVERY_ENTRIES: usize = 512;
-const MAX_AGENT_SERVER_REMOTE_DISCOVERY_ENTRIES: usize = 512;
-const MAX_VERSIONED_ARCHIVE_CACHE_SCAN_ENTRIES: usize = 512;
-
 static EXTENSION_TO_REGISTRY_IDS: LazyLock<HashMap<&'static str, &'static str>> =
     LazyLock::new(|| {
         HashMap::from_iter([
@@ -333,7 +328,6 @@ impl AgentServerStore {
                     .read(cx)
                     .agents()
                     .iter()
-                    .take(MAX_AGENT_SERVER_REGISTRY_DISCOVERY_ENTRIES)
                     .cloned()
                     .map(|agent| (agent.id().to_string(), agent))
                     .collect::<HashMap<_, _>>()
@@ -362,10 +356,7 @@ impl AgentServerStore {
             }
         }
 
-        for (name, settings) in new_settings
-            .iter()
-            .take(MAX_AGENT_SERVER_SETTINGS_DISCOVERY_ENTRIES)
-        {
+        for (name, settings) in new_settings.iter() {
             match settings {
                 CustomAgentServerSettings::Custom { command, .. } => {
                     let agent_name = AgentId(name.clone().into());
@@ -752,7 +743,6 @@ impl AgentServerStore {
                 .payload
                 .names
                 .into_iter()
-                .take(MAX_AGENT_SERVER_REMOTE_DISCOVERY_ENTRIES)
                 .map(|name| {
                     let agent_id = AgentId(name.into());
                     let (icon, display_name, source) = metadata
@@ -1076,13 +1066,7 @@ async fn remove_stale_versioned_archive_cache_dirs(
         .await
         .with_context(|| format!("reading archive cache directory {base_dir:?}"))?;
 
-    let mut scanned_entries = 0usize;
-    while scanned_entries < MAX_VERSIONED_ARCHIVE_CACHE_SCAN_ENTRIES {
-        let Some(entry) = entries.next().await else {
-            break;
-        };
-        scanned_entries += 1;
-
+    while let Some(entry) = entries.next().await {
         let entry = entry.with_context(|| format!("reading entry in {base_dir:?}"))?;
         let Some(entry_name) = entry.file_name() else {
             continue;
@@ -1540,10 +1524,10 @@ pub enum CustomAgentServerSettings {
         default_mode: Option<String>,
         /// Default values for session config options.
         ///
-        /// This is a map from config option ID to value ID.
+        /// This is a map from config option ID to the default value for that option.
         ///
         /// Default: {}
-        default_config_options: HashMap<String, String>,
+        default_config_options: HashMap<String, AgentConfigOptionValue>,
         /// Favorited values for session config options.
         ///
         /// This is a map from config option ID to a list of favorited value IDs.
@@ -1564,10 +1548,10 @@ pub enum CustomAgentServerSettings {
         default_mode: Option<String>,
         /// Default values for session config options.
         ///
-        /// This is a map from config option ID to value ID.
+        /// This is a map from config option ID to the default value for that option.
         ///
         /// Default: {}
-        default_config_options: HashMap<String, String>,
+        default_config_options: HashMap<String, AgentConfigOptionValue>,
         /// Favorited values for session config options.
         ///
         /// This is a map from config option ID to a list of favorited value IDs.
@@ -1592,7 +1576,7 @@ impl CustomAgentServerSettings {
         }
     }
 
-    pub fn default_config_option(&self, config_id: &str) -> Option<&str> {
+    pub fn default_config_option(&self, config_id: &str) -> Option<&AgentConfigOptionValue> {
         match self {
             CustomAgentServerSettings::Custom {
                 default_config_options,
@@ -1601,7 +1585,7 @@ impl CustomAgentServerSettings {
             | CustomAgentServerSettings::Registry {
                 default_config_options,
                 ..
-            } => default_config_options.get(config_id).map(|s| s.as_str()),
+            } => default_config_options.get(config_id),
         }
     }
 
@@ -1663,7 +1647,6 @@ impl settings::Settings for AllAgentServersSettings {
             agent_settings
                 .0
                 .into_iter()
-                .take(MAX_AGENT_SERVER_SETTINGS_DISCOVERY_ENTRIES)
                 .map(|(k, v)| {
                     (
                         EXTENSION_TO_REGISTRY_IDS
@@ -1968,7 +1951,6 @@ mod tests {
             .read_dir(base_dir)
             .await
             .unwrap()
-            .take(MAX_VERSIONED_ARCHIVE_CACHE_SCAN_ENTRIES)
             .filter_map(|entry| async move { entry.ok() })
             .map(|path| {
                 path.file_name()

@@ -28,7 +28,7 @@ impl N8nNode {
             let base = base_names[i % base_names.len()];
             nodes.push(Self {
                 id: i,
-                name: format!("{base}").into(),
+                name: base.to_string().into(),
                 description: format!("Automate {base} workflows via the n8n {cat} integration.").into(),
                 category: cat.into(),
             });

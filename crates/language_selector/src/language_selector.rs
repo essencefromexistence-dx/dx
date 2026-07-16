@@ -6,7 +6,7 @@ use editor::Editor;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
     App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, ParentElement,
-    Render, Styled, TaskExt, WeakEntity, Window, actions,
+    Render, TaskExt, WeakEntity, Window, actions,
 };
 use language::{Buffer, LanguageMatcher, LanguageName, LanguageRegistry};
 use open_path_prompt::file_finder_settings::FileFinderSettings;
@@ -25,67 +25,6 @@ actions!(
         Toggle
     ]
 );
-
-const MAX_LANGUAGE_SELECTOR_CANDIDATES: usize = 4096;
-const MAX_LANGUAGE_SELECTOR_MATCHES: usize = MAX_LANGUAGE_SELECTOR_CANDIDATES;
-const MAX_LANGUAGE_SELECTOR_FUZZY_MATCHES: usize = 100;
-
-fn capped_language_selector_candidates(
-    language_registry: &Arc<LanguageRegistry>,
-    current_language_name: Option<&str>,
-) -> Vec<StringMatchCandidate> {
-    let mut candidates = Vec::new();
-    let mut overflow_current_language = None;
-
-    for name in language_registry
-        .language_names()
-        .into_iter()
-        .filter_map(|name| {
-            language_registry
-                .available_language_for_name(name.as_ref())?
-                .hidden()
-                .not()
-                .then_some(name)
-        })
-    {
-        let is_current_language = current_language_name
-            .is_some_and(|current_language_name| current_language_name == name.as_ref());
-
-        if candidates.len() < MAX_LANGUAGE_SELECTOR_CANDIDATES {
-            candidates.push(name);
-        } else if is_current_language {
-            overflow_current_language = Some(name);
-        }
-    }
-
-    if let Some(current_language) = overflow_current_language
-        && !candidates
-            .iter()
-            .any(|name: &LanguageName| name.as_ref() == current_language.as_ref())
-    {
-        candidates.pop();
-        candidates.push(current_language);
-    }
-
-    candidates
-        .into_iter()
-        .enumerate()
-        .map(|(candidate_id, name)| StringMatchCandidate::new(candidate_id, name.as_ref()))
-        .collect()
-}
-
-fn capped_empty_query_matches(candidates: Vec<StringMatchCandidate>) -> Vec<StringMatch> {
-    candidates
-        .into_iter()
-        .take(MAX_LANGUAGE_SELECTOR_MATCHES)
-        .map(|candidate| StringMatch {
-            candidate_id: candidate.id,
-            string: candidate.string,
-            positions: Vec::new(),
-            score: 0.0,
-        })
-        .collect()
-}
 
 pub fn init(cx: &mut App) {
     cx.observe_new(LanguageSelector::register).detach();
@@ -153,7 +92,6 @@ impl Render for LanguageSelector {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         v_flex()
             .key_context("LanguageSelector")
-            .w(rems(34.))
             .child(self.picker.clone())
     }
 }
@@ -186,10 +124,19 @@ impl LanguageSelectorDelegate {
         language_registry: Arc<LanguageRegistry>,
         current_language_name: Option<String>,
     ) -> Self {
-        let candidates = capped_language_selector_candidates(
-            &language_registry,
-            current_language_name.as_deref(),
-        );
+        let candidates = language_registry
+            .language_names()
+            .into_iter()
+            .filter_map(|name| {
+                language_registry
+                    .available_language_for_name(name.as_ref())?
+                    .hidden()
+                    .not()
+                    .then_some(name)
+            })
+            .enumerate()
+            .map(|(candidate_id, name)| StringMatchCandidate::new(candidate_id, name.as_ref()))
+            .collect::<Vec<_>>();
 
         let current_language_candidate_index = current_language_name.as_ref().and_then(|name| {
             candidates
@@ -245,43 +192,14 @@ impl LanguageSelectorDelegate {
             .map(Icon::from_path)
             .map(|icon| icon.color(Color::Muted))
     }
-
-    fn clamped_match_index(&self, ix: usize) -> usize {
-        self.matches
-            .len()
-            .checked_sub(1)
-            .map_or(0, |last_index| ix.min(last_index))
-    }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_index = self.clamped_match_index(self.selected_index);
-    }
-
-    fn selected_index_for_updated_matches(
-        &self,
-        query_is_empty: bool,
-        matches: &[StringMatch],
-    ) -> usize {
-        if matches.is_empty() {
-            return 0;
-        }
-
-        if query_is_empty {
-            self.current_language_candidate_index
-                .and_then(|current_language_candidate_index| {
-                    matches
-                        .iter()
-                        .position(|mat| mat.candidate_id == current_language_candidate_index)
-                })
-                .unwrap_or(0)
-        } else {
-            0
-        }
-    }
 }
 
 impl PickerDelegate for LanguageSelectorDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "language selector"
+    }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Select a language…".into()
@@ -293,11 +211,7 @@ impl PickerDelegate for LanguageSelectorDelegate {
 
     fn confirm(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
         if let Some(mat) = self.matches.get(self.selected_index) {
-            let Some(language_candidate) = self.candidates.get(mat.candidate_id) else {
-                self.dismissed(window, cx);
-                return;
-            };
-            let language_name = &language_candidate.string;
+            let language_name = &self.candidates[mat.candidate_id].string;
             let language = self.language_registry.language_for_name(language_name);
             let project = self.project.downgrade();
             let buffer = self.buffer.downgrade();
@@ -331,7 +245,7 @@ impl PickerDelegate for LanguageSelectorDelegate {
         _window: &mut Window,
         _: &mut Context<Picker<Self>>,
     ) {
-        self.selected_index = self.clamped_match_index(ix);
+        self.selected_index = ix;
     }
 
     fn update_matches(
@@ -345,14 +259,23 @@ impl PickerDelegate for LanguageSelectorDelegate {
         let query_is_empty = query.is_empty();
         cx.spawn_in(window, async move |this, cx| {
             let matches = if query_is_empty {
-                capped_empty_query_matches(candidates)
+                candidates
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, candidate)| StringMatch {
+                        candidate_id: index,
+                        string: candidate.string,
+                        positions: Vec::new(),
+                        score: 0.0,
+                    })
+                    .collect()
             } else {
                 match_strings(
                     &candidates,
                     &query,
                     false,
                     true,
-                    MAX_LANGUAGE_SELECTOR_FUZZY_MATCHES,
+                    100,
                     &Default::default(),
                     background,
                 )
@@ -360,16 +283,28 @@ impl PickerDelegate for LanguageSelectorDelegate {
             };
 
             this.update_in(cx, |this, window, cx| {
-                let selected_index = this
-                    .delegate
-                    .selected_index_for_updated_matches(query_is_empty, &matches);
-                this.delegate.matches = matches;
-                this.delegate.selected_index = selected_index;
-                this.delegate.clamp_selected_index_to_matches();
-                if !this.delegate.matches.is_empty() {
-                    let selected_index = this.delegate.selected_index;
-                    this.set_selected_index(selected_index, None, false, window, cx);
+                if matches.is_empty() {
+                    this.delegate.matches = matches;
+                    this.delegate.selected_index = 0;
+                    cx.notify();
+                    return;
                 }
+
+                let selected_index = if query_is_empty {
+                    this.delegate
+                        .current_language_candidate_index
+                        .and_then(|current_language_candidate_index| {
+                            matches.iter().position(|mat| {
+                                mat.candidate_id == current_language_candidate_index
+                            })
+                        })
+                        .unwrap_or(0)
+                } else {
+                    0
+                };
+
+                this.delegate.matches = matches;
+                this.set_selected_index(selected_index, None, false, window, cx);
                 cx.notify();
             })
             .log_err();

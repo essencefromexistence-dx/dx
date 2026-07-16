@@ -34,15 +34,21 @@ pub struct Tab {
     div: Stateful<Div>,
     selected: bool,
     selected_bottom_border: bool,
+    fill_available_width: bool,
     position: TabPosition,
     close_side: TabCloseSide,
-    fill_available_width: bool,
     start_slot: Option<AnyElement>,
     end_slot: Option<AnyElement>,
     children: SmallVec<[AnyElement; 2]>,
 }
 
 impl Tab {
+
+    pub fn selected_bottom_border(mut self, selected_bottom_border: bool) -> Self {
+        self.selected_bottom_border = selected_bottom_border;
+        self
+    }
+
     pub fn new(id: impl Into<ElementId>) -> Self {
         let id = id.into();
         Self {
@@ -51,13 +57,18 @@ impl Tab {
                 .debug_selector(|| format!("TAB-{}", id)),
             selected: false,
             selected_bottom_border: false,
+            fill_available_width: false,
             position: TabPosition::First,
             close_side: TabCloseSide::End,
-            fill_available_width: false,
             start_slot: None,
             end_slot: None,
             children: SmallVec::new(),
         }
+    }
+
+    pub fn fill_available_width(mut self) -> Self {
+        self.fill_available_width = true;
+        self
     }
 
     pub fn position(mut self, position: TabPosition) -> Self {
@@ -86,16 +97,6 @@ impl Tab {
 
     pub fn container_height(cx: &App) -> Pixels {
         DynamicSpacing::Base32.px(cx)
-    }
-
-    pub fn selected_bottom_border(mut self, selected_bottom_border: bool) -> Self {
-        self.selected_bottom_border = selected_bottom_border;
-        self
-    }
-
-    pub fn fill_available_width(mut self) -> Self {
-        self.fill_available_width = true;
-        self
     }
 }
 
@@ -163,36 +164,19 @@ impl RenderOnce for Tab {
             .map(|this| match self.position {
                 TabPosition::First => {
                     if self.selected {
-                        let this = this.pl_px().border_r_1();
-                        if self.selected_bottom_border {
-                            this.border_b_1()
-                        } else {
-                            this.pb_px()
-                        }
+                        this.pl_px().border_r_1().pb_px()
                     } else {
                         this.pl_px().pr_px().border_b_1()
                     }
                 }
                 TabPosition::Last => {
                     if self.selected {
-                        let this = this.border_l_1().border_r_1();
-                        if self.selected_bottom_border {
-                            this.border_b_1()
-                        } else {
-                            this.pb_px()
-                        }
+                        this.border_l_1().border_r_1().pb_px()
                     } else {
                         this.pl_px().border_b_1().border_r_1()
                     }
                 }
-                TabPosition::Middle(Ordering::Equal) => {
-                    let this = this.border_l_1().border_r_1();
-                    if self.selected_bottom_border {
-                        this.border_b_1()
-                    } else {
-                        this.pb_px()
-                    }
-                }
+                TabPosition::Middle(Ordering::Equal) => this.border_l_1().border_r_1().pb_px(),
                 TabPosition::Middle(Ordering::Less) => this.border_l_1().pr_px().border_b_1(),
                 TabPosition::Middle(Ordering::Greater) => this.border_r_1().pl_px().border_b_1(),
             })

@@ -186,8 +186,7 @@ impl DraggedMediaAsset {
             .or_else(|| path.file_name())
             .and_then(|name| name.to_str())
             .unwrap_or("media")
-            .replace('_', " ")
-            .replace('-', " ");
+            .replace(['_', '-'], " ");
         let relative_display = path
             .strip_prefix(root)
             .unwrap_or(path.as_path())

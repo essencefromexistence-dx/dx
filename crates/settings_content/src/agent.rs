@@ -188,6 +188,7 @@ pub struct AutoCompactSettingsContent {
     pub threshold: Option<AutoCompactThreshold>,
 }
 
+/// Dx Agents CLI/receipt bridge settings (local Dx catalog + CLI integration).
 #[with_fallible_options]
 #[derive(Clone, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom, Debug, Default)]
 pub struct DxAgentsSettingsContent {
@@ -196,18 +197,13 @@ pub struct DxAgentsSettingsContent {
     /// Default: true
     pub enabled: Option<bool>,
     /// The root DX CLI executable Zed uses for explicit `dx agents ... --json`
-    /// bridge actions. The dx-agents runtime remains owned by the public DX
-    /// command surface.
+    /// bridge actions.
     ///
     /// Default: dx
     pub cli_path: Option<String>,
     /// Receipt root used by the CLI bridge. Receipts must be redacted JSON.
-    ///
-    /// Default: G:\Dx\.dx\receipts\agents
     pub receipt_root: Option<String>,
     /// Generated rkyv/memmap provider catalog path used for fast discovery.
-    ///
-    /// Default: G:\Dx\.dx\catalog\agents\provider-model-catalog.rkyv
     pub provider_catalog_path: Option<String>,
     /// Whether GPUI buttons may run explicit dx-agents bridge commands.
     ///
@@ -223,6 +219,7 @@ pub struct DxAgentsSettingsContent {
     pub show_in_agent_rail: Option<bool>,
 }
 
+/// Liquid Glass settings for the Agent chat input (Dx GPUI glass renderer).
 #[with_fallible_options]
 #[derive(Clone, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom, Debug, Default)]
 pub struct AgentLiquidGlassSettingsContent {
@@ -230,109 +227,31 @@ pub struct AgentLiquidGlassSettingsContent {
     ///
     /// Default: true
     pub enabled: Option<bool>,
-    /// Superellipse shape power used by the glass surface.
-    ///
-    /// Default: 3.0
     pub power_factor: Option<f32>,
-    /// Glass quad width in world units before pixel scaling.
-    ///
-    /// Default: 3.5
     pub width: Option<f32>,
-    /// Glass quad height in world units before pixel scaling.
-    ///
-    /// Default: 3.5
     pub height: Option<f32>,
-    /// Distortion curve parameter a.
-    ///
-    /// Default: 0.7
     pub a: Option<f32>,
-    /// Distortion curve parameter b.
-    ///
-    /// Default: 2.3
     pub b: Option<f32>,
-    /// Distortion curve parameter c.
-    ///
-    /// Default: 5.2
     pub c: Option<f32>,
-    /// Distortion curve parameter d.
-    ///
-    /// Default: 6.9
     pub d: Option<f32>,
-    /// Distortion curve power.
-    ///
-    /// Default: 1.0
     pub f_power: Option<f32>,
-    /// Surface noise intensity.
-    ///
-    /// Default: 0.0
     pub noise: Option<f32>,
-    /// Glow strength.
-    ///
-    /// Default: 0.054
     pub glow_weight: Option<f32>,
-    /// Glow smoothstep inner edge.
-    ///
-    /// Default: 1.0
     pub glow_edge0: Option<f32>,
-    /// Glow smoothstep outer edge.
-    ///
-    /// Default: -1.0
     pub glow_edge1: Option<f32>,
-    /// Glow additive bias.
-    ///
-    /// Default: 0.353
     pub glow_bias: Option<f32>,
-    /// Chromatic aberration strength.
-    ///
-    /// Default: 0.0
     pub chromatic_aberration: Option<f32>,
-    /// Chromatic aberration sample count.
-    ///
-    /// Default: 1
     pub aberration_samples: Option<u32>,
-    /// Blur kernel radius in pixels.
-    ///
-    /// Default: 2.0
     pub blur_radius: Option<f32>,
-    /// Multi-pass blur iteration count.
-    ///
-    /// Default: 1
     pub blur_iterations: Option<u32>,
-    /// Blur downscale factor.
-    ///
-    /// Default: 0.5
     pub blur_downscale: Option<f32>,
-    /// Whether the standalone glass surface follows pointer movement.
-    ///
-    /// Default: false
     pub mouse_control: Option<bool>,
-    /// Standalone glass center position in pixels, preserved for parity with the recovered Rust app.
-    ///
-    /// Default: [512.0, 384.0]
     pub position: Option<[f32; 2]>,
-    /// World-to-pixel scale factor.
-    ///
-    /// Default: 100.0
     pub pixel_scale: Option<f32>,
-    /// Standalone camera position in world units, preserved for parity with the recovered Rust app.
-    ///
-    /// Default: [0.0, 0.0]
     pub camera_position: Option<[f32; 2]>,
-    /// Standalone glass movement speed.
-    ///
-    /// Default: 2.0
     pub velocity: Option<f32>,
-    /// Standalone camera movement speed.
-    ///
-    /// Default: 2.0
     pub camera_velocity: Option<f32>,
-    /// Background index from the recovered Liquid Glass app.
-    ///
-    /// Default: 0
     pub current_bg: Option<usize>,
-    /// Glass material variant index from the recovered Liquid Glass app.
-    ///
-    /// Default: 0
     pub glass_variant: Option<usize>,
 }
 
@@ -396,6 +315,11 @@ pub struct AgentSettingsContent {
     pub inline_assistant_use_streaming_tools: Option<bool>,
     /// Model to use for generating git commit messages. Defaults to default_model when not specified.
     pub commit_message_model: Option<LanguageModelSelection>,
+    /// Whether to include project rules files (AGENTS.md, CLAUDE.md, .rules, etc.)
+    /// in the prompt when generating git commit messages.
+    ///
+    /// Default: true
+    pub commit_message_include_project_rules: Option<bool>,
     /// Custom instructions to include in the prompt when generating git commit messages.
     /// Applied in addition to any project rules files (such as `.rules` or `AGENTS.md`).
     pub commit_message_instructions: Option<String>,
@@ -446,6 +370,13 @@ pub struct AgentSettingsContent {
     ///
     /// Default: true
     pub expand_terminal_card: Option<bool>,
+    /// Command to automatically run when Zed creates a Terminal Thread shell in the agent panel.
+    /// The command is sent to the shell as if typed, so it is interpreted by your
+    /// configured shell (including on Windows and remote/WSL projects).
+    /// An empty string disables this behavior.
+    ///
+    /// Default: ""
+    pub terminal_init_command: Option<String>,
     /// How thinking blocks should be displayed by default in the agent panel.
     ///
     /// Default: automatic
@@ -472,7 +403,7 @@ pub struct AgentSettingsContent {
     ///
     /// Default: true
     pub show_merge_conflict_indicator: Option<bool>,
-    /// Liquid Glass settings for the Agent chat input.
+    /// Liquid Glass settings for the Agent chat input (Dx).
     pub liquid_glass: Option<AgentLiquidGlassSettingsContent>,
     /// Per-tool permission rules for granular control over which tool actions
     /// require confirmation.
@@ -485,7 +416,7 @@ pub struct AgentSettingsContent {
     /// `always_confirm`) match against the tool's text input (command, path,
     /// URL, etc.).
     pub tool_permissions: Option<ToolPermissionsContent>,
-    /// DX Agents CLI/receipt bridge settings.
+    /// DX Agents CLI/receipt bridge settings (Dx).
     pub dx_agents: Option<DxAgentsSettingsContent>,
 
     /// Persistent sandbox permission grants for agent-run terminal commands.
@@ -595,10 +526,29 @@ impl AgentSettingsContent {
         }
     }
 
-    pub fn allow_sandbox_network(&mut self) {
+    pub fn allow_sandbox_all_hosts(&mut self) {
         self.sandbox_permissions
             .get_or_insert_default()
-            .allow_network = Some(true);
+            .allow_all_hosts = Some(true);
+    }
+
+    /// The persisted sandbox network host patterns, as written (callers own
+    /// parsing/validation).
+    pub fn sandbox_network_hosts(&self) -> &[String] {
+        self.sandbox_permissions
+            .as_ref()
+            .and_then(|permissions| permissions.network_hosts.as_ref())
+            .map(|hosts| hosts.0.as_slice())
+            .unwrap_or_default()
+    }
+
+    /// Replace the persisted sandbox network host patterns. Callers compute
+    /// the new list (typically the old list plus newly granted hosts, pruned
+    /// of entries subsumed by wildcards) rather than appending blindly.
+    pub fn set_sandbox_network_hosts(&mut self, hosts: Vec<String>) {
+        self.sandbox_permissions
+            .get_or_insert_default()
+            .network_hosts = Some(ExtendingVec(hosts));
     }
 
     pub fn allow_sandbox_fs_write_all(&mut self) {
@@ -787,6 +737,56 @@ impl std::ops::DerefMut for AllAgentServersSettings {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, JsonSchema, MergeFrom, Debug, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum AgentConfigOptionValue {
+    ValueId(String),
+    Boolean(bool),
+}
+
+impl AgentConfigOptionValue {
+    pub fn as_value_id(&self) -> Option<&str> {
+        match self {
+            Self::ValueId(value) => Some(value),
+            Self::Boolean(_) => None,
+        }
+    }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            Self::Boolean(value) => Some(*value),
+            Self::ValueId(_) => None,
+        }
+    }
+}
+
+impl std::fmt::Display for AgentConfigOptionValue {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ValueId(value) => formatter.write_str(value),
+            Self::Boolean(value) => value.fmt(formatter),
+        }
+    }
+}
+
+impl From<String> for AgentConfigOptionValue {
+    fn from(value: String) -> Self {
+        Self::ValueId(value)
+    }
+}
+
+impl From<&str> for AgentConfigOptionValue {
+    fn from(value: &str) -> Self {
+        Self::ValueId(value.to_string())
+    }
+}
+
+impl From<bool> for AgentConfigOptionValue {
+    fn from(value: bool) -> Self {
+        Self::Boolean(value)
+    }
+}
+
 #[with_fallible_options]
 #[derive(Deserialize, Serialize, Clone, JsonSchema, MergeFrom, Debug, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -807,11 +807,11 @@ pub enum CustomAgentServerSettings {
         default_mode: Option<String>,
         /// Default values for session config options.
         ///
-        /// This is a map from config option ID to value ID.
+        /// This is a map from config option ID to the default value for that option.
         ///
         /// Default: {}
         #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-        default_config_options: HashMap<String, String>,
+        default_config_options: HashMap<String, AgentConfigOptionValue>,
         /// Favorited values for session config options.
         ///
         /// This is a map from config option ID to a list of favorited value IDs.
@@ -836,11 +836,11 @@ pub enum CustomAgentServerSettings {
         default_mode: Option<String>,
         /// Default values for session config options.
         ///
-        /// This is a map from config option ID to value ID.
+        /// This is a map from config option ID to the default value for that option.
         ///
         /// Default: {}
         #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-        default_config_options: HashMap<String, String>,
+        default_config_options: HashMap<String, AgentConfigOptionValue>,
         /// Favorited values for session config options.
         ///
         /// This is a map from config option ID to a list of favorited value IDs.
@@ -854,18 +854,28 @@ pub enum CustomAgentServerSettings {
 #[with_fallible_options]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
 pub struct SandboxPermissionsContent {
-    /// Whether sandboxed terminal commands may always use outbound network
-    /// access without prompting.
+    /// Whether sandboxed terminal commands may always reach any host over the
+    /// network without prompting.
     /// Default: false
-    pub allow_network: Option<bool>,
+    pub allow_all_hosts: Option<bool>,
+
+    /// Hosts that sandboxed terminal commands may always reach over the
+    /// network without prompting. Each entry is an exact hostname
+    /// (`github.com`) or a leading-`*.` subdomain wildcard (`*.npmjs.org`).
+    /// Default: []
+    pub network_hosts: Option<ExtendingVec<String>>,
 
     /// Whether sandboxed terminal commands may always write anywhere on the
     /// filesystem without prompting.
     /// Default: false
     pub allow_fs_write_all: Option<bool>,
 
-    /// Whether terminal commands may always run outside the sandbox without
-    /// prompting when they request `unsandboxed: true`.
+    /// Whether to persistently run agent terminal commands outside the OS
+    /// sandbox. This is the model-facing "off switch": when true, the sandboxed
+    /// terminal tool is not exposed and the system prompt omits the sandbox
+    /// section, so the model uses the plain `terminal` tool. On Windows, WSL
+    /// sandbox setup is skipped. Distinct from the model-requested
+    /// `unsandboxed: true` escape approved "once" or "for this thread".
     /// Default: false
     pub allow_unsandboxed: Option<bool>,
 
@@ -873,6 +883,14 @@ pub struct SandboxPermissionsContent {
     /// to without prompting. Paths written by Zed are absolute.
     /// Default: []
     pub write_paths: Option<ExtendingVec<PathBuf>>,
+
+    /// Whether to warn when a sandbox escalation prompt requests a domain or
+    /// write path that contains potentially confusable Unicode characters
+    /// (homoglyphs, invisible characters, or bidirectional overrides). When
+    /// enabled, such prompts show a warning that must be acknowledged before
+    /// the request can be allowed.
+    /// Default: true
+    pub warn_confusable_unicode: Option<bool>,
 }
 
 #[with_fallible_options]
@@ -967,6 +985,46 @@ impl std::fmt::Display for ToolPermissionMode {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn agent_config_option_value_serializes_value_id_as_string() {
+        let value = AgentConfigOptionValue::from("manual");
+
+        assert_eq!(
+            serde_json::to_value(&value).expect("serialize value id"),
+            serde_json::json!("manual")
+        );
+        assert_eq!(
+            serde_json::from_value::<AgentConfigOptionValue>(serde_json::json!("manual"))
+                .expect("deserialize value id"),
+            AgentConfigOptionValue::ValueId("manual".to_string())
+        );
+    }
+
+    #[test]
+    fn agent_config_option_value_serializes_boolean_as_boolean() {
+        let value = AgentConfigOptionValue::Boolean(true);
+
+        assert_eq!(
+            serde_json::to_value(&value).expect("serialize boolean"),
+            serde_json::json!(true)
+        );
+        assert_eq!(
+            serde_json::from_value::<AgentConfigOptionValue>(serde_json::json!(true))
+                .expect("deserialize boolean"),
+            AgentConfigOptionValue::Boolean(true)
+        );
+    }
+
+    #[test]
+    fn agent_config_option_value_merge_replaces_existing_value() {
+        use crate::merge_from::MergeFrom as _;
+
+        let mut value = AgentConfigOptionValue::ValueId("manual".to_string());
+        value.merge_from(&AgentConfigOptionValue::Boolean(true));
+
+        assert_eq!(value, AgentConfigOptionValue::Boolean(true));
+    }
 
     #[test]
     fn test_set_tool_default_permission_creates_structure() {
@@ -1146,13 +1204,29 @@ mod tests {
         let mut settings = AgentSettingsContent::default();
         assert!(settings.sandbox_permissions.is_none());
 
-        settings.allow_sandbox_network();
+        settings.allow_sandbox_all_hosts();
+        assert_eq!(settings.sandbox_network_hosts(), &[] as &[String]);
+        settings
+            .set_sandbox_network_hosts(vec!["github.com".to_string(), "*.npmjs.org".to_string()]);
+        assert_eq!(
+            settings.sandbox_network_hosts(),
+            &["github.com".to_string(), "*.npmjs.org".to_string()]
+        );
         settings.allow_sandbox_fs_write_all();
         settings.allow_sandbox_unsandboxed();
         settings.add_sandbox_write_path(PathBuf::from("/tmp/build"));
 
         let sandbox_permissions = settings.sandbox_permissions.as_ref().unwrap();
-        assert_eq!(sandbox_permissions.allow_network, Some(true));
+        assert_eq!(sandbox_permissions.allow_all_hosts, Some(true));
+        assert_eq!(
+            sandbox_permissions
+                .network_hosts
+                .as_ref()
+                .unwrap()
+                .0
+                .as_slice(),
+            &["github.com".to_string(), "*.npmjs.org".to_string()]
+        );
         assert_eq!(sandbox_permissions.allow_fs_write_all, Some(true));
         assert_eq!(sandbox_permissions.allow_unsandboxed, Some(true));
         assert_eq!(

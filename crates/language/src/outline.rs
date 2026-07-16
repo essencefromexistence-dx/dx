@@ -3,37 +3,6 @@ use fuzzy_nucleo::{Case, LengthPenalty, StringMatch, StringMatchCandidate};
 use gpui::{BackgroundExecutor, HighlightStyle, SharedString};
 use std::ops::Range;
 
-pub const MAX_OUTLINE_ITEMS: usize = 20_000;
-const MAX_OUTLINE_PATH_TEXT_BYTES: usize = 256 * 1024;
-pub const MAX_OUTLINE_SEARCH_MATCHES: usize = 100;
-
-fn warn_truncated_outline_materialization(label: &str, actual: usize, max: usize) {
-    if actual > max {
-        log::warn!("truncating {label} from {actual} to {max} entries");
-    }
-}
-
-fn bounded_utf8_prefix(text: &str, max_bytes: usize) -> &str {
-    if text.len() <= max_bytes {
-        return text;
-    }
-
-    let mut end = max_bytes;
-    while !text.is_char_boundary(end) {
-        end -= 1;
-    }
-    &text[..end]
-}
-
-fn push_bounded_outline_text(target: &mut String, text: &str, max_bytes: usize) {
-    if target.len() >= max_bytes {
-        return;
-    }
-
-    let remaining = max_bytes - target.len();
-    target.push_str(bounded_utf8_prefix(text, remaining));
-}
-
 /// An outline of all the symbols contained in a buffer.
 #[derive(Debug)]
 pub struct Outline<T> {
@@ -179,10 +148,7 @@ impl<T: ToPoint> OutlineItem<T> {
 }
 
 impl<T> Outline<T> {
-    pub fn new(mut items: Vec<OutlineItem<T>>) -> Self {
-        warn_truncated_outline_materialization("outline items", items.len(), MAX_OUTLINE_ITEMS);
-        items.truncate(MAX_OUTLINE_ITEMS);
-
+    pub fn new(items: Vec<OutlineItem<T>>) -> Self {
         let mut candidates = Vec::with_capacity(items.len());
         let mut leaf_offsets = Vec::with_capacity(items.len());
         let mut path_text = String::new();
@@ -193,11 +159,11 @@ impl<T> Outline<T> {
                 path_stack.truncate(item.depth);
                 path_text.truncate(path_stack.last().copied().unwrap_or(0));
             }
-            if !path_text.is_empty() && path_text.len() < MAX_OUTLINE_PATH_TEXT_BYTES {
+            if !path_text.is_empty() {
                 path_text.push(' ');
             }
             leaf_offsets.push(path_text.len());
-            push_bounded_outline_text(&mut path_text, &item.text, MAX_OUTLINE_PATH_TEXT_BYTES);
+            path_text.push_str(&item.text);
             path_stack.push(path_text.len());
             candidates.push(StringMatchCandidate::new(id, &path_text));
         }
@@ -250,7 +216,7 @@ impl<T> Outline<T> {
             query,
             Case::Smart,
             LengthPenalty::On,
-            MAX_OUTLINE_SEARCH_MATCHES,
+            100,
             &Default::default(),
             executor,
         )

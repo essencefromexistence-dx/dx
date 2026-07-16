@@ -4,7 +4,7 @@ use std::{
 };
 
 use agent::{ThreadStore, ZED_AGENT_ID};
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use anyhow::Context as _;
 use chrono::{DateTime, Utc};
 use collections::{HashMap, HashSet};
@@ -59,22 +59,6 @@ impl Column for ThreadId {
 
 const THREAD_REMOTE_CONNECTION_MIGRATION_KEY: &str = "thread-metadata-remote-connection-backfill";
 const THREAD_ID_MIGRATION_KEY: &str = "thread-metadata-thread-id-backfill";
-const MAX_THREAD_REMOTE_CONNECTION_JSON_BYTES: usize = 64 * 1024;
-
-fn deserialize_thread_remote_connection(
-    remote_connection_json: &str,
-) -> anyhow::Result<RemoteConnectionOptions> {
-    if remote_connection_json.len() > MAX_THREAD_REMOTE_CONNECTION_JSON_BYTES {
-        anyhow::bail!(
-            "deserialize thread metadata remote connection: remote_connection_json is too large ({} bytes; max {} bytes)",
-            remote_connection_json.len(),
-            MAX_THREAD_REMOTE_CONNECTION_JSON_BYTES
-        );
-    }
-
-    serde_json::from_str::<RemoteConnectionOptions>(remote_connection_json)
-        .context("deserialize thread metadata remote connection")
-}
 
 /// List all sidebar thread metadata from an arbitrary SQLite connection.
 ///
@@ -1775,8 +1759,9 @@ impl Column for ThreadMetadata {
 
         let remote_connection = remote_connection_json
             .as_deref()
-            .map(deserialize_thread_remote_connection)
-            .transpose()?;
+            .map(serde_json::from_str::<RemoteConnectionOptions>)
+            .transpose()
+            .context("deserialize thread metadata remote connection")?;
 
         let worktree_paths = WorktreePaths::from_path_lists(main_worktree_paths, folder_paths)
             .unwrap_or_else(|_| WorktreePaths::default());
@@ -1839,7 +1824,7 @@ mod tests {
     use acp_thread::StubAgentConnection;
     use action_log::ActionLog;
     use agent::DbThread;
-    use agent_client_protocol::schema as acp;
+    use agent_client_protocol::schema::v1 as acp;
     use gpui::{TestAppContext, VisualTestContext};
     use project::FakeFs;
     use project::Project;
@@ -1859,7 +1844,6 @@ mod tests {
             request_token_usage: Default::default(),
             model: None,
             profile: None,
-            imported: false,
             subagent_context: None,
             speed: None,
             thinking_enabled: false,
@@ -1867,6 +1851,7 @@ mod tests {
             draft_prompt: None,
             ui_scroll_position: None,
             sandboxed_terminal_temp_dir: None,
+            sandbox_grants: Default::default(),
         }
     }
 

@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
-use fuzzy::StringMatch;
+use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{AnyElement, App, Context, DismissEvent, SharedString, Task, Window};
 use picker::{Picker, PickerDelegate};
 use theme::ThemeRegistry;
 use ui::{ListItem, ListItemSpacing, prelude::*};
-
-use super::{bounded_picker_matches, bounded_picker_options};
 
 type IconThemePicker = Picker<IconThemePickerDelegate>;
 
@@ -31,14 +29,22 @@ impl IconThemePickerDelegate {
             .into_iter()
             .map(|theme_meta| theme_meta.name)
             .collect();
-        let icon_themes = bounded_picker_options(icon_themes, &current_theme);
 
         let selected_index = icon_themes
             .iter()
             .position(|icon_theme| *icon_theme == current_theme)
             .unwrap_or(0);
 
-        let filtered_themes = bounded_picker_matches(icon_themes.iter().enumerate());
+        let filtered_themes = icon_themes
+            .iter()
+            .enumerate()
+            .map(|(index, theme)| StringMatch {
+                candidate_id: index,
+                string: theme.to_string(),
+                positions: Vec::new(),
+                score: 0.0,
+            })
+            .collect();
 
         Self {
             icon_themes,
@@ -52,6 +58,10 @@ impl IconThemePickerDelegate {
 
 impl PickerDelegate for IconThemePickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "icon theme picker"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_themes.len()
@@ -83,17 +93,36 @@ impl PickerDelegate for IconThemePickerDelegate {
     ) -> Task<()> {
         let icon_themes = self.icon_themes.clone();
         let current_theme = self.current_theme.clone();
-        let query_lower = query.to_lowercase();
 
         let matches: Vec<StringMatch> = if query.is_empty() {
-            bounded_picker_matches(icon_themes.iter().enumerate())
+            icon_themes
+                .iter()
+                .enumerate()
+                .map(|(index, theme)| StringMatch {
+                    candidate_id: index,
+                    string: theme.to_string(),
+                    positions: Vec::new(),
+                    score: 0.0,
+                })
+                .collect()
         } else {
-            bounded_picker_matches(
-                icon_themes
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, theme)| theme.to_lowercase().contains(&query_lower)),
-            )
+            let _candidates: Vec<StringMatchCandidate> = icon_themes
+                .iter()
+                .enumerate()
+                .map(|(id, theme)| StringMatchCandidate::new(id, theme.as_ref()))
+                .collect();
+
+            icon_themes
+                .iter()
+                .enumerate()
+                .filter(|(_, theme)| theme.to_lowercase().contains(&query.to_lowercase()))
+                .map(|(index, theme)| StringMatch {
+                    candidate_id: index,
+                    string: theme.to_string(),
+                    positions: Vec::new(),
+                    score: 0.0,
+                })
+                .collect()
         };
 
         let selected_index = if query.is_empty() {
@@ -104,11 +133,7 @@ impl PickerDelegate for IconThemePickerDelegate {
         } else {
             matches
                 .iter()
-                .position(|m| {
-                    icon_themes
-                        .get(m.candidate_id)
-                        .is_some_and(|theme| *theme == current_theme)
-                })
+                .position(|m| icon_themes[m.candidate_id] == current_theme)
                 .unwrap_or(0)
         };
 
@@ -168,6 +193,7 @@ pub fn icon_theme_picker(
 
     Picker::uniform_list(delegate, window, cx)
         .show_scrollbar(true)
-        .width(rems_from_px(210.))
-        .max_height(Some(rems(18.).into()))
+        .initial_width(rems_from_px(210.))
+        .max_height(rems(18.))
+        .popover()
 }

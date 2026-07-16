@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use agent::ContextServerRegistry;
 use agent_settings::{AgentProfile, AgentProfileId, AgentSettings, builtin_profiles};
-use editor::{Editor, MultiBufferSnapshot};
+use editor::Editor;
 use fs::Fs;
 use gpui::{DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Subscription, prelude::*};
 use language_model::{LanguageModel, LanguageModelRegistry};
@@ -21,42 +21,6 @@ use crate::agent_configuration::manage_profiles_modal::profile_modal_header::Pro
 use crate::agent_configuration::tool_picker::{ToolPicker, ToolPickerDelegate};
 use crate::language_model_selector::{LanguageModelSelector, language_model_selector};
 use crate::{AgentPanel, ManageProfiles};
-
-const MAX_AGENT_PROFILE_NAME_INPUT_BYTES: usize = 1024;
-const MAX_AGENT_PROFILE_NAME_INPUT_CHARS: usize = 1024;
-
-fn profile_name_editor_text(
-    editor: &Editor,
-    cx: &App,
-) -> std::result::Result<String, SharedString> {
-    let snapshot = editor.buffer().read(cx).snapshot(cx);
-    if profile_name_snapshot_exceeds_limit(&snapshot) {
-        return Err(format!(
-            "Profile name is too large (maximum {} bytes)",
-            MAX_AGENT_PROFILE_NAME_INPUT_BYTES
-        )
-        .into());
-    }
-
-    Ok(snapshot.text())
-}
-
-fn profile_name_snapshot_exceeds_limit(snapshot: &MultiBufferSnapshot) -> bool {
-    let summary = snapshot.text_summary();
-    summary.len.0 > MAX_AGENT_PROFILE_NAME_INPUT_BYTES
-        || summary.chars > MAX_AGENT_PROFILE_NAME_INPUT_CHARS
-}
-
-fn profile_icon(profile_id: &AgentProfileId) -> IconName {
-    match profile_id.as_str() {
-        builtin_profiles::WRITE => IconName::Sparkle,
-        builtin_profiles::ASK | builtin_profiles::LEGACY_MINIMAL => IconName::Chat,
-        builtin_profiles::MEDIA => dx_icon(DxUiIcon::Media),
-        builtin_profiles::SEARCH => dx_icon(DxUiIcon::Search),
-        builtin_profiles::STUDY => IconName::Book,
-        _ => IconName::UserRoundPen,
-    }
-}
 
 enum Mode {
     ChooseProfile(ChooseProfileMode),
@@ -81,27 +45,25 @@ enum Mode {
 
 impl Mode {
     pub fn choose_profile(_window: &mut Window, cx: &mut Context<ManageProfilesModal>) -> Self {
+        let settings = AgentSettings::get_global(cx);
+
         let mut builtin_profiles = Vec::new();
         let mut custom_profiles = Vec::new();
 
-        for (profile_id, profile_name) in AgentProfile::available_profiles(cx) {
+        for (profile_id, profile) in settings.profiles.iter() {
             let entry = ProfileEntry {
                 id: profile_id.clone(),
-                name: profile_name.clone(),
+                name: profile.name.clone(),
                 navigation: NavigableEntry::focusable(cx),
             };
-            if builtin_profiles::is_builtin(&profile_id) {
+            if builtin_profiles::is_builtin(profile_id) {
                 builtin_profiles.push(entry);
             } else {
                 custom_profiles.push(entry);
             }
         }
 
-        builtin_profiles.sort_unstable_by(|a, b| {
-            AgentProfile::builtin_sort_index(&a.id)
-                .cmp(&AgentProfile::builtin_sort_index(&b.id))
-                .then_with(|| a.name.cmp(&b.name))
-        });
+        builtin_profiles.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         custom_profiles.sort_unstable_by(|a, b| a.name.cmp(&b.name));
 
         Self::ChooseProfile(ChooseProfileMode {
@@ -141,7 +103,6 @@ pub struct ViewProfileMode {
 pub struct NewProfileMode {
     name_editor: Entity<Editor>,
     base_profile_id: Option<AgentProfileId>,
-    new_profile_error: Option<SharedString>,
 }
 
 pub struct ManageProfilesModal {
@@ -229,7 +190,6 @@ impl ManageProfilesModal {
         self.mode = Mode::NewProfile(NewProfileMode {
             name_editor,
             base_profile_id,
-            new_profile_error: None,
         });
         self.focus_handle(cx).focus(window, cx);
     }
@@ -335,7 +295,7 @@ impl ManageProfilesModal {
                 window,
                 cx,
             )
-            .modal(false)
+            .embedded()
         });
 
         let dismiss_subscription = cx.subscribe_in(&model_picker, window, {
@@ -452,33 +412,14 @@ impl ManageProfilesModal {
     }
 
     fn confirm(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        match &mut self.mode {
+        match &self.mode {
             Mode::ChooseProfile { .. } => {}
             Mode::NewProfile(mode) => {
-                let name = match profile_name_editor_text(mode.name_editor.read(cx), cx) {
-                    Ok(name) => name,
-                    Err(error) => {
-                        mode.new_profile_error = Some(error);
-                        cx.notify();
-                        return;
-                    }
-                };
+                let name = mode.name_editor.read(cx).text(cx);
                 let base_profile_id = mode.base_profile_id.clone();
-                mode.new_profile_error = None;
 
-                let profile_id = match AgentProfile::create(
-                    name,
-                    base_profile_id.clone(),
-                    self.fs.clone(),
-                    cx,
-                ) {
-                    Ok(profile_id) => profile_id,
-                    Err(error) => {
-                        mode.new_profile_error = Some(error.to_string().into());
-                        cx.notify();
-                        return;
-                    }
-                };
+                let profile_id =
+                    AgentProfile::create(name, base_profile_id.clone(), self.fs.clone(), cx);
                 telemetry::event!(
                     "Agent Profile Created",
                     profile_id = profile_id.as_str(),
@@ -598,7 +539,6 @@ impl ManageProfilesModal {
                     .toggle_state(is_focused)
                     .inset(true)
                     .spacing(ListItemSpacing::Sparse)
-                    .start_slot(Icon::new(profile_icon(&profile.id)).size(IconSize::Small))
                     .child(Label::new(profile.name.clone()))
                     .when(is_focused, |this| {
                         this.end_slot(
@@ -714,7 +654,7 @@ impl ManageProfilesModal {
             settings
                 .profiles
                 .get(base_profile_id)
-                .map(|profile| AgentProfile::display_name(base_profile_id, &profile.name))
+                .map(|profile| profile.name.clone())
                 .unwrap_or_else(|| "Unknown".into())
         });
 
@@ -733,20 +673,6 @@ impl ManageProfilesModal {
             ))
             .child(ListSeparator)
             .child(h_flex().p_2().child(mode.name_editor))
-            .when_some(mode.new_profile_error, |this, error| {
-                this.child(
-                    h_flex()
-                        .px_2()
-                        .pb_2()
-                        .gap_1p5()
-                        .child(
-                            Icon::new(IconName::Warning)
-                                .size(IconSize::Small)
-                                .color(Color::Warning),
-                        )
-                        .child(Label::new(error).size(LabelSize::Small).color(Color::Muted)),
-                )
-            })
     }
 
     fn render_view_profile(
@@ -760,10 +686,14 @@ impl ManageProfilesModal {
         let profile_name = settings
             .profiles
             .get(&mode.profile_id)
-            .map(|profile| AgentProfile::display_name(&mode.profile_id, &profile.name))
+            .map(|profile| profile.name.clone())
             .unwrap_or_else(|| "Unknown".into());
 
-        let icon = profile_icon(&mode.profile_id);
+        let icon = match mode.profile_id.as_str() {
+            "write" => IconName::Pencil,
+            "ask" => IconName::Chat,
+            _ => IconName::UserRoundPen,
+        };
 
         Navigable::new(
             div()
@@ -835,7 +765,7 @@ impl ManageProfilesModal {
                                         .inset(true)
                                         .spacing(ListItemSpacing::Sparse)
                                         .start_slot(
-                                            Icon::new(IconName::Sparkle)
+                                            Icon::new(IconName::ZedAssistant)
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
@@ -876,7 +806,7 @@ impl ManageProfilesModal {
                                         .inset(true)
                                         .spacing(ListItemSpacing::Sparse)
                                         .start_slot(
-                                            Icon::new(dx_icon(DxUiIcon::Settings))
+                                            Icon::new(IconName::Settings)
                                                 .size(IconSize::Small)
                                                 .color(Color::Muted),
                                         )
@@ -1082,14 +1012,14 @@ impl Render for ManageProfilesModal {
                     let profile_name = settings
                         .profiles
                         .get(profile_id)
-                        .map(|profile| AgentProfile::display_name(profile_id, &profile.name))
+                        .map(|profile| profile.name.clone())
                         .unwrap_or_else(|| "Unknown".into());
 
                     v_flex()
                         .pb_1()
                         .child(ProfileModalHeader::new(
                             format!("{profile_name} — Configure Built-in Tools"),
-                            Some(dx_icon(DxUiIcon::Settings)),
+                            Some(IconName::Settings),
                         ))
                         .child(ListSeparator)
                         .child(tool_picker.clone())
@@ -1105,14 +1035,14 @@ impl Render for ManageProfilesModal {
                     let profile_name = settings
                         .profiles
                         .get(profile_id)
-                        .map(|profile| AgentProfile::display_name(profile_id, &profile.name))
+                        .map(|profile| profile.name.clone())
                         .unwrap_or_else(|| "Unknown".into());
 
                     v_flex()
                         .pb_1()
                         .child(ProfileModalHeader::new(
                             format!("{profile_name} — Configure Default Model"),
-                            Some(IconName::Sparkle),
+                            Some(IconName::ZedAgent),
                         ))
                         .child(ListSeparator)
                         .child(v_flex().w(rems(34.)).child(model_picker.clone()))
@@ -1128,7 +1058,7 @@ impl Render for ManageProfilesModal {
                     let profile_name = settings
                         .profiles
                         .get(profile_id)
-                        .map(|profile| AgentProfile::display_name(profile_id, &profile.name))
+                        .map(|profile| profile.name.clone())
                         .unwrap_or_else(|| "Unknown".into());
 
                     v_flex()

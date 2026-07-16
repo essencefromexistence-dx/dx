@@ -1,5 +1,6 @@
 use crate::DEFAULT_THREAD_TITLE;
 use crate::SendImmediately;
+use crate::completion_provider::PromptLocalCommand;
 use crate::{
     ChatWithFollow,
     completion_provider::{
@@ -18,7 +19,7 @@ use crate::{
 // };
 use acp_thread::MentionUri;
 use agent::ThreadStore;
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use anyhow::{Result, anyhow};
 use base64::Engine as _;
 use editor::{
@@ -43,7 +44,9 @@ use project::{
 };
 use rope::Point;
 use settings::Settings;
-use std::{cmp::min, fmt::Write, ops::Range, path::PathBuf, rc::Rc, sync::Arc};
+use std::{
+    cmp::min, fmt::Write, ops::Range, path::PathBuf, rc::Rc, sync::Arc,
+};
 use text::LineEnding;
 use theme_settings::ThemeSettings;
 use ui::{ContextMenu, prelude::*};
@@ -147,10 +150,13 @@ impl SessionCapabilities {
 
 pub type SharedSessionCapabilities = Arc<RwLock<SessionCapabilities>>;
 
+pub type SharedLocalCommands = Arc<RwLock<Vec<PromptLocalCommand>>>;
+
 struct MessageEditorCompletionDelegate {
     session_capabilities: SharedSessionCapabilities,
     has_thread_store: bool,
     message_editor: WeakEntity<MessageEditor>,
+    local_commands: SharedLocalCommands,
 }
 
 impl PromptCompletionProviderDelegate for MessageEditorCompletionDelegate {
@@ -170,6 +176,18 @@ impl PromptCompletionProviderDelegate for MessageEditorCompletionDelegate {
 
     fn available_skills(&self, _cx: &App) -> Vec<AvailableSkill> {
         self.session_capabilities.read().completion_skills()
+    }
+
+    fn available_local_commands(&self, _cx: &App) -> Vec<PromptLocalCommand> {
+        self.local_commands.read().clone()
+    }
+
+    fn run_local_command(&self, command: PromptLocalCommand, cx: &mut App) {
+        self.message_editor
+            .update(cx, |_this, cx| {
+                cx.emit(MessageEditorEvent::LocalCommandInvoked(command));
+            })
+            .ok();
     }
 
     fn slash_autocomplete_invoked(&self, cx: &mut App) {
@@ -196,6 +214,7 @@ pub struct MessageEditor {
     editor: Entity<Editor>,
     workspace: WeakEntity<Workspace>,
     session_capabilities: SharedSessionCapabilities,
+    local_commands: SharedLocalCommands,
     agent_id: AgentId,
     thread_store: Option<Entity<ThreadStore>>,
     _subscriptions: Vec<Subscription>,
@@ -220,6 +239,11 @@ pub enum MessageEditorEvent {
     /// editor. Used by `ThreadView` to fire the global-skills scan
     /// trigger; see `NativeAgent::ensure_skills_scan_started`.
     SlashAutocompleteOpened,
+    /// Emitted when the user confirms a local slash command (scrolling,
+    /// exporting, feedback) in this editor's completion popup. `ThreadView`
+    /// handles it by running the corresponding action; see
+    /// `handle_message_editor_event`.
+    LocalCommandInvoked(PromptLocalCommand),
     InputAttempted {
         attempt: InputAttempt,
         cursor_offset: usize,
@@ -348,7 +372,7 @@ async fn resolve_pasted_context_items(
     project: Entity<Project>,
     project_is_local: bool,
     supports_images: bool,
-    entries: Vec<PastedContextEntry>,
+    entries: Vec<ClipboardEntry>,
     cx: &mut gpui::AsyncWindowContext,
 ) -> (Vec<ResolvedPastedContextItem>, Vec<Entity<Worktree>>) {
     let mut items = Vec::new();
@@ -357,7 +381,8 @@ async fn resolve_pasted_context_items(
 
     for entry in entries {
         match entry {
-            PastedContextEntry::Image(image) => {
+            ClipboardEntry::String(_) => {}
+            ClipboardEntry::Image(image) => {
                 if supports_images {
                     items.push(ResolvedPastedContextItem::Image(
                         image,
@@ -365,40 +390,43 @@ async fn resolve_pasted_context_items(
                     ));
                 }
             }
-            PastedContextEntry::ExternalPath(path) => {
-                if let Some((image, name)) = cx
-                    .background_spawn({
-                        let path = path.clone();
-                        let default_image_name = default_image_name.clone();
-                        async move {
-                            crate::mention_set::load_external_image_from_path(
-                                &path,
-                                &default_image_name,
-                            )
+            ClipboardEntry::ExternalPaths(paths) => {
+                for path in paths.paths().iter() {
+                    if let Some((image, name)) = cx
+                        .background_spawn({
+                            let path = path.clone();
+                            let default_image_name = default_image_name.clone();
+                            async move {
+                                crate::mention_set::load_external_image_from_path(
+                                    &path,
+                                    &default_image_name,
+                                )
+                            }
+                        })
+                        .await
+                    {
+                        if supports_images {
+                            items.push(ResolvedPastedContextItem::Image(image, name));
                         }
-                    })
-                    .await
-                {
-                    if supports_images {
-                        items.push(ResolvedPastedContextItem::Image(image, name));
+                        continue;
                     }
-                    continue;
-                }
 
-                if !project_is_local {
-                    continue;
-                }
+                    if !project_is_local {
+                        continue;
+                    }
 
-                let Ok(resolve_task) = cx.update({
-                    let project = project.clone();
-                    move |_, cx| Workspace::project_path_for_path(project, &path, false, cx)
-                }) else {
-                    continue;
-                };
+                    let path = path.clone();
+                    let Ok(resolve_task) = cx.update({
+                        let project = project.clone();
+                        move |_, cx| Workspace::project_path_for_path(project, &path, false, cx)
+                    }) else {
+                        continue;
+                    };
 
-                if let Some((worktree, project_path)) = resolve_task.await.log_err() {
-                    added_worktrees.push(worktree);
-                    items.push(ResolvedPastedContextItem::ProjectPath(project_path));
+                    if let Some((worktree, project_path)) = resolve_task.await.log_err() {
+                        added_worktrees.push(worktree);
+                        items.push(ResolvedPastedContextItem::ProjectPath(project_path));
+                    }
                 }
             }
         }
@@ -534,11 +562,13 @@ impl MessageEditor {
             editor
         });
         let mention_set = cx.new(|_cx| MentionSet::new(project, thread_store.clone()));
+        let local_commands: SharedLocalCommands = Arc::new(RwLock::new(Vec::new()));
         let completion_provider = Rc::new(PromptCompletionProvider::new(
             MessageEditorCompletionDelegate {
                 session_capabilities: session_capabilities.clone(),
                 has_thread_store: thread_store.is_some(),
                 message_editor: cx.weak_entity(),
+                local_commands: local_commands.clone(),
             },
             editor.downgrade(),
             mention_set.clone(),
@@ -633,11 +663,16 @@ impl MessageEditor {
             mention_set,
             workspace,
             session_capabilities,
+            local_commands,
             agent_id,
             thread_store,
             _subscriptions: subscriptions,
             _parse_slash_command_task: Task::ready(()),
         }
+    }
+
+    pub fn set_local_commands(&self, commands: Vec<PromptLocalCommand>) {
+        *self.local_commands.write() = commands;
     }
 
     pub fn set_session_capabilities(
@@ -756,7 +791,6 @@ impl MessageEditor {
             .detach();
     }
 
-    #[cfg(test)]
     pub(crate) fn editor(&self) -> &Entity<Editor> {
         &self.editor
     }
@@ -1195,7 +1229,11 @@ impl MessageEditor {
                                     .update(cx, |project, cx| {
                                         project.project_path_for_absolute_path(&file_path, cx)
                                     })
-                                    .ok_or_else(|| "project path not found".to_string())?;
+                                    .ok_or_else(|| {
+                                        format!(
+                                            "project path not found for pasted selection {file_path:?}"
+                                        )
+                                    })?;
 
                                 let buffer = project
                                     .update(cx, |project, cx| project.open_buffer(project_path, cx))
@@ -1233,11 +1271,11 @@ impl MessageEditor {
         // Handle text paste with potential markdown mention links before
         // clipboard context entries so markdown text still pastes as text.
         let clipboard_text = clipboard.entries().iter().find_map(|entry| match entry {
-            ClipboardEntry::String(text) => Some(text.text()),
+            ClipboardEntry::String(text) => Some(text.text().to_string()),
             _ => None,
         });
-        if let Some(clipboard_text) = clipboard_text {
-            if should_parse_pasted_mention_links(clipboard_text) {
+        if let Some(clipboard_text) = clipboard_text.as_deref() {
+            if clipboard_text.contains("[@") {
                 let selections_before = self.editor.update(cx, |editor, cx| {
                     let snapshot = editor.buffer().read(cx).snapshot(cx);
                     editor
@@ -1400,7 +1438,7 @@ impl MessageEditor {
         let editor = self.editor.clone();
         let mention_set = self.mention_set.clone();
         let workspace = self.workspace.clone();
-        let entries = limited_pasted_context_entries(clipboard);
+        let entries = clipboard.clone().into_entries().collect::<Vec<_>>();
 
         window
             .spawn(cx, async move |mut cx| {
@@ -2165,7 +2203,7 @@ impl Render for MessageEditor {
                 EditorElement::new(
                     &self.editor,
                     EditorStyle {
-                        background: cx.theme().system().transparent,
+                        background: cx.theme().colors().editor_background,
                         local_player: cx.theme().players().local(),
                         text: text_style,
                         syntax: cx.theme().syntax().clone(),
@@ -2408,7 +2446,7 @@ mod tests {
 
     use acp_thread::MentionUri;
     use agent::{ThreadStore, outline};
-    use agent_client_protocol::schema as acp;
+    use agent_client_protocol::schema::v1 as acp;
     use base64::Engine as _;
     use editor::{
         AnchorRangeExt as _, Editor, EditorMode, MultiBufferOffset, SelectionEffects,
@@ -3100,6 +3138,118 @@ mod tests {
             assert_eq!(editor.display_text(cx), "/say-hell");
             assert!(!editor.has_visible_completions_menu());
         });
+    }
+
+    /// Local commands set via `set_local_commands` must surface in the
+    /// slash-command popup, and confirming one must emit
+    /// `MessageEditorEvent::LocalCommandInvoked` (so `ThreadView` can run the
+    /// corresponding action) without leaving the `/keyword` in the editor.
+    #[gpui::test]
+    async fn test_local_commands_complete_and_emit_event(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let app_state = cx.update(AppState::test);
+
+        cx.update(|cx| {
+            editor::init(cx);
+            workspace::init(app_state.clone(), cx);
+        });
+
+        let project = Project::test(app_state.fs.clone(), [path!("/dir").as_ref()], cx).await;
+        let window =
+            cx.add_window(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
+        let workspace = window
+            .read_with(cx, |mw, _| mw.workspace().clone())
+            .unwrap();
+
+        let mut cx = VisualTestContext::from_window(window.into(), cx);
+
+        let session_capabilities = Arc::new(RwLock::new(SessionCapabilities::from_acp_commands(
+            acp::PromptCapabilities::default(),
+            Vec::new(),
+        )));
+
+        let (message_editor, editor) = workspace.update_in(&mut cx, |workspace, window, cx| {
+            let workspace_handle = cx.weak_entity();
+            let message_editor = cx.new(|cx| {
+                MessageEditor::new(
+                    workspace_handle,
+                    project.downgrade(),
+                    None,
+                    session_capabilities.clone(),
+                    "Test Agent".into(),
+                    "Test",
+                    EditorMode::AutoHeight {
+                        max_lines: None,
+                        min_lines: 1,
+                    },
+                    window,
+                    cx,
+                )
+            });
+            workspace.active_pane().update(cx, |pane, cx| {
+                pane.add_item(
+                    Box::new(cx.new(|_| MessageEditorItem(message_editor.clone()))),
+                    true,
+                    true,
+                    None,
+                    window,
+                    cx,
+                );
+            });
+            message_editor.read(cx).focus_handle(cx).focus(window, cx);
+            let editor = message_editor.read(cx).editor().clone();
+            (message_editor, editor)
+        });
+
+        message_editor.read_with(&cx, |message_editor, _| {
+            message_editor.set_local_commands(vec![
+                PromptLocalCommand::ThumbsUp,
+                PromptLocalCommand::ThumbsDown,
+            ]);
+        });
+
+        let invoked = Rc::new(std::cell::RefCell::new(Vec::new()));
+        let _subscription = cx.update(|_, cx| {
+            cx.subscribe(&message_editor, {
+                let invoked = invoked.clone();
+                move |_editor, event, _cx| {
+                    if let MessageEditorEvent::LocalCommandInvoked(command) = event {
+                        invoked.borrow_mut().push(*command);
+                    }
+                }
+            })
+        });
+
+        // `/helpful` would fuzzy-match both commands ("helpful" is a
+        // subsequence of "not-helpful"), so drive the unambiguous keyword.
+        cx.simulate_input("/not-helpful");
+        cx.run_until_parked();
+
+        editor.read_with(&cx, |editor, _| {
+            assert!(editor.has_visible_completions_menu());
+            assert_eq!(
+                current_completion_labels(editor),
+                &[PromptLocalCommand::ThumbsDown.label().to_string()],
+            );
+        });
+
+        editor.update_in(&mut cx, |editor, window, cx| {
+            editor.confirm_completion(&editor::actions::ConfirmCompletion::default(), window, cx);
+        });
+
+        cx.run_until_parked();
+
+        editor.read_with(&cx, |editor, cx| {
+            // The `/keyword` text is removed when a local command is confirmed.
+            assert_eq!(editor.text(cx), "");
+            assert!(!editor.has_visible_completions_menu());
+        });
+
+        assert_eq!(
+            invoked.borrow().as_slice(),
+            &[PromptLocalCommand::ThumbsDown],
+        );
     }
 
     /// Opening slash-command autocomplete must emit

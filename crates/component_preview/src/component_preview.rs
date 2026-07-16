@@ -500,9 +500,11 @@ impl ComponentPreview {
                     list(
                         self.component_list.clone(),
                         cx.processor(|this, ix, window, cx| {
-                            let Some(entry) = this.entries.get(ix) else {
+                            if ix >= this.entries.len() {
                                 return div().w_full().h_0().into_any_element();
-                            };
+                            }
+
+                            let entry = &this.entries[ix];
 
                             match entry {
                                 PreviewEntry::Component(component, _) => this

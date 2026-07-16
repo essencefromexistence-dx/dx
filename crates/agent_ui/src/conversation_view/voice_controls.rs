@@ -2,8 +2,8 @@ use std::time::{Duration, Instant};
 
 use gpui::{Animation, AnimationExt, AnyElement, App, ClickEvent, IntoElement, Window};
 use ui::{
-    Button, ButtonCommon, ButtonSize, Clickable, Color, Icon, IconButton, IconButtonShape,
-    IconName, IconSize, Label, LabelSize, Tooltip, dx_loading_icon,
+    Button, ButtonCommon, ButtonSize, Clickable, Color, CommonAnimationExt, Icon, IconButton,
+    IconButtonShape, IconName, IconSize, Label, LabelSize, Tooltip, dx_loading_icon,
 };
 use ui::{h_flex, prelude::*, v_flex};
 

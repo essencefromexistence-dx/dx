@@ -2,22 +2,8 @@ use std::rc::Rc;
 
 use gpui::{DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, IntoElement};
 use ui::{Tooltip, prelude::*};
-use util::truncate_and_trailoff;
 use workspace::{ToastAction, ToastView};
 use zed_actions::toast;
-
-const MAX_STATUS_TOAST_MESSAGE_LABEL_LEN: usize = 4_096;
-const MAX_STATUS_TOAST_ACTION_LABEL_LEN: usize = 512;
-
-fn bounded_status_toast_message(text: impl Into<SharedString>) -> SharedString {
-    let text = text.into();
-    truncate_and_trailoff(&text, MAX_STATUS_TOAST_MESSAGE_LABEL_LEN).into()
-}
-
-fn bounded_status_toast_action_label(label: impl Into<SharedString>) -> SharedString {
-    let label = label.into();
-    truncate_and_trailoff(&label, MAX_STATUS_TOAST_ACTION_LABEL_LEN).into()
-}
 
 #[derive(RegisterComponent)]
 pub struct StatusToast {
@@ -41,7 +27,7 @@ impl StatusToast {
 
             f(
                 Self {
-                    text: bounded_status_toast_message(text),
+                    text: text.into(),
                     icon: None,
                     action: None,
                     show_dismiss: false,
@@ -70,9 +56,8 @@ impl StatusToast {
         f: impl Fn(&mut Window, &mut App) + 'static,
     ) -> Self {
         let this_handle = self.this_handle.clone();
-        let label = bounded_status_toast_action_label(label);
         self.action = Some(ToastAction::new(
-            label,
+            label.into(),
             Some(Rc::new(move |window, cx| {
                 this_handle.update(cx, |_, cx| {
                     cx.emit(DismissEvent);

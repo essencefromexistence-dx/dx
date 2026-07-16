@@ -21,7 +21,7 @@ impl ContactFinder {
             potential_contacts: Arc::from([]),
             selected_index: 0,
         };
-        let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).modal(false));
+        let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).embedded());
 
         Self { picker }
     }
@@ -48,7 +48,6 @@ impl Render for ContactFinder {
                     .child(h_flex().child(Label::new("Invite new contacts"))),
             )
             .child(self.picker.clone())
-            .w(rems(34.))
     }
 }
 
@@ -68,15 +67,12 @@ impl Focusable for ContactFinder {
     }
 }
 
-impl ContactFinderDelegate {
-    fn clamp_selected_index_to_potential_contacts(&mut self) {
-        let last_selectable_index = self.potential_contacts.len().saturating_sub(1);
-        self.selected_index = self.selected_index.min(last_selectable_index);
-    }
-}
-
 impl PickerDelegate for ContactFinderDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "contact finder"
+    }
 
     fn match_count(&self) -> usize {
         self.potential_contacts.len()
@@ -114,7 +110,6 @@ impl PickerDelegate for ContactFinderDelegate {
                 let potential_contacts = search_users.await?;
                 picker.update(cx, |picker, cx| {
                     picker.delegate.potential_contacts = potential_contacts.into();
-                    picker.delegate.clamp_selected_index_to_potential_contacts();
                     cx.notify();
                 })?;
                 anyhow::Ok(())
@@ -172,7 +167,7 @@ impl PickerDelegate for ContactFinderDelegate {
                 .spacing(ListItemSpacing::Sparse)
                 .toggle_state(selected)
                 .start_slot(Avatar::new(user.avatar_uri.clone()))
-                .child(Label::new(user.github_login.clone()))
+                .child(Label::new(user.username.clone()))
                 .end_slot::<Icon>(icon_path.map(Icon::from_path)),
         )
     }

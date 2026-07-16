@@ -38,7 +38,6 @@ mod lsp_ext;
 mod mouse_context_menu;
 pub mod movement;
 mod persistence;
-mod rainbow_caret;
 mod runnables;
 mod rust_analyzer_ext;
 pub mod scroll;
@@ -73,7 +72,6 @@ mod rewrap;
 mod selection;
 
 pub(crate) use actions::*;
-use audio::{Audio, DxSoundEvent};
 pub use clipboard::ClipboardSelection;
 pub use code_actions::CodeActionProvider;
 use collections::TypeIdHashMap;
@@ -100,21 +98,25 @@ pub use edit_prediction_types::Direction;
 pub use edit_prediction_types::EditPredictionRequestTrigger;
 pub use editor_settings::{
     CompletionDetailAlignment, CompletionMenuItemKind, CurrentLineHighlight, DiffViewStyle,
-    DocumentColorsRenderMode, EditorSettings, EditorSettingsScrollbarProxy, ScrollBeyondLastLine,
-    ScrollbarAxes, SearchSettings, ShowMinimap, ui_scrollbar_settings_from_raw,
+    DocumentColorsRenderMode, EditorSettings, EditorSettingsScrollbarProxy, OpenResultsIn,
+    ScrollBeyondLastLine, ScrollbarAxes, SearchSettings, ShowMinimap,
+    ui_scrollbar_settings_from_raw,
 };
 pub use element::{
     CursorLayout, EditorElement, HighlightedRange, HighlightedRangeLine, PointForPosition,
-    render_breadcrumb_text,
+    file_status_label_color, render_breadcrumb_text,
 };
 pub use git::blame::BlameRenderer;
+pub use git::{
+    DiffHunkDelegate, ResolvedDiffHunk, ResolvedDiffHunks, RestoreOnlyDiffHunkDelegate,
+    RestoreOnlyUnstagedDiffHunkDelegate, UncommittedDiffHunkDelegate, render_diff_hunk_controls,
+    set_blame_renderer,
+};
 pub(crate) use git::{DiffHunkKey, StoredReviewComment};
 use git::{
-    DiffReviewDragState, DiffReviewOverlay, InlineBlamePopover, render_diff_hunk_controls,
-    update_uncommitted_diff_for_buffer,
+    DiffReviewDragState, DiffReviewOverlay, InlineBlamePopover, update_uncommitted_diff_for_buffer,
 };
 pub(crate) use git::{DisplayDiffHunk, PhantomDiffReviewIndicator};
-pub use git::{RenderDiffHunkControlsFn, set_blame_renderer};
 pub use hover_popover::hover_markdown_style;
 pub use inlays::Inlay;
 pub use items::MAX_TAB_TITLE_LEN;
@@ -126,11 +128,11 @@ pub use multi_buffer::{
     MultiBufferOffset, MultiBufferOffsetUtf16, MultiBufferSnapshot, PathKey, RowInfo, ToOffset,
     ToPoint,
 };
-pub use split::{SplittableEditor, ToggleSplitDiff};
+pub use split::{DiffStyleControls, SplittableEditor, ToggleSplitDiff};
 pub use split_editor_view::SplitEditorView;
 pub use text::Bias;
 
-use ::git::status::FileStatus;
+use ::git::{Blame, status::FileStatus};
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, BuildError};
 use anyhow::{Context as _, Result, anyhow, bail};
 use blink_manager::BlinkManager;
@@ -222,7 +224,6 @@ use project::{
     },
     project_settings::{DiagnosticSeverity, GoToDiagnosticSeverityFilter, ProjectSettings},
 };
-use rainbow_caret::RainbowCaretContrastCache;
 use rand::seq::SliceRandom;
 use regex::Regex;
 use rpc::{ErrorCode, ErrorExt, proto::PeerId};
@@ -257,9 +258,8 @@ use theme::{
 };
 use theme_settings::{ThemeSettings, observe_buffer_font_size_adjustment};
 use ui::{
-    Avatar, ButtonSize, ButtonStyle, ContextMenu, Disclosure, IconButton, IconButtonShape,
-    IconName, IconSize, Indicator, Key, Tooltip, h_flex, prelude::*, scrollbars::ScrollbarAutoHide,
-    utils::WithRemSize,
+    Avatar, ContextMenu, Disclosure, IconButtonShape, Indicator, Key, KeyBinding, Tooltip,
+    prelude::*, scrollbars::ScrollbarAutoHide, tooltip_container, utils::WithRemSize,
 };
 use ui_input::ErasedEditor;
 use util::{RangeExt, ResultExt, TryFutureExt, maybe, post_inc};
@@ -300,14 +300,6 @@ pub(crate) const CURSORS_VISIBLE_FOR: Duration = Duration::from_millis(2000);
 #[doc(hidden)]
 pub const CODE_ACTIONS_DEBOUNCE_TIMEOUT: Duration = Duration::from_millis(250);
 pub const SELECTION_HIGHLIGHT_DEBOUNCE_TIMEOUT: Duration = Duration::from_millis(100);
-pub(crate) const DEFERRED_SELECTION_REFRESH_DEBOUNCE: Duration = Duration::from_millis(75);
-const POWER_MODE_MAX_PARTICLES: usize = 48;
-const POWER_MODE_MAX_PENDING_BURSTS: usize = 4;
-const POWER_MODE_PARTICLES_PER_BURST: usize = 5;
-const POWER_MODE_PARTICLE_LIFETIME: Duration = Duration::from_millis(360);
-const POWER_MODE_PENDING_BURST_LIFETIME: Duration = Duration::from_millis(120);
-const POWER_MODE_SHAKE_LIFETIME: Duration = Duration::from_millis(90);
-const POWER_MODE_SHAKE_MAX_PX: f32 = 1.4;
 
 pub(crate) const CODE_ACTION_TIMEOUT: Duration = Duration::from_secs(5);
 pub(crate) const FORMAT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -624,9 +616,6 @@ impl EditorActionId {
     }
 }
 
-// type GetFieldEditorTheme = dyn Fn(&theme::Theme) -> theme::FieldEditor;
-// type OverrideTextStyle = dyn Fn(&EditorStyle) -> Option<HighlightStyle>;
-
 type BackgroundHighlight = (
     Arc<dyn Fn(&usize, &Theme) -> Hsla + Send + Sync>,
     Arc<[Range<Anchor>]>,
@@ -929,63 +918,6 @@ struct ActionFetchReady {
     actions: Rc<[AvailableCodeAction]>,
 }
 
-#[derive(Default)]
-struct PowerModeEffects {
-    particles: Vec<PowerModeParticle>,
-    pending_bursts: usize,
-    pending_until: Option<Instant>,
-    shake_until: Option<Instant>,
-    sequence: u32,
-}
-
-struct PowerModeParticle {
-    origin: gpui::Point<Pixels>,
-    travel_x: f32,
-    travel_y: f32,
-    size: Pixels,
-    color: Hsla,
-    created_at: Instant,
-    expires_at: Instant,
-}
-
-pub(crate) struct PowerModePaintParticle {
-    pub(crate) origin: gpui::Point<Pixels>,
-    pub(crate) size: Pixels,
-    pub(crate) color: Hsla,
-}
-
-pub(crate) struct PowerModePaintState {
-    pub(crate) particles: Vec<PowerModePaintParticle>,
-    pub(crate) shake_offset: gpui::Point<Pixels>,
-    pub(crate) alive: bool,
-}
-
-impl PowerModeEffects {
-    fn clear(&mut self) {
-        self.particles.clear();
-        self.pending_bursts = 0;
-        self.pending_until = None;
-        self.shake_until = None;
-    }
-
-    fn prune(&mut self, now: Instant) {
-        self.particles.retain(|particle| particle.expires_at > now);
-        if self.pending_until.is_some_and(|deadline| deadline <= now) {
-            self.pending_bursts = 0;
-            self.pending_until = None;
-        }
-        if self.shake_until.is_some_and(|deadline| deadline <= now) {
-            self.shake_until = None;
-        }
-    }
-
-    fn is_alive(&self, now: Instant) -> bool {
-        !self.particles.is_empty()
-            || self.pending_until.is_some_and(|deadline| deadline > now)
-            || self.shake_until.is_some_and(|deadline| deadline > now)
-    }
-}
-
 /// Zed's primary implementation of text input, allowing users to edit a [`MultiBuffer`].
 ///
 /// See the [module level documentation](self) for more information.
@@ -1004,7 +936,7 @@ pub struct Editor {
     /// Whenever you want to modify the scroll position of the editor, you should
     /// usually use the existing available APIs as opposed to directly interacting
     /// with the scroll manager.
-    pub(crate) scroll_manager: ScrollManager,
+    pub scroll_manager: ScrollManager,
     /// When inline assist editors are linked, they all render cursors because
     /// typing enters text into each of them, even the ones that aren't focused.
     pub(crate) show_cursor_when_unfocused: bool,
@@ -1015,9 +947,6 @@ pub struct Editor {
     selection_history: SelectionHistory,
     defer_selection_effects: bool,
     deferred_selection_effects_state: Option<DeferredSelectionEffectsState>,
-    deferred_selection_refresh_scheduled: bool,
-    deferred_completion_on_input: Option<DeferredCompletionOnInput>,
-    deferred_completion_on_input_scheduled: bool,
     autoclose_regions: Vec<AutocloseRegion>,
     snippet_stack: InvalidationStack<SnippetState>,
     select_syntax_node_history: SelectSyntaxNodeHistory,
@@ -1048,7 +977,6 @@ pub struct Editor {
     offset_content: bool,
     disable_expand_excerpt_buttons: bool,
     delegate_expand_excerpts: bool,
-    delegate_stage_and_restore: bool,
     delegate_open_excerpts: bool,
     enable_lsp_data: bool,
     needs_initial_data_update: bool,
@@ -1133,8 +1061,6 @@ pub struct Editor {
     next_color_inlay_id: usize,
     _subscriptions: Vec<Subscription>,
     pixel_position_of_newest_cursor: Option<gpui::Point<Pixels>>,
-    power_mode_effects: PowerModeEffects,
-    rainbow_caret_contrast_cache: RainbowCaretContrastCache,
     gutter_dimensions: GutterDimensions,
     style: Option<EditorStyle>,
     text_style_refinement: Option<TextStyleRefinement>,
@@ -1151,11 +1077,11 @@ pub struct Editor {
     show_git_blame_inline: bool,
     show_git_blame_inline_delay_task: Option<Task<()>>,
     git_blame_inline_enabled: bool,
-    render_diff_hunk_controls: RenderDiffHunkControlsFn,
     buffer_serialization: Option<BufferSerialization>,
     show_selection_menu: Option<bool>,
     blame: Option<Entity<GitBlame>>,
     blame_subscription: Option<Subscription>,
+    pending_blame_hover_observation: Option<Subscription>,
     custom_context_menu: Option<
         Box<
             dyn 'static
@@ -1205,12 +1131,7 @@ pub struct Editor {
     addons: TypeIdHashMap<Box<dyn Addon>>,
     registered_buffers: HashMap<BufferId, OpenLspBufferHandle>,
     load_diff_task: Option<Shared<Task<()>>>,
-    /// Whether we are temporarily displaying a diff other than git's
-    temporary_diff_override: bool,
-    /// Whether to render all diff hunks with the "unstaged" appearance,
-    /// regardless of whether they have a secondary hunk. Used by views whose
-    /// diffs aren't related to the git index (e.g. agent diffs).
-    render_diff_hunks_as_unstaged: bool,
+    diff_hunk_delegate: Option<Arc<dyn DiffHunkDelegate>>,
     selection_mark_mode: bool,
     toggle_fold_multiple_buffers: Task<()>,
     _scroll_cursor_center_top_bottom_task: Task<()>,
@@ -1407,7 +1328,6 @@ pub struct SelectionEffects {
     completions: bool,
     scroll: Option<Autoscroll>,
     from_search: bool,
-    defer_noncritical_refreshes: bool,
 }
 
 impl Default for SelectionEffects {
@@ -1417,7 +1337,6 @@ impl Default for SelectionEffects {
             completions: true,
             scroll: Some(Autoscroll::fit()),
             from_search: false,
-            defer_noncritical_refreshes: false,
         }
     }
 }
@@ -1456,18 +1375,6 @@ impl SelectionEffects {
             ..self
         }
     }
-
-    pub fn defer_noncritical_refreshes(self, defer_noncritical_refreshes: bool) -> Self {
-        Self {
-            defer_noncritical_refreshes,
-            ..self
-        }
-    }
-}
-
-struct DeferredCompletionOnInput {
-    text: String,
-    trigger_in_words: bool,
 }
 
 struct DeferredSelectionEffectsState {
@@ -1477,11 +1384,15 @@ struct DeferredSelectionEffectsState {
     history_entry: SelectionHistoryEntry,
 }
 
+#[derive(Clone, Debug)]
+pub struct TransactionSelections {
+    pub undo: Arc<[Selection<Anchor>]>,
+    pub redo: Option<Arc<[Selection<Anchor>]>>,
+}
+
 #[derive(Default)]
 struct SelectionHistory {
-    #[allow(clippy::type_complexity)]
-    selections_by_transaction:
-        HashMap<TransactionId, (Arc<[Selection<Anchor>]>, Option<Arc<[Selection<Anchor>]>>)>,
+    selections_by_transaction: HashMap<TransactionId, TransactionSelections>,
     mode: SelectionHistoryMode,
     undo_stack: VecDeque<SelectionHistoryEntry>,
     redo_stack: VecDeque<SelectionHistoryEntry>,
@@ -1501,23 +1412,23 @@ impl SelectionHistory {
             );
             return;
         }
-        self.selections_by_transaction
-            .insert(transaction_id, (selections, None));
+        self.selections_by_transaction.insert(
+            transaction_id,
+            TransactionSelections {
+                undo: selections,
+                redo: None,
+            },
+        );
     }
 
-    #[allow(clippy::type_complexity)]
-    fn transaction(
-        &self,
-        transaction_id: TransactionId,
-    ) -> Option<&(Arc<[Selection<Anchor>]>, Option<Arc<[Selection<Anchor>]>>)> {
+    fn transaction(&self, transaction_id: TransactionId) -> Option<&TransactionSelections> {
         self.selections_by_transaction.get(&transaction_id)
     }
 
-    #[allow(clippy::type_complexity)]
     fn transaction_mut(
         &mut self,
         transaction_id: TransactionId,
-    ) -> Option<&mut (Arc<[Selection<Anchor>]>, Option<Arc<[Selection<Anchor>]>>)> {
+    ) -> Option<&mut TransactionSelections> {
         self.selections_by_transaction.get_mut(&transaction_id)
     }
 
@@ -1580,7 +1491,7 @@ impl Default for RowHighlightOptions {
 struct RowHighlight {
     index: usize,
     range: Range<Anchor>,
-    color: Hsla,
+    color: fn(&App) -> Hsla,
     options: RowHighlightOptions,
     type_id: TypeId,
 }
@@ -1721,6 +1632,97 @@ pub struct RewrapOptions {
     pub override_language_settings: bool,
     pub preserve_existing_whitespace: bool,
     pub line_length: Option<usize>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum GutterButtonIntent {
+    SetBookmark,
+    SetBreakpoint,
+}
+
+impl GutterButtonIntent {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Self::SetBookmark => "Set Bookmark",
+            Self::SetBreakpoint => "Set Breakpoint",
+        }
+    }
+
+    fn icon(&self) -> ui::IconName {
+        match self {
+            Self::SetBookmark => ui::IconName::Bookmark,
+            Self::SetBreakpoint => ui::IconName::DebugBreakpoint,
+        }
+    }
+
+    fn color(&self) -> Color {
+        match self {
+            Self::SetBookmark => Color::Info,
+            Self::SetBreakpoint => Color::Hint,
+        }
+    }
+
+    fn action(&self) -> &'static dyn Action {
+        match self {
+            Self::SetBookmark => &ToggleBookmark,
+            Self::SetBreakpoint => &ToggleBreakpoint,
+        }
+    }
+}
+
+struct GutterButtonTooltip {
+    primary: GutterButtonIntent,
+    secondary: GutterButtonIntent,
+    focus_handle: FocusHandle,
+}
+
+impl GutterButtonTooltip {
+    fn active_intent(&self, modifiers: Modifiers) -> GutterButtonIntent {
+        if modifiers.secondary() {
+            self.secondary
+        } else {
+            self.primary
+        }
+    }
+
+    fn meta_text(&self, intent: GutterButtonIntent) -> String {
+        const RIGHT_CLICK_HINT: &str = "right-click for more options";
+
+        if self.primary == self.secondary {
+            return RIGHT_CLICK_HINT.to_string();
+        }
+        let modifier_as_text = gpui::Keystroke {
+            modifiers: Modifiers::secondary_key(),
+            ..Default::default()
+        };
+        let other = match intent {
+            GutterButtonIntent::SetBookmark => "breakpoint",
+            GutterButtonIntent::SetBreakpoint => "bookmark",
+        };
+        format!("{modifier_as_text}-click to add a {other}\n{RIGHT_CLICK_HINT}")
+    }
+}
+
+impl Render for GutterButtonTooltip {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let intent = self.active_intent(window.modifiers());
+        let key_binding = KeyBinding::for_action_in(intent.action(), &self.focus_handle, cx);
+        let meta_text = self.meta_text(intent);
+
+        tooltip_container(cx, move |this, _| {
+            this.child(
+                h_flex()
+                    .justify_between()
+                    .child(intent.as_str())
+                    .child(key_binding),
+            )
+            .child(
+                Label::new(meta_text)
+                    .size(LabelSize::Small)
+                    .color(Color::Muted),
+            )
+        })
+    }
 }
 
 impl Editor {
@@ -2249,9 +2251,6 @@ impl Editor {
             selection_history: SelectionHistory::default(),
             defer_selection_effects: false,
             deferred_selection_effects_state: None,
-            deferred_selection_refresh_scheduled: false,
-            deferred_completion_on_input: None,
-            deferred_completion_on_input_scheduled: false,
             autoclose_regions: Vec::new(),
             snippet_stack: InvalidationStack::default(),
             select_syntax_node_history: SelectSyntaxNodeHistory::default(),
@@ -2283,7 +2282,6 @@ impl Editor {
             use_relative_line_numbers: None,
             disable_expand_excerpt_buttons: !full_mode,
             delegate_expand_excerpts: false,
-            delegate_stage_and_restore: false,
             delegate_open_excerpts: false,
             enable_lsp_data: full_mode,
             needs_initial_data_update: full_mode,
@@ -2364,8 +2362,6 @@ impl Editor {
             inline_value_cache: InlineValueCache::new(inlay_hint_settings.show_value_hints),
             gutter_hovered: false,
             pixel_position_of_newest_cursor: None,
-            power_mode_effects: PowerModeEffects::default(),
-            rainbow_caret_contrast_cache: RainbowCaretContrastCache::default(),
             last_bounds: None,
             last_position_map: None,
             last_right_margin: Pixels::ZERO,
@@ -2390,7 +2386,6 @@ impl Editor {
             show_git_blame_inline_delay_task: None,
             git_blame_inline_enabled: full_mode
                 && ProjectSettings::get_global(cx).git.inline_blame.enabled,
-            render_diff_hunk_controls: Arc::new(render_diff_hunk_controls),
             buffer_serialization: is_minimap.not().then(|| {
                 BufferSerialization::new(
                     ProjectSettings::get_global(cx)
@@ -2400,6 +2395,7 @@ impl Editor {
             }),
             blame: None,
             blame_subscription: None,
+            pending_blame_hover_observation: None,
 
             bookmark_store,
             breakpoint_store,
@@ -2459,8 +2455,7 @@ impl Editor {
             serialize_folds: Task::ready(()),
             text_style_refinement: None,
             load_diff_task: load_uncommitted_diff,
-            temporary_diff_override: false,
-            render_diff_hunks_as_unstaged: false,
+            diff_hunk_delegate: None,
             minimap: None,
             change_list: ChangeList::new(),
             mode,
@@ -3126,159 +3121,41 @@ impl Editor {
         self.blink_manager.update(cx, BlinkManager::show_cursor);
     }
 
-    pub(crate) fn queue_power_mode_insert_effect(&mut self, cx: &mut Context<Self>) {
-        if !self.mode.is_full() || !EditorSettings::get_global(cx).power_mode.enabled {
-            return;
-        }
-
-        let now = Instant::now();
-        self.power_mode_effects.pending_bursts =
-            (self.power_mode_effects.pending_bursts + 1).min(POWER_MODE_MAX_PENDING_BURSTS);
-        self.power_mode_effects.pending_until = Some(now + POWER_MODE_PENDING_BURST_LIFETIME);
-        cx.notify();
-    }
-
-    pub(crate) fn flush_power_mode_pending_bursts_at(
-        &mut self,
-        caret_center: gpui::Point<Pixels>,
-        cx: &mut App,
-    ) {
-        if !self.mode.is_full() || !EditorSettings::get_global(cx).power_mode.enabled {
-            self.power_mode_effects.clear();
-            return;
-        }
-
-        let now = Instant::now();
-        self.power_mode_effects.prune(now);
-        let Some(pending_until) = self.power_mode_effects.pending_until else {
-            return;
-        };
-        if pending_until <= now || self.power_mode_effects.pending_bursts == 0 {
-            self.power_mode_effects.pending_bursts = 0;
-            self.power_mode_effects.pending_until = None;
-            return;
-        }
-
-        const TRAVEL: [(f32, f32); 10] = [
-            (-18.0, -18.0),
-            (-12.0, -24.0),
-            (-6.0, -17.0),
-            (6.0, -23.0),
-            (14.0, -15.0),
-            (19.0, -4.0),
-            (10.0, 8.0),
-            (-11.0, 7.0),
-            (-20.0, -2.0),
-            (2.0, -28.0),
-        ];
-
-        let burst_count = self.power_mode_effects.pending_bursts;
-        let colors = [
-            cx.theme().colors().text_accent,
-            cx.theme().players().local().cursor,
-            cx.theme().colors().editor_foreground,
-        ];
-
-        for _ in 0..burst_count {
-            for particle_ix in 0..POWER_MODE_PARTICLES_PER_BURST {
-                let sequence = self.power_mode_effects.sequence;
-                self.power_mode_effects.sequence = self.power_mode_effects.sequence.wrapping_add(1);
-                let (travel_x, travel_y) = TRAVEL[(sequence as usize + particle_ix) % TRAVEL.len()];
-                let jitter = (sequence % 5) as f32 - 2.0;
-                let origin = point(
-                    caret_center.x + px(jitter),
-                    caret_center.y + px(jitter * 0.4),
-                );
-                let size = px(2.0 + (sequence % 3) as f32);
-                self.power_mode_effects.particles.push(PowerModeParticle {
-                    origin,
-                    travel_x,
-                    travel_y,
-                    size,
-                    color: colors[sequence as usize % colors.len()],
-                    created_at: now,
-                    expires_at: now + POWER_MODE_PARTICLE_LIFETIME,
-                });
-            }
-        }
-
-        if self.power_mode_effects.particles.len() > POWER_MODE_MAX_PARTICLES {
-            let overflow = self.power_mode_effects.particles.len() - POWER_MODE_MAX_PARTICLES;
-            self.power_mode_effects.particles.drain(0..overflow);
-        }
-
-        self.power_mode_effects.pending_bursts = 0;
-        self.power_mode_effects.pending_until = None;
-        self.power_mode_effects.shake_until = Some(now + POWER_MODE_SHAKE_LIFETIME);
-    }
-
-    pub(crate) fn power_mode_paint_state(&mut self, cx: &mut App) -> PowerModePaintState {
-        let zero = point(Pixels::ZERO, Pixels::ZERO);
-        if !self.mode.is_full() || !EditorSettings::get_global(cx).power_mode.enabled {
-            self.power_mode_effects.clear();
-            return PowerModePaintState {
-                particles: Vec::new(),
-                shake_offset: zero,
-                alive: false,
-            };
-        }
-
-        let now = Instant::now();
-        self.power_mode_effects.prune(now);
-
-        let mut particles = Vec::with_capacity(self.power_mode_effects.particles.len());
-        for particle in &self.power_mode_effects.particles {
-            let lifetime = particle
-                .expires_at
-                .duration_since(particle.created_at)
-                .as_secs_f32()
-                .max(0.001);
-            let elapsed = now
-                .saturating_duration_since(particle.created_at)
-                .as_secs_f32();
-            let progress = (elapsed / lifetime).clamp(0.0, 1.0);
-            let fade = (1.0 - progress) * (1.0 - progress);
-            particles.push(PowerModePaintParticle {
-                origin: point(
-                    particle.origin.x + px(particle.travel_x * progress),
-                    particle.origin.y + px(particle.travel_y * progress),
-                ),
-                size: particle.size * (1.0 - progress * 0.35),
-                color: particle.color.opacity(0.48 * fade),
-            });
-        }
-
-        let shake_offset = self
-            .power_mode_effects
-            .shake_until
-            .and_then(|shake_until| {
-                if shake_until <= now {
-                    return None;
-                }
-
-                let remaining = shake_until.duration_since(now).as_secs_f32();
-                let amount =
-                    POWER_MODE_SHAKE_MAX_PX * (remaining / POWER_MODE_SHAKE_LIFETIME.as_secs_f32());
-                let frame = ((POWER_MODE_SHAKE_LIFETIME.as_secs_f32() - remaining) * 60.0) as u32;
-                let sign = if frame % 2 == 0 { 1.0 } else { -1.0 };
-                Some(point(px(amount * sign), px(amount * -0.35 * sign)))
-            })
-            .unwrap_or(zero);
-
-        let alive = self.power_mode_effects.is_alive(now);
-        PowerModePaintState {
-            particles,
-            shake_offset,
-            alive,
-        }
-    }
-
     pub fn cursor_shape(&self) -> CursorShape {
         self.cursor_shape
     }
 
     pub fn set_cursor_offset_on_selection(&mut self, set_cursor_offset_on_selection: bool) {
         self.cursor_offset_on_selection = set_cursor_offset_on_selection;
+    }
+
+    /// Returns the anchor to use as the rename target for a selection.
+    ///
+    /// In selection-based modes, like vim's visual mode and helix, the rendered
+    /// block cursor sits one position to the left of the selection's head,
+    /// since the head is the exclusive end of a forward selection. Using the
+    /// head
+    /// directly would place the rename one character past the symbol, for
+    /// example, trailing whitespace, so for a non-empty forward selection we
+    /// shift one point left to land back on the symbol under the cursor.
+    fn rename_target_anchor(&self, selection: &Selection<Anchor>, cx: &mut App) -> Anchor {
+        let head = selection.head();
+
+        if self.cursor_offset_on_selection
+            && !selection.reversed
+            && selection.start != selection.end
+        {
+            let display_map = self.display_snapshot(cx);
+            let display_head = head.to_display_point(&display_map);
+
+            if display_head.column() > 0 {
+                return display_map.display_point_to_anchor(
+                    movement::left(&display_map, display_head),
+                    Bias::Left,
+                );
+            }
+        }
+        head
     }
 
     pub fn set_current_line_highlight(
@@ -4181,7 +4058,7 @@ impl Editor {
             });
             for bookmark in bookmarks {
                 let Some(multi_buffer_anchor) =
-                    multi_buffer_snapshot.anchor_in_buffer(bookmark.anchor())
+                    multi_buffer_snapshot.anchor_in_buffer(bookmark.anchor)
                 else {
                     continue;
                 };
@@ -4203,7 +4080,7 @@ impl Editor {
             .size(ui::ButtonSize::None)
             .icon_color(Color::Info)
             .style(ButtonStyle::Transparent)
-            .on_click(cx.listener(move |editor, _, _, cx| {
+            .on_click(cx.listener(move |editor, _, _window, cx| {
                 editor.toggle_bookmark_at_row(row, cx);
             }))
             .on_right_click(cx.listener(move |editor, event: &ClickEvent, window, cx| {
@@ -4329,6 +4206,12 @@ impl Editor {
             "Set Breakpoint"
         };
 
+        let git_blame_msg = if self.show_git_blame_gutter {
+            "Close Git Blame"
+        } else {
+            "Open Git Blame"
+        };
+
         let bookmark = self.bookmark_at_row(row, window, cx);
 
         let set_bookmark_msg = if bookmark.as_ref().is_some() {
@@ -4336,6 +4219,7 @@ impl Editor {
         } else {
             "Add Bookmark"
         };
+        let has_bookmark = bookmark.as_ref().is_some();
 
         let run_to_cursor = window.is_action_available(&RunToCursor, cx);
 
@@ -4475,17 +4359,40 @@ impl Editor {
                     }
                 })
                 .separator()
-                .entry(
-                    set_bookmark_msg,
-                    Some(ToggleBookmark.boxed_clone()),
+                .entry(git_blame_msg, Some(Blame.boxed_clone()), {
+                    let weak_editor = weak_editor.clone();
+                    move |window, cx| {
+                        weak_editor
+                            .update(cx, |this, cx| {
+                                this.toggle_git_blame(&Blame, window, cx);
+                            })
+                            .log_err();
+                    }
+                })
+                .separator()
+                .entry(set_bookmark_msg, Some(ToggleBookmark.boxed_clone()), {
+                    let weak_editor = weak_editor.clone();
                     move |_window, cx| {
                         weak_editor
                             .update(cx, |this, cx| {
                                 this.toggle_bookmark_at_anchor(anchor, cx);
                             })
                             .log_err();
-                    },
-                )
+                    }
+                })
+                .when(has_bookmark, |this| {
+                    this.entry(
+                        "Edit Bookmark",
+                        Some(EditBookmark.boxed_clone()),
+                        move |window, cx| {
+                            weak_editor
+                                .update(cx, |this, cx| {
+                                    this.edit_bookmark_at_anchor(anchor, window, cx);
+                                })
+                                .log_err();
+                        },
+                    )
+                })
         })
     }
 
@@ -4583,61 +4490,20 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> IconButton {
-        #[derive(Clone, Copy)]
-        enum Intent {
-            SetBookmark,
-            SetBreakpoint,
-        }
-
-        impl Intent {
-            fn as_str(&self) -> &'static str {
-                match self {
-                    Intent::SetBookmark => "Set bookmark",
-                    Intent::SetBreakpoint => "Set breakpoint",
-                }
-            }
-
-            fn icon(&self) -> ui::IconName {
-                match self {
-                    Intent::SetBookmark => ui::IconName::Bookmark,
-                    Intent::SetBreakpoint => ui::IconName::DebugBreakpoint,
-                }
-            }
-
-            fn color(&self) -> Color {
-                match self {
-                    Intent::SetBookmark => Color::Info,
-                    Intent::SetBreakpoint => Color::Hint,
-                }
-            }
-
-            fn secondary_and_options(&self) -> String {
-                let alt_as_text = gpui::Keystroke {
-                    modifiers: Modifiers::secondary_key(),
-                    ..Default::default()
-                };
-                match self {
-                    Intent::SetBookmark => format!(
-                        "{alt_as_text}-click to add a breakpoint\nright-click for more options"
-                    ),
-                    Intent::SetBreakpoint => format!(
-                        "{alt_as_text}-click to add a bookmark\nright-click for more options"
-                    ),
-                }
-            }
-        }
-
         let gutter_settings = EditorSettings::get_global(cx).gutter;
         let show_bookmarks = self.show_bookmarks.unwrap_or(gutter_settings.bookmarks);
         let show_breakpoints = self.show_breakpoints.unwrap_or(gutter_settings.breakpoints);
 
         let [primary, secondary] = match [show_breakpoints, show_bookmarks] {
-            [true, true] => [Intent::SetBreakpoint, Intent::SetBookmark],
-            [true, false] => [Intent::SetBreakpoint; 2],
-            [false, true] => [Intent::SetBookmark; 2],
+            [true, true] => [
+                GutterButtonIntent::SetBreakpoint,
+                GutterButtonIntent::SetBookmark,
+            ],
+            [true, false] => [GutterButtonIntent::SetBreakpoint; 2],
+            [false, true] => [GutterButtonIntent::SetBookmark; 2],
             [false, false] => {
                 log::error!("Trying to place gutter_hover without anything enabled!!");
-                [Intent::SetBookmark; 2]
+                [GutterButtonIntent::SetBookmark; 2]
             }
         };
 
@@ -4664,8 +4530,8 @@ impl Editor {
                     };
 
                     match intent {
-                        Intent::SetBookmark => editor.toggle_bookmark_at_row(row, cx),
-                        Intent::SetBreakpoint => editor.edit_breakpoint_at_anchor(
+                        GutterButtonIntent::SetBookmark => editor.toggle_bookmark_at_row(row, cx),
+                        GutterButtonIntent::SetBreakpoint => editor.edit_breakpoint_at_anchor(
                             position,
                             Breakpoint::new_standard(),
                             BreakpointEditAction::Toggle,
@@ -4679,13 +4545,12 @@ impl Editor {
             }))
             .when(!has_context_menu, |button| {
                 button.tooltip(move |_window, cx| {
-                    Tooltip::with_meta_in(
-                        intent.as_str(),
-                        Some(&ToggleBreakpoint),
-                        intent.secondary_and_options(),
-                        &focus_handle,
-                        cx,
-                    )
+                    cx.new(|_| GutterButtonTooltip {
+                        primary,
+                        secondary,
+                        focus_handle: focus_handle.clone(),
+                    })
+                    .into()
                 })
             })
     }
@@ -5111,7 +4976,6 @@ impl Editor {
                 cx,
             );
             refresh_linked_ranges(this, window, cx);
-            Audio::play_dx_sound(DxSoundEvent::DeleteSoft, cx);
         });
     }
 
@@ -5141,7 +5005,6 @@ impl Editor {
                 cx,
             );
             refresh_linked_ranges(this, window, cx);
-            Audio::play_dx_sound(DxSoundEvent::DeleteSoft, cx);
         });
     }
 
@@ -5982,24 +5845,29 @@ impl Editor {
         );
     }
 
-    fn add_edit_breakpoint_block(
+    fn add_edit_block(
         &mut self,
         anchor: Anchor,
-        breakpoint: &Breakpoint,
-        edit_action: BreakpointPromptEditAction,
+        base_text: &str,
+        placeholder_text: &str,
+        confirm: Option<PromptEditorCallback>,
+        cancel: Option<PromptEditorCallback>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let weak_editor = cx.weak_entity();
         let bp_prompt = cx.new(|cx| {
-            BreakpointPromptEditor::new(
-                weak_editor,
-                anchor,
-                breakpoint.clone(),
-                edit_action,
-                window,
-                cx,
-            )
+            let mut prompt_editor =
+                PromptEditor::new(weak_editor, placeholder_text, base_text, window, cx);
+
+            if let Some(callback) = confirm {
+                prompt_editor = prompt_editor.on_confirm(callback);
+            }
+            if let Some(callback) = cancel {
+                prompt_editor = prompt_editor.on_cancel(callback);
+            }
+
+            prompt_editor
         });
 
         let height = bp_prompt.update(cx, |this, cx| {
@@ -6025,6 +5893,61 @@ impl Editor {
         bp_prompt.update(cx, |prompt, _| {
             prompt.add_block_ids(block_ids);
         });
+    }
+
+    fn add_edit_breakpoint_block(
+        &mut self,
+        anchor: Anchor,
+        breakpoint: &Breakpoint,
+        edit_action: BreakpointPromptEditAction,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let base_text: &str = match edit_action {
+            BreakpointPromptEditAction::Log => breakpoint.message.as_ref(),
+            BreakpointPromptEditAction::Condition => breakpoint.condition.as_ref(),
+            BreakpointPromptEditAction::HitCondition => breakpoint.hit_condition.as_ref(),
+        }
+        .map(|msg| msg.as_ref())
+        .unwrap_or_default();
+
+        let placeholder_text = match edit_action {
+            BreakpointPromptEditAction::Log => {
+                "Message to log when a breakpoint is hit. Expressions within {} are interpolated."
+            }
+            BreakpointPromptEditAction::Condition => {
+                "Condition when a breakpoint is hit. Expressions within {} are interpolated."
+            }
+            BreakpointPromptEditAction::HitCondition => "How many breakpoint hits to ignore",
+        };
+
+        let breakpoint = breakpoint.clone();
+        self.add_edit_block(
+            anchor,
+            base_text,
+            placeholder_text,
+            Some(Box::new(move |message: String, editor: &mut Self, cx| {
+                editor.edit_breakpoint_at_anchor(
+                    anchor,
+                    breakpoint,
+                    match edit_action {
+                        BreakpointPromptEditAction::Log => {
+                            BreakpointEditAction::EditLogMessage(message.into())
+                        }
+                        BreakpointPromptEditAction::Condition => {
+                            BreakpointEditAction::EditCondition(message.into())
+                        }
+                        BreakpointPromptEditAction::HitCondition => {
+                            BreakpointEditAction::EditHitCondition(message.into())
+                        }
+                    },
+                    cx,
+                );
+            })),
+            None,
+            window,
+            cx,
+        );
     }
 
     pub(crate) fn breakpoint_at_row(
@@ -6132,13 +6055,13 @@ impl Editor {
                     .first()
                     .and_then(|bookmark| {
                         let bookmark_row = buffer_snapshot
-                            .summary_for_anchor::<text::PointUtf16>(&bookmark.anchor())
+                            .summary_for_anchor::<text::PointUtf16>(&bookmark.anchor)
                             .row;
 
                         if bookmark_row == row {
                             snapshot
                                 .buffer_snapshot()
-                                .anchor_in_excerpt(bookmark.anchor())
+                                .anchor_in_excerpt(bookmark.anchor)
                         } else {
                             None
                         }
@@ -6460,7 +6383,7 @@ impl Editor {
 
             self.go_to_line::<ActiveDebugLine>(
                 multibuffer_anchor,
-                Some(cx.theme().colors().editor_debugger_active_line_background),
+                |cx| cx.theme().colors().editor_debugger_active_line_background,
                 window,
                 cx,
             );
@@ -6612,18 +6535,14 @@ impl Editor {
                     .iter()
                     .map(|selection| {
                         let point = buffer.offset_to_point(selection.start);
-                        let Some(&old_index) = row_to_index.get(&point.row) else {
-                            return selection.clone();
-                        };
+                        let old_index = row_to_index[&point.row];
                         let new_index = if reverse {
                             (old_index + num_rows - 1) % num_rows
                         } else {
                             (old_index + 1) % num_rows
                         };
-                        let Some(&new_line_start) = new_line_starts.get(new_index) else {
-                            return selection.clone();
-                        };
-                        let new_offset = MultiBufferOffset(new_line_start + point.column as usize);
+                        let new_offset =
+                            MultiBufferOffset(new_line_starts[new_index] + point.column as usize);
                         Selection {
                             id: selection.id,
                             start: new_offset,
@@ -7624,26 +7543,31 @@ impl Editor {
         });
     }
 
+    fn restore_selections(
+        &mut self,
+        selections: Option<Arc<[Selection<Anchor>]>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if let Some(selections) = selections.filter(|selections| !selections.is_empty()) {
+            self.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
+                s.select_anchors(selections.to_vec());
+            });
+        }
+    }
+
     pub fn undo(&mut self, _: &Undo, window: &mut Window, cx: &mut Context<Self>) {
         if self.read_only(cx) {
             return;
         }
 
         if let Some(transaction_id) = self.buffer.update(cx, |buffer, cx| buffer.undo(cx)) {
-            if let Some((selections, _)) =
-                self.selection_history.transaction(transaction_id).cloned()
-            {
-                self.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
-                    s.select_anchors(selections.to_vec());
-                });
-            } else {
-                log::error!(
-                    "No entry in selection_history found for undo. \
-                     This may correspond to a bug where undo does not update the selection. \
-                     If this is occurring, please add details to \
-                     https://github.com/zed-industries/zed/issues/22692"
-                );
+            let transaction = self.selection_history.transaction(transaction_id);
+            if transaction.is_none() {
+                log::error!("No selection history for undone transaction; selection unchanged");
             }
+            let selections = transaction.map(|transaction| transaction.undo.clone());
+            self.restore_selections(selections, window, cx);
             self.request_autoscroll(Autoscroll::fit(), cx);
             self.unmark_text(window, cx);
             self.refresh_edit_prediction(
@@ -7664,20 +7588,11 @@ impl Editor {
         }
 
         if let Some(transaction_id) = self.buffer.update(cx, |buffer, cx| buffer.redo(cx)) {
-            if let Some((_, Some(selections))) =
-                self.selection_history.transaction(transaction_id).cloned()
-            {
-                self.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
-                    s.select_anchors(selections.to_vec());
-                });
-            } else {
-                log::error!(
-                    "No entry in selection_history found for redo. \
-                     This may correspond to a bug where undo does not update the selection. \
-                     If this is occurring, please add details to \
-                     https://github.com/zed-industries/zed/issues/22692"
-                );
-            }
+            let selections = self
+                .selection_history
+                .transaction(transaction_id)
+                .and_then(|transaction| transaction.redo.clone());
+            self.restore_selections(selections, window, cx);
             self.request_autoscroll(Autoscroll::fit(), cx);
             self.unmark_text(window, cx);
             self.refresh_edit_prediction(
@@ -7790,7 +7705,10 @@ impl Editor {
         }
         let provider = self.semantics_provider.clone()?;
         let selection = self.selections.newest_anchor().clone();
-        let (cursor_buffer, cursor_buffer_position) = self
+        let cursor = self.rename_target_anchor(&selection, cx);
+        let (cursor_buffer, cursor_buffer_position) =
+            self.buffer.read(cx).text_anchor_for_position(cursor, cx)?;
+        let (head_buffer, head_buffer_position) = self
             .buffer
             .read(cx)
             .text_anchor_for_position(selection.head(), cx)?;
@@ -7798,12 +7716,13 @@ impl Editor {
             .buffer
             .read(cx)
             .text_anchor_for_position(selection.tail(), cx)?;
-        if tail_buffer != cursor_buffer {
+        if tail_buffer != cursor_buffer || head_buffer != cursor_buffer {
             return None;
         }
 
         let snapshot = cursor_buffer.read(cx).snapshot();
         let cursor_buffer_offset = cursor_buffer_position.to_offset(&snapshot);
+        let head_buffer_offset = head_buffer_position.to_offset(&snapshot);
         let cursor_buffer_offset_end = cursor_buffer_position_end.to_offset(&snapshot);
         let prepare_rename = provider.range_for_rename(&cursor_buffer, cursor_buffer_position, cx);
         drop(snapshot);
@@ -7816,12 +7735,14 @@ impl Editor {
                     let rename_buffer_range = rename_range.to_offset(&snapshot);
                     let cursor_offset_in_rename_range =
                         cursor_buffer_offset.saturating_sub(rename_buffer_range.start);
-                    let cursor_offset_in_rename_range_end =
+                    let head_offset_in_rename_range =
+                        head_buffer_offset.saturating_sub(rename_buffer_range.start);
+                    let tail_offset_in_rename_range =
                         cursor_buffer_offset_end.saturating_sub(rename_buffer_range.start);
 
                     this.take_rename(false, window, cx);
                     let buffer = this.buffer.read(cx).read(cx);
-                    let cursor_offset = selection.head().to_offset(&buffer);
+                    let cursor_offset = cursor.to_offset(&buffer);
                     let rename_start =
                         cursor_offset.saturating_sub_usize(cursor_offset_in_rename_range);
                     let rename_end = rename_start + rename_buffer_range.len();
@@ -7857,24 +7778,23 @@ impl Editor {
                                 cx,
                             )
                         });
-                        let cursor_offset_in_rename_range =
-                            MultiBufferOffset(cursor_offset_in_rename_range);
-                        let cursor_offset_in_rename_range_end =
-                            MultiBufferOffset(cursor_offset_in_rename_range_end);
-                        let rename_selection_range = match cursor_offset_in_rename_range
-                            .cmp(&cursor_offset_in_rename_range_end)
-                        {
-                            Ordering::Equal => {
-                                editor.select_all(&SelectAll, window, cx);
-                                return editor;
-                            }
-                            Ordering::Less => {
-                                cursor_offset_in_rename_range..cursor_offset_in_rename_range_end
-                            }
-                            Ordering::Greater => {
-                                cursor_offset_in_rename_range_end..cursor_offset_in_rename_range
-                            }
-                        };
+                        let head_offset_in_rename_range =
+                            MultiBufferOffset(head_offset_in_rename_range);
+                        let tail_offset_in_rename_range =
+                            MultiBufferOffset(tail_offset_in_rename_range);
+                        let rename_selection_range =
+                            match head_offset_in_rename_range.cmp(&tail_offset_in_rename_range) {
+                                Ordering::Equal => {
+                                    editor.select_all(&SelectAll, window, cx);
+                                    return editor;
+                                }
+                                Ordering::Less => {
+                                    head_offset_in_rename_range..tail_offset_in_rename_range
+                                }
+                                Ordering::Greater => {
+                                    tail_offset_in_rename_range..head_offset_in_rename_range
+                                }
+                            };
                         if rename_selection_range.end.0 > old_name.len() {
                             editor.select_all(&SelectAll, window, cx);
                         } else {
@@ -8191,7 +8111,7 @@ impl Editor {
                 // will take you back to where you made the last edit, instead of staying where you scrolled
                 self.selection_history
                     .transaction(transaction_id_prev)
-                    .map(|t| t.0.clone())
+                    .map(|t| t.undo.clone())
             })
             .unwrap_or_else(|| self.selections.disjoint_anchors_arc());
 
@@ -8417,10 +8337,8 @@ impl Editor {
             .buffer
             .update(cx, |buffer, cx| buffer.end_transaction_at(now, cx))
         {
-            if let Some((_, end_selections)) =
-                self.selection_history.transaction_mut(transaction_id)
-            {
-                *end_selections = Some(self.selections.disjoint_anchors_arc());
+            if let Some(transaction) = self.selection_history.transaction_mut(transaction_id) {
+                transaction.redo = Some(self.selections.disjoint_anchors_arc());
             } else {
                 log::error!("unexpectedly ended a transaction that wasn't started by this editor");
             }
@@ -8435,7 +8353,7 @@ impl Editor {
     pub fn modify_transaction_selection_history(
         &mut self,
         transaction_id: TransactionId,
-        modify: impl FnOnce(&mut (Arc<[Selection<Anchor>]>, Option<Arc<[Selection<Anchor>]>>)),
+        modify: impl FnOnce(&mut TransactionSelections),
     ) -> bool {
         self.selection_history
             .transaction_mut(transaction_id)
@@ -8742,19 +8660,30 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         let selection = self.selections.newest::<Point>(&self.display_snapshot(cx));
+        let multi_buffer_snapshot = self.buffer.read(cx).snapshot(cx);
 
-        let start_line = selection.start.row + 1;
-        let end_line = selection.end.row + 1;
+        if let Some(file_location) = maybe!({
+            let (buffer, range) = multi_buffer_snapshot
+                .range_to_buffer_range(selection.range())
+                .or_else(|| {
+                    // A selection that spans multiple buffers has no single location,
+                    // so fall back to the buffer the latest cursor is in.
+                    let (buffer, point) =
+                        multi_buffer_snapshot.point_to_buffer_point(selection.head())?;
+                    Some((buffer, point..point))
+                })?;
 
-        let end_line = if selection.end.column == 0 && end_line > start_line {
-            end_line - 1
-        } else {
-            end_line
-        };
+            let start_line = range.start.row + 1;
+            let end_line = range.end.row + 1;
 
-        if let Some(file_location) = self.active_buffer(cx).and_then(|buffer| {
+            let end_line = if range.end.column == 0 && end_line > start_line {
+                end_line - 1
+            } else {
+                end_line
+            };
+
             let project = self.project()?.read(cx);
-            let file = buffer.read(cx).file()?;
+            let file = buffer.file()?;
             let path = file.path().display(project.path_style(cx));
 
             let location = if start_line == end_line {
@@ -8871,7 +8800,7 @@ impl Editor {
     pub fn highlight_rows<T: 'static>(
         &mut self,
         range: Range<Anchor>,
-        color: Hsla,
+        color: fn(&App) -> Hsla,
         options: RowHighlightOptions,
         cx: &mut Context<Self>,
     ) {
@@ -8983,12 +8912,15 @@ impl Editor {
     }
 
     /// For a highlight given context type, gets all anchor ranges that will be used for row highlighting.
-    pub fn highlighted_rows<T: 'static>(&self) -> impl '_ + Iterator<Item = (Range<Anchor>, Hsla)> {
+    pub fn highlighted_rows<'a, T: 'static>(
+        &'a self,
+        cx: &'a App,
+    ) -> impl 'a + Iterator<Item = (Range<Anchor>, Hsla)> {
         self.highlighted_rows
             .get(&TypeId::of::<T>())
             .map_or(&[] as &[_], |vec| vec.as_slice())
             .iter()
-            .map(|highlight| (highlight.range.clone(), highlight.color))
+            .map(|highlight| (highlight.range.clone(), (highlight.color)(cx)))
     }
 
     /// Merges all anchor ranges for all context types ever set, picking the last highlight added in case of a row conflict.
@@ -9025,7 +8957,7 @@ impl Editor {
                                 LineHighlight {
                                     include_gutter: highlight.options.include_gutter,
                                     border: None,
-                                    background: highlight.color.into(),
+                                    background: (highlight.color)(cx).into(),
                                     type_id: Some(highlight.type_id),
                                 },
                             );
@@ -9478,15 +9410,8 @@ impl Editor {
     }
 
     pub fn show_local_cursors(&self, window: &mut Window, cx: &mut App) -> bool {
-        if self.show_cursor_when_unfocused {
-            return true;
-        }
-
-        if self.focus_handle.contains_focused(window, cx) {
-            return self.input_enabled || self.read_only(cx);
-        }
-
-        self.input_enabled && self.mode.is_full()
+        (self.read_only(cx) || self.blink_manager.read(cx).visible())
+            && self.focus_handle.is_focused(window)
     }
 
     pub fn set_show_cursor_when_unfocused(&mut self, is_enabled: bool, cx: &mut Context<Self>) {
@@ -9655,6 +9580,9 @@ impl Editor {
                 ranges,
                 path_key,
             } => {
+                if let Some(hovered_link_state) = self.hovered_link_state.as_mut() {
+                    hovered_link_state.symbol_range = None;
+                }
                 self.refresh_document_highlights(cx);
                 let buffer_id = buffer.read(cx).remote_id();
                 if self.buffer.read(cx).diff_for(buffer_id).is_none()
@@ -9774,6 +9702,13 @@ impl Editor {
         let theme_settings = theme_settings::ThemeSettings::get_global(cx);
         let theme = cx.theme();
         let accent_colors = theme.accents().clone();
+        let editor_background = theme.colors().editor_background;
+        let auto_accent_colors =
+            AccentColors(crate::bracket_colorization::bracket_colorization_accents(
+                &accent_colors.0,
+                theme.appearance,
+                editor_background,
+            ));
 
         let accent_overrides = theme_settings
             .theme_overrides
@@ -9793,7 +9728,7 @@ impl Editor {
             .collect();
 
         Some(AccentData {
-            colors: accent_colors,
+            colors: auto_accent_colors,
             overrides: accent_overrides,
         })
     }
@@ -9836,7 +9771,13 @@ impl Editor {
         }
         self.refresh_runnables(None, window, cx);
         self.update_edit_prediction_settings(cx);
-        self.refresh_edit_prediction(true, false, EditPredictionRequestTrigger::Other, window, cx);
+        self.refresh_edit_prediction(
+            true,
+            false,
+            EditPredictionRequestTrigger::SettingsChanged,
+            window,
+            cx,
+        );
         self.refresh_inline_values(cx);
 
         let old_cursor_shape = self.cursor_shape;
@@ -10982,7 +10923,7 @@ impl Editor {
                         if multibuffer.is_singleton() {
                             multibuffer.title(cx).to_string()
                         } else {
-                            "untitled".to_string()
+                            MultiBuffer::DEFAULT_TITLE.to_string()
                         }
                     })
             });
@@ -11753,30 +11694,50 @@ impl EditorSnapshot {
         current_selection_head: DisplayRow,
         count_wrapped_lines: bool,
     ) -> HashMap<DisplayRow, u32> {
-        let initial_offset =
-            self.relative_line_delta(current_selection_head, rows.start, count_wrapped_lines);
-
-        self.row_infos(rows.start)
+        let mut row_infos = self
+            .row_infos(rows.start)
             .take(rows.len())
             .enumerate()
-            .map(|(i, row_info)| (DisplayRow(rows.start.0 + i as u32), row_info))
+            .map(|(index, row_info)| (DisplayRow(rows.start.0 + index as u32), row_info))
             .filter(|(_row, row_info)| {
                 row_info.buffer_row.is_some()
                     || (count_wrapped_lines && row_info.wrapped_buffer_row.is_some())
             })
-            .enumerate()
-            .filter_map(|(i, (row, row_info))| {
+            .peekable();
+
+        // We find the first row that actually passes the filter and calculate its
+        // delta independently. This ensures accuracy when scrolling, as the first
+        // visible row in `rows` might be a wrap part that is filtered out, which
+        // would otherwise offset the counter for subsequent lines if we used
+        // `rows.start` as the base for enumeration.
+        let Some((first_row, _)) = row_infos.peek() else {
+            return HashMap::default();
+        };
+
+        let mut current_delta =
+            self.relative_line_delta(current_selection_head, *first_row, count_wrapped_lines);
+
+        row_infos
+            .filter_map(|(row, row_info)| {
+                let is_deleted = row_info
+                    .diff_status
+                    .is_some_and(|status| status.is_deleted());
+
+                if !self.number_deleted_lines && is_deleted {
+                    // Even if we don't number this line, it still counts as a unit
+                    // of distance for the relative numbers of lines below it.
+                    current_delta += 1;
+                    return None;
+                }
+
                 // We want to ensure here that the current line has absolute
                 // numbering, even if we are in a soft-wrapped line. With the
                 // exception that if we are in a deleted line, we should number this
                 // relative with 0, as otherwise it would have no line number at all
-                let relative_line_number = (initial_offset + i as i64).unsigned_abs() as u32;
+                let relative_line_number = current_delta.unsigned_abs() as u32;
+                current_delta += 1;
 
-                (relative_line_number != 0
-                    || row_info
-                        .diff_status
-                        .is_some_and(|status| status.is_deleted()))
-                .then_some((row, relative_line_number))
+                (relative_line_number != 0 || is_deleted).then_some((row, relative_line_number))
             })
             .collect()
     }
@@ -11841,16 +11802,9 @@ pub enum EditorEvent {
         lines: u32,
         direction: ExpandExcerptDirection,
     },
-    StageOrUnstageRequested {
-        stage: bool,
-        hunks: Vec<MultiBufferDiffHunk>,
-    },
     OpenExcerptsRequested {
         selections_by_buffer: HashMap<BufferId, (Vec<Range<BufferOffset>>, Option<u32>)>,
         split: bool,
-    },
-    RestoreRequested {
-        hunks: Vec<MultiBufferDiffHunk>,
     },
     /// Emitted when an underlying buffer changes, including edits made through another editor.
     BufferEdited,
@@ -11998,6 +11952,21 @@ impl ui_input::ErasedEditor for ErasedEditorImpl {
         });
     }
 
+    fn set_multiline(&self, max_lines: Option<usize>, _window: &mut Window, cx: &mut App) {
+        self.0.update(cx, |this, cx| {
+            if let Some(max_lines) = max_lines {
+                this.set_mode(EditorMode::AutoHeight {
+                    min_lines: 1,
+                    max_lines: Some(max_lines),
+                });
+                this.set_soft_wrap_mode(language_settings::SoftWrap::EditorWidth, cx);
+            } else {
+                this.set_mode(EditorMode::SingleLine);
+            }
+            cx.notify();
+        });
+    }
+
     fn focus_handle(&self, cx: &App) -> FocusHandle {
         self.0.read(cx).focus_handle(cx)
     }
@@ -12042,6 +12011,12 @@ impl ui_input::ErasedEditor for ErasedEditorImpl {
         });
     }
 
+    fn select_all(&self, window: &mut Window, cx: &mut App) {
+        self.0.update(cx, |editor, cx| {
+            editor.select_all(&Default::default(), window, cx);
+        });
+    }
+
     fn subscribe(
         &self,
         mut callback: Box<dyn FnMut(ui_input::ErasedEditorEvent, &mut Window, &mut App) + 'static>,
@@ -12061,6 +12036,13 @@ impl ui_input::ErasedEditor for ErasedEditorImpl {
     fn set_masked(&self, masked: bool, _window: &mut Window, cx: &mut App) {
         self.0.update(cx, |editor, cx| {
             editor.set_masked(masked, cx);
+        });
+    }
+
+    fn set_read_only(&self, read_only: bool, cx: &mut App) {
+        self.0.update(cx, |editor, cx| {
+            editor.set_read_only(read_only);
+            cx.notify();
         });
     }
 }
@@ -12265,42 +12247,35 @@ fn collapse_multiline_range(range: Range<Point>) -> Range<Point> {
 
 const UPDATE_DEBOUNCE: Duration = Duration::from_millis(50);
 
+#[derive(Copy, Clone, Debug)]
 enum BreakpointPromptEditAction {
     Log,
     Condition,
     HitCondition,
 }
 
-struct BreakpointPromptEditor {
+type PromptEditorCallback = Box<dyn FnOnce(String, &mut Editor, &mut Context<Editor>) + 'static>;
+
+struct PromptEditor {
     pub(crate) prompt: Entity<Editor>,
     editor: WeakEntity<Editor>,
-    breakpoint_anchor: Anchor,
-    breakpoint: Breakpoint,
-    edit_action: BreakpointPromptEditAction,
+    confirm_callback: Option<PromptEditorCallback>,
+    cancel_callback: Option<PromptEditorCallback>,
     block_ids: HashSet<CustomBlockId>,
     editor_margins: Arc<Mutex<EditorMargins>>,
     _subscriptions: Vec<Subscription>,
 }
 
-impl BreakpointPromptEditor {
+impl PromptEditor {
     const MAX_LINES: u8 = 4;
 
     fn new(
         editor: WeakEntity<Editor>,
-        breakpoint_anchor: Anchor,
-        breakpoint: Breakpoint,
-        edit_action: BreakpointPromptEditAction,
+        placeholder_text: &str,
+        base_text: &str,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let base_text = match edit_action {
-            BreakpointPromptEditAction::Log => breakpoint.message.as_ref(),
-            BreakpointPromptEditAction::Condition => breakpoint.condition.as_ref(),
-            BreakpointPromptEditAction::HitCondition => breakpoint.hit_condition.as_ref(),
-        }
-        .map(|msg| msg.to_string())
-        .unwrap_or_default();
-
         let buffer = cx.new(|cx| Buffer::local(base_text, cx));
         let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
 
@@ -12317,15 +12292,7 @@ impl BreakpointPromptEditor {
             );
             prompt.set_soft_wrap_mode(language::language_settings::SoftWrap::EditorWidth, cx);
             prompt.set_show_cursor_when_unfocused(false, cx);
-            prompt.set_placeholder_text(
-                match edit_action {
-                    BreakpointPromptEditAction::Log => "Message to log when a breakpoint is hit. Expressions within {} are interpolated.",
-                    BreakpointPromptEditAction::Condition => "Condition when a breakpoint is hit. Expressions within {} are interpolated.",
-                    BreakpointPromptEditAction::HitCondition => "How many breakpoint hits to ignore",
-                },
-                window,
-                cx,
-            );
+            prompt.set_placeholder_text(placeholder_text, window, cx);
 
             prompt
         });
@@ -12333,13 +12300,22 @@ impl BreakpointPromptEditor {
         Self {
             prompt,
             editor,
-            breakpoint_anchor,
-            breakpoint,
-            edit_action,
+            confirm_callback: None,
+            cancel_callback: None,
             editor_margins: Arc::new(Mutex::new(EditorMargins::default())),
             block_ids: Default::default(),
             _subscriptions: vec![],
         }
+    }
+
+    fn on_confirm(mut self, confirm: PromptEditorCallback) -> Self {
+        self.confirm_callback = Some(confirm);
+        self
+    }
+
+    fn on_cancel(mut self, cancel: PromptEditorCallback) -> Self {
+        self.cancel_callback = Some(cancel);
+        self
     }
 
     pub(crate) fn add_block_ids(&mut self, block_ids: Vec<CustomBlockId>) {
@@ -12354,28 +12330,15 @@ impl BreakpointPromptEditor {
                 .buffer
                 .read(cx)
                 .as_singleton()
-                .expect("A multi buffer in breakpoint prompt isn't possible")
+                .expect("A multi buffer in prompt isn't possible")
                 .read(cx)
                 .as_rope()
                 .to_string();
 
             editor.update(cx, |editor, cx| {
-                editor.edit_breakpoint_at_anchor(
-                    self.breakpoint_anchor,
-                    self.breakpoint.clone(),
-                    match self.edit_action {
-                        BreakpointPromptEditAction::Log => {
-                            BreakpointEditAction::EditLogMessage(message.into())
-                        }
-                        BreakpointPromptEditAction::Condition => {
-                            BreakpointEditAction::EditCondition(message.into())
-                        }
-                        BreakpointPromptEditAction::HitCondition => {
-                            BreakpointEditAction::EditHitCondition(message.into())
-                        }
-                    },
-                    cx,
-                );
+                if let Some(confirm) = self.confirm_callback.take() {
+                    confirm(message, editor, cx);
+                }
 
                 editor.remove_blocks(self.block_ids.clone(), None, cx);
                 cx.focus_self(window);
@@ -12386,6 +12349,21 @@ impl BreakpointPromptEditor {
     fn cancel(&mut self, _: &menu::Cancel, window: &mut Window, cx: &mut Context<Self>) {
         self.editor
             .update(cx, |editor, cx| {
+                let message = self
+                    .prompt
+                    .read(cx)
+                    .buffer
+                    .read(cx)
+                    .as_singleton()
+                    .expect("A multi buffer in prompt isn't possible")
+                    .read(cx)
+                    .as_rope()
+                    .to_string();
+
+                if let Some(cancel) = self.cancel_callback.take() {
+                    cancel(message, editor, cx);
+                }
+
                 editor.remove_blocks(self.block_ids.clone(), None, cx);
                 window.focus(&editor.focus_handle, cx);
             })
@@ -12445,7 +12423,7 @@ impl BreakpointPromptEditor {
     }
 }
 
-impl Render for BreakpointPromptEditor {
+impl Render for PromptEditor {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let ui_font_size = ThemeSettings::get_global(cx).ui_font_size(cx);
         let editor_margins = *self.editor_margins.lock();
@@ -12490,7 +12468,7 @@ impl Render for BreakpointPromptEditor {
     }
 }
 
-impl Focusable for BreakpointPromptEditor {
+impl Focusable for PromptEditor {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
         self.prompt.focus_handle(cx)
     }

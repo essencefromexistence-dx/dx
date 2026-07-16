@@ -6,7 +6,7 @@ use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
     Action, AnyElement, App, AppContext as _, Context, DismissEvent, Entity, EventEmitter,
     Focusable, InteractiveElement, ParentElement, Render, Styled, Subscription, Task, WeakEntity,
-    Window, rems,
+    Window,
 };
 use itertools::Itertools;
 use picker::{Picker, PickerDelegate, highlighted_match_with_paths::HighlightedMatch};
@@ -148,7 +148,7 @@ impl TasksModal {
                 window,
                 cx,
             )
-            .modal(is_modal)
+            .when(!is_modal, |picker| picker.embedded())
         });
         let mut _subscriptions = [
             cx.subscribe(&picker, |_, _, _: &DismissEvent, cx| {
@@ -211,7 +211,6 @@ impl Render for TasksModal {
     ) -> impl gpui::prelude::IntoElement {
         v_flex()
             .key_context("TasksModal")
-            .w(rems(34.))
             .child(self.picker.clone())
     }
 }
@@ -233,22 +232,13 @@ impl Focusable for TasksModal {
 impl ModalView for TasksModal {}
 
 const MAX_TAGS_LINE_LEN: usize = 30;
-const MAX_TASK_MODAL_MATCH_CANDIDATES: usize = 2_000;
-const MAX_TASK_MODAL_MATCHES: usize = 100;
-const MAX_TASK_MODAL_TOOLTIP_TAGS: usize = 32;
-
-impl TasksModalDelegate {
-    fn clamped_match_index(&self, ix: usize) -> usize {
-        ix.min(self.matches.len().saturating_sub(1))
-    }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_index = self.clamped_match_index(self.selected_index);
-    }
-}
 
 impl PickerDelegate for TasksModalDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "tasks modal"
+    }
 
     fn match_count(&self) -> usize {
         self.matches.len()
@@ -264,7 +254,7 @@ impl PickerDelegate for TasksModalDelegate {
         _window: &mut Window,
         _cx: &mut Context<picker::Picker<Self>>,
     ) {
-        self.selected_index = self.clamped_match_index(ix);
+        self.selected_index = ix;
     }
 
     fn placeholder_text(&self, _window: &mut Window, _: &mut App) -> Arc<str> {
@@ -365,7 +355,7 @@ impl PickerDelegate for TasksModalDelegate {
                 &query,
                 true,
                 true,
-                MAX_TASK_MODAL_MATCHES,
+                1000,
                 &Default::default(),
                 cx.background_executor().clone(),
             )
@@ -386,7 +376,12 @@ impl PickerDelegate for TasksModalDelegate {
                         Some(index).and_then(|index| (index != 0).then(|| index - 1))
                     });
 
-                    delegate.clamp_selected_index_to_matches();
+                    if delegate.matches.is_empty() {
+                        delegate.selected_index = 0;
+                    } else {
+                        delegate.selected_index =
+                            delegate.selected_index.min(delegate.matches.len() - 1);
+                    }
                 })
                 .log_err();
         })
@@ -403,10 +398,10 @@ impl PickerDelegate for TasksModalDelegate {
             .matches
             .get(current_match_index)
             .and_then(|current_match| {
+                let ix = current_match.candidate_id;
                 self.candidates
-                    .as_ref()?
-                    .get(current_match.candidate_id)
-                    .cloned()
+                    .as_ref()
+                    .map(|candidates| candidates[ix].clone())
             });
         let Some((task_source_kind, mut task)) = task else {
             return;
@@ -449,7 +444,6 @@ impl PickerDelegate for TasksModalDelegate {
         let (source_kind, resolved_task) = &candidates.get(hit.candidate_id)?;
         let template = resolved_task.original_task();
         let display_label = resolved_task.display_label();
-        let tag_labels = task_modal_tag_labels(&template.tags);
 
         let mut tooltip_label_text =
             if display_label != &template.label || source_kind == &TaskSourceKind::UserInput {
@@ -468,9 +462,10 @@ impl PickerDelegate for TasksModalDelegate {
         if !template.tags.is_empty() {
             tooltip_label_text.push('\n');
             tooltip_label_text.push_str(
-                tag_labels
+                template
+                    .tags
                     .iter()
-                    .map(|tag| format!("\n{}", tag))
+                    .map(|tag| format!("\n#{}", tag))
                     .collect::<Vec<_>>()
                     .concat()
                     .as_str(),
@@ -489,7 +484,7 @@ impl PickerDelegate for TasksModalDelegate {
         };
         let icon = match source_kind {
             TaskSourceKind::UserInput => Some(Icon::new(IconName::Terminal)),
-            TaskSourceKind::AbsPath { .. } => Some(Icon::new(IconName::DxCog)),
+            TaskSourceKind::AbsPath { .. } => Some(Icon::new(IconName::Settings)),
             TaskSourceKind::Worktree { .. } => Some(Icon::new(IconName::FileTree)),
             TaskSourceKind::Lsp {
                 language_name: name,
@@ -535,7 +530,12 @@ impl PickerDelegate for TasksModalDelegate {
                     h_flex()
                         .gap_1()
                         .child(Label::new(truncate_and_trailoff(
-                            &tag_labels.join(" "),
+                            &template
+                                .tags
+                                .iter()
+                                .map(|tag| format!("#{}", tag))
+                                .collect::<Vec<_>>()
+                                .join(" "),
                             MAX_TAGS_LINE_LEN,
                         )))
                         .flex_none()
@@ -728,15 +728,7 @@ fn string_match_candidates<'a>(
     candidates
         .into_iter()
         .enumerate()
-        .take(MAX_TASK_MODAL_MATCH_CANDIDATES)
         .map(|(index, (_, candidate))| StringMatchCandidate::new(index, candidate.display_label()))
-        .collect()
-}
-
-fn task_modal_tag_labels<'a>(tags: impl IntoIterator<Item = &'a String>) -> Vec<String> {
-    tags.into_iter()
-        .take(MAX_TASK_MODAL_TOOLTIP_TAGS)
-        .map(|tag| format!("#{}", tag))
         .collect()
 }
 

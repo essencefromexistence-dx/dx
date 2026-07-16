@@ -5,11 +5,9 @@ use agent_settings::{AgentProfileId, AgentProfileSettings};
 use fs::Fs;
 use gpui::{App, Context, DismissEvent, Entity, EventEmitter, Focusable, Task, WeakEntity, Window};
 use picker::{Picker, PickerDelegate};
-use settings::update_settings_file;
+use settings::{AgentProfileContent, ContextServerPresetContent, update_settings_file};
 use ui::{ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt as _;
-
-const MAX_TOOL_PICKER_TOOL_ROWS: usize = 512;
 
 pub struct ToolPicker {
     picker: Entity<Picker<ToolPickerDelegate>>,
@@ -27,7 +25,7 @@ impl ToolPicker {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).modal(false));
+        let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).embedded());
         Self { picker }
     }
 
@@ -36,7 +34,7 @@ impl ToolPicker {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let picker = cx.new(|cx| Picker::list(delegate, window, cx).modal(false));
+        let picker = cx.new(|cx| Picker::list(delegate, window, cx).embedded());
         Self { picker }
     }
 }
@@ -51,7 +49,7 @@ impl Focusable for ToolPicker {
 
 impl Render for ToolPicker {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        v_flex().w(rems(34.)).child(self.picker.clone())
+        v_flex().child(self.picker.clone())
     }
 }
 
@@ -152,16 +150,14 @@ impl ToolPickerDelegate {
             selected_index: 0,
         }
     }
-
-    fn clamp_selected_index(&mut self) {
-        self.selected_index = self
-            .selected_index
-            .min(self.filtered_items.len().saturating_sub(1));
-    }
 }
 
 impl PickerDelegate for ToolPickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "tool picker"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_items.len()
@@ -178,7 +174,6 @@ impl PickerDelegate for ToolPickerDelegate {
         _cx: &mut Context<Picker<Self>>,
     ) {
         self.selected_index = ix;
-        self.clamp_selected_index();
     }
 
     fn can_select(&self, ix: usize, _window: &mut Window, _cx: &mut Context<Picker<Self>>) -> bool {
@@ -206,18 +201,12 @@ impl PickerDelegate for ToolPickerDelegate {
                 .background_spawn(async move {
                     let mut tools_by_provider: BTreeMap<Option<Arc<str>>, Vec<Arc<str>>> =
                         BTreeMap::default();
-                    let mut tool_row_count = 0;
 
                     for item in all_items.iter() {
-                        if tool_row_count >= MAX_TOOL_PICKER_TOOL_ROWS {
-                            break;
-                        }
-
                         if let PickerItem::Tool { server_id, name } = item.clone()
                             && name.contains(&query)
                         {
                             tools_by_provider.entry(server_id).or_default().push(name);
-                            tool_row_count += 1;
                         }
                     }
 
@@ -241,7 +230,10 @@ impl PickerDelegate for ToolPickerDelegate {
 
             this.update(cx, |this, _cx| {
                 this.delegate.filtered_items = filtered_items;
-                this.delegate.clamp_selected_index();
+                this.delegate.selected_index = this
+                    .delegate
+                    .selected_index
+                    .min(this.delegate.filtered_items.len().saturating_sub(1));
             })
             .log_err();
         })
@@ -290,6 +282,7 @@ impl PickerDelegate for ToolPickerDelegate {
 
         update_settings_file(self.fs.clone(), cx, {
             let profile_id = self.profile_id.clone();
+            let default_profile = self.profile_settings.clone();
             let server_id = server_id.clone();
             let tool_name = tool_name.clone();
             move |settings, _cx| {
@@ -298,9 +291,28 @@ impl PickerDelegate for ToolPickerDelegate {
                     .get_or_insert_default()
                     .profiles
                     .get_or_insert_default();
-                let Some(profile) = profiles.get_mut(&profile_id.0) else {
-                    return;
-                };
+                let profile = profiles
+                    .entry(profile_id.0)
+                    .or_insert_with(|| AgentProfileContent {
+                        name: default_profile.name.into(),
+                        tools: default_profile.tools,
+                        enable_all_context_servers: Some(
+                            default_profile.enable_all_context_servers,
+                        ),
+                        context_servers: default_profile
+                            .context_servers
+                            .into_iter()
+                            .map(|(server_id, preset)| {
+                                (
+                                    server_id,
+                                    ContextServerPresetContent {
+                                        tools: preset.tools,
+                                    },
+                                )
+                            })
+                            .collect(),
+                        default_model: default_profile.default_model.clone(),
+                    });
 
                 if let Some(server_id) = server_id {
                     let preset = profile.context_servers.entry(server_id).or_default();

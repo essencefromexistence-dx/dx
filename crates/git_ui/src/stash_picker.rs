@@ -1,6 +1,6 @@
 use fuzzy::StringMatchCandidate;
 
-use git::stash::{GitStash, StashEntry};
+use git::stash::StashEntry;
 use gpui::{
     Action, AnyElement, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
     InteractiveElement, IntoElement, Modifiers, ModifiersChangedEvent, ParentElement, Render,
@@ -28,24 +28,6 @@ actions!(
         ShowStashItem,
     ]
 );
-
-const MAX_STASH_PICKER_ENTRIES: usize = 1_024;
-const MAX_STASH_PICKER_MATCH_CANDIDATES: usize = MAX_STASH_PICKER_ENTRIES;
-const MAX_STASH_PICKER_MATCHES: usize = 512;
-const MAX_STASH_PICKER_LABEL_CHARS: usize = 512;
-
-fn bounded_stash_entries(stash: &GitStash) -> Vec<StashEntry> {
-    stash
-        .entries
-        .iter()
-        .take(MAX_STASH_PICKER_ENTRIES)
-        .cloned()
-        .collect()
-}
-
-fn bounded_stash_label(label: &str) -> String {
-    util::truncate_and_trailoff(label, MAX_STASH_PICKER_LABEL_CHARS)
-}
 
 pub fn open(
     workspace: &mut Workspace,
@@ -111,12 +93,13 @@ impl StashList {
             _subscriptions.push(
                 cx.subscribe_in(&repo, window, |this, _, event, window, cx| {
                     if matches!(event, RepositoryEvent::StashEntriesChanged) {
-                        let stash_entries =
-                            this.picker.read_with(cx, |picker, cx| {
-                                picker.delegate.repo.clone().map(|repo| {
-                                    bounded_stash_entries(&repo.read(cx).cached_stash())
-                                })
-                            });
+                        let stash_entries = this.picker.read_with(cx, |picker, cx| {
+                            picker
+                                .delegate
+                                .repo
+                                .clone()
+                                .map(|repo| repo.read(cx).cached_stash().entries.to_vec())
+                        });
                         this.picker.update(cx, |this, cx| {
                             this.delegate.all_stash_entries = stash_entries;
                             this.refresh(window, cx);
@@ -128,7 +111,7 @@ impl StashList {
 
         cx.spawn_in(window, async move |this, cx| {
             let stash_entries = stash_request
-                .map(|git_stash| bounded_stash_entries(&git_stash))
+                .map(|git_stash| git_stash.entries.to_vec())
                 .unwrap_or_default();
 
             this.update_in(cx, |this, window, cx| {
@@ -145,8 +128,9 @@ impl StashList {
         let delegate = StashListDelegate::new(repository, workspace, window, cx);
         let picker = cx.new(|cx| {
             Picker::uniform_list(delegate, window, cx)
+                .initial_width(width)
                 .show_scrollbar(true)
-                .modal(!embedded)
+                .when(embedded, |picker| picker.embedded())
         });
         let picker_focus_handle = picker.focus_handle(cx);
         picker.update(cx, |picker, _| {
@@ -289,10 +273,6 @@ impl StashListDelegate {
         format!("#{}: {}", ix, message)
     }
 
-    fn bounded_format_message(ix: usize, message: &String) -> String {
-        bounded_stash_label(&Self::format_message(ix, message))
-    }
-
     fn format_timestamp(timestamp: i64, timezone: UtcOffset) -> String {
         let timestamp =
             OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or(OffsetDateTime::now_utc());
@@ -313,14 +293,6 @@ impl StashListDelegate {
             timezone,
             time_format::TimestampFormat::EnhancedAbsolute,
         )
-    }
-
-    fn clamp_selected_index(&self, ix: usize) -> usize {
-        if self.matches.is_empty() {
-            0
-        } else {
-            ix.min(self.matches.len() - 1)
-        }
     }
 
     fn drop_stash_at(&self, ix: usize, window: &mut Window, cx: &mut Context<Picker<Self>>) {
@@ -398,6 +370,10 @@ impl StashListDelegate {
 impl PickerDelegate for StashListDelegate {
     type ListItem = ListItem;
 
+    fn name() -> &'static str {
+        "stash picker"
+    }
+
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Select a stash…".into()
     }
@@ -407,7 +383,7 @@ impl PickerDelegate for StashListDelegate {
     }
 
     fn selected_index(&self) -> usize {
-        self.clamp_selected_index(self.selected_index)
+        self.selected_index
     }
 
     fn set_selected_index(
@@ -416,7 +392,7 @@ impl PickerDelegate for StashListDelegate {
         _window: &mut Window,
         _: &mut Context<Picker<Self>>,
     ) {
-        self.selected_index = self.clamp_selected_index(ix);
+        self.selected_index = ix;
     }
 
     fn update_matches(
@@ -435,7 +411,6 @@ impl PickerDelegate for StashListDelegate {
             let matches: Vec<StashEntryMatch> = if query.is_empty() {
                 all_stash_entries
                     .into_iter()
-                    .take(MAX_STASH_PICKER_MATCHES)
                     .map(|entry| {
                         let formatted_timestamp = Self::format_timestamp(entry.timestamp, timezone);
                         let formatted_absolute_timestamp =
@@ -453,11 +428,10 @@ impl PickerDelegate for StashListDelegate {
                 let candidates = all_stash_entries
                     .iter()
                     .enumerate()
-                    .take(MAX_STASH_PICKER_MATCH_CANDIDATES)
                     .map(|(ix, entry)| {
                         StringMatchCandidate::new(
                             ix,
-                            &Self::bounded_format_message(entry.index, &entry.message),
+                            &Self::format_message(entry.index, &entry.message),
                         )
                     })
                     .collect::<Vec<StringMatchCandidate>>();
@@ -466,24 +440,24 @@ impl PickerDelegate for StashListDelegate {
                     &query,
                     false,
                     true,
-                    MAX_STASH_PICKER_MATCHES,
+                    10000,
                     &Default::default(),
                     cx.background_executor().clone(),
                 )
                 .await
                 .into_iter()
-                .filter_map(|candidate| {
-                    let entry = all_stash_entries.get(candidate.candidate_id).cloned()?;
+                .map(|candidate| {
+                    let entry = all_stash_entries[candidate.candidate_id].clone();
                     let formatted_timestamp = Self::format_timestamp(entry.timestamp, timezone);
                     let formatted_absolute_timestamp =
                         Self::format_absolute_timestamp(entry.timestamp, timezone);
 
-                    Some(StashEntryMatch {
+                    StashEntryMatch {
                         entry,
                         positions: candidate.positions,
                         formatted_timestamp,
                         formatted_absolute_timestamp,
-                    })
+                    }
                 })
                 .collect()
             };
@@ -496,7 +470,7 @@ impl PickerDelegate for StashListDelegate {
                         delegate.selected_index = 0;
                     } else {
                         delegate.selected_index =
-                            delegate.clamp_selected_index(delegate.selected_index);
+                            core::cmp::min(delegate.selected_index, delegate.matches.len() - 1);
                     }
                     delegate.last_query = query;
                 })
@@ -527,23 +501,16 @@ impl PickerDelegate for StashListDelegate {
         _window: &mut Window,
         cx: &mut Context<Picker<Self>>,
     ) -> Option<Self::ListItem> {
-        let Some(entry_match) = self.matches.get(ix) else {
-            return None;
-        };
+        let entry_match = &self.matches[ix];
 
         let stash_message =
-            Self::bounded_format_message(entry_match.entry.index, &entry_match.entry.message);
+            Self::format_message(entry_match.entry.index, &entry_match.entry.message);
         let positions = entry_match.positions.clone();
         let stash_label = HighlightedLabel::new(stash_message, positions)
             .truncate()
             .into_any_element();
 
-        let branch_name = entry_match
-            .entry
-            .branch
-            .as_ref()
-            .map(|branch| bounded_stash_label(branch))
-            .unwrap_or_default();
+        let branch_name = entry_match.entry.branch.clone().unwrap_or_default();
         let branch_info = h_flex()
             .gap_1p5()
             .w_full()
@@ -624,7 +591,7 @@ impl PickerDelegate for StashListDelegate {
                                 .child(stash_label)
                                 .child(branch_info)
                                 .tooltip({
-                                    let stash_message = Self::bounded_format_message(
+                                    let stash_message = Self::format_message(
                                         entry_match.entry.index,
                                         &entry_match.entry.message,
                                     );
