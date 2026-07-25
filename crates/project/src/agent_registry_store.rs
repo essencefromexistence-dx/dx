@@ -23,11 +23,6 @@ const REFRESH_THROTTLE_DURATION: Duration = Duration::from_secs(60 * 60);
 // HTTP client only has a connect timeout.
 const REGISTRY_FETCH_TIMEOUT: Duration = Duration::from_secs(30);
 const REGISTRY_ICON_FETCH_TIMEOUT: Duration = Duration::from_secs(10);
-const MAX_REGISTRY_RESPONSE_BODY_BYTES: u64 = 4 * 1024 * 1024;
-const MAX_REGISTRY_RESPONSE_ERROR_DISPLAY_BYTES: usize = 8 * 1024;
-const MAX_REGISTRY_INDEX_AGENTS: usize = 512;
-const MAX_REGISTRY_ICON_FETCHES: usize = 256;
-const MAX_REGISTRY_BINARY_TARGETS: usize = 64;
 
 #[derive(Clone, Debug)]
 pub struct RegistryAgentMetadata {
@@ -131,8 +126,10 @@ pub struct AgentRegistryStore {
 impl AgentRegistryStore {
     /// Initialize the global AgentRegistryStore.
     ///
-    /// This loads the cached registry from disk. Network refreshes are kept
-    /// explicit so startup never waits on registry CDN availability.
+    /// This loads the cached registry from disk. If the cache is empty but there
+    /// are registry agents configured in settings, it will trigger a network fetch.
+    /// Otherwise, call `refresh()` explicitly when you need fresh data
+    /// (e.g., when opening the Agent Registry page).
     pub fn init_global(
         cx: &mut App,
         fs: Arc<dyn Fs>,
@@ -144,6 +141,12 @@ impl AgentRegistryStore {
 
         let store = cx.new(|cx| Self::new(fs, http_client, cx));
         cx.set_global(GlobalAgentRegistryStore(store.clone()));
+
+        store.update(cx, |store, cx| {
+            if store.agents.is_empty() {
+                store.refresh(cx);
+            }
+        });
 
         store
     }
@@ -338,7 +341,7 @@ async fn fetch_registry_index(
             .context("fetching ACP registry")?;
 
     if status.is_client_error() {
-        let text = format_registry_response_error_body(&body);
+        let text = String::from_utf8_lossy(body.as_slice());
         bail!(
             "registry status error {}, response: {text:?}",
             status.as_u16()
@@ -374,9 +377,8 @@ async fn build_registry_agents(
     }
 
     let current_platform = current_platform_key();
-    let registry_entries = capped_registry_entries(index.agents);
     let icon_paths = resolve_icon_paths(
-        &registry_entries,
+        &index.agents,
         &icons_dir,
         update_cache,
         fs.clone(),
@@ -385,8 +387,8 @@ async fn build_registry_agents(
     )
     .await;
 
-    let mut agents = Vec::with_capacity(registry_entries.len());
-    for (entry, icon_path) in registry_entries.into_iter().zip(icon_paths) {
+    let mut agents = Vec::new();
+    for (entry, icon_path) in index.agents.into_iter().zip(icon_paths) {
         let metadata = RegistryAgentMetadata {
             id: AgentId::new(entry.id),
             name: entry.name.into(),
@@ -403,18 +405,17 @@ async fn build_registry_agents(
             }
 
             let mut targets = HashMap::default();
-            let current_platform_target =
-                current_platform.and_then(|platform| binary.get_key_value(platform));
-            for (platform, target) in current_platform_target
-                .into_iter()
-                .chain(
-                    binary
-                        .iter()
-                        .filter(|(platform, _)| current_platform != Some(platform.as_str())),
-                )
-                .take(MAX_REGISTRY_BINARY_TARGETS)
-            {
-                targets.insert(platform.clone(), registry_target_config(target));
+            for (platform, target) in binary.iter() {
+                targets.insert(
+                    platform.clone(),
+                    RegistryTargetConfig {
+                        archive: target.archive.clone(),
+                        cmd: target.cmd.clone(),
+                        args: target.args.clone(),
+                        sha256: target.sha256.clone(),
+                        env: target.env.clone(),
+                    },
+                );
             }
 
             let supports_current_platform = current_platform
@@ -454,20 +455,6 @@ async fn build_registry_agents(
     Ok(agents)
 }
 
-fn capped_registry_entries(entries: Vec<RegistryEntry>) -> Vec<RegistryEntry> {
-    if entries.len() > MAX_REGISTRY_INDEX_AGENTS {
-        log::warn!(
-            "ACP registry returned {} agents; only the first {MAX_REGISTRY_INDEX_AGENTS} will be loaded",
-            entries.len()
-        );
-    }
-
-    entries
-        .into_iter()
-        .take(MAX_REGISTRY_INDEX_AGENTS)
-        .collect()
-}
-
 async fn resolve_icon_paths(
     entries: &[RegistryEntry],
     icons_dir: &Path,
@@ -476,14 +463,7 @@ async fn resolve_icon_paths(
     http_client: Arc<dyn HttpClient>,
     executor: &BackgroundExecutor,
 ) -> Vec<Option<SharedString>> {
-    if entries.len() > MAX_REGISTRY_ICON_FETCHES {
-        log::warn!(
-            "ACP registry returned {} agents with potential icons; only the first {MAX_REGISTRY_ICON_FETCHES} icon paths will be resolved",
-            entries.len()
-        );
-    }
-
-    let mut icon_paths = join_all(entries.iter().take(MAX_REGISTRY_ICON_FETCHES).map(|entry| {
+    join_all(entries.iter().map(|entry| {
         let fs = fs.clone();
         let http_client = http_client.clone();
         async move {
@@ -493,9 +473,7 @@ async fn resolve_icon_paths(
                 .flatten()
         }
     }))
-    .await;
-    icon_paths.resize(entries.len(), None);
-    icon_paths
+    .await
 }
 
 async fn resolve_icon_path(
@@ -544,7 +522,7 @@ async fn download_icon(
             .with_context(|| format!("fetching icon for {}", entry.id))?;
 
     if status.is_client_error() {
-        let text = format_registry_response_error_body(&body);
+        let text = String::from_utf8_lossy(body.as_slice());
         bail!("icon status error {}, response: {text:?}", status.as_u16());
     }
 
@@ -553,20 +531,6 @@ async fn download_icon(
         .join(format!("{}.svg", entry.id));
     fs.write(&icon_path, &body).await?;
     Ok(())
-}
-
-fn format_registry_response_error_body(body: &[u8]) -> String {
-    let visible_len = body.len().min(MAX_REGISTRY_RESPONSE_ERROR_DISPLAY_BYTES);
-    let visible_body = &body[..visible_len];
-    let mut text = String::from_utf8_lossy(visible_body).into_owned();
-
-    if body.len() > MAX_REGISTRY_RESPONSE_ERROR_DISPLAY_BYTES {
-        text.push_str(&format!(
-            " [truncated] response body exceeded {MAX_REGISTRY_RESPONSE_ERROR_DISPLAY_BYTES} bytes"
-        ));
-    }
-
-    text
 }
 
 async fn fetch_url_body(
@@ -585,14 +549,9 @@ async fn fetch_url_body(
         let mut body = Vec::new();
         response
             .body_mut()
-            .take(MAX_REGISTRY_RESPONSE_BODY_BYTES + 1)
             .read_to_end(&mut body)
             .await
             .with_context(|| format!("reading response from {url}"))?;
-
-        if body.len() as u64 > MAX_REGISTRY_RESPONSE_BODY_BYTES {
-            bail!("response body from {url} exceeded {MAX_REGISTRY_RESPONSE_BODY_BYTES} bytes");
-        }
 
         Ok((status, body))
     }
@@ -658,16 +617,6 @@ fn current_platform_key() -> Option<&'static str> {
     })
 }
 
-fn registry_target_config(target: &RegistryBinaryTarget) -> RegistryTargetConfig {
-    RegistryTargetConfig {
-        archive: target.archive.clone(),
-        cmd: target.cmd.clone(),
-        args: target.args.clone(),
-        sha256: None,
-        env: target.env.clone(),
-    }
-}
-
 fn registry_cache_dir() -> PathBuf {
     paths::external_agents_dir().join("registry")
 }
@@ -712,6 +661,8 @@ struct RegistryBinaryTarget {
     cmd: String,
     #[serde(default)]
     args: Vec<String>,
+    #[serde(default)]
+    sha256: Option<String>,
     #[serde(default)]
     env: HashMap<String, String>,
 }

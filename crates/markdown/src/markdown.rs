@@ -803,6 +803,10 @@ impl Markdown {
         }
     }
 
+    pub fn has_selection(&self) -> bool {
+        self.selection.end > self.selection.start
+    }
+
     pub fn set_search_highlights(
         &mut self,
         highlights: Vec<Range<usize>>,

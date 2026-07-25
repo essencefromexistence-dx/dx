@@ -1568,7 +1568,7 @@ impl GitPanel {
                     let task = workspace.update(cx, |workspace, cx| {
                         workspace
                             .project()
-                            .update(cx, |project, cx| project.delete_file(path, true, cx))
+                            .update(cx, |project, cx| project.delete_file(path, cx))
                     })?;
                     if let Some(task) = task {
                         task.await?;
@@ -1762,7 +1762,7 @@ impl GitPanel {
                             let project_path = active_repo
                                 .read(cx)
                                 .repo_path_to_project_path(&entry.repo_path, cx)?;
-                            project.delete_file(project_path, true, cx)
+                            project.delete_file(project_path, cx)
                         })
                     })
                     .collect::<Vec<_>>()
@@ -2197,6 +2197,7 @@ impl GitPanel {
         if commit_editor_focus_handle.contains_focused(window, cx) {
             self.commit_changes(
                 CommitOptions {
+                    no_verify: false,
                     amend: self.amend_pending,
                     signoff: self.signoff_enabled,
                     allow_empty: false,
@@ -2654,7 +2655,7 @@ impl GitPanel {
 
                 let worktree_snapshot = worktree.read(cx).snapshot();
                 for rules_name in RULES_FILE_NAMES {
-                    if let Ok(rel_path) = RelPath::unix(rules_name) {
+                    if let Ok(rel_path) = RelPath::from_unix_str(rules_name) {
                         if let Some(entry) = worktree_snapshot.entry_for_path(rel_path) {
                             if entry.is_file() {
                                 return Some(ProjectPath {
@@ -2826,6 +2827,7 @@ impl GitPanel {
                 );
 
                 let request = LanguageModelRequest {
+                    compact_at_tokens: None,
                     thread_id: None,
                     prompt_id: None,
                     intent: Some(CompletionIntent::GenerateGitCommitMessage),
@@ -3449,7 +3451,7 @@ impl GitPanel {
                     .committer_name
                     .clone()
                     .or_else(|| participant.user.name.clone())
-                    .unwrap_or_else(|| participant.user.github_login.clone().to_string());
+                    .unwrap_or_else(|| participant.user.username.clone().to_string());
                 new_co_authors.push((name.clone(), email.clone()))
             }
         }
@@ -3471,7 +3473,7 @@ impl GitPanel {
             .name
             .clone()
             .or_else(|| user.name.clone())
-            .unwrap_or_else(|| user.github_login.clone().to_string());
+            .unwrap_or_else(|| user.username.clone().to_string());
         Some((name, email))
     }
 
@@ -4923,6 +4925,7 @@ impl GitPanel {
                             .update(cx, |git_panel, cx| {
                                 git_panel.commit_changes(
                                     CommitOptions {
+                                        no_verify: false,
                                         amend,
                                         signoff,
                                         allow_empty: false,
@@ -8639,7 +8642,7 @@ mod tests {
             cx.read(|cx| project.read(cx).worktrees(cx).next().unwrap().read(cx).id());
         let project_path = ProjectPath {
             worktree_id,
-            path: RelPath::unix("src/a/foo.rs").unwrap().into_arc(),
+            path: RelPath::from_unix_str("src/a/foo.rs").unwrap().into_arc(),
         };
 
         panel.update_in(cx, |panel, window, cx| {

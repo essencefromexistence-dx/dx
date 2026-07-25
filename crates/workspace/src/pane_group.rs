@@ -415,24 +415,24 @@ impl PaneLeaderDecorator for PaneRenderContext<'_> {
                             is_in_unshared_view.then(|| {
                                 Label::new(format!(
                                     "{} is in an unshared pane",
-                                    leader.user.github_login
+                                    leader.user.username
                                 ))
                             })
                         } else {
                             leader_join_data = Some((leader_project_id, leader.user.legacy_id));
                             Some(Label::new(format!(
                                 "Follow {} to their active project",
-                                leader.user.github_login,
+                                leader.user.username,
                             )))
                         }
                     }
                     ParticipantLocation::UnsharedProject => Some(Label::new(format!(
                         "{} is viewing an unshared Dx project",
-                        leader.user.github_login
+                        leader.user.username
                     ))),
                     ParticipantLocation::External => Some(Label::new(format!(
                         "{} is viewing a window outside of Dx",
-                        leader.user.github_login
+                        leader.user.username
                     ))),
                 };
                 status_box = leader_status_box.map(|status| {

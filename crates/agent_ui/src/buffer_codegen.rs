@@ -79,19 +79,6 @@ pub struct BufferCodegen {
 
 pub const REWRITE_SECTION_TOOL_NAME: &str = "rewrite_section";
 pub const FAILURE_MESSAGE_TOOL_NAME: &str = "failure_message";
-const MAX_INLINE_CODEGEN_SOURCE_BYTES: usize = 512 * 1024;
-
-fn ensure_inline_codegen_source_within_limit(source_byte_len: usize) -> Result<()> {
-    if source_byte_len > MAX_INLINE_CODEGEN_SOURCE_BYTES {
-        anyhow::bail!(
-            "Selected source is too large for inline assistant rewrite ({} bytes; max {} bytes)",
-            source_byte_len,
-            MAX_INLINE_CODEGEN_SOURCE_BYTES
-        );
-    }
-
-    Ok(())
-}
 
 impl BufferCodegen {
     pub fn new(
@@ -307,25 +294,6 @@ pub struct CodegenAlternative {
 impl EventEmitter<CodegenEvent> for CodegenAlternative {}
 
 impl CodegenAlternative {
-    fn source_range_byte_len(snapshot: &MultiBufferSnapshot, range: &Range<Anchor>) -> usize {
-        let start = range.start.to_offset(snapshot).0;
-        let end = range.end.to_offset(snapshot).0;
-        end.saturating_sub(start)
-    }
-
-    fn finish_with_error(&mut self, error: anyhow::Error, cx: &mut Context<Self>) {
-        self.last_equal_ranges.clear();
-        self.edits.clear();
-        self.line_operations.clear();
-        self.diff = Diff::default();
-        self.completion = None;
-        self.selected_text = None;
-        self.status = CodegenStatus::Error(error);
-        self.generation = Task::ready(());
-        cx.emit(CodegenEvent::Finished);
-        cx.notify();
-    }
-
     pub fn new(
         buffer: Entity<MultiBuffer>,
         range: Range<Anchor>,
@@ -402,9 +370,6 @@ impl CodegenAlternative {
                 if matches!(self.status, CodegenStatus::Pending) {
                     let line_operations = self.line_operations.clone();
                     self.reapply_line_based_diff(line_operations, cx);
-                } else if self.edits.is_empty() && self.line_operations.is_empty() {
-                    self.diff = Diff::default();
-                    cx.notify();
                 } else {
                     self.reapply_batch_diff(cx).detach();
                 }
@@ -458,14 +423,6 @@ impl CodegenAlternative {
         }
 
         self.edit_position = Some(self.range.start.bias_right(&self.snapshot));
-
-        let source_byte_len =
-            Self::source_range_byte_len(&self.buffer.read(cx).snapshot(cx), &self.range);
-        if let Err(error) = ensure_inline_codegen_source_within_limit(source_byte_len) {
-            log::warn!("Inline assistant codegen source rejected: {error}");
-            self.finish_with_error(error, cx);
-            return Ok(());
-        }
 
         if Self::use_streaming_tools(model.as_ref(), cx) {
             let request = self.build_request(&model, user_prompt, context_task, cx)?;
@@ -568,18 +525,18 @@ impl CodegenAlternative {
             messages.push(user_message);
 
             let tools = vec![
-                LanguageModelRequestTool {
-                    name: REWRITE_SECTION_TOOL_NAME.to_string(),
-                    description: "Replaces text in <rewrite_this></rewrite_this> tags with your replacement_text.".to_string(),
-                    input_schema: language_model::tool_schema::root_schema_for::<RewriteSectionInput>(tool_input_format).to_value(),
-                    use_input_streaming: false,
-                },
-                LanguageModelRequestTool {
-                    name: FAILURE_MESSAGE_TOOL_NAME.to_string(),
-                    description: "Use this tool to provide a message to the user when you're unable to complete a task.".to_string(),
-                    input_schema: language_model::tool_schema::root_schema_for::<FailureMessageInput>(tool_input_format).to_value(),
-                    use_input_streaming: false,
-                },
+                LanguageModelRequestTool::function(
+                    REWRITE_SECTION_TOOL_NAME.to_string(),
+                    "Replaces text in <rewrite_this></rewrite_this> tags with your replacement_text.".to_string(),
+                    language_model::tool_schema::root_schema_for::<RewriteSectionInput>(tool_input_format).to_value(),
+                    false,
+                ),
+                LanguageModelRequestTool::function(
+                    FAILURE_MESSAGE_TOOL_NAME.to_string(),
+                    "Use this tool to provide a message to the user when you're unable to complete a task.".to_string(),
+                    language_model::tool_schema::root_schema_for::<FailureMessageInput>(tool_input_format).to_value(),
+                    false,
+                ),
             ];
 
             LanguageModelRequest {
@@ -594,6 +551,7 @@ impl CodegenAlternative {
                 thinking_allowed: false,
                 thinking_effort: None,
                 speed: None,
+                compact_at_tokens: None,
             }
         }))
     }
@@ -674,6 +632,7 @@ impl CodegenAlternative {
                 thinking_allowed: false,
                 thinking_effort: None,
                 speed: None,
+                compact_at_tokens: None,
             }
         }))
     }
@@ -697,13 +656,6 @@ impl CodegenAlternative {
         self.snapshot = self.buffer.read(cx).snapshot(cx);
         self.range = self.snapshot.anchor_after(self.range.start)
             ..self.snapshot.anchor_after(self.range.end);
-
-        let source_byte_len = Self::source_range_byte_len(&self.snapshot, &self.range);
-        if let Err(error) = ensure_inline_codegen_source_within_limit(source_byte_len) {
-            log::warn!("Inline assistant codegen source rejected: {error}");
-            self.finish_with_error(error, cx);
-            return Task::ready(());
-        }
 
         let snapshot = self.snapshot.clone();
         let selected_text = snapshot
@@ -1227,9 +1179,7 @@ impl CodegenAlternative {
                 let mut chars_read_by_tool_id = chars_read_by_tool_id.lock();
                 match tool_use.name.as_ref() {
                     REWRITE_SECTION_TOOL_NAME => {
-                        let Ok(input) =
-                            serde_json::from_value::<RewriteSectionInput>(tool_use.input)
-                        else {
+                        let Ok(input) = tool_use.input.parse::<RewriteSectionInput>() else {
                             return None;
                         };
                         let chars_read_so_far =
@@ -1246,9 +1196,7 @@ impl CodegenAlternative {
                         })
                     }
                     FAILURE_MESSAGE_TOOL_NAME => {
-                        let Ok(mut input) =
-                            serde_json::from_value::<FailureMessageInput>(tool_use.input)
-                        else {
+                        let Ok(mut input) = tool_use.input.parse::<FailureMessageInput>() else {
                             return None;
                         };
                         Some(ToolUseOutput::Failure(std::mem::take(&mut input.message)))
@@ -2059,7 +2007,9 @@ mod tests {
             id: id.into(),
             name: REWRITE_SECTION_TOOL_NAME.into(),
             raw_input: serde_json::to_string(&input).unwrap(),
-            input: serde_json::to_value(&input).unwrap(),
+            input: language_model::LanguageModelToolUseInput::Json(
+                serde_json::to_value(&input).unwrap(),
+            ),
             is_input_complete: is_complete,
             thought_signature: None,
         })

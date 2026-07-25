@@ -28,8 +28,6 @@ use ui::{
 use util::{ResultExt, maybe, paths::PathStyle, rel_path::RelPath};
 use workspace::{ModalView, Workspace};
 
-const MAX_TOOLCHAIN_SELECTOR_MATCHES: usize = 100;
-
 actions!(
     toolchain,
     [
@@ -895,16 +893,14 @@ impl ToolchainSelectorDelegate {
             .map(|suffix| format!(".{}{suffix}", path_style.primary_separator()).into())
             .unwrap_or(path)
     }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_index = self
-            .selected_index
-            .min(self.matches.len().saturating_sub(1));
-    }
 }
 
 impl PickerDelegate for ToolchainSelectorDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "toolchain selector"
+    }
 
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         self.placeholder_text.clone()
@@ -916,44 +912,43 @@ impl PickerDelegate for ToolchainSelectorDelegate {
 
     fn confirm(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
         if let Some(string_match) = self.matches.get(self.selected_index) {
-            if let Some((toolchain, _)) = self.candidates.get(string_match.candidate_id).cloned() {
-                if let Some(workspace_id) = self
-                    .workspace
-                    .read_with(cx, |this, _| this.database_id())
-                    .ok()
-                    .flatten()
-                {
-                    let workspace = self.workspace.clone();
-                    let worktree_id = self.worktree_id;
-                    let worktree_abs_path_root = self.worktree_abs_path_root.clone();
-                    let path = self.relative_path.clone();
-                    let relative_path = self.relative_path.clone();
-                    let db = workspace::WorkspaceDb::global(cx);
-                    cx.spawn_in(window, async move |_, cx| {
-                        db.set_toolchain(
-                            workspace_id,
-                            worktree_abs_path_root,
-                            relative_path,
-                            toolchain.clone(),
-                        )
-                        .await
-                        .log_err();
-                        workspace
-                            .update(cx, |this, cx| {
-                                this.project().update(cx, |this, cx| {
-                                    this.activate_toolchain(
-                                        ProjectPath { worktree_id, path },
-                                        toolchain,
-                                        cx,
-                                    )
-                                })
+            let (toolchain, _) = self.candidates[string_match.candidate_id].clone();
+            if let Some(workspace_id) = self
+                .workspace
+                .read_with(cx, |this, _| this.database_id())
+                .ok()
+                .flatten()
+            {
+                let workspace = self.workspace.clone();
+                let worktree_id = self.worktree_id;
+                let worktree_abs_path_root = self.worktree_abs_path_root.clone();
+                let path = self.relative_path.clone();
+                let relative_path = self.relative_path.clone();
+                let db = workspace::WorkspaceDb::global(cx);
+                cx.spawn_in(window, async move |_, cx| {
+                    db.set_toolchain(
+                        workspace_id,
+                        worktree_abs_path_root,
+                        relative_path,
+                        toolchain.clone(),
+                    )
+                    .await
+                    .log_err();
+                    workspace
+                        .update(cx, |this, cx| {
+                            this.project().update(cx, |this, cx| {
+                                this.activate_toolchain(
+                                    ProjectPath { worktree_id, path },
+                                    toolchain,
+                                    cx,
+                                )
                             })
-                            .ok()?
-                            .await;
-                        Some(())
-                    })
-                    .detach();
-                }
+                        })
+                        .ok()?
+                        .await;
+                    Some(())
+                })
+                .detach();
             }
         }
         self.dismissed(window, cx);
@@ -993,7 +988,6 @@ impl PickerDelegate for ToolchainSelectorDelegate {
                 candidates
                     .into_iter()
                     .enumerate()
-                    .take(MAX_TOOLCHAIN_SELECTOR_MATCHES)
                     .map(|(index, (candidate, _))| {
                         let path = Self::relativize_path(
                             candidate.path.clone(),
@@ -1028,7 +1022,7 @@ impl PickerDelegate for ToolchainSelectorDelegate {
                     &query,
                     false,
                     true,
-                    MAX_TOOLCHAIN_SELECTOR_MATCHES,
+                    100,
                     &Default::default(),
                     background,
                 )
@@ -1038,7 +1032,9 @@ impl PickerDelegate for ToolchainSelectorDelegate {
             this.update(cx, |this, cx| {
                 let delegate = &mut this.delegate;
                 delegate.matches = matches;
-                delegate.clamp_selected_index_to_matches();
+                delegate.selected_index = delegate
+                    .selected_index
+                    .min(delegate.matches.len().saturating_sub(1));
                 cx.notify();
             })
             .log_err();

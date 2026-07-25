@@ -43,10 +43,10 @@ pub struct PanelLayout {
 impl PanelLayout {
     const AGENT: Self = Self {
         agent_dock: Some(DockPosition::Left),
-        project_panel_dock: Some(DockSide::Left),
-        outline_panel_dock: Some(DockSide::Left),
-        collaboration_panel_dock: Some(DockPosition::Left),
-        git_panel_dock: Some(DockPosition::Left),
+        project_panel_dock: Some(DockSide::Right),
+        outline_panel_dock: Some(DockSide::Right),
+        collaboration_panel_dock: Some(DockPosition::Right),
+        git_panel_dock: Some(DockPosition::Right),
     };
 
     const EDITOR: Self = Self {
@@ -139,171 +139,6 @@ impl WindowLayout {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct AgentLiquidGlassSettings {
-    pub enabled: bool,
-    pub power_factor: f32,
-    pub width: f32,
-    pub height: f32,
-    pub a: f32,
-    pub b: f32,
-    pub c: f32,
-    pub d: f32,
-    pub f_power: f32,
-    pub noise: f32,
-    pub glow_weight: f32,
-    pub glow_edge0: f32,
-    pub glow_edge1: f32,
-    pub glow_bias: f32,
-    pub chromatic_aberration: f32,
-    pub aberration_samples: u32,
-    pub blur_radius: f32,
-    pub blur_iterations: u32,
-    pub blur_downscale: f32,
-    pub mouse_control: bool,
-    pub position: [f32; 2],
-    pub pixel_scale: f32,
-    pub camera_position: [f32; 2],
-    pub velocity: f32,
-    pub camera_velocity: f32,
-    pub current_bg: usize,
-    pub glass_variant: usize,
-}
-
-const LIQUID_GLASS_BACKGROUND_COUNT: usize = 11;
-const LIQUID_GLASS_VARIANT_SIZES: &[(f32, f32)] = &[
-    (3.5, 3.5),
-    (3.5, 3.5),
-    (8.0, 0.8),
-    (1.2, 1.2),
-    (4.0, 4.0),
-    (6.0, 1.0),
-    (6.0, 4.0),
-    (5.0, 5.0),
-    (3.0, 6.0),
-    (3.0, 7.0),
-    (1.5, 1.5),
-    (2.0, 2.0),
-    (2.5, 2.5),
-    (4.0, 4.0),
-    (3.0, 1.5),
-    (8.0, 3.0),
-    (2.5, 8.0),
-    (2.5, 8.0),
-    (3.0, 5.0),
-    (2.0, 2.0),
-    (2.0, 2.0),
-    (5.0, 0.5),
-    (4.0, 3.0),
-    (3.0, 2.0),
-];
-
-impl Default for AgentLiquidGlassSettings {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            power_factor: 3.0,
-            width: 3.5,
-            height: 3.5,
-            a: 0.7,
-            b: 2.3,
-            c: 5.2,
-            d: 6.9,
-            f_power: 1.0,
-            noise: 0.0,
-            glow_weight: 0.054,
-            glow_edge0: 1.0,
-            glow_edge1: -1.0,
-            glow_bias: 0.353,
-            chromatic_aberration: 0.0,
-            aberration_samples: 1,
-            blur_radius: 2.0,
-            blur_iterations: 1,
-            blur_downscale: 0.5,
-            mouse_control: false,
-            position: [512.0, 384.0],
-            pixel_scale: 100.0,
-            camera_position: [0.0, 0.0],
-            velocity: 2.0,
-            camera_velocity: 2.0,
-            current_bg: 0,
-            glass_variant: 0,
-        }
-    }
-}
-
-impl From<settings::AgentLiquidGlassSettingsContent> for AgentLiquidGlassSettings {
-    fn from(content: settings::AgentLiquidGlassSettingsContent) -> Self {
-        let defaults = Self::default();
-        let glass_variant = sanitize_usize(
-            content.glass_variant,
-            defaults.glass_variant,
-            LIQUID_GLASS_VARIANT_SIZES.len().saturating_sub(1),
-        );
-        let (variant_width, variant_height) = LIQUID_GLASS_VARIANT_SIZES[glass_variant];
-
-        Self {
-            enabled: content.enabled.unwrap_or(defaults.enabled),
-            power_factor: sanitize_f32(content.power_factor, defaults.power_factor, 1.001, 6.0),
-            width: sanitize_f32(content.width, variant_width, 0.01, 10.0),
-            height: sanitize_f32(content.height, variant_height, 0.01, 10.0),
-            a: sanitize_f32(content.a, defaults.a, 0.0, 5.0),
-            b: sanitize_f32(content.b, defaults.b, 0.0, 6.0),
-            c: sanitize_f32(content.c, defaults.c, 0.0, 6.0),
-            d: sanitize_f32(content.d, defaults.d, 0.0, 10.0),
-            f_power: sanitize_f32(content.f_power, defaults.f_power, -1.5, 6.0),
-            noise: sanitize_f32(content.noise, defaults.noise, 0.0, 0.3),
-            glow_weight: sanitize_f32(content.glow_weight, defaults.glow_weight, -1.0, 1.0),
-            glow_edge0: sanitize_f32(content.glow_edge0, defaults.glow_edge0, -1.0, 1.0),
-            glow_edge1: sanitize_f32(content.glow_edge1, defaults.glow_edge1, -1.0, 1.0),
-            glow_bias: sanitize_f32(content.glow_bias, defaults.glow_bias, -1.0, 1.0),
-            chromatic_aberration: sanitize_f32(
-                content.chromatic_aberration,
-                defaults.chromatic_aberration,
-                0.0,
-                0.02,
-            ),
-            aberration_samples: sanitize_u32(
-                content.aberration_samples,
-                defaults.aberration_samples,
-                1,
-                8,
-            ),
-            blur_radius: sanitize_f32(content.blur_radius, defaults.blur_radius, 0.0, 10.0),
-            blur_iterations: sanitize_u32(content.blur_iterations, defaults.blur_iterations, 0, 10),
-            blur_downscale: sanitize_f32(content.blur_downscale, defaults.blur_downscale, 0.1, 1.0),
-            mouse_control: content.mouse_control.unwrap_or(defaults.mouse_control),
-            position: sanitize_pair(
-                content.position,
-                defaults.position,
-                [0.0, 0.0],
-                [1024.0, 768.0],
-            ),
-            pixel_scale: sanitize_f32(content.pixel_scale, defaults.pixel_scale, 1.0, 512.0),
-            camera_position: sanitize_pair(
-                content.camera_position,
-                defaults.camera_position,
-                [-1024.0, -1024.0],
-                [1024.0, 1024.0],
-            ),
-            velocity: sanitize_f32(content.velocity, defaults.velocity, 0.0, 20.0),
-            camera_velocity: sanitize_f32(
-                content.camera_velocity,
-                defaults.camera_velocity,
-                0.0,
-                20.0,
-            ),
-            current_bg: sanitize_usize(
-                content.current_bg,
-                defaults.current_bg,
-                LIQUID_GLASS_BACKGROUND_COUNT.saturating_sub(1),
-            ),
-            glass_variant,
-        }
-    }
-}
-
-/// A threshold for when to automatically compact a thread.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AutoCompactThreshold {
     /// Compact once the context window is at least this full, as a fraction in
@@ -329,35 +164,6 @@ impl fmt::Display for AutoCompactThreshold {
             Self::TokensRemaining(tokens) => write!(formatter, "-{tokens}"),
         }
     }
-}
-
-fn sanitize_f32(value: Option<f32>, fallback: f32, min: f32, max: f32) -> f32 {
-    value
-        .filter(|value| value.is_finite())
-        .unwrap_or(fallback)
-        .clamp(min, max)
-}
-
-fn sanitize_u32(value: Option<u32>, fallback: u32, min: u32, max: u32) -> u32 {
-    value.unwrap_or(fallback).clamp(min, max)
-}
-
-fn sanitize_usize(value: Option<usize>, fallback: usize, max: usize) -> usize {
-    value.unwrap_or(fallback).min(max)
-}
-
-fn sanitize_pair(
-    value: Option<[f32; 2]>,
-    fallback: [f32; 2],
-    min: [f32; 2],
-    max: [f32; 2],
-) -> [f32; 2] {
-    let value = value.unwrap_or(fallback);
-
-    [
-        sanitize_f32(Some(value[0]), fallback[0], min[0], max[0]),
-        sanitize_f32(Some(value[1]), fallback[1], min[1], max[1]),
-    ]
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -410,8 +216,10 @@ pub struct AgentSettings {
     pub inline_assistant_model: Option<LanguageModelSelection>,
     pub inline_assistant_use_streaming_tools: bool,
     pub commit_message_model: Option<LanguageModelSelection>,
+    pub commit_message_include_project_rules: bool,
     pub commit_message_instructions: Option<String>,
     pub thread_summary_model: Option<LanguageModelSelection>,
+    pub compaction_model: Option<LanguageModelSelection>,
     pub inline_alternatives: Vec<LanguageModelSelection>,
     pub favorite_models: Vec<LanguageModelSelection>,
     pub default_profile: AgentProfileId,
@@ -425,13 +233,13 @@ pub struct AgentSettings {
     pub enable_feedback: bool,
     pub expand_edit_card: bool,
     pub expand_terminal_card: bool,
+    pub terminal_init_command: Option<String>,
     pub thinking_display: ThinkingBlockDisplay,
     pub cancel_generation_on_terminal_stop: bool,
     pub use_modifier_to_send: bool,
     pub message_editor_min_lines: usize,
     pub show_turn_stats: bool,
     pub show_merge_conflict_indicator: bool,
-    pub liquid_glass: AgentLiquidGlassSettings,
     pub tool_permissions: ToolPermissions,
     pub sandbox_permissions: SandboxPermissions,
 }
@@ -607,12 +415,42 @@ impl Default for AgentProfileId {
 /// combines them with the in-memory per-thread grants. `write_paths` are
 /// stored as minimal, lexically-normalized subtrees (see
 /// [`compile_sandbox_permissions`]).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SandboxPermissions {
-    pub allow_network: bool,
+    /// Allow sandboxed commands to reach any host over the network.
+    pub allow_all_hosts: bool,
+    /// Hosts sandboxed commands may always reach, in canonical form (exact
+    /// hostnames or leading-`*.` subdomain wildcards). Parsed/validated where
+    /// consumed (`agent::sandboxing`).
+    pub network_hosts: Vec<String>,
     pub allow_fs_write_all: bool,
+    /// Persistently run agent terminal commands outside the OS sandbox. This is
+    /// the model-facing "off switch": when set, the sandboxed terminal tool is
+    /// not exposed and the system prompt omits the sandbox section, so the
+    /// model uses the plain `terminal` tool (on Windows, WSL sandbox setup is
+    /// skipped). Distinct from the model-requested `unsandboxed: true` escape
+    /// approved "once" or "for this thread", which keeps the sandboxed
+    /// tool/prompt in place — see `agent::sandboxing`.
     pub allow_unsandboxed: bool,
     pub write_paths: Vec<PathBuf>,
+    /// Whether sandbox escalation prompts warn about domains or write paths
+    /// that contain potentially confusable Unicode characters (homoglyphs,
+    /// invisible characters, or bidirectional overrides). Enabled by default.
+    pub warn_confusable_unicode: bool,
+}
+
+impl Default for SandboxPermissions {
+    fn default() -> Self {
+        Self {
+            allow_all_hosts: false,
+            network_hosts: Vec::new(),
+            allow_fs_write_all: false,
+            allow_unsandboxed: false,
+            write_paths: Vec::new(),
+            // The confusable-Unicode warning is a safety net, so it defaults on.
+            warn_confusable_unicode: true,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -908,17 +746,6 @@ pub fn normalize_path(raw: &str) -> String {
 impl Settings for AgentSettings {
     fn from_settings(content: &settings::SettingsContent) -> Self {
         let agent = content.agent.clone().unwrap();
-        let profiles: IndexMap<AgentProfileId, AgentProfileSettings> = agent
-            .profiles
-            .unwrap()
-            .into_iter()
-            .map(|(key, val)| (AgentProfileId(key), val.into()))
-            .collect();
-        let default_profile = AgentProfile::normalize_id_from_profiles(
-            AgentProfileId(agent.default_profile.unwrap()),
-            &profiles,
-        );
-
         Self {
             enabled: agent.enabled.unwrap(),
             button: agent.button.unwrap(),
@@ -938,13 +765,22 @@ impl Settings for AgentSettings {
             inline_assistant_use_streaming_tools: agent
                 .inline_assistant_use_streaming_tools
                 .unwrap_or(true),
+            commit_message_include_project_rules: agent
+                .commit_message_include_project_rules
+                .unwrap_or(true),
             commit_message_model: agent.commit_message_model,
             commit_message_instructions: agent.commit_message_instructions,
             thread_summary_model: agent.thread_summary_model,
+            compaction_model: agent.compaction_model,
             inline_alternatives: agent.inline_alternatives.unwrap_or_default(),
             favorite_models: agent.favorite_models,
-            default_profile,
-            profiles,
+            default_profile: AgentProfileId(agent.default_profile.unwrap()),
+            profiles: agent
+                .profiles
+                .unwrap()
+                .into_iter()
+                .map(|(key, val)| (AgentProfileId(key), val.into()))
+                .collect(),
 
             notify_when_agent_waiting: agent.notify_when_agent_waiting.unwrap(),
             play_sound_when_agent_done: agent.play_sound_when_agent_done.unwrap_or_default(),
@@ -963,13 +799,15 @@ impl Settings for AgentSettings {
             enable_feedback: agent.enable_feedback.unwrap(),
             expand_edit_card: agent.expand_edit_card.unwrap(),
             expand_terminal_card: agent.expand_terminal_card.unwrap(),
+            terminal_init_command: agent
+                .terminal_init_command
+                .filter(|command| !command.trim().is_empty()),
             thinking_display: agent.thinking_display.unwrap(),
             cancel_generation_on_terminal_stop: agent.cancel_generation_on_terminal_stop.unwrap(),
             use_modifier_to_send: agent.use_modifier_to_send.unwrap(),
             message_editor_min_lines: agent.message_editor_min_lines.unwrap(),
             show_turn_stats: agent.show_turn_stats.unwrap(),
             show_merge_conflict_indicator: agent.show_merge_conflict_indicator.unwrap(),
-            liquid_glass: agent.liquid_glass.map(Into::into).unwrap_or_default(),
             tool_permissions: compile_tool_permissions(agent.tool_permissions),
             sandbox_permissions: compile_sandbox_permissions(agent.sandbox_permissions),
         }
@@ -992,11 +830,18 @@ fn compile_sandbox_permissions(
         }
     }
 
+    let network_hosts = content
+        .network_hosts
+        .map(|hosts| hosts.0)
+        .unwrap_or_default();
+
     SandboxPermissions {
-        allow_network: content.allow_network.unwrap_or(false),
+        allow_all_hosts: content.allow_all_hosts.unwrap_or(false),
+        network_hosts,
         allow_fs_write_all: content.allow_fs_write_all.unwrap_or(false),
         allow_unsandboxed: content.allow_unsandboxed.unwrap_or(false),
         write_paths,
+        warn_confusable_unicode: content.warn_confusable_unicode.unwrap_or(true),
     }
 }
 
@@ -1169,6 +1014,56 @@ mod tests {
         assert!(result.is_none());
     }
 
+    #[gpui::test]
+    fn test_terminal_init_command_filters_empty_without_trimming(cx: &mut gpui::App) {
+        let store = SettingsStore::test(cx);
+        cx.set_global(store);
+        project::DisableAiSettings::register(cx);
+        AgentSettings::register(cx);
+
+        SettingsStore::update_global(cx, |store, cx| {
+            let new_text = store
+                .new_text_for_update("{}".to_string(), |settings| {
+                    settings.agent.get_or_insert_default().terminal_init_command =
+                        Some(" claude --resume ".to_string());
+                })
+                .unwrap();
+            assert!(
+                new_text.contains(r#""terminal_init_command": " claude --resume ""#),
+                "updated settings JSON should include terminal_init_command, got {new_text}"
+            );
+            store.set_user_settings(&new_text, cx).unwrap();
+        });
+        assert_eq!(
+            AgentSettings::get_global(cx)
+                .terminal_init_command
+                .as_deref(),
+            Some(" claude --resume ")
+        );
+
+        SettingsStore::update_global(cx, |store, cx| {
+            store
+                .set_user_settings(r#"{ "agent": { "terminal_init_command": "   " } }"#, cx)
+                .unwrap();
+        });
+        assert!(
+            AgentSettings::get_global(cx)
+                .terminal_init_command
+                .is_none()
+        );
+
+        SettingsStore::update_global(cx, |store, cx| {
+            store
+                .set_user_settings(r#"{ "agent": { "terminal_init_command": null } }"#, cx)
+                .unwrap();
+        });
+        assert!(
+            AgentSettings::get_global(cx)
+                .terminal_init_command
+                .is_none()
+        );
+    }
+
     #[test]
     fn test_tool_permissions_parsing() {
         let json = json!({
@@ -1224,12 +1119,29 @@ mod tests {
     fn test_sandbox_permissions_empty() {
         let permissions = compile_sandbox_permissions(None);
         assert_eq!(permissions, SandboxPermissions::default());
+        // The confusable-Unicode warning is a safety net, so it's on by default.
+        assert!(permissions.warn_confusable_unicode);
+    }
+
+    #[test]
+    fn test_sandbox_permissions_warn_confusable_unicode_can_be_disabled() {
+        let content: settings::SandboxPermissionsContent =
+            serde_json::from_value(json!({ "warn_confusable_unicode": false })).unwrap();
+        let permissions = compile_sandbox_permissions(Some(content));
+        assert!(!permissions.warn_confusable_unicode);
+
+        // Omitting the key keeps the warning enabled.
+        let content: settings::SandboxPermissionsContent =
+            serde_json::from_value(json!({})).unwrap();
+        let permissions = compile_sandbox_permissions(Some(content));
+        assert!(permissions.warn_confusable_unicode);
     }
 
     #[test]
     fn test_sandbox_permissions_parsing_and_pruning() {
         let json = json!({
-            "allow_network": true,
+            "allow_all_hosts": true,
+            "network_hosts": ["github.com", "*.npmjs.org"],
             "allow_unsandboxed": true,
             "write_paths": [
                 "/tmp/build/cache",
@@ -1241,7 +1153,11 @@ mod tests {
         let content: settings::SandboxPermissionsContent = serde_json::from_value(json).unwrap();
         let permissions = compile_sandbox_permissions(Some(content));
 
-        assert!(permissions.allow_network);
+        assert!(permissions.allow_all_hosts);
+        assert_eq!(
+            permissions.network_hosts,
+            vec!["github.com".to_string(), "*.npmjs.org".to_string()]
+        );
         assert!(!permissions.allow_fs_write_all);
         assert!(permissions.allow_unsandboxed);
         assert_eq!(
@@ -1702,13 +1618,13 @@ mod tests {
         assert_eq!(user_layout.git_panel_dock, None);
 
         // User sets a combination that doesn't match either preset:
-        // agent on the left but project panel on the right.
+        // agent on the left but project panel also on the left.
         SettingsStore::update_global(cx, |store, cx| {
             store
                 .set_user_settings(
                     r#"{
                         "agent": { "dock": "left" },
-                        "project_panel": { "dock": "right" }
+                        "project_panel": { "dock": "left" }
                     }"#,
                     cx,
                 )
@@ -1720,7 +1636,7 @@ mod tests {
             panic!("expected Custom, got {:?}", layout);
         };
         assert_eq!(user_layout.agent_dock, Some(DockPosition::Left));
-        assert_eq!(user_layout.project_panel_dock, Some(DockSide::Right));
+        assert_eq!(user_layout.project_panel_dock, Some(DockSide::Left));
     }
 
     #[gpui::test]
@@ -1807,7 +1723,7 @@ mod tests {
             project::DisableAiSettings::register(cx);
             AgentSettings::register(cx);
 
-            // User has agent=left and project_panel=left, both matching the preset.
+            // User has agent=left (matches preset) and project_panel=left (does not)
             SettingsStore::update_global(cx, |store, cx| {
                 store
                     .set_user_settings(
@@ -1821,7 +1737,7 @@ mod tests {
             });
 
             let layout = AgentSettings::get_layout(cx);
-            assert!(matches!(layout, WindowLayout::Agent(_)));
+            assert!(matches!(layout, WindowLayout::Custom(_)));
 
             AgentSettings::set_layout(WindowLayout::agent(), fs.clone(), cx)
         })
@@ -1836,7 +1752,8 @@ mod tests {
                 store.set_user_settings(&written, cx).unwrap();
             });
 
-            // The user settings should still have agent=left and project_panel=left.
+            // The user settings should still have agent=left (preserved)
+            // and now project_panel=right (changed to match preset).
             let store = cx.global::<SettingsStore>();
             let user_layout = store
                 .raw_user_settings()
@@ -1844,7 +1761,7 @@ mod tests {
                 .unwrap_or_default();
 
             assert_eq!(user_layout.agent_dock, Some(DockPosition::Left));
-            assert_eq!(user_layout.project_panel_dock, Some(DockSide::Left));
+            assert_eq!(user_layout.project_panel_dock, Some(DockSide::Right));
             // Other fields weren't in user settings and didn't need changing.
             assert_eq!(user_layout.outline_panel_dock, None);
 

@@ -41,11 +41,12 @@ pub static LANGUAGE_GIT_COMMIT: std::sync::LazyLock<Arc<Language>> =
             LanguageConfig {
                 name: "Git Commit".into(),
                 soft_wrap: Some(language::SoftWrap::EditorWidth),
-                matcher: LanguageMatcher {
+                matcher: (LanguageMatcher {
                     path_suffixes: vec!["COMMIT_EDITMSG".to_owned()],
                     first_line_pattern: None,
                     ..LanguageMatcher::default()
-                },
+                })
+                .into(),
                 line_comments: vec![Arc::from("#")],
                 ..LanguageConfig::default()
             },
@@ -142,11 +143,6 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
             name: "jsonc",
             adapters: vec![json_lsp_adapter],
             context: Some(json_context_provider),
-            ..Default::default()
-        },
-        LanguageInfo {
-            name: "dx_serializer",
-            adapters: vec![],
             ..Default::default()
         },
         LanguageInfo {

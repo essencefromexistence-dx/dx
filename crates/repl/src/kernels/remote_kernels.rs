@@ -1,11 +1,10 @@
-use async_tungstenite::{
-    tokio::connect_async,
-    tungstenite::{client::IntoClientRequest, http::HeaderValue},
-};
 use futures::{SinkExt as _, channel::mpsc};
 use gpui::{App, AppContext as _, Entity, Task, Window};
 use http_client::{AsyncBody, HttpClient, Request};
 use jupyter_protocol::{ExecutionState, JupyterKernelspec, JupyterMessage, KernelInfoReply};
+
+use async_tungstenite::tokio::connect_async;
+use async_tungstenite::tungstenite::{client::IntoClientRequest, http::HeaderValue};
 
 use futures::StreamExt;
 use smol::io::AsyncReadExt as _;

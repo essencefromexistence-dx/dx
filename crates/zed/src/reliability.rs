@@ -2,9 +2,9 @@ use anyhow::{Context as _, Result};
 use client::{Client, telemetry::MINIDUMP_ENDPOINT};
 use feature_flags::FeatureFlagAppExt;
 use futures::{AsyncReadExt, TryStreamExt};
-use gpui::{App, AppContext, TaskExt};
+use gpui::{App, AppContext, Entity, TaskExt};
 use http_client::{AsyncBody, HttpClient, Request};
-use project::Project;
+use project::{Project, worktree_store::WorktreeStoreDiagnostics};
 use proto::{CrashReport, GetCrashFilesResponse};
 use reqwest::{
     Method,
@@ -12,15 +12,22 @@ use reqwest::{
 };
 use serde::Deserialize;
 use smol::stream::StreamExt;
-use std::{ffi::OsStr, fs, path::Path, sync::Arc};
-use sysinfo::{MemoryRefreshKind, RefreshKind, System};
+use std::{
+    collections::HashSet,
+    ffi::OsStr,
+    fs,
+    sync::Arc,
+    time::{Duration, Instant},
+};
+use sysinfo::{MemoryRefreshKind, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
 use util::ResultExt;
+use workspace::WorkspaceStore;
 
-const MAX_REMOTE_MINIDUMP_METADATA_BYTES: usize = 64 * 1024;
 mod hang_detection;
 
-pub fn init(client: Arc<Client>, cx: &mut App) {
+pub fn init(client: Arc<Client>, workspace_store: Entity<WorkspaceStore>, cx: &mut App) {
     hang_detection::start(client.clone(), cx);
+    start_memory_usage_logging(workspace_store, cx);
 
     cx.on_flags_ready({
         let client = client.clone();
@@ -54,32 +61,22 @@ pub fn init(client: Arc<Client>, cx: &mut App) {
             if !client.telemetry().diagnostics_enabled() {
                 return;
             }
-            let Some(endpoint) = MINIDUMP_ENDPOINT.as_ref().cloned() else {
-                log::debug!("Minidump endpoint not set; skipping remote minidump upload");
-                return;
-            };
             let request = remote_client
                 .proto_client()
                 .request(proto::GetCrashFiles {});
             cx.background_spawn(async move {
                 let GetCrashFilesResponse { crashes } = request.await?;
 
+                let Some(endpoint) = MINIDUMP_ENDPOINT.as_ref() else {
+                    return Ok(());
+                };
                 for CrashReport {
                     metadata,
                     minidump_contents,
                 } in crashes
                 {
-                    if metadata.len() > MAX_REMOTE_MINIDUMP_METADATA_BYTES {
-                        log::warn!(
-                            "Remote minidump metadata is too large to parse: {} bytes (limit {} bytes)",
-                            metadata.len(),
-                            MAX_REMOTE_MINIDUMP_METADATA_BYTES
-                        );
-                        continue;
-                    }
-
                     if let Some(metadata) = serde_json::from_str(&metadata).log_err() {
-                        upload_minidump(client.clone(), &endpoint, minidump_contents, &metadata)
+                        upload_minidump(client.clone(), endpoint, minidump_contents, &metadata)
                             .await
                             .log_err();
                     }
@@ -93,67 +90,153 @@ pub fn init(client: Arc<Client>, cx: &mut App) {
     .detach();
 }
 
-const MAX_PREVIOUS_MINIDUMP_METADATA_BYTES: u64 = 64 * 1024;
-const MAX_PREVIOUS_MINIDUMP_BYTES: u64 = 64 * 1024 * 1024;
-const MAX_PREVIOUS_MINIDUMP_SCAN_ENTRIES: usize = 256;
+const MEMORY_USAGE_POLL_INTERVAL: Duration = Duration::from_secs(30);
+const MEMORY_USAGE_HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10 * 60);
+const MEMORY_USAGE_MINIMUM_LOGGED_DELTA: u64 = 64 * 1024 * 1024;
 
-async fn read_limited_previous_minidump_file(
-    path: &Path,
-    max_bytes: u64,
-    label: &str,
-) -> Result<Option<Vec<u8>>> {
-    let file = smol::fs::File::open(path).await?;
-    let mut contents = Vec::new();
-    let mut limited_file = file.take(max_bytes + 1);
-    limited_file.read_to_end(&mut contents).await?;
+/// Periodically logs this process' memory usage, so that gradual memory growth can be
+///
+/// Logs on a fixed heartbeat, and additionally whenever resident memory changed
+/// significantly since the last logged value, so that bursts of growth are timestamped
+/// against the surrounding log entries.
+fn start_memory_usage_logging(workspace_store: Entity<WorkspaceStore>, cx: &App) {
+    let (diagnostics_sender, mut diagnostics_receiver) = futures::channel::mpsc::unbounded();
+    cx.spawn(async move |cx| {
+        while diagnostics_receiver.next().await.is_some() {
+            cx.update(|cx| log_worktree_diagnostics(&workspace_store, cx));
+        }
+    })
+    .detach();
 
-    if contents.len() as u64 > max_bytes {
-        log::warn!(
-            "Previous minidump {label} file {:?} is too large for previous minidump upload: {} bytes read (limit {} bytes)",
-            path,
-            contents.len(),
-            max_bytes
-        );
-        return Ok(None);
+    let executor = cx.background_executor().clone();
+    cx.background_spawn(async move {
+        let Some(pid) = sysinfo::get_current_pid().log_err() else {
+            return;
+        };
+        let refresh_kind = ProcessRefreshKind::nothing().with_memory();
+        let mut system = System::new();
+        let mut last_logged_resident: Option<u64> = None;
+        let mut last_logged_at = Instant::now();
+        loop {
+            let refreshed = system.refresh_processes_specifics(
+                ProcessesToUpdate::Some(&[pid]),
+                false,
+                refresh_kind,
+            );
+            if refreshed == 1
+                && let Some(process) = system.process(pid)
+            {
+                let resident = process.memory();
+                let significant_change = last_logged_resident.is_none_or(|last| {
+                    resident.abs_diff(last) >= (last / 10).max(MEMORY_USAGE_MINIMUM_LOGGED_DELTA)
+                });
+                if significant_change || last_logged_at.elapsed() >= MEMORY_USAGE_HEARTBEAT_INTERVAL
+                {
+                    const MIB: u64 = 1024 * 1024;
+                    let delta = match last_logged_resident {
+                        Some(last) => {
+                            format!(" ({:+} MiB)", (resident as i64 - last as i64) / MIB as i64)
+                        }
+                        None => String::new(),
+                    };
+                    log::info!(
+                        "memory usage: resident {} MiB{delta}, virtual {} MiB",
+                        resident / MIB,
+                        process.virtual_memory() / MIB,
+                    );
+                    if diagnostics_sender.unbounded_send(()).is_err() {
+                        return;
+                    }
+                    last_logged_resident = Some(resident);
+                    last_logged_at = Instant::now();
+                }
+            }
+            executor.timer(MEMORY_USAGE_POLL_INTERVAL).await;
+        }
+    })
+    .detach();
+}
+
+fn log_worktree_diagnostics(workspace_store: &Entity<WorkspaceStore>, cx: &App) {
+    let workspaces = workspace_store
+        .read(cx)
+        .workspaces()
+        .filter_map(|workspace| workspace.upgrade())
+        .collect::<Vec<_>>();
+    let mut worktree_store_ids = HashSet::new();
+    let mut store_count = 0;
+    let mut aggregate = WorktreeStoreDiagnostics::default();
+
+    for workspace in workspaces {
+        let project = workspace.read(cx).project().clone();
+        let worktree_store = project.read(cx).worktree_store();
+        if !worktree_store_ids.insert(worktree_store.entity_id()) {
+            continue;
+        }
+        store_count += 1;
+
+        let WorktreeStoreDiagnostics {
+            worktree_slots,
+            live_worktrees,
+            visible_worktrees,
+            strong_handles,
+            dead_weak_handles,
+            loading_worktrees,
+            total_entries,
+            visible_entries,
+            largest_worktree,
+        } = worktree_store.read(cx).diagnostics(cx);
+        aggregate.worktree_slots += worktree_slots;
+        aggregate.live_worktrees += live_worktrees;
+        aggregate.visible_worktrees += visible_worktrees;
+        aggregate.strong_handles += strong_handles;
+        aggregate.dead_weak_handles += dead_weak_handles;
+        aggregate.loading_worktrees += loading_worktrees;
+        aggregate.total_entries += total_entries;
+        aggregate.visible_entries += visible_entries;
+
+        if let Some(largest_worktree) = largest_worktree
+            && aggregate
+                .largest_worktree
+                .as_ref()
+                .is_none_or(|largest| largest_worktree.entries > largest.entries)
+        {
+            aggregate.largest_worktree = Some(largest_worktree);
+        }
     }
 
-    Ok(Some(contents))
-}
-
-async fn read_previous_minidump_metadata(path: &Path) -> Result<Option<crashes::CrashInfo>> {
-    let Some(data) =
-        read_limited_previous_minidump_file(path, MAX_PREVIOUS_MINIDUMP_METADATA_BYTES, "metadata")
-            .await?
-    else {
-        return Ok(None);
-    };
-
-    Ok(serde_json::from_slice(&data).ok())
-}
-
-async fn read_previous_minidump_payload(path: &Path) -> Result<Option<Vec<u8>>> {
-    read_limited_previous_minidump_file(path, MAX_PREVIOUS_MINIDUMP_BYTES, "payload").await
+    let WorktreeStoreDiagnostics {
+        worktree_slots,
+        live_worktrees,
+        visible_worktrees,
+        strong_handles,
+        dead_weak_handles,
+        loading_worktrees,
+        total_entries,
+        visible_entries,
+        largest_worktree,
+    } = aggregate;
+    match largest_worktree {
+        Some(largest_worktree) => log::info!(
+            "worktree diagnostics: stores {store_count}, slots {worktree_slots}, live {live_worktrees}, visible {visible_worktrees}, strong {strong_handles}, dead weak {dead_weak_handles}, loading {loading_worktrees}, entries {total_entries}, visible entries {visible_entries}, largest {} ({} entries, {} visible)",
+            largest_worktree.path.display(),
+            largest_worktree.entries,
+            largest_worktree.visible_entries,
+        ),
+        None => log::info!(
+            "worktree diagnostics: stores {store_count}, slots {worktree_slots}, live {live_worktrees}, visible {visible_worktrees}, strong {strong_handles}, dead weak {dead_weak_handles}, loading {loading_worktrees}, entries {total_entries}, visible entries {visible_entries}, largest none",
+        ),
+    }
 }
 
 pub async fn upload_previous_minidumps(client: Arc<Client>) -> anyhow::Result<()> {
     let Some(minidump_endpoint) = MINIDUMP_ENDPOINT.as_ref() else {
-        log::debug!("Minidump endpoint not set; skipping previous minidump upload");
+        log::warn!("Minidump endpoint not set");
         return Ok(());
     };
 
     let mut children = smol::fs::read_dir(paths::logs_dir()).await?;
-    let mut scanned_entries = 0;
-    loop {
-        if scanned_entries >= MAX_PREVIOUS_MINIDUMP_SCAN_ENTRIES {
-            log::debug!(
-                "Previous minidump scan reached {MAX_PREVIOUS_MINIDUMP_SCAN_ENTRIES} entries; skipping remaining files for this upload pass"
-            );
-            break;
-        }
-        let Some(child) = children.next().await else {
-            break;
-        };
-        scanned_entries += 1;
+    while let Some(child) = children.next().await {
         let child = child?;
         let child_path = child.path();
         if child_path.extension() != Some(OsStr::new("dmp")) {
@@ -161,20 +244,24 @@ pub async fn upload_previous_minidumps(client: Arc<Client>) -> anyhow::Result<()
         }
         let mut json_path = child_path.clone();
         json_path.set_extension("json");
-        let Ok(Some(metadata)) = read_previous_minidump_metadata(&json_path).await else {
+        let Ok(metadata) = smol::fs::read(&json_path)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))
+            .and_then(|data| serde_json::from_slice(&data).map_err(|e| anyhow::anyhow!(e)))
+        else {
             continue;
         };
-        let minidump = match read_previous_minidump_payload(&child_path)
-            .await
-            .context("Failed to read minidump")?
-        {
-            Some(minidump) => minidump,
-            None => continue,
-        };
-        if upload_minidump(client.clone(), minidump_endpoint, minidump, &metadata)
-            .await
-            .log_err()
-            .is_some()
+        if upload_minidump(
+            client.clone(),
+            minidump_endpoint,
+            smol::fs::read(&child_path)
+                .await
+                .context("Failed to read minidump")?,
+            &metadata,
+        )
+        .await
+        .log_err()
+        .is_some()
         {
             fs::remove_file(child_path).ok();
             fs::remove_file(json_path).ok();
@@ -183,106 +270,14 @@ pub async fn upload_previous_minidumps(client: Arc<Client>) -> anyhow::Result<()
     Ok(())
 }
 
-fn has_missing_minidump_commit_sha(commit_sha: &str) -> bool {
-    matches!(commit_sha, "no sha" | "no_sha")
-}
-
-fn log_missing_minidump_commit_sha(metadata: &crashes::CrashInfo) {
-    if metadata.init.release_channel.eq_ignore_ascii_case("dev") {
-        log::debug!("No commit sha set; skipping dev minidump upload");
-    } else {
-        log::warn!("No commit sha set, skipping minidump upload");
-    }
-}
-
-const MAX_MINIDUMP_UPLOAD_BODY_BYTES: u64 = 65 * 1024 * 1024;
-
-async fn read_limited_minidump_upload_body(form: Form) -> Result<Vec<u8>> {
-    let mut body_bytes = Vec::new();
-    let mut limited_stream = form
-        .into_stream()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
-        .into_async_read()
-        .take(MAX_MINIDUMP_UPLOAD_BODY_BYTES + 1);
-    limited_stream.read_to_end(&mut body_bytes).await?;
-
-    if body_bytes.len() as u64 > MAX_MINIDUMP_UPLOAD_BODY_BYTES {
-        anyhow::bail!(
-            "minidump upload request body exceeded {MAX_MINIDUMP_UPLOAD_BODY_BYTES} bytes: {} bytes read",
-            body_bytes.len()
-        );
-    }
-
-    Ok(body_bytes)
-}
-
-const MAX_MINIDUMP_UPLOAD_RESPONSE_BYTES: u64 = 64 * 1024;
-const MAX_MINIDUMP_UPLOAD_RESPONSE_DISPLAY_CHARS: usize = 1024;
-
-struct LimitedMinidumpUploadResponse {
-    text: String,
-    truncated: bool,
-}
-
-async fn read_limited_minidump_upload_response(
-    response: &mut http_client::Response<AsyncBody>,
-) -> Result<LimitedMinidumpUploadResponse> {
-    let mut response_body = Vec::new();
-    let mut limited_response_body = response
-        .body_mut()
-        .take(MAX_MINIDUMP_UPLOAD_RESPONSE_BYTES + 1);
-    limited_response_body
-        .read_to_end(&mut response_body)
-        .await?;
-
-    let truncated = response_body.len() as u64 > MAX_MINIDUMP_UPLOAD_RESPONSE_BYTES;
-    if truncated {
-        response_body.truncate(MAX_MINIDUMP_UPLOAD_RESPONSE_BYTES as usize);
-    }
-
-    Ok(LimitedMinidumpUploadResponse {
-        text: String::from_utf8_lossy(&response_body).into_owned(),
-        truncated,
-    })
-}
-
-fn compact_minidump_upload_response_text(response: &LimitedMinidumpUploadResponse) -> String {
-    let mut compact_response = response
-        .text
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ");
-    let suffix = if response.truncated {
-        format!("... [response body exceeded {MAX_MINIDUMP_UPLOAD_RESPONSE_BYTES} bytes]")
-    } else {
-        "...".to_string()
-    };
-    let suffix_chars = suffix.chars().count();
-
-    if compact_response.is_empty() {
-        compact_response = "<empty response>".to_string();
-    }
-
-    if compact_response.chars().count() > MAX_MINIDUMP_UPLOAD_RESPONSE_DISPLAY_CHARS
-        || response.truncated
-    {
-        let max_text_chars =
-            MAX_MINIDUMP_UPLOAD_RESPONSE_DISPLAY_CHARS.saturating_sub(suffix_chars);
-        compact_response = compact_response.chars().take(max_text_chars).collect();
-        compact_response.push_str(&suffix);
-    }
-
-    compact_response
-}
-
 async fn upload_minidump(
     client: Arc<Client>,
     endpoint: &str,
     minidump: Vec<u8>,
     metadata: &crashes::CrashInfo,
 ) -> Result<()> {
-    if has_missing_minidump_commit_sha(&metadata.init.commit_sha) {
-        log_missing_minidump_commit_sha(metadata);
+    if metadata.init.commit_sha == "no sha" {
+        log::warn!("No commit sha set, skipping minidump upload");
         return Ok(());
     }
     let mut form = Form::new()
@@ -309,6 +304,21 @@ async fn upload_minidump(
     }
     if let Some(minidump_error) = metadata.minidump_error.clone() {
         form = form.text("minidump_error", minidump_error);
+    }
+    if let Some(abort_message) = metadata.abort_message.as_ref() {
+        // Sentry tag values are limited to 200 characters on a single line, so
+        // put a searchable prefix in the tag (which grouping rules also match
+        // on) and the full message in a context.
+        let tag: String = abort_message
+            .lines()
+            .next()
+            .unwrap_or_default()
+            .chars()
+            .take(200)
+            .collect();
+        form = form
+            .text("sentry[tags][abort_message]", tag)
+            .text("sentry[contexts][abort][message]", abort_message.clone());
     }
 
     if let Some(is_staff) = &metadata
@@ -397,15 +407,23 @@ async fn upload_minidump(
     // TODO: feature-flag-context, and more of device-context like screen resolution, available ram, device model, etc
 
     let content_type = format!("multipart/form-data; boundary={}", form.boundary());
-    let body_bytes = read_limited_minidump_upload_body(form).await?;
+    let mut body_bytes = Vec::new();
+    let mut stream = form
+        .into_stream()
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+        .into_async_read();
+    stream.read_to_end(&mut body_bytes).await?;
     let req = Request::builder()
         .method(Method::POST)
         .uri(endpoint)
         .header("Content-Type", content_type)
         .body(AsyncBody::from(body_bytes))?;
+    let mut response_text = String::new();
     let mut response = client.http_client().send(req).await?;
-    let response_text = read_limited_minidump_upload_response(&mut response).await?;
-    let response_text = compact_minidump_upload_response_text(&response_text);
+    response
+        .body_mut()
+        .read_to_string(&mut response_text)
+        .await?;
     if !response.status().is_success() {
         anyhow::bail!("failed to upload minidump: {response_text}");
     }
@@ -421,28 +439,6 @@ struct BuildTiming {
     target: String,
     blocked_ms: f32,
     command: String,
-}
-
-const MAX_BUILD_TIMING_JSON_BYTES: u64 = 64 * 1024;
-const MAX_BUILD_TIMING_SCAN_ENTRIES: usize = 128;
-
-async fn read_build_timing_json(path: &Path) -> Result<Option<String>> {
-    let file = smol::fs::File::open(path).await?;
-    let mut contents = Vec::new();
-    let mut limited_file = file.take(MAX_BUILD_TIMING_JSON_BYTES + 1);
-    limited_file.read_to_end(&mut contents).await?;
-
-    if contents.len() as u64 > MAX_BUILD_TIMING_JSON_BYTES {
-        log::warn!(
-            "Build timing file {:?} is too large to parse: {} bytes read (limit {} bytes)",
-            path,
-            contents.len(),
-            MAX_BUILD_TIMING_JSON_BYTES
-        );
-        return Ok(None);
-    }
-
-    Ok(Some(String::from_utf8(contents)?))
 }
 
 // NOTE: this is a bit of a hack. We want to be able to have internal
@@ -466,18 +462,7 @@ async fn upload_build_timings(_client: Arc<Client>) -> Result<()> {
     let ram_size_gb = (system.total_memory() as f64) / (1024.0 * 1024.0 * 1024.0);
 
     let mut entries = smol::fs::read_dir(&build_timings_dir).await?;
-    let mut scanned_entries = 0;
-    loop {
-        if scanned_entries >= MAX_BUILD_TIMING_SCAN_ENTRIES {
-            log::debug!(
-                "Build timing scan reached {MAX_BUILD_TIMING_SCAN_ENTRIES} entries; skipping remaining files for this upload pass"
-            );
-            break;
-        }
-        let Some(entry) = entries.next().await else {
-            break;
-        };
-        scanned_entries += 1;
+    while let Some(entry) = entries.next().await {
         let entry = entry?;
         let path = entry.path();
 
@@ -485,9 +470,8 @@ async fn upload_build_timings(_client: Arc<Client>) -> Result<()> {
             continue;
         }
 
-        let contents = match read_build_timing_json(&path).await {
-            Ok(Some(contents)) => contents,
-            Ok(None) => continue,
+        let contents = match smol::fs::read_to_string(&path).await {
+            Ok(contents) => contents,
             Err(err) => {
                 log::warn!("Failed to read build timing file {:?}: {}", path, err);
                 continue;

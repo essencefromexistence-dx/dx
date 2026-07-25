@@ -208,15 +208,15 @@ impl Settings for EditorSettings {
         let axes = scrollbar.axes.unwrap();
         let toolbar = editor.toolbar.unwrap();
         let search = editor.search.unwrap();
-        let power_mode = editor.power_mode.unwrap();
+        let power_mode = editor.power_mode.unwrap_or_default();
         let drag_and_drop_selection = editor.drag_and_drop_selection.unwrap();
         let sticky_scroll = editor.sticky_scroll.unwrap();
         Self {
             cursor_blink: editor.cursor_blink.unwrap(),
-            rainbow_caret_animation: editor.rainbow_caret_animation.unwrap(),
+            rainbow_caret_animation: editor.rainbow_caret_animation.unwrap_or(true),
             cursor_shape: editor.cursor_shape.map(Into::into),
             power_mode: PowerMode {
-                enabled: power_mode.enabled.unwrap(),
+                enabled: power_mode.enabled.unwrap_or(false),
             },
             current_line_highlight: editor.current_line_highlight.unwrap(),
             selection_highlight: editor.selection_highlight.unwrap(),

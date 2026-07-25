@@ -175,14 +175,6 @@ where
 }
 
 impl KernelPickerDelegate {
-    fn clamp_entry_index(&self, ix: usize) -> Option<usize> {
-        if self.filtered_entries.is_empty() {
-            return None;
-        }
-
-        Some(ix.min(self.filtered_entries.len() - 1))
-    }
-
     fn first_selectable_index(entries: &[KernelPickerEntry]) -> usize {
         entries
             .iter()
@@ -209,17 +201,14 @@ impl KernelPickerDelegate {
 
         from
     }
-
-    fn sync_selected_kernelspec(&mut self) {
-        self.selected_kernelspec = match self.filtered_entries.get(self.selected_index) {
-            Some(KernelPickerEntry::Kernel { spec, .. }) => Some(spec.clone()),
-            _ => None,
-        };
-    }
 }
 
 impl PickerDelegate for KernelPickerDelegate {
     type ListItem = ListItem;
+
+    fn name() -> &'static str {
+        "kernel picker"
+    }
 
     fn match_count(&self) -> usize {
         self.filtered_entries.len()
@@ -230,13 +219,6 @@ impl PickerDelegate for KernelPickerDelegate {
     }
 
     fn set_selected_index(&mut self, ix: usize, _: &mut Window, cx: &mut Context<Picker<Self>>) {
-        let Some(ix) = self.clamp_entry_index(ix) else {
-            self.selected_index = 0;
-            self.selected_kernelspec = None;
-            cx.notify();
-            return;
-        };
-
         if matches!(
             self.filtered_entries.get(ix),
             Some(KernelPickerEntry::SectionHeader(_))
@@ -251,7 +233,11 @@ impl PickerDelegate for KernelPickerDelegate {
             self.selected_index = ix;
         }
 
-        self.sync_selected_kernelspec();
+        if let Some(KernelPickerEntry::Kernel { spec, .. }) =
+            self.filtered_entries.get(self.selected_index)
+        {
+            self.selected_kernelspec = Some(spec.clone());
+        }
         cx.notify();
     }
 
@@ -292,7 +278,11 @@ impl PickerDelegate for KernelPickerDelegate {
         }
 
         self.selected_index = Self::first_selectable_index(&self.filtered_entries);
-        self.sync_selected_kernelspec();
+        if let Some(KernelPickerEntry::Kernel { spec, .. }) =
+            self.filtered_entries.get(self.selected_index)
+        {
+            self.selected_kernelspec = Some(spec.clone());
+        }
 
         Task::ready(())
     }
@@ -491,8 +481,7 @@ where
         let picker_view = cx.new(|cx| {
             Picker::list(delegate, window, cx)
                 .list_measure_all()
-                .width(rems(34.))
-                .max_height(Some(rems(24.).into()))
+                .popover()
         });
 
         PopoverMenu::new("kernel-switcher")

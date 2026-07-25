@@ -15,7 +15,7 @@ pub struct AgentScreen {
 
 impl AgentScreen {
     pub(crate) fn new(workspace: &Workspace, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let panel = cx.new(|cx| AgentPanel::new_builder_workspace(workspace, window, cx));
+        let panel = cx.new(|cx| AgentPanel::new(workspace, window, cx));
         Self { panel }
     }
 
@@ -35,12 +35,7 @@ impl AgentScreen {
             });
         if let Some(item) = existing_item {
             if let Some(agent_screen) = item.downcast::<AgentScreen>() {
-                agent_screen.update(cx, |agent_screen, cx| {
-                    agent_screen.panel.update(cx, |panel, cx| {
-                        panel.ensure_builder_workspace_chrome();
-                        cx.notify();
-                    });
-                });
+                agent_screen.update(cx, |_agent_screen, cx| cx.notify());
             }
             workspace.activate_item(&*item, true, true, window, cx);
             return;

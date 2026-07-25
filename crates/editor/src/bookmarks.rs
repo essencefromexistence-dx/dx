@@ -51,7 +51,7 @@ impl Editor {
                 let buffer_id = buffer_anchor.buffer_id;
                 if let Some(buffer) = project.read(cx).buffer_for_id(buffer_id, cx) {
                     bookmark_store.update(cx, |store, cx| {
-                        store.toggle_bookmark(buffer, buffer_anchor, cx);
+                        store.toggle_bookmark(buffer, buffer_anchor, String::new(), cx);
                     });
                 }
             }
@@ -77,7 +77,7 @@ impl Editor {
         };
 
         bookmark_store.update(cx, |bookmark_store, cx| {
-            bookmark_store.toggle_bookmark(buffer, position, cx);
+            bookmark_store.toggle_bookmark(buffer, position, String::new(), cx);
         });
 
         cx.notify();
@@ -96,7 +96,7 @@ impl Editor {
         };
 
         bookmark_store.update(cx, |bookmark_store, cx| {
-            bookmark_store.toggle_bookmark(buffer, position, cx);
+            bookmark_store.toggle_bookmark(buffer, position, String::new(), cx);
         });
 
         cx.notify();
@@ -233,9 +233,7 @@ impl Editor {
                         )
                     })
                     .into_iter()
-                    .filter_map(|bookmark| {
-                        multi_buffer_snapshot.anchor_in_buffer(bookmark.anchor())
-                    })
+                    .filter_map(|bookmark| multi_buffer_snapshot.anchor_in_buffer(bookmark.anchor))
                     .collect::<Vec<_>>()
             })
             .collect()

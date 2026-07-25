@@ -835,8 +835,7 @@ impl ProjectDiff {
                         cx,
                     );
                 }
-                buffer_diff::BufferDiffEvent::BaseTextChanged
-                | buffer_diff::BufferDiffEvent::HunksStagedOrUnstaged(_) => {}
+                buffer_diff::BufferDiffEvent::BaseTextChanged => {}
             }
         });
         let conflict_set_subscription = cx.subscribe_in(&conflict_set, window, {

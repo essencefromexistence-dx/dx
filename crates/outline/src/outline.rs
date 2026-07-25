@@ -19,7 +19,7 @@ use ui::{ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt;
 use workspace::{DismissDecision, ModalView};
 
-const MAX_OUTLINE_VIEW_ITEMS: usize = language::MAX_OUTLINE_ITEMS;
+const MAX_OUTLINE_VIEW_ITEMS: usize = 20_000;
 
 pub fn init(cx: &mut App) {
     cx.observe_new(OutlineView::register).detach();
@@ -681,7 +681,8 @@ mod tests {
         let (selected_candidate_id, expected_deepest_containing_candidate_id) = outline_view
             .update(cx, |outline_view, cx| {
                 let delegate = &outline_view.delegate;
-                let selected_candidate_id = delegate.matches[delegate.selected_match_index].candidate_id();
+                let selected_candidate_id =
+                    delegate.matches[delegate.selected_match_index].candidate_id();
                 let (buffer, cursor_offset) = delegate.active_editor.update(cx, |editor, cx| {
                     let buffer = editor.buffer().read(cx).snapshot(cx);
                     let cursor_offset = editor

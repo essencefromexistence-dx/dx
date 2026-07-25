@@ -6,7 +6,7 @@ use encoding_rs::Encoding;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
     App, AppContext, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
-    InteractiveElement, ParentElement, Render, Styled, Task, WeakEntity, Window, actions,
+    InteractiveElement, ParentElement, Render, Task, WeakEntity, Window, actions,
 };
 use language::Buffer;
 use picker::{Picker, PickerDelegate};
@@ -22,22 +22,6 @@ actions!(
         Toggle
     ]
 );
-
-const MAX_ENCODING_SELECTOR_MATCHES: usize = 256;
-const MAX_ENCODING_SELECTOR_FUZZY_MATCHES: usize = 100;
-
-fn capped_empty_query_matches(candidates: &[StringMatchCandidate]) -> Vec<StringMatch> {
-    candidates
-        .iter()
-        .take(MAX_ENCODING_SELECTOR_MATCHES)
-        .map(|candidate| StringMatch {
-            candidate_id: candidate.id,
-            string: candidate.string.clone(),
-            positions: Vec::new(),
-            score: 0.0,
-        })
-        .collect()
-}
 
 pub fn init(cx: &mut App) {
     cx.observe_new(EncodingSelector::register).detach();
@@ -120,7 +104,6 @@ impl Render for EncodingSelector {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl gpui::IntoElement {
         v_flex()
             .key_context("EncodingSelector")
-            .w(gpui::rems(34.))
             .child(self.picker.clone())
     }
 }
@@ -161,26 +144,15 @@ impl EncodingSelectorDelegate {
         }
     }
 
-    fn render_data_for_match(&self, mat: &StringMatch, cx: &App) -> Option<String> {
-        let candidate_encoding = self.encodings.get(mat.candidate_id).copied()?;
+    fn render_data_for_match(&self, mat: &StringMatch, cx: &App) -> String {
+        let candidate_encoding = self.encodings[mat.candidate_id];
         let current_encoding = self.buffer.read(cx).encoding();
 
-        Some(if candidate_encoding.name() == current_encoding.name() {
+        if candidate_encoding.name() == current_encoding.name() {
             format!("{} (current)", candidate_encoding.name())
         } else {
             candidate_encoding.name().to_string()
-        })
-    }
-
-    fn clamped_match_index(&self, ix: usize) -> usize {
-        self.matches
-            .len()
-            .checked_sub(1)
-            .map_or(0, |last_index| ix.min(last_index))
-    }
-
-    fn clamp_selected_index_to_matches(&mut self) {
-        self.selected_index = self.clamped_match_index(self.selected_index);
+        }
     }
 }
 
@@ -248,6 +220,10 @@ fn available_encodings() -> Vec<&'static Encoding> {
 impl PickerDelegate for EncodingSelectorDelegate {
     type ListItem = ListItem;
 
+    fn name() -> &'static str {
+        "encoding selector"
+    }
+
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Reopen with encoding...".into()
     }
@@ -266,7 +242,7 @@ impl PickerDelegate for EncodingSelectorDelegate {
         _window: &mut Window,
         _: &mut Context<Picker<Self>>,
     ) {
-        self.selected_index = self.clamped_match_index(ix);
+        self.selected_index = ix;
     }
 
     fn update_matches(
@@ -280,14 +256,23 @@ impl PickerDelegate for EncodingSelectorDelegate {
 
         cx.spawn_in(window, async move |this, cx| {
             let matches = if query.is_empty() {
-                capped_empty_query_matches(candidates.as_ref())
+                candidates
+                    .iter()
+                    .enumerate()
+                    .map(|(index, candidate)| StringMatch {
+                        candidate_id: index,
+                        string: candidate.string.clone(),
+                        positions: Vec::new(),
+                        score: 0.0,
+                    })
+                    .collect()
             } else {
                 match_strings(
                     &candidates,
                     &query,
                     false,
                     true,
-                    MAX_ENCODING_SELECTOR_FUZZY_MATCHES,
+                    100,
                     &Default::default(),
                     background,
                 )
@@ -297,7 +282,9 @@ impl PickerDelegate for EncodingSelectorDelegate {
             this.update(cx, |this, cx| {
                 let delegate = &mut this.delegate;
                 delegate.matches = matches;
-                delegate.clamp_selected_index_to_matches();
+                delegate.selected_index = delegate
+                    .selected_index
+                    .min(delegate.matches.len().saturating_sub(1));
                 cx.notify();
             })
             .log_err();
@@ -305,11 +292,9 @@ impl PickerDelegate for EncodingSelectorDelegate {
     }
 
     fn confirm(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
-        if let Some(selected_encoding) = self
-            .matches
-            .get(self.selected_index)
-            .and_then(|mat| self.encodings.get(mat.candidate_id).copied())
-        {
+        if let Some(mat) = self.matches.get(self.selected_index) {
+            let selected_encoding = self.encodings[mat.candidate_id];
+
             self.buffer.update(cx, |buffer, cx| {
                 let _ = buffer.reload_with_encoding(selected_encoding, cx);
             });
@@ -332,7 +317,7 @@ impl PickerDelegate for EncodingSelectorDelegate {
     ) -> Option<Self::ListItem> {
         let mat = &self.matches.get(ix)?;
 
-        let label = self.render_data_for_match(mat, cx)?;
+        let label = self.render_data_for_match(mat, cx);
 
         Some(
             ListItem::new(ix)

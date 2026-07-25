@@ -419,16 +419,12 @@ fn icon_keys_by_association(
     icon_keys_by_association
 }
 
-const DX_ICON_THEME_SOURCE_EXTENSION: &str = "material-icon-theme@v1.3.1";
-
 /// The name of the default icon theme.
-pub const DEFAULT_ICON_THEME_NAME: &str = "DX Icon";
+pub const DEFAULT_ICON_THEME_NAME: &str = "Zed (Default)";
 
 static DEFAULT_ICON_THEME: LazyLock<Arc<IconTheme>> = LazyLock::new(|| {
-    let _source_extension = DX_ICON_THEME_SOURCE_EXTENSION;
-
     Arc::new(IconTheme {
-        id: "dx-icon".into(),
+        id: "zed".into(),
         name: DEFAULT_ICON_THEME_NAME.into(),
         appearance: Appearance::Dark,
         directory_icons: DirectoryIcons {

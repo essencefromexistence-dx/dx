@@ -5,7 +5,7 @@ mod thread_switcher;
 use acp_thread::ThreadStatus;
 use action_log::DiffStats;
 use agent::ThreadStore;
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use agent_settings::AgentSettings;
 use agent_ui::terminal_thread_metadata_store::{
     TerminalThreadMetadata, TerminalThreadMetadataStore, terminal_title_prefix,
@@ -1792,7 +1792,7 @@ impl Sidebar {
                     this.sync_active_entry_from_panel(agent_panel, cx);
                     this.schedule_update_entries(false, cx);
                 }
-                AgentPanelEvent::TerminalClosed { metadata } => {
+                AgentPanelEvent::TerminalCloseRequested { metadata } => {
                     if let Some(workspace) = workspace.upgrade() {
                         let workspace = ThreadEntryWorkspace::Open(workspace);
                         this.close_terminal(metadata, &workspace, window, cx);
@@ -2922,7 +2922,9 @@ impl Sidebar {
                     v_flex()
                         .w_full()
                         .child(header)
-                        .when(has_pinned, |this| this.child(self.render_chat_group_label("Pinned", IconName::Pin, cx)))
+                        .when(has_pinned, |this| {
+                            this.child(self.render_chat_group_label("Pinned", IconName::Pin, cx))
+                        })
                         .child(self.render_chat_group_label("All Chats", IconName::Chat, cx))
                         .into_any_element()
                 } else {
@@ -3041,33 +3043,24 @@ impl Sidebar {
             .border_t_1()
             .border_color(cx.theme().colors().border_variant.opacity(0.5))
             .child(
-                h_flex()
-                    .gap_1()
-                    .items_center()
-                    .child(
-                        Label::new(label)
-                            .size(LabelSize::XSmall)
-                            .color(Color::Muted),
-                    ),
+                h_flex().gap_1().items_center().child(
+                    Label::new(label)
+                        .size(LabelSize::XSmall)
+                        .color(Color::Muted),
+                ),
             )
             .child(
                 h_flex()
                     .gap_1()
                     .items_center()
                     .child(
-                        div()
-                            .visible_on_hover(group.clone())
-                            .child(
-                                Label::new(current_sort.label())
-                                    .size(LabelSize::XSmall)
-                                    .color(Color::Muted)
-                            ),
+                        div().visible_on_hover(group.clone()).child(
+                            Label::new(current_sort.label())
+                                .size(LabelSize::XSmall)
+                                .color(Color::Muted),
+                        ),
                     )
-                    .child(
-                        div()
-                            .visible_on_hover(group.clone())
-                            .child(sort_menu)
-                    ),
+                    .child(div().visible_on_hover(group.clone()).child(sort_menu)),
             )
             .into_any_element()
     }
@@ -3181,7 +3174,10 @@ impl Sidebar {
                     )
                     .when(is_collapsed, |this| {
                         this.when(has_running_threads, |this| {
-                            this.child(dx_loading_icon(IconSize::XSmall, Color::Muted).with_rotate_animation(2))
+                            this.child(
+                                dx_loading_icon(IconSize::XSmall, Color::Muted)
+                                    .with_rotate_animation(2),
+                            )
                         })
                         .when(waiting_thread_count > 0, |this| {
                             let tooltip_text = if waiting_thread_count == 1 {
@@ -3726,11 +3722,13 @@ impl Sidebar {
                                             .group(&row_group_name)
                                             .justify_between()
                                             .gap_2()
-                                            .child(h_flex().min_w_0().gap_3().children(
-                                                workspace_label.iter().map(|label| {
-                                                    label.render().into_any_element()
-                                                }),
-                                            ))
+                                            .child(
+                                                h_flex().min_w_0().gap_3().children(
+                                                    workspace_label.iter().map(|label| {
+                                                        label.render().into_any_element()
+                                                    }),
+                                                ),
+                                            )
                                             .when(is_active_workspace, |this| {
                                                 this.pr_1().child(
                                                     Icon::new(IconName::Check)
@@ -4157,7 +4155,12 @@ impl Sidebar {
         }
     }
 
-    fn apply_grid_shortcut_rename(&mut self, shortcut_id: &str, new_title: String, cx: &mut Context<Self>) {
+    fn apply_grid_shortcut_rename(
+        &mut self,
+        shortcut_id: &str,
+        new_title: String,
+        cx: &mut Context<Self>,
+    ) {
         if let Some(shortcut) = self.grid_shortcuts.iter_mut().find(|s| s.id == shortcut_id) {
             shortcut.label = new_title;
             self.serialize(cx);
@@ -4171,7 +4174,13 @@ impl Sidebar {
         cx.notify();
     }
 
-    fn start_renaming_grid_shortcut(&mut self, shortcut_id: String, title: String, window: &mut Window, cx: &mut Context<Self>) {
+    fn start_renaming_grid_shortcut(
+        &mut self,
+        shortcut_id: String,
+        title: String,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         self.finish_thread_rename(window, cx);
         self.suppress_next_rename_edit = true;
         self.thread_rename_editor.update(cx, |editor, cx| {
@@ -4182,7 +4191,6 @@ impl Sidebar {
         self.thread_rename_editor.focus_handle(cx).focus(window, cx);
         cx.notify();
     }
-
 
     fn apply_thread_rename(
         &mut self,
@@ -7386,7 +7394,9 @@ impl Sidebar {
                 move |this, is_hovered: &bool, _window, cx| {
                     if *is_hovered {
                         this.hovered_thread_index = Some(ix);
-                    } else if this.hovered_thread_index == Some(ix) && !more_menu_handle.is_deployed() {
+                    } else if this.hovered_thread_index == Some(ix)
+                        && !more_menu_handle.is_deployed()
+                    {
                         // Only clear hover (which may hide more icon) if the more menu is not open.
                         // This prevents the dropdown from closing just by moving mouse off the icon;
                         // it will stay until click on empty space or menu item.
@@ -7418,7 +7428,8 @@ impl Sidebar {
                 )
             })
             .when(
-                (is_hovered || is_icon_picker_open || is_thread_more_menu_open || is_focused) && !is_renaming,
+                (is_hovered || is_icon_picker_open || is_thread_more_menu_open || is_focused)
+                    && !is_renaming,
                 |this| {
                     let rename_button = IconButton::new(("rename-thread", ix), IconName::Pencil)
                         .icon_size(IconSize::Small)
@@ -8583,7 +8594,8 @@ impl Sidebar {
         let cell_size: Pixels = px(28.0);
         let grid_gap: f32 = 4.0;
         let padding: f32 = 6.0;
-        let available_width = (chrome_width_f32 - padding * 2.0 - grid_gap * (columns as f32 - 1.0)).max(0.0);
+        let available_width =
+            (chrome_width_f32 - padding * 2.0 - grid_gap * (columns as f32 - 1.0)).max(0.0);
         let computed_cell_width: Pixels = if columns > 0 {
             Pixels::from(available_width / columns as f32)
         } else {
@@ -8607,12 +8619,16 @@ impl Sidebar {
             let id_string = id.to_string();
             let label_string = label.to_string();
             let cell_id = format!("sidebar-grid-dx-web-tool-{id}");
-            
+
             let on_click_listener = std::rc::Rc::new(cx.listener({
                 let id = id_string.clone();
                 move |this, _, window, cx| {
                     let url = web_preview::server::local_preview_url(&id).unwrap_or_else(|| {
-                        let port = cx.try_global::<agent_ui::agent_thread_www_preview::WebPreviewServerPort>().map(|p| p.0).unwrap_or(0);
+                        let port = cx
+                            .try_global::<agent_ui::agent_thread_www_preview::WebPreviewServerPort>(
+                            )
+                            .map(|p| p.0)
+                            .unwrap_or(0);
                         format!("http://127.0.0.1:{}/{}", port, id)
                     });
                     this.open_browser_grid_url(&url, window, cx);
@@ -8681,7 +8697,10 @@ impl Sidebar {
 
         let dx_web_click_listener = std::rc::Rc::new(cx.listener(|this, _, window, cx| {
             let url = web_preview::server::local_preview_url("dx-web").unwrap_or_else(|| {
-                let port = cx.try_global::<agent_ui::agent_thread_www_preview::WebPreviewServerPort>().map(|p| p.0).unwrap_or(0);
+                let port = cx
+                    .try_global::<agent_ui::agent_thread_www_preview::WebPreviewServerPort>()
+                    .map(|p| p.0)
+                    .unwrap_or(0);
                 format!("http://127.0.0.1:{}/dx-web/", port)
             });
             this.open_browser_grid_url(&url, window, cx);
@@ -8864,7 +8883,7 @@ impl Sidebar {
         let mut rendered_rows: Vec<AnyElement> = Vec::new();
         let mut current_row: Vec<AnyElement> = Vec::new();
         let mut row_ix = 0;
-        
+
         for cell in cells {
             current_row.push(cell);
             if current_row.len() == column_count {
@@ -9011,7 +9030,7 @@ impl Sidebar {
                             }
                         },
                     ))
-                    .children(panel_buttons) // TODO(dx-sidebar): Commented out Search button
+                    .children(panel_buttons), // TODO(dx-sidebar): Commented out Search button
                                               // .child(button(
                                               //     "sidebar-toolbar-search",
                                               //     dx_icon(DxUiIcon::Search),
@@ -9177,98 +9196,99 @@ impl Sidebar {
         let panel_buttons =
             self.render_sidebar_panel_buttons(cx, "sidebar-activity", IconSize::Medium);
 
-        let primary_actions =
-            vec![
-                button(
-                    cx,
-                    "sidebar-activity-new-chat",
-                    IconName::Plus,
-                    "New Chat",
-                    |this, _, window, cx| {
-                        if let Some(workspace) = this.active_workspace(cx) {
-                            this.create_new_thread(&workspace, window, cx);
-                        }
-                    },
-                )
-                .into_any_element(),
-                button(
-                    cx,
-                    "sidebar-activity-search",
-                    dx_icon(DxUiIcon::Search),
-                    "Search",
-                    |this, _, window, cx| {
-                        this.activity_bar_expanded = true;
-                        this.show_thread_list(window, cx);
-                        this.focus_sidebar_filter(&FocusSidebarFilter, window, cx);
-                    },
-                )
-                .into_any_element(),
-            ]
-            .into_iter()
-            .chain(panel_buttons)
-            // .chain(std::iter::once(self.render_sidebar_dx_web_tool_grid(px(0.0), cx).into_any_element()))
-            .chain([
-                // TODO(dx-sidebar): Restored Mobile Preview button
-                button(
-                    cx,
-                    "sidebar-activity-mobile",
-                    dx_icon(DxUiIcon::Browser),
-                    "Mobile Preview",
-                    |this, _, window, cx| {
-                        this.activate_workspace_screen(WorkspaceScreenKind::Browser, window, cx);
-                    },
-                )
-                .into_any_element(),
-                // TODO(dx-sidebar): Restored CLI button
-                button(
-                    cx,
-                    "sidebar-activity-cli",
-                    dx_icon(DxUiIcon::Commands),
-                    "CLI",
-                    |this, _, window, cx| {
-                        this.activate_workspace_screen(WorkspaceScreenKind::Terminal, window, cx);
-                    },
-                )
-                .into_any_element(),
-                // TODO(dx-sidebar): Commented out Plugins button per request (collapsed bar).
-                // button(
-                //     cx,
-                //     "sidebar-activity-plugins",
-                //     dx_icon(DxUiIcon::Plugins),
-                //     "Plugins",
-                //     |this, _, window, cx| {
-                //         this.activate_workspace_screen(WorkspaceScreenKind::Tools, window, cx);
-                //     },
-                // )
-                // .into_any_element(),
-                // TODO(dx-sidebar): Commented out Connections button per request (collapsed bar).
-                // button(
-                //     cx,
-                //     "sidebar-activity-connections",
-                //     dx_icon(DxUiIcon::Connections),
-                //     "Connections",
-                //     |this, _, window, cx| {
-                //         this.activate_workspace_screen(WorkspaceScreenKind::Connections, window, cx);
-                //     },
-                // )
-                // .into_any_element(),
-                // TODO(dx-sidebar): Restored Automations button
-                button(
-                    cx,
-                    "sidebar-activity-automations",
-                    dx_icon(DxUiIcon::Automations),
-                    "Automations",
-                    |this, _, window, cx| {
-                        this.activate_workspace_screen(WorkspaceScreenKind::Automations, window, cx);
-                    },
-                )
-                .into_any_element(),
-            ])
-            .chain(self.render_collapsed_thread_shortcuts(
+        let primary_actions = vec![
+            button(
+                cx,
+                "sidebar-activity-new-chat",
+                IconName::Plus,
+                "New Chat",
+                |this, _, window, cx| {
+                    if let Some(workspace) = this.active_workspace(cx) {
+                        this.create_new_thread(&workspace, window, cx);
+                    }
+                },
+            )
+            .into_any_element(),
+            button(
+                cx,
+                "sidebar-activity-search",
+                dx_icon(DxUiIcon::Search),
+                "Search",
+                |this, _, window, cx| {
+                    this.activity_bar_expanded = true;
+                    this.show_thread_list(window, cx);
+                    this.focus_sidebar_filter(&FocusSidebarFilter, window, cx);
+                },
+            )
+            .into_any_element(),
+        ]
+        .into_iter()
+        .chain(panel_buttons)
+        // .chain(std::iter::once(self.render_sidebar_dx_web_tool_grid(px(0.0), cx).into_any_element()))
+        .chain([
+            // TODO(dx-sidebar): Restored Mobile Preview button
+            button(
+                cx,
+                "sidebar-activity-mobile",
+                dx_icon(DxUiIcon::Browser),
+                "Mobile Preview",
+                |this, _, window, cx| {
+                    this.activate_workspace_screen(WorkspaceScreenKind::Browser, window, cx);
+                },
+            )
+            .into_any_element(),
+            // TODO(dx-sidebar): Restored CLI button
+            button(
+                cx,
+                "sidebar-activity-cli",
+                dx_icon(DxUiIcon::Commands),
+                "CLI",
+                |this, _, window, cx| {
+                    this.activate_workspace_screen(WorkspaceScreenKind::Terminal, window, cx);
+                },
+            )
+            .into_any_element(),
+            // TODO(dx-sidebar): Commented out Plugins button per request (collapsed bar).
+            // button(
+            //     cx,
+            //     "sidebar-activity-plugins",
+            //     dx_icon(DxUiIcon::Plugins),
+            //     "Plugins",
+            //     |this, _, window, cx| {
+            //         this.activate_workspace_screen(WorkspaceScreenKind::Tools, window, cx);
+            //     },
+            // )
+            // .into_any_element(),
+            // TODO(dx-sidebar): Commented out Connections button per request (collapsed bar).
+            // button(
+            //     cx,
+            //     "sidebar-activity-connections",
+            //     dx_icon(DxUiIcon::Connections),
+            //     "Connections",
+            //     |this, _, window, cx| {
+            //         this.activate_workspace_screen(WorkspaceScreenKind::Connections, window, cx);
+            //     },
+            // )
+            // .into_any_element(),
+            // TODO(dx-sidebar): Restored Automations button
+            button(
+                cx,
+                "sidebar-activity-automations",
+                dx_icon(DxUiIcon::Automations),
+                "Automations",
+                |this, _, window, cx| {
+                    this.activate_workspace_screen(WorkspaceScreenKind::Automations, window, cx);
+                },
+            )
+            .into_any_element(),
+        ])
+        .chain(
+            self.render_collapsed_thread_shortcuts(
                 Self::collapsed_thread_shortcut_limit(window),
                 cx,
-            ))
-            .collect();
+            ),
+        )
+        .collect();
 
         let secondary_actions = vec![
             self.render_space_carousel(SpaceCarouselOrientation::Vertical, cx)
@@ -9899,7 +9919,7 @@ impl Sidebar {
                 .into_iter()
                 .chain(generated_entries)
                 .filter(|entry| seen_actions.insert(entry.action.dedupe_key()))
-                .take(SIDEBAR_SPACE_GRID_COLUMNS * 4)
+                .take(SIDEBAR_SPACE_GRID_COLUMNS * 4),
         );
 
         entries
@@ -9990,7 +10010,8 @@ impl Sidebar {
     }
 
     fn delete_grid_shortcut(&mut self, entry_id: &str, cx: &mut Context<Self>) {
-        self.grid_shortcuts.retain(|existing| existing.id != entry_id);
+        self.grid_shortcuts
+            .retain(|existing| existing.id != entry_id);
         self.grid_entry_cache.borrow_mut().clear();
         self.serialize(cx);
         cx.notify();
@@ -10769,52 +10790,52 @@ impl Sidebar {
                     .border_t_1()
                     .border_color(cx.theme().colors().border_variant)
                     .child(left_slot)
-            // project (add/open) and time (history/clock) icons grouped on the left of expanded sidebar bottom
-            .child(
-                IconButton::new("sidebar-bottom-add-folder", dx_icon(DxUiIcon::OpenProject))
-                    .icon_size(IconSize::Small)
-                    .tooltip(Tooltip::text("Add Folder to Project"))
-                    .on_click(cx.listener(|this, _, window, cx| {
-                        this.add_folder_to_active_workspace(window, cx);
-                    })),
-            )
-            .child(
-                IconButton::new("history", IconName::Clock)
-                    .icon_size(IconSize::Small)
-                    .toggle_state(is_archive)
-                    .tooltip(move |_, cx| {
-                        let label = if is_archive {
-                            "Hide Thread History"
-                        } else {
-                            "Show Thread History"
-                        };
-                        Tooltip::for_action(label, &ToggleThreadHistory, cx)
-                    })
-                    .on_click(cx.listener(|this, _, window, cx| {
-                        this.toggle_archive(&ToggleThreadHistory, window, cx);
-                    })),
-            )
-            .child(
-                h_flex()
-                    .flex_1()
-                    .justify_center()
-                    .child(self.render_space_carousel(SpaceCarouselOrientation::Horizontal, cx)),
-            )
-            // only settings cog and speaker (sounds) kept on the right of expanded sidebar bottom
-            .child(self.render_dx_sounds_toggle_button(
-                "sidebar-bottom-sounds",
-                IconSize::Small,
-                cx,
-            ))
-            .child(
-                IconButton::new("sidebar-bottom-settings", dx_icon(DxUiIcon::Settings))
-                    .icon_size(IconSize::Small)
-                    .tooltip(Tooltip::text("Settings"))
-                    .on_click(cx.listener(|this, _, window, cx| {
-                        this.open_settings(window, cx);
-                    })),
-            )
-                    .child(right_slot)
+                    // project (add/open) and time (history/clock) icons grouped on the left of expanded sidebar bottom
+                    .child(
+                        IconButton::new(
+                            "sidebar-bottom-add-folder",
+                            dx_icon(DxUiIcon::OpenProject),
+                        )
+                        .icon_size(IconSize::Small)
+                        .tooltip(Tooltip::text("Add Folder to Project"))
+                        .on_click(cx.listener(|this, _, window, cx| {
+                            this.add_folder_to_active_workspace(window, cx);
+                        })),
+                    )
+                    .child(
+                        IconButton::new("history", IconName::Clock)
+                            .icon_size(IconSize::Small)
+                            .toggle_state(is_archive)
+                            .tooltip(move |_, cx| {
+                                let label = if is_archive {
+                                    "Hide Thread History"
+                                } else {
+                                    "Show Thread History"
+                                };
+                                Tooltip::for_action(label, &ToggleThreadHistory, cx)
+                            })
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                this.toggle_archive(&ToggleThreadHistory, window, cx);
+                            })),
+                    )
+                    .child(h_flex().flex_1().justify_center().child(
+                        self.render_space_carousel(SpaceCarouselOrientation::Horizontal, cx),
+                    ))
+                    // only settings cog and speaker (sounds) kept on the right of expanded sidebar bottom
+                    .child(self.render_dx_sounds_toggle_button(
+                        "sidebar-bottom-sounds",
+                        IconSize::Small,
+                        cx,
+                    ))
+                    .child(
+                        IconButton::new("sidebar-bottom-settings", dx_icon(DxUiIcon::Settings))
+                            .icon_size(IconSize::Small)
+                            .tooltip(Tooltip::text("Settings"))
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                this.open_settings(window, cx);
+                            })),
+                    )
+                    .child(right_slot),
             )
     }
 

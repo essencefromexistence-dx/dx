@@ -20,7 +20,10 @@ use std::{
     path::{Component, Path, PathBuf},
     sync::{Mutex, OnceLock},
 };
-use ui::{ListHeader, ListItem, ListItemSpacing, TintColor, Tooltip, ContextMenu, ContextMenuEntry, PopoverMenu, prelude::*};
+use ui::{
+    ContextMenu, ContextMenuEntry, ListHeader, ListItem, ListItemSpacing, PopoverMenu, TintColor,
+    Tooltip, prelude::*,
+};
 use url::Url;
 use workspace::{
     DraggedShadcnAsset, DraggedShadcnKind, Workspace,

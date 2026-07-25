@@ -91,7 +91,7 @@ fn register_entry(
             RelPath::new(rel, PathStyle::local())
                 .map(|r| r.into_owned().into())
                 .unwrap_or_else(|_| {
-                    RelPath::new(Path::new("untitled"), PathStyle::Posix)
+                    RelPath::new(Path::new("untitled"), PathStyle::Unix)
                         .unwrap()
                         .into_owned()
                         .into()
@@ -102,10 +102,10 @@ fn register_entry(
                 .new_path
                 .file_name()
                 .and_then(|n| n.to_str())
-                .and_then(|s| RelPath::new(Path::new(s), PathStyle::Posix).ok())
+                .and_then(|s| RelPath::new(Path::new(s), PathStyle::Unix).ok())
                 .map(|r| r.into_owned().into())
                 .unwrap_or_else(|| {
-                    RelPath::new(Path::new("untitled"), PathStyle::Posix)
+                    RelPath::new(Path::new("untitled"), PathStyle::Unix)
                         .unwrap()
                         .into_owned()
                         .into()

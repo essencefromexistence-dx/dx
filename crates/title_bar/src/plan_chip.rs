@@ -35,6 +35,7 @@ impl RenderOnce for PlanChip {
             Plan::ZedPro => ("Pro", Color::Accent, pro_chip_bg),
             Plan::ZedBusiness => ("Business", Color::Accent, pro_chip_bg),
             Plan::ZedStudent => ("Student", Color::Accent, pro_chip_bg),
+            Plan::ZedVip => ("VIP", Color::Accent, pro_chip_bg),
         };
 
         Chip::new(plan_name.to_string())

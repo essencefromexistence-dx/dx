@@ -172,6 +172,8 @@ impl VsCodeSettings {
 
     pub fn settings_content(&self) -> SettingsContent {
         SettingsContent {
+            markdown_preview: None,
+            reduce_motion: None,
             agent: self.agent_settings_content(),
             agent_servers: None,
             audio: None,
@@ -248,6 +250,7 @@ impl VsCodeSettings {
         };
 
         EditorSettingsContent {
+            lsp_results_location: None,
             auto_signature_help: self.read_bool("editor.parameterHints.enabled"),
             autoscroll_on_clicks: None,
             cursor_blink,
@@ -638,15 +641,19 @@ impl VsCodeSettings {
         }
     }
 
-    fn file_types(&self) -> Option<HashMap<Arc<str>, ExtendingVec<String>>> {
+    fn file_types(&self) -> Option<FileTypeMap> {
         // vscodes file association map is inverted from ours, so we flip the mapping before merging
-        let mut associations: HashMap<Arc<str>, ExtendingVec<String>> = HashMap::default();
+        let mut associations: HashMap<Arc<str>, ExtendingSet<String>> = HashMap::default();
         let map = self.read_value("files.associations")?.as_object()?;
         for (k, v) in map {
             let Some(v) = v.as_str() else { continue };
-            associations.entry(v.into()).or_default().0.push(k.clone());
+            associations
+                .entry(v.into())
+                .or_default()
+                .0
+                .insert(k.clone());
         }
-        skip_default(associations)
+        skip_default(FileTypeMap(associations))
     }
 
     fn edit_predictions_settings_content(&self) -> Option<EditPredictionSettingsContent> {
@@ -878,6 +885,7 @@ impl VsCodeSettings {
     fn terminal_settings_content(&self) -> Option<TerminalSettingsContent> {
         let (font_family, font_fallbacks) = self.read_fonts("terminal.integrated.fontFamily");
         skip_default(TerminalSettingsContent {
+            open_links_in_mouse_mode: None,
             alternate_scroll: None,
             blinking: self
                 .read_bool("terminal.integrated.cursorBlinking")
@@ -988,6 +996,7 @@ impl VsCodeSettings {
             agent_buffer_font_size: None,
             git_commit_buffer_font_size: None,
             markdown_preview_font_family: None,
+            markdown_preview_font_size: None,
             markdown_preview_code_font_family: None,
             markdown_preview_theme: None,
             theme: None,
@@ -1002,6 +1011,7 @@ impl VsCodeSettings {
     fn workspace_settings_content(&self) -> WorkspaceSettingsContent {
         WorkspaceSettingsContent {
             active_pane_modifiers: self.active_pane_modifiers(),
+            accessible_mode: None,
             text_rendering_mode: None,
             autosave: self.read_enum("files.autoSave", |s| match s {
                 "off" => Some(AutosaveSetting::Off),

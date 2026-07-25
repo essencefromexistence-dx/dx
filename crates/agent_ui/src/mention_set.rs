@@ -1,7 +1,7 @@
 use crate::diagnostics::{DiagnosticsOptions, codeblock_fence_for_path, collect_diagnostics};
 use acp_thread::{MentionUri, selection_name};
 use agent::{ThreadStore, outline};
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use agent_servers::{AgentServer, AgentServerDelegate};
 use anyhow::{Context as _, Result, anyhow};
 use collections::{HashMap, HashSet};
@@ -27,7 +27,6 @@ use std::{
     cell::RefCell,
     ffi::OsStr,
     fmt::Write,
-    io::Read,
     ops::{Range, RangeInclusive},
     path::{Path, PathBuf},
     rc::Rc,
@@ -264,7 +263,7 @@ impl MentionSet {
                 .read(cx)
                 .project_path_for_absolute_path(&abs_path, cx)
             else {
-                log::error!("project path not found");
+                log::error!("project path not found for image mention {abs_path:?}");
                 return Task::ready(());
             };
             let image_task = project.update(cx, |project, cx| project.open_image(project_path, cx));
@@ -396,7 +395,9 @@ impl MentionSet {
             .read(cx)
             .project_path_for_absolute_path(&abs_path, cx)
         else {
-            return Task::ready(Err(anyhow!("project path not found")));
+            return Task::ready(Err(anyhow!(
+                "project path not found for file mention {abs_path:?}"
+            )));
         };
 
         if is_raster_image_path(&abs_path) {
@@ -466,7 +467,9 @@ impl MentionSet {
             .read(cx)
             .project_path_for_absolute_path(&abs_path, cx)
         else {
-            return Task::ready(Err(anyhow!("project path not found")));
+            return Task::ready(Err(anyhow!(
+                "project path not found for symbol mention {abs_path:?}"
+            )));
         };
         let buffer = project.update(cx, |project, cx| project.open_buffer(project_path, cx));
         cx.spawn(async move |_, cx| {
@@ -498,7 +501,7 @@ impl MentionSet {
             }));
         }
         cx.background_spawn(async move {
-            let content = read_skill_mention_file(&skill_file_path).map_err(|e| {
+            let content = std::fs::read_to_string(&skill_file_path).map_err(|e| {
                 anyhow!(
                     "Failed to read skill file {}: {}",
                     skill_file_path.display(),
@@ -698,41 +701,41 @@ impl MentionSet {
     }
 }
 
-const MAX_SKILL_MENTION_FILE_BYTES: u64 = 1024 * 1024;
-const MAX_FETCH_MENTION_BODY_BYTES: u64 = 10 * 1024 * 1024;
-const MAX_FETCH_MENTION_ERROR_BODY_DISPLAY_BYTES: usize = 8 * 1024;
-const MAX_EXTERNAL_RASTER_IMAGE_FILE_BYTES: u64 = 25 * 1024 * 1024;
-
-fn read_skill_mention_file(path: &Path) -> Result<String> {
-    let mut bytes = Vec::new();
-    let mut file = std::fs::File::open(path)?.take(MAX_SKILL_MENTION_FILE_BYTES + 1);
-    file.read_to_end(&mut bytes)?;
-    if bytes.len() as u64 > MAX_SKILL_MENTION_FILE_BYTES {
-        return Err(anyhow!(
-            "skill file exceeds {} bytes",
-            MAX_SKILL_MENTION_FILE_BYTES
-        ));
-    }
-    Ok(String::from_utf8(bytes)?)
-}
-
-/// Computes disambiguated labels for a set of mentions. When multiple mentions
-/// share the same base name, their labels include extra context (additional
-/// parent path components for files/directories, source for skills) so the user
-/// can tell them apart. Driven by [`util::disambiguate::compute_disambiguation_details`],
-/// which is the same utility used for buffer tab titles and the sidebar.
+/// Computes disambiguated labels for a set of mentions, so that mentions sharing
+/// a base name get extra context (parent path components, skill source) to tell
+/// them apart. Same approach as buffer tab titles and the sidebar.
 fn compute_disambiguated_labels<'a>(
     mentions: impl Iterator<Item = (CreaseId, &'a MentionUri)>,
 ) -> HashMap<CreaseId, SharedString> {
-    let mentions: Vec<_> = mentions.collect();
+    let (ids, uris): (Vec<CreaseId>, Vec<&MentionUri>) = mentions.unzip();
+    ids.into_iter()
+        .zip(disambiguated_labels_for_uris(&uris))
+        .collect()
+}
+
+/// Labels for each URI, in input order. Duplicate URIs are collapsed first, so a
+/// mention added twice keeps its base name instead of being escalated to its
+/// full path by the collision-resolution loop.
+fn disambiguated_labels_for_uris(uris: &[&MentionUri]) -> Vec<SharedString> {
+    let mut seen: HashSet<&MentionUri> = HashSet::default();
+    let unique_uris: Vec<&MentionUri> = uris
+        .iter()
+        .copied()
+        .filter(|&uri| seen.insert(uri))
+        .collect();
+
     let details =
-        util::disambiguate::compute_disambiguation_details(&mentions, |(_, uri), detail| {
+        util::disambiguate::compute_disambiguation_details(&unique_uris, |uri, detail| {
             uri.disambiguated_name(detail)
         });
-    mentions
-        .into_iter()
-        .zip(details)
-        .map(|((id, uri), detail)| (id, uri.disambiguated_name(detail).into()))
+
+    let uri_to_detail: HashMap<&MentionUri, usize> = unique_uris.into_iter().zip(details).collect();
+
+    uris.iter()
+        .map(|uri| {
+            let detail = uri_to_detail.get(uri).copied().unwrap_or(0);
+            uri.disambiguated_name(detail).into()
+        })
         .collect()
 }
 
@@ -843,6 +846,27 @@ mod tests {
         assert!(!is_raster_image_path(Path::new("/tmp/notes.txt")));
         assert!(!is_raster_image_path(Path::new("/tmp/README")));
     }
+
+    #[test]
+    fn test_disambiguated_labels_dedupe_identical_uris() {
+        // Mentioning the same file twice must not escalate the duplicates to
+        // their full path. Distinct files sharing a base name still disambiguate.
+        let foo_a = MentionUri::File {
+            abs_path: path!("/project/a/foo.rs").into(),
+        };
+
+        let foo_b = MentionUri::File {
+            abs_path: path!("/project/b/foo.rs").into(),
+        };
+
+        let uris = vec![&foo_a, &foo_a, &foo_b];
+        let labels = disambiguated_labels_for_uris(&uris);
+
+        assert_eq!(labels[0].as_ref(), "a/foo.rs");
+        assert_eq!(labels[2].as_ref(), "b/foo.rs");
+        // The duplicate keeps the same label rather than escalating to full path.
+        assert_eq!(labels[1].as_ref(), "a/foo.rs");
+    }
 }
 
 /// Inserts a list of images into the editor as context mentions.
@@ -951,31 +975,6 @@ pub(crate) async fn insert_images_as_context(
     }
 }
 
-fn read_external_raster_image_file_bytes(path: &Path) -> Option<Vec<u8>> {
-    if path
-        .extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("svg"))
-    {
-        return None;
-    }
-
-    let metadata = std::fs::metadata(path).ok()?;
-    if metadata.len() > MAX_EXTERNAL_RASTER_IMAGE_FILE_BYTES {
-        return None;
-    }
-
-    let mut bytes = Vec::new();
-    let mut file = std::fs::File::open(path)
-        .ok()?
-        .take(MAX_EXTERNAL_RASTER_IMAGE_FILE_BYTES + 1);
-    file.read_to_end(&mut bytes).ok()?;
-    if bytes.len() as u64 > MAX_EXTERNAL_RASTER_IMAGE_FILE_BYTES {
-        return None;
-    }
-    Some(bytes)
-}
-
 fn image_format_from_external_content(format: image::ImageFormat) -> Option<ImageFormat> {
     match format {
         image::ImageFormat::Png => Some(ImageFormat::Png),
@@ -1011,7 +1010,7 @@ pub(crate) fn load_external_image_from_path(
     path: &Path,
     default_name: &SharedString,
 ) -> Option<(Image, SharedString)> {
-    let content = read_external_raster_image_file_bytes(path)?;
+    let content = std::fs::read(path).ok()?;
     let format = image::guess_format(&content)
         .ok()
         .and_then(image_format_from_external_content)?;
@@ -1227,7 +1226,9 @@ fn full_mention_for_directory(
         .read(cx)
         .project_path_for_absolute_path(&abs_path, cx)
     else {
-        return Task::ready(Err(anyhow!("project path not found")));
+        return Task::ready(Err(anyhow!(
+            "project path not found for directory mention {abs_path:?}"
+        )));
     };
     let Some(entry) = project.read(cx).entry_for_path(&project_path, cx) else {
         return Task::ready(Err(anyhow!("project entry not found")));
@@ -1247,8 +1248,7 @@ fn full_mention_for_directory(
                 |(worktree_path, full_path): (Arc<RelPath>, String)| {
                     let rel_path = worktree_path
                         .strip_prefix(&directory_path)
-                        .log_err()
-                        .map_or_else(|| worktree_path.clone(), |rel_path| rel_path.into());
+                        .map_or_else(|_| worktree_path.clone(), |rel_path| rel_path.into());
 
                     let open_task = project.update(cx, |project, cx| {
                         project.buffer_store().update(cx, |buffer_store, cx| {
@@ -1420,39 +1420,6 @@ impl Render for ImageHover {
     }
 }
 
-fn format_fetch_mention_error_body(body: &[u8]) -> String {
-    let truncated = body.len() > MAX_FETCH_MENTION_ERROR_BODY_DISPLAY_BYTES;
-    let visible_len = body.len().min(MAX_FETCH_MENTION_ERROR_BODY_DISPLAY_BYTES);
-    let visible_body = &body[..visible_len];
-    let text = String::from_utf8_lossy(visible_body);
-    let mut display = text.split_whitespace().collect::<Vec<_>>().join(" ");
-
-    if truncated {
-        if !display.is_empty() {
-            display.push(' ');
-        }
-        display.push_str("[truncated]");
-    }
-
-    display
-}
-
-async fn read_fetch_mention_body(body: &mut AsyncBody) -> Result<Vec<u8>> {
-    let mut reader = body.take(MAX_FETCH_MENTION_BODY_BYTES + 1);
-    let mut body = Vec::new();
-    reader
-        .read_to_end(&mut body)
-        .await
-        .context("error reading response body")?;
-    if body.len() as u64 > MAX_FETCH_MENTION_BODY_BYTES {
-        anyhow::bail!(
-            "fetched mention body exceeds {} bytes",
-            MAX_FETCH_MENTION_BODY_BYTES
-        );
-    }
-    Ok(body)
-}
-
 async fn fetch_url_content(http_client: Arc<HttpClientWithUrl>, url: String) -> Result<String> {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
     enum ContentType {
@@ -1469,10 +1436,15 @@ async fn fetch_url_content(http_client: Arc<HttpClientWithUrl>, url: String) -> 
     };
 
     let mut response = http_client.get(&url, AsyncBody::default(), true).await?;
-    let body = read_fetch_mention_body(response.body_mut()).await?;
+    let mut body = Vec::new();
+    response
+        .body_mut()
+        .read_to_end(&mut body)
+        .await
+        .context("error reading response body")?;
 
     if response.status().is_client_error() {
-        let text = format_fetch_mention_error_body(&body);
+        let text = String::from_utf8_lossy(body.as_slice());
         anyhow::bail!(
             "status error {}, response: {text:?}",
             response.status().as_u16()

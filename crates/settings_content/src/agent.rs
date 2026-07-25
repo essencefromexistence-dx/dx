@@ -399,8 +399,11 @@ pub struct AgentSettingsContent {
     /// Custom instructions to include in the prompt when generating git commit messages.
     /// Applied in addition to any project rules files (such as `.rules` or `AGENTS.md`).
     pub commit_message_instructions: Option<String>,
+    pub commit_message_include_project_rules: Option<bool>,
     /// Model to use for generating thread summaries. Defaults to default_model when not specified.
     pub thread_summary_model: Option<LanguageModelSelection>,
+    /// Model to use for context compaction.
+    pub compaction_model: Option<LanguageModelSelection>,
     /// Additional models with which to generate alternatives when performing inline assists.
     pub inline_alternatives: Option<Vec<LanguageModelSelection>>,
     /// The default profile to use in the Agent.
@@ -450,6 +453,8 @@ pub struct AgentSettingsContent {
     ///
     /// Default: automatic
     pub thinking_display: Option<ThinkingBlockDisplay>,
+    /// Command run before agent terminal commands.
+    pub terminal_init_command: Option<String>,
     /// Whether clicking the stop button on a running terminal tool should also cancel the agent's generation.
     /// Note that this only applies to the stop button, not to ctrl+c inside the terminal.
     ///
@@ -599,6 +604,26 @@ impl AgentSettingsContent {
         self.sandbox_permissions
             .get_or_insert_default()
             .allow_network = Some(true);
+    }
+
+    pub fn allow_sandbox_all_hosts(&mut self) {
+        self.sandbox_permissions
+            .get_or_insert_default()
+            .allow_all_hosts = Some(true);
+    }
+
+    pub fn sandbox_network_hosts(&self) -> &[String] {
+        self.sandbox_permissions
+            .as_ref()
+            .and_then(|permissions| permissions.network_hosts.as_ref())
+            .map(|hosts| hosts.0.as_slice())
+            .unwrap_or_default()
+    }
+
+    pub fn set_sandbox_network_hosts(&mut self, hosts: Vec<String>) {
+        self.sandbox_permissions
+            .get_or_insert_default()
+            .network_hosts = Some(ExtendingVec(hosts));
     }
 
     pub fn allow_sandbox_fs_write_all(&mut self) {
@@ -787,6 +812,56 @@ impl std::ops::DerefMut for AllAgentServersSettings {
     }
 }
 
+#[derive(Deserialize, Serialize, Clone, JsonSchema, MergeFrom, Debug, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum AgentConfigOptionValue {
+    ValueId(String),
+    Boolean(bool),
+}
+
+impl AgentConfigOptionValue {
+    pub fn as_value_id(&self) -> Option<&str> {
+        match self {
+            Self::ValueId(value) => Some(value),
+            Self::Boolean(_) => None,
+        }
+    }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            Self::Boolean(value) => Some(*value),
+            Self::ValueId(_) => None,
+        }
+    }
+}
+
+impl std::fmt::Display for AgentConfigOptionValue {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ValueId(value) => formatter.write_str(value),
+            Self::Boolean(value) => value.fmt(formatter),
+        }
+    }
+}
+
+impl From<String> for AgentConfigOptionValue {
+    fn from(value: String) -> Self {
+        Self::ValueId(value)
+    }
+}
+
+impl From<&str> for AgentConfigOptionValue {
+    fn from(value: &str) -> Self {
+        Self::ValueId(value.to_string())
+    }
+}
+
+impl From<bool> for AgentConfigOptionValue {
+    fn from(value: bool) -> Self {
+        Self::Boolean(value)
+    }
+}
+
 #[with_fallible_options]
 #[derive(Deserialize, Serialize, Clone, JsonSchema, MergeFrom, Debug, PartialEq)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -811,7 +886,7 @@ pub enum CustomAgentServerSettings {
         ///
         /// Default: {}
         #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-        default_config_options: HashMap<String, String>,
+        default_config_options: HashMap<String, AgentConfigOptionValue>,
         /// Favorited values for session config options.
         ///
         /// This is a map from config option ID to a list of favorited value IDs.
@@ -840,7 +915,7 @@ pub enum CustomAgentServerSettings {
         ///
         /// Default: {}
         #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-        default_config_options: HashMap<String, String>,
+        default_config_options: HashMap<String, AgentConfigOptionValue>,
         /// Favorited values for session config options.
         ///
         /// This is a map from config option ID to a list of favorited value IDs.
@@ -854,6 +929,12 @@ pub enum CustomAgentServerSettings {
 #[with_fallible_options]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
 pub struct SandboxPermissionsContent {
+    /// Whether sandboxed commands may reach any network host without prompting.
+    pub allow_all_hosts: Option<bool>,
+
+    /// Network hosts that sandboxed commands may reach without prompting.
+    pub network_hosts: Option<ExtendingVec<String>>,
+
     /// Whether sandboxed terminal commands may always use outbound network
     /// access without prompting.
     /// Default: false
@@ -868,6 +949,9 @@ pub struct SandboxPermissionsContent {
     /// prompting when they request `unsandboxed: true`.
     /// Default: false
     pub allow_unsandboxed: Option<bool>,
+
+    /// Whether to warn about confusable Unicode in permission prompts.
+    pub warn_confusable_unicode: Option<bool>,
 
     /// Directory subtrees that sandboxed terminal commands may always write
     /// to without prompting. Paths written by Zed are absolute.

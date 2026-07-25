@@ -455,6 +455,7 @@ impl CommitModal {
                             this.git_panel.update(cx, |git_panel, cx| {
                                 git_panel.commit_changes(
                                     CommitOptions {
+                                        no_verify: false,
                                         amend: is_amend_pending,
                                         signoff: is_signoff_enabled,
                                         allow_empty: false,

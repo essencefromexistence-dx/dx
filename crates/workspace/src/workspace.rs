@@ -6276,6 +6276,18 @@ impl Workspace {
             })
     }
 
+    pub fn adjacent_pane_of(
+        &mut self,
+        origin: &Entity<Pane>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Entity<Pane> {
+        self.center
+            .find_pane_in_direction(origin, SplitDirection::Right, cx)
+            .cloned()
+            .unwrap_or_else(|| self.split_pane(origin.clone(), SplitDirection::Right, window, cx))
+    }
+
     pub fn pane_for(&self, handle: &dyn ItemHandle) -> Option<Entity<Pane>> {
         self.pane_for_item_id(handle.item_id())
     }

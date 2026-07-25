@@ -1128,7 +1128,12 @@ impl ProjectPanel {
                     dx_explorer_storage_drilldown: Default::default(),
                 },
                 update_visible_entries_task: Default::default(),
-                undo_manager: UndoManager::new(workspace.weak_handle(), weak_project_panel, &cx),
+                undo_manager: UndoManager::new(
+                    workspace.weak_handle(),
+                    weak_project_panel,
+                    project.read(cx).is_via_collab(),
+                    &cx,
+                ),
             };
             if this.storage_root_shortcuts_allowed(cx) {
                 this.refresh_dx_explorer_storage_roots(cx);
@@ -2026,7 +2031,7 @@ impl ProjectPanel {
             }
             let trimmed_filename = trimmed_filename.trim_start_matches('/');
 
-            let Ok(filename) = RelPath::unix(trimmed_filename) else {
+            let Ok(filename) = RelPath::from_unix_str(trimmed_filename) else {
                 edit_state.validation_state = ValidationState::Warning(
                     "File or directory name contains leading or trailing whitespace.".to_string(),
                 );
@@ -2050,7 +2055,7 @@ impl ProjectPanel {
                     let new_path = if let Some(parent) = entry.path.clone().parent() {
                         parent.join(&filename)
                     } else {
-                        filename.into()
+                        filename.to_owned()
                     };
                     if let Some(existing) = worktree.read(cx).entry_for_path(&new_path)
                         && existing.id != entry.id
@@ -2137,7 +2142,7 @@ impl ProjectPanel {
             let new_path = if let Some(parent) = entry.path.parent() {
                 parent.join(&filename)
             } else {
-                filename.clone()
+                filename.as_ref().to_owned()
             };
             if let Some(existing) = worktree.read(cx).entry_for_path(&new_path) {
                 if existing.id == entry.id && refocus {
@@ -2814,14 +2819,20 @@ impl ProjectPanel {
                 let mut changes = Vec::new();
 
                 for (entry_id, worktree_id, _) in file_paths {
-                    let trashed_entry = panel
-                        .update(cx, |panel, cx| {
-                            panel
-                                .project
-                                .update(cx, |project, cx| project.delete_entry(entry_id, trash, cx))
-                                .context("no such entry")
-                        })??
-                        .await?;
+                    let task = panel.update(cx, |panel, cx| {
+                        panel.project.update(cx, |project, cx| {
+                            if trash {
+                                project
+                                    .trash_entry(entry_id, cx)
+                                    .map(|task| cx.spawn(async move |_, _| task.await.map(Some)))
+                            } else {
+                                project.delete_entry(entry_id, cx).map(|task| {
+                                    cx.spawn(async move |_, _| task.await.map(|()| None))
+                                })
+                            }
+                        })
+                    })?;
+                    let trashed_entry = task.context("no such entry")?.await?;
 
                     // Keep track of trashed change so that we can then record
                     // all of the changes at once, such that undoing and redoing
@@ -3432,7 +3443,8 @@ impl ProjectPanel {
         let source_entry = source_worktree.read(cx).entry_for_id(source.entry_id)?;
 
         let clipboard_entry_file_name = source_entry.path.file_name()?.to_string();
-        let Ok(clipboard_entry_file_name_path) = RelPath::unix(&clipboard_entry_file_name) else {
+        let Ok(clipboard_entry_file_name_path) = RelPath::from_unix_str(&clipboard_entry_file_name)
+        else {
             return None;
         };
         new_path.push(clipboard_entry_file_name_path);
@@ -3471,7 +3483,7 @@ impl ProjectPanel {
                     new_file_name.push_str(extension);
                 }
 
-                let Ok(new_file_name_path) = RelPath::unix(&new_file_name) else {
+                let Ok(new_file_name_path) = RelPath::from_unix_str(&new_file_name) else {
                     return None;
                 };
                 new_path.push(new_file_name_path);
@@ -3497,7 +3509,7 @@ impl ProjectPanel {
         };
 
         let source_name = source_path.path.file_name()?;
-        let Ok(source_name_path) = RelPath::unix(source_name) else {
+        let Ok(source_name_path) = RelPath::from_unix_str(source_name) else {
             return None;
         };
 
@@ -3534,7 +3546,7 @@ impl ProjectPanel {
                 new_file_name.push_str(extension);
             }
 
-            let Ok(new_file_name_path) = RelPath::unix(&new_file_name) else {
+            let Ok(new_file_name_path) = RelPath::from_unix_str(&new_file_name) else {
                 return None;
             };
             new_path.push(new_file_name_path);
@@ -4087,7 +4099,7 @@ impl ProjectPanel {
             let dir_path = if include_root {
                 worktree.read(cx).root_name().join(&dir_path)
             } else {
-                dir_path
+                dir_path.as_ref().to_owned()
             };
 
             self.workspace
@@ -5613,7 +5625,10 @@ impl ProjectPanel {
             entry: Entry {
                 id: NEW_ENTRY_ID,
                 kind: new_entry_kind,
-                path: parent_entry.path.join(RelPath::unix("\0").unwrap()),
+                path: parent_entry
+                    .path
+                    .join(RelPath::from_unix_str("\0").unwrap_or(RelPath::empty()))
+                    .into(),
                 inode: 0,
                 mtime: parent_entry.mtime,
                 size: parent_entry.size,
@@ -6075,16 +6090,22 @@ impl ProjectPanel {
                                         entry.path.strip_prefix(root_folded_entry).ok().and_then(
                                             |suffix| {
                                                 Some(
-                                                    RelPath::unix(root_folded_entry.file_name()?)
-                                                        .unwrap()
-                                                        .join(suffix),
+                                                    RelPath::from_unix_str(
+                                                        root_folded_entry.file_name()?,
+                                                    )
+                                                    .ok()?
+                                                    .join(suffix)
+                                                    .into(),
                                                 )
                                             },
                                         )
                                     })
                                     .or_else(|| {
                                         entry.path.file_name().map(|file_name| {
-                                            RelPath::unix(file_name).unwrap().into()
+                                            RelPath::from_unix_str(file_name)
+                                                .unwrap_or(RelPath::empty())
+                                                .to_owned()
+                                                .into()
                                         })
                                     })
                                     .unwrap_or_else(|| entry.path.clone());
@@ -6401,7 +6422,7 @@ impl ProjectPanel {
             if let Some(name) = path.file_name()
                 && let Some(name) = name.to_str()
             {
-                let Ok(name) = RelPath::unix(name) else {
+                let Ok(name) = RelPath::from_unix_str(name) else {
                     continue;
                 };
                 let target_path = target_directory.join(name);
@@ -6775,7 +6796,7 @@ impl ProjectPanel {
                                         move_results.iter().find(|(id, _)| id == resolved_id)?;
                                     let worktree = project.worktree_for_entry(new_entry.id, cx)?;
                                     let leaf_path = new_entry.path.join(suffix);
-                                    Some((worktree, leaf_path))
+                                    Some((worktree, leaf_path.into()))
                                 })
                                 .collect()
                         })
@@ -9407,9 +9428,7 @@ impl Render for ProjectPanel {
                         .on_action(cx.listener(Self::restore_file))
                         .on_action(cx.listener(Self::add_to_gitignore))
                         .on_action(cx.listener(Self::add_to_git_info_exclude))
-                        .when(!is_remote, |el| {
-                            el.on_action(cx.listener(Self::trash))
-                        })
+                        .when(!is_remote, |el| el.on_action(cx.listener(Self::trash)))
                 })
                 .when(is_local_or_wsl, |el| {
                     el.on_action(cx.listener(Self::reveal_in_finder))
@@ -9679,12 +9698,11 @@ impl Render for ProjectPanel {
                                         .border_t_1()
                                         .border_color(cx.theme().colors().border.opacity(0.5))
                                         .child(
-                                            ListHeader::new("Media")
-                                                .start_slot(
-                                                    Icon::new(IconName::Image)
-                                                        .size(IconSize::Small)
-                                                        .color(Color::Muted),
-                                                ),
+                                            ListHeader::new("Media").start_slot(
+                                                Icon::new(IconName::Image)
+                                                    .size(IconSize::Small)
+                                                    .color(Color::Muted),
+                                            ),
                                         )
                                         .child(media_preview::render_folder_media_shelf(
                                             &media_preview,

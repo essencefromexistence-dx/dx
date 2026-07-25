@@ -32,6 +32,10 @@ impl GradientFade {
         self
     }
 
+    pub fn width_hovered(self, _width: Pixels) -> Self {
+        self
+    }
+
     pub fn right(mut self, right: Pixels) -> Self {
         self.right = right;
         self

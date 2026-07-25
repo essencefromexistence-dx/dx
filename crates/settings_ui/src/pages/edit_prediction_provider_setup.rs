@@ -270,7 +270,7 @@ fn render_api_key_provider(
 
     let container = if has_key {
         base_container.child(header).child(
-            ConfiguredApiCard::new(configured_card_label)
+            ConfiguredApiCard::new("edit-prediction-provider-reset", configured_card_label)
                 .button_label("Reset Key")
                 .button_tab_index(0)
                 .disabled(is_from_env_var)

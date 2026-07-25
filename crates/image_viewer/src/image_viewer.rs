@@ -590,7 +590,7 @@ fn breadcrumbs_text_for_image(project: &Project, image: &ImageItem, cx: &App) ->
     if project.visible_worktrees(cx).count() > 1
         && let Some(worktree) = project.worktree_for_id(image.project_path(cx).worktree_id, cx)
     {
-        path = worktree.read(cx).root_name().join(&path);
+        path = worktree.read(cx).root_name().join(&path).into();
     }
 
     path.display(project.path_style(cx)).to_string()

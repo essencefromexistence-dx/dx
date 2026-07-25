@@ -1,6 +1,10 @@
 mod head;
 pub mod highlighted_match_with_paths;
 pub mod popover_menu;
+mod preview;
+
+pub use preview::Layout as PreviewLayout;
+pub use preview::{MatchLocation, Preview, PreviewBackend, PreviewSource, Update as PreviewUpdate};
 
 use anyhow::Result;
 
@@ -94,6 +98,10 @@ pub enum PickerEditorPosition {
 }
 
 pub trait PickerDelegate: Sized + 'static {
+    fn name() -> &'static str {
+        std::any::type_name::<Self>()
+    }
+
     type ListItem: IntoElement;
 
     fn match_count(&self) -> usize;
@@ -372,6 +380,18 @@ impl<D: PickerDelegate> Picker<D> {
 
     pub fn width(mut self, width: impl Into<gpui::Length>) -> Self {
         self.width = Some(width.into());
+        self
+    }
+
+    pub fn initial_width(self, width: impl Into<gpui::Length>) -> Self {
+        self.width(width)
+    }
+
+    pub fn embedded(self) -> Self {
+        self.modal(false)
+    }
+
+    pub fn popover(self) -> Self {
         self
     }
 

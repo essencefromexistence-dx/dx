@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use client::zed_urls;
 use collections::HashMap;
-use editor::{Editor, EditorElement, EditorStyle, MultiBufferOffset};
+use editor::{Editor, EditorElement, EditorStyle};
 use fs::Fs;
 use gpui::{
     AnyElement, App, Context, Entity, EventEmitter, Focusable, KeyContext, ParentElement, Render,
@@ -21,10 +21,6 @@ use workspace::{
     Workspace,
     item::{Item, ItemEvent},
 };
-
-const MAX_AGENT_REGISTRY_SEARCH_QUERY_CHARS: usize = 256;
-const MAX_FILTERED_AGENT_REGISTRY_RESULTS: usize = 512;
-const MAX_DISPLAYED_AGENT_REGISTRY_RESULTS: usize = MAX_FILTERED_AGENT_REGISTRY_RESULTS;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum RegistryFilter {
@@ -171,24 +167,17 @@ impl AgentRegistryPage {
     }
 
     fn search_query(&self, cx: &mut App) -> Option<String> {
-        let buffer = self.query_editor.read(cx).buffer().clone();
-        let snapshot = buffer.read(cx).snapshot(cx);
-        let search = snapshot
-            .text_for_range(MultiBufferOffset(0)..snapshot.len())
-            .flat_map(str::chars)
-            .take(MAX_AGENT_REGISTRY_SEARCH_QUERY_CHARS)
-            .collect::<String>();
-        let search = search.trim();
-        if search.is_empty() {
+        let search = self.query_editor.read(cx).text(cx);
+        if search.trim().is_empty() {
             None
         } else {
-            Some(search.to_lowercase())
+            Some(search)
         }
     }
 
     fn filter_registry_agents(&mut self, cx: &mut Context<Self>) {
         self.refresh_installed_statuses(cx);
-        let search = self.search_query(cx);
+        let search = self.search_query(cx).map(|search| search.to_lowercase());
         let filter = self.filter;
         let installed_statuses = self.installed_statuses.clone();
 
@@ -221,7 +210,6 @@ impl AgentRegistryPage {
                 matches_search && matches_filter
             })
             .map(|(index, _)| index)
-            .take(MAX_FILTERED_AGENT_REGISTRY_RESULTS)
             .collect();
 
         self.filtered_registry_indices = filtered_indices;
@@ -261,7 +249,7 @@ impl AgentRegistryPage {
             .border_1()
             .border_color(cx.theme().colors().border)
             .rounded_md()
-            .child(Icon::new(dx_icon(DxUiIcon::Search)).color(Color::Muted))
+            .child(Icon::new(IconName::MagnifyingGlass).color(Color::Muted))
             .child(self.render_text_input(&self.query_editor, cx))
     }
 
@@ -526,19 +514,27 @@ impl AgentRegistryPage {
                             .size(IconSize::Small)
                             .color(Color::Muted),
                     )
-                    .on_click(move |_, _, cx| {
-                        let agent_id = agent_id.clone();
-                        update_settings_file(fs.clone(), cx, move |settings, _| {
-                            let agent_servers = settings.agent_servers.get_or_insert_default();
-                            agent_servers.entry(agent_id).or_insert_with(|| {
-                                settings::CustomAgentServerSettings::Registry {
-                                    default_mode: None,
-                                    env: Default::default(),
-                                    default_config_options: HashMap::default(),
-                                    favorite_config_option_values: HashMap::default(),
-                                }
-                            });
+                    .on_click(move |_, window, cx| {
+                        update_settings_file(fs.clone(), cx, {
+                            let agent_id = agent_id.clone();
+                            move |settings, _| {
+                                let agent_servers = settings.agent_servers.get_or_insert_default();
+                                agent_servers.entry(agent_id).or_insert_with(|| {
+                                    settings::CustomAgentServerSettings::Registry {
+                                        default_mode: None,
+                                        env: Default::default(),
+                                        default_config_options: HashMap::default(),
+                                        favorite_config_option_values: HashMap::default(),
+                                    }
+                                });
+                            }
                         });
+                        window.dispatch_action(
+                            Box::new(zed_actions::agent::SelectAgent {
+                                agent: agent_id.clone(),
+                            }),
+                            cx,
+                        );
                     })
             }
             RegistryInstallStatus::InstalledRegistry => {
@@ -653,10 +649,7 @@ impl Render for AgentRegistryPage {
                     ),
             )
             .child(v_flex().px_4().size_full().overflow_y_hidden().map(|this| {
-                let count = self
-                    .filtered_registry_indices
-                    .len()
-                    .min(MAX_DISPLAYED_AGENT_REGISTRY_RESULTS);
+                let count = self.filtered_registry_indices.len();
                 if count == 0 {
                     this.child(self.render_empty_state(cx)).into_any_element()
                 } else {

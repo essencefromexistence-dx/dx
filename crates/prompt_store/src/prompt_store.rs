@@ -6,24 +6,17 @@ use chrono::{DateTime, Utc};
 use collections::HashMap;
 use futures::FutureExt as _;
 use futures::future::Shared;
-use fuzzy::StringMatchCandidate;
-use gpui::{
-    App, AppContext, Context, Entity, EventEmitter, Global, ReadGlobal, SharedString, Task,
-};
+
+use gpui::{App, AppContext, Entity, Global, ReadGlobal, SharedString, Task};
 use heed::{
     Database, RoTxn,
     types::{SerdeBincode, SerdeJson, Str},
 };
 use parking_lot::RwLock;
 pub use prompts::*;
-use rope::Rope;
+
 use serde::{Deserialize, Serialize};
-use std::{
-    cmp::Reverse,
-    future::Future,
-    path::PathBuf,
-    sync::{Arc, atomic::AtomicBool},
-};
+use std::{future::Future, path::PathBuf, sync::Arc};
 use strum::{EnumIter, IntoEnumIterator as _};
 use text::LineEnding;
 use util::ResultExt;
@@ -122,15 +115,6 @@ impl PromptId {
     pub fn is_built_in(&self) -> bool {
         matches!(self, Self::BuiltIn { .. })
     }
-
-    pub fn can_edit(&self) -> bool {
-        match self {
-            Self::User { .. } => true,
-            Self::BuiltIn(builtin) => match builtin {
-                BuiltInPrompt::CommitMessage => true,
-            },
-        }
-    }
 }
 
 impl From<BuiltInPrompt> for PromptId {
@@ -173,13 +157,8 @@ impl std::fmt::Display for PromptId {
 pub struct PromptStore {
     env: heed::Env,
     metadata_cache: RwLock<MetadataCache>,
-    metadata: Database<SerdeJson<PromptId>, SerdeJson<PromptMetadata>>,
     bodies: Database<SerdeJson<PromptId>, Str>,
 }
-
-pub struct PromptsUpdatedEvent;
-
-impl EventEmitter<PromptsUpdatedEvent> for PromptStore {}
 
 #[derive(Default)]
 struct MetadataCache {
@@ -218,21 +197,6 @@ impl MetadataCache {
         }
         cache.sort();
         Ok(cache)
-    }
-
-    fn insert(&mut self, metadata: PromptMetadata) {
-        self.metadata_by_id.insert(metadata.id, metadata.clone());
-        if let Some(old_metadata) = self.metadata.iter_mut().find(|m| m.id == metadata.id) {
-            *old_metadata = metadata;
-        } else {
-            self.metadata.push(metadata);
-        }
-        self.sort();
-    }
-
-    fn remove(&mut self, id: PromptId) {
-        self.metadata.retain(|metadata| metadata.id != id);
-        self.metadata_by_id.remove(&id);
     }
 
     fn sort(&mut self) {
@@ -275,7 +239,6 @@ impl PromptStore {
             Ok(PromptStore {
                 env: db_env,
                 metadata_cache: RwLock::new(metadata_cache),
-                metadata,
                 bodies,
             })
         })
@@ -362,219 +325,6 @@ impl PromptStore {
 
     pub fn all_prompt_metadata(&self) -> Vec<PromptMetadata> {
         self.metadata_cache.read().metadata.clone()
-    }
-
-    pub fn default_prompt_metadata(&self) -> Vec<PromptMetadata> {
-        return self
-            .metadata_cache
-            .read()
-            .metadata
-            .iter()
-            .filter(|metadata| metadata.default)
-            .cloned()
-            .collect::<Vec<_>>();
-    }
-
-    pub fn delete(&self, id: PromptId, cx: &Context<Self>) -> Task<Result<()>> {
-        self.metadata_cache.write().remove(id);
-
-        let db_connection = self.env.clone();
-        let bodies = self.bodies;
-        let metadata = self.metadata;
-
-        let task = cx.background_spawn(async move {
-            let mut txn = db_connection.write_txn()?;
-
-            metadata.delete(&mut txn, &id)?;
-            bodies.delete(&mut txn, &id)?;
-
-            if let PromptId::User { uuid } = id {
-                let prompt_id_v1 = PromptIdV1::from(uuid);
-
-                if let Some(metadata_v1_db) = db_connection
-                    .open_database::<SerdeBincode<PromptIdV1>, SerdeBincode<()>>(
-                        &txn,
-                        Some("metadata"),
-                    )?
-                {
-                    metadata_v1_db.delete(&mut txn, &prompt_id_v1)?;
-                }
-
-                if let Some(bodies_v1_db) = db_connection
-                    .open_database::<SerdeBincode<PromptIdV1>, SerdeBincode<()>>(
-                        &txn,
-                        Some("bodies"),
-                    )?
-                {
-                    bodies_v1_db.delete(&mut txn, &prompt_id_v1)?;
-                }
-            }
-
-            txn.commit()?;
-            anyhow::Ok(())
-        });
-
-        cx.spawn(async move |this, cx| {
-            task.await?;
-            this.update(cx, |_, cx| cx.emit(PromptsUpdatedEvent)).ok();
-            anyhow::Ok(())
-        })
-    }
-
-    pub fn metadata(&self, id: PromptId) -> Option<PromptMetadata> {
-        self.metadata_cache.read().metadata_by_id.get(&id).cloned()
-    }
-
-    pub fn first(&self) -> Option<PromptMetadata> {
-        self.metadata_cache.read().metadata.first().cloned()
-    }
-
-    pub fn id_for_title(&self, title: &str) -> Option<PromptId> {
-        let metadata_cache = self.metadata_cache.read();
-        let metadata = metadata_cache
-            .metadata
-            .iter()
-            .find(|metadata| metadata.title.as_deref() == Some(title))?;
-        Some(metadata.id)
-    }
-
-    pub fn search(
-        &self,
-        query: String,
-        cancellation_flag: Arc<AtomicBool>,
-        cx: &App,
-    ) -> Task<Vec<PromptMetadata>> {
-        let cached_metadata = self.metadata_cache.read().metadata.clone();
-        let executor = cx.background_executor().clone();
-        cx.background_spawn(async move {
-            let mut matches = if query.is_empty() {
-                cached_metadata
-            } else {
-                let candidates = cached_metadata
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(ix, metadata)| {
-                        Some(StringMatchCandidate::new(ix, metadata.title.as_ref()?))
-                    })
-                    .collect::<Vec<_>>();
-                let matches = fuzzy::match_strings(
-                    &candidates,
-                    &query,
-                    false,
-                    true,
-                    100,
-                    &cancellation_flag,
-                    executor,
-                )
-                .await;
-                matches
-                    .into_iter()
-                    .filter_map(|mat| cached_metadata.get(mat.candidate_id).cloned())
-                    .collect()
-            };
-            matches.sort_by_key(|metadata| Reverse(metadata.default));
-            matches
-        })
-    }
-
-    pub fn save(
-        &self,
-        id: PromptId,
-        title: Option<SharedString>,
-        default: bool,
-        body: Rope,
-        cx: &Context<Self>,
-    ) -> Task<Result<()>> {
-        if !id.can_edit() {
-            return Task::ready(Err(anyhow!("this prompt cannot be edited")));
-        }
-
-        let body = body.to_string();
-        let is_default_content = id
-            .as_built_in()
-            .is_some_and(|builtin| body.trim() == builtin.default_content().trim());
-
-        let metadata = if let Some(builtin) = id.as_built_in() {
-            PromptMetadata::builtin(builtin)
-        } else {
-            PromptMetadata {
-                id,
-                title,
-                default,
-                saved_at: Utc::now(),
-            }
-        };
-
-        self.metadata_cache.write().insert(metadata.clone());
-
-        let db_connection = self.env.clone();
-        let bodies = self.bodies;
-        let metadata_db = self.metadata;
-
-        let task = cx.background_spawn(async move {
-            let mut txn = db_connection.write_txn()?;
-
-            if is_default_content {
-                metadata_db.delete(&mut txn, &id)?;
-                bodies.delete(&mut txn, &id)?;
-            } else {
-                metadata_db.put(&mut txn, &id, &metadata)?;
-                bodies.put(&mut txn, &id, &body)?;
-            }
-
-            txn.commit()?;
-
-            anyhow::Ok(())
-        });
-
-        cx.spawn(async move |this, cx| {
-            task.await?;
-            this.update(cx, |_, cx| cx.emit(PromptsUpdatedEvent)).ok();
-            anyhow::Ok(())
-        })
-    }
-
-    pub fn save_metadata(
-        &self,
-        id: PromptId,
-        mut title: Option<SharedString>,
-        default: bool,
-        cx: &Context<Self>,
-    ) -> Task<Result<()>> {
-        let mut cache = self.metadata_cache.write();
-
-        if !id.can_edit() {
-            title = cache
-                .metadata_by_id
-                .get(&id)
-                .and_then(|metadata| metadata.title.clone());
-        }
-
-        let prompt_metadata = PromptMetadata {
-            id,
-            title,
-            default,
-            saved_at: Utc::now(),
-        };
-
-        cache.insert(prompt_metadata.clone());
-
-        let db_connection = self.env.clone();
-        let metadata = self.metadata;
-
-        let task = cx.background_spawn(async move {
-            let mut txn = db_connection.write_txn()?;
-            metadata.put(&mut txn, &id, &prompt_metadata)?;
-            txn.commit()?;
-
-            anyhow::Ok(())
-        });
-
-        cx.spawn(async move |this, cx| {
-            task.await?;
-            this.update(cx, |_, cx| cx.emit(PromptsUpdatedEvent)).ok();
-            anyhow::Ok(())
-        })
     }
 }
 

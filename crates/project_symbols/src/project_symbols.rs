@@ -279,7 +279,7 @@ impl PickerDelegate for ProjectSymbolsDelegate {
                 if self.show_worktree_root_name
                     && let Some(worktree) = project.worktree_for_id(project_path.worktree_id, cx)
                 {
-                    path = worktree.read(cx).root_name().join(&path);
+                    path = worktree.read(cx).root_name().join(&path).into();
                 }
                 path.display(path_style).into_owned().into()
             }

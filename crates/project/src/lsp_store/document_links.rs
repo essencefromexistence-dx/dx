@@ -4,8 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context as _;
-use clock::Global;
-use collections::HashMap;
+use collections::{HashMap, HashSet};
 use futures::FutureExt as _;
 use futures::future::{Shared, join_all};
 use gpui::{AppContext as _, AsyncApp, Context, Entity, SharedString, Task};
@@ -18,11 +17,10 @@ use text::{Anchor, BufferId, ToPointUtf16 as _};
 use util::ResultExt as _;
 
 use crate::lsp_command::{GetDocumentLinks, LspCommand as _};
-use crate::lsp_store::LspStore;
+use crate::lsp_store::{
+    LspStore, LspStoreEvent, RunningFetch, missing_servers_to_query, next_lsp_fetch_id,
+};
 use crate::project_settings::ProjectSettings;
-
-const MAX_DOCUMENT_LINK_LSP_RESPONSES: usize = 64;
-const MAX_DOCUMENT_LINKS_PER_LSP_RESPONSE: usize = 10_000;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct DocumentLinkId(u64);
@@ -46,35 +44,32 @@ pub type DocumentLinkResolveTask = Shared<Task<Option<(DocumentLinkId, LspDocume
 #[derive(Debug, Default)]
 pub(super) struct DocumentLinksData {
     pub(super) links: BufferDocumentLinks,
+    fetched_servers: HashSet<LanguageServerId>,
     pub(super) next_id: u64,
-    links_update: Option<(Global, DocumentLinksTask)>,
+    links_update: Option<RunningFetch<DocumentLinksTask>>,
     pub(super) link_resolves: HashMap<(LanguageServerId, DocumentLinkId), DocumentLinkResolveTask>,
 }
 
 impl DocumentLinksData {
     pub(super) fn remove_server_data(&mut self, server_id: LanguageServerId) {
         self.links.remove(&server_id);
+        self.fetched_servers.remove(&server_id);
         self.link_resolves
             .retain(|(resolved_server, _), _| *resolved_server != server_id);
-    }
-}
-
-fn cap_document_links_for_response(
-    server_id: LanguageServerId,
-    links: Vec<LspDocumentLink>,
-) -> Vec<LspDocumentLink> {
-    if links.len() > MAX_DOCUMENT_LINKS_PER_LSP_RESPONSE {
-        log::warn!(
-            "Skipping {} document links for server {server_id} over cap {}",
-            links.len() - MAX_DOCUMENT_LINKS_PER_LSP_RESPONSE,
-            MAX_DOCUMENT_LINKS_PER_LSP_RESPONSE
-        );
+        RunningFetch::discard_if_queried(&mut self.links_update, server_id);
     }
 
-    links
-        .into_iter()
-        .take(MAX_DOCUMENT_LINKS_PER_LSP_RESPONSE)
-        .collect()
+    fn evict(&mut self, for_server: Option<LanguageServerId>) {
+        match for_server {
+            Some(server_id) => self.remove_server_data(server_id),
+            None => {
+                self.links.clear();
+                self.fetched_servers.clear();
+                self.link_resolves.clear();
+            }
+        }
+        self.links_update = None;
+    }
 }
 
 /// Mirror of [`crate::lsp_store::ResolvedHint`] for document links: callers
@@ -87,6 +82,43 @@ pub enum ResolvedDocumentLink {
 }
 
 impl LspStore {
+    pub(super) fn refresh_document_links(
+        &mut self,
+        for_server: Option<LanguageServerId>,
+        cx: &mut Context<Self>,
+    ) {
+        for lsp_data in self.lsp_data.values_mut() {
+            if let Some(document_links) = &mut lsp_data.document_links {
+                document_links.evict(for_server);
+            }
+        }
+
+        cx.emit(LspStoreEvent::RefreshDocumentLinks {
+            server_id: for_server,
+        });
+        if let Some((downstream_client, project_id)) = self.downstream_client.as_ref() {
+            downstream_client
+                .send(proto::RefreshDocumentLinks {
+                    project_id: *project_id,
+                    server_id: for_server.map(|server_id| server_id.to_proto()),
+                })
+                .context("sending refresh document links downstream")
+                .log_err();
+        }
+    }
+
+    pub(super) async fn handle_refresh_document_links(
+        lsp_store: Entity<Self>,
+        envelope: TypedEnvelope<proto::RefreshDocumentLinks>,
+        mut cx: AsyncApp,
+    ) -> anyhow::Result<proto::Ack> {
+        lsp_store.update(&mut cx, |lsp_store, cx| {
+            let server_id = envelope.payload.server_id.map(LanguageServerId::from_proto);
+            lsp_store.refresh_document_links(server_id, cx);
+        });
+        Ok(proto::Ack {})
+    }
+
     /// `Some(..)` means the underlying state was actually refreshed; `None`
     /// means the fetch was skipped or failed, and the caller should keep its
     /// previous data.
@@ -98,24 +130,31 @@ impl LspStore {
         let version_queried_for = buffer.read(cx).version();
         let buffer_id = buffer.read(cx).remote_id();
 
-        let current_language_servers = self.as_local().map(|local| {
-            local
-                .buffers_opened_in_servers
-                .get(&buffer_id)
-                .cloned()
-                .unwrap_or_default()
-        });
+        let current_servers = self.relevant_server_ids_for_capability_check(buffer, cx);
 
-        if let Some(lsp_data) = self.current_lsp_data(buffer_id)
-            && let Some(cached) = &lsp_data.document_links
-            && !version_queried_for.changed_since(&lsp_data.buffer_version)
-        {
-            let has_different_servers =
-                current_language_servers.is_some_and(|current_language_servers| {
-                    current_language_servers != cached.links.keys().copied().collect()
-                });
-            if !has_different_servers {
-                return Task::ready(Some(cached.links.clone()));
+        let mut servers_to_query = None;
+        if let Some(lsp_data) = self.current_lsp_data(buffer_id) {
+            if !version_queried_for.changed_since(&lsp_data.buffer_version)
+                && let Some(cached) = &mut lsp_data.document_links
+            {
+                match missing_servers_to_query(
+                    &mut cached.links,
+                    &mut cached.fetched_servers,
+                    &current_servers,
+                ) {
+                    Some(missing_servers) => servers_to_query = Some(missing_servers),
+                    None => return Task::ready(Some(cached.links.clone())),
+                }
+            }
+            if let Some(document_links) = &lsp_data.document_links
+                && let Some(running) = &document_links.links_update
+                && !version_queried_for.changed_since(&running.version)
+                && servers_to_query
+                    .as_ref()
+                    .is_none_or(|missing| missing.is_subset(&running.servers))
+            {
+                let running = running.task.clone();
+                return cx.background_spawn(async move { running.await.ok().flatten() });
             }
         }
 
@@ -123,93 +162,104 @@ impl LspStore {
             .latest_lsp_data(buffer, cx)
             .document_links
             .get_or_insert_default();
-        if let Some((updating_for, running_update)) = &links_lsp_data.links_update
-            && !version_queried_for.changed_since(updating_for)
-        {
-            let running = running_update.clone();
-            return cx.background_spawn(async move { running.await.ok().flatten() });
-        }
-
+        let fetch_id = next_lsp_fetch_id();
+        let queried_servers = servers_to_query
+            .clone()
+            .unwrap_or_else(|| current_servers.clone());
         let buffer = buffer.clone();
         let query_version = version_queried_for.clone();
         let new_task = cx
-            .spawn(async move |lsp_store, cx| {
-                cx.background_executor()
-                    .timer(Duration::from_millis(30))
-                    .await;
+            .spawn({
+                let queried_servers = queried_servers.clone();
+                async move |lsp_store, cx| {
+                    cx.background_executor()
+                        .timer(Duration::from_millis(30))
+                        .await;
 
-                let fetched = lsp_store
-                    .update(cx, |lsp_store, cx| {
-                        lsp_store.fetch_document_links_for_buffer(&buffer, cx)
-                    })
-                    .map_err(Arc::new)?
-                    .await
-                    .context("fetching document links")
-                    .map_err(Arc::new);
+                    let fetched = lsp_store
+                        .update(cx, |lsp_store, cx| {
+                            lsp_store.fetch_document_links_for_buffer(&buffer, servers_to_query, cx)
+                        })
+                        .map_err(Arc::new)?
+                        .await
+                        .context("fetching document links")
+                        .map_err(Arc::new);
 
-                let fetched = match fetched {
-                    Ok(fetched) => fetched,
-                    Err(e) => {
-                        lsp_store
-                            .update(cx, |lsp_store, _| {
-                                if let Some(lsp_data) = lsp_store.lsp_data.get_mut(&buffer_id)
-                                    && let Some(document_links) = &mut lsp_data.document_links
-                                {
-                                    document_links.links_update = None;
+                    let fetched = match fetched {
+                        Ok(fetched) => fetched,
+                        Err(e) => {
+                            lsp_store
+                                .update(cx, |lsp_store, _| {
+                                    if let Some(lsp_data) = lsp_store.lsp_data.get_mut(&buffer_id)
+                                        && let Some(document_links) = &mut lsp_data.document_links
+                                    {
+                                        RunningFetch::take_finished(
+                                            &mut document_links.links_update,
+                                            fetch_id,
+                                        );
+                                    }
+                                })
+                                .ok();
+                            return Err(e);
+                        }
+                    };
+
+                    lsp_store
+                        .update(cx, |lsp_store, cx| {
+                            let lsp_data = lsp_store.latest_lsp_data(&buffer, cx);
+                            let links_data = lsp_data.document_links.get_or_insert_default();
+                            if !RunningFetch::take_finished(&mut links_data.links_update, fetch_id)
+                            {
+                                return Some(links_data.links.clone());
+                            }
+
+                            let Some(fetched_links) = fetched else {
+                                return None;
+                            };
+
+                            let mut tagged = BufferDocumentLinks::default();
+                            for (server_id, server_links) in fetched_links {
+                                let mut by_id = HashMap::default();
+                                by_id.reserve(server_links.len());
+                                for link in server_links {
+                                    let id = DocumentLinkId(links_data.next_id);
+                                    links_data.next_id += 1;
+                                    by_id.insert(id, link);
                                 }
-                            })
-                            .ok();
-                        return Err(e);
-                    }
-                };
-
-                lsp_store
-                    .update(cx, |lsp_store, cx| {
-                        let lsp_data = lsp_store.latest_lsp_data(&buffer, cx);
-                        let links_data = lsp_data.document_links.get_or_insert_default();
-                        links_data.links_update = None;
-
-                        let Some(fetched_links) = fetched else {
-                            return None;
-                        };
-
-                        let mut tagged = BufferDocumentLinks::default();
-                        for (server_id, server_links) in fetched_links {
-                            let server_links =
-                                cap_document_links_for_response(server_id, server_links);
-                            let mut by_id = HashMap::default();
-                            by_id.reserve(server_links.len());
-                            for link in server_links {
-                                let id = DocumentLinkId(links_data.next_id);
-                                links_data.next_id += 1;
-                                by_id.insert(id, link);
+                                tagged.insert(server_id, by_id);
                             }
-                            tagged.insert(server_id, by_id);
-                        }
 
-                        if lsp_data.buffer_version == query_version {
-                            for (server_id, new_links) in &tagged {
-                                links_data.links.insert(*server_id, new_links.clone());
+                            if lsp_data.buffer_version == query_version {
+                                for (server_id, new_links) in &tagged {
+                                    links_data.links.insert(*server_id, new_links.clone());
+                                }
+                                links_data.fetched_servers.extend(queried_servers);
+                                // The newly inserted links are unresolved by definition; drop any
+                                // pending resolves that were keyed against the prior entries for
+                                // those servers so callers re-issue against the fresh ids.
+                                links_data.link_resolves.clear();
+                                Some(links_data.links.clone())
+                            } else if !lsp_data.buffer_version.changed_since(&query_version) {
+                                lsp_data.buffer_version = query_version;
+                                links_data.links = tagged;
+                                links_data.fetched_servers = queried_servers;
+                                links_data.link_resolves.clear();
+                                Some(links_data.links.clone())
+                            } else {
+                                None
                             }
-                            // The newly inserted links are unresolved by definition; drop any
-                            // pending resolves that were keyed against the prior entries for
-                            // those servers so callers re-issue against the fresh ids.
-                            links_data.link_resolves.clear();
-                            Some(links_data.links.clone())
-                        } else if !lsp_data.buffer_version.changed_since(&query_version) {
-                            lsp_data.buffer_version = query_version;
-                            links_data.links = tagged;
-                            links_data.link_resolves.clear();
-                            Some(links_data.links.clone())
-                        } else {
-                            None
-                        }
-                    })
-                    .map_err(Arc::new)
+                        })
+                        .map_err(Arc::new)
+                }
             })
             .shared();
 
-        links_lsp_data.links_update = Some((version_queried_for, new_task.clone()));
+        links_lsp_data.links_update = Some(RunningFetch {
+            id: fetch_id,
+            version: version_queried_for,
+            servers: queried_servers,
+            task: new_task.clone(),
+        });
 
         cx.background_spawn(async move { new_task.await.ok().flatten() })
     }
@@ -224,9 +274,14 @@ impl LspStore {
     fn fetch_document_links_for_buffer(
         &mut self,
         buffer: &Entity<Buffer>,
+        for_servers: Option<HashSet<LanguageServerId>>,
         cx: &mut Context<Self>,
     ) -> Task<anyhow::Result<Option<HashMap<LanguageServerId, Vec<LspDocumentLink>>>>> {
         if let Some((client, project_id)) = self.upstream_client() {
+            // No `for_servers` filter is forwarded: unlike its siblings, `GetDocumentLinks`
+            // is answered from the host's own `fetch_document_links` cache with the full
+            // per-server map, to spare the LSP request (see collab's
+            // `test_lsp_document_links`), so filtering could not reduce the work anyway.
             let request = GetDocumentLinks;
             if !self.is_capable_for_proto_request(buffer, &request, cx) {
                 return Task::ready(Ok(None));
@@ -251,39 +306,25 @@ impl LspStore {
                     return Ok(None);
                 };
 
-                let response_count = responses.payload.len();
-                if response_count > MAX_DOCUMENT_LINK_LSP_RESPONSES {
-                    log::warn!(
-                        "Skipping {} document link LSP responses over cap {}",
-                        response_count - MAX_DOCUMENT_LINK_LSP_RESPONSES,
-                        MAX_DOCUMENT_LINK_LSP_RESPONSES
-                    );
-                }
-                let response_tasks = responses
-                    .payload
-                    .into_iter()
-                    .take(MAX_DOCUMENT_LINK_LSP_RESPONSES)
-                    .map(|response| {
-                        let lsp_store = lsp_store.clone();
-                        let buffer = buffer.clone();
-                        let cx = cx.clone();
-                        async move {
-                            let server_id = LanguageServerId::from_proto(response.server_id);
-                            let links = GetDocumentLinks
-                                .response_from_proto(response.response, lsp_store, buffer, cx)
-                                .await;
-                            (server_id, links)
-                        }
-                    });
-                let document_links = join_all(response_tasks).await;
+                let document_links = join_all(responses.payload.into_iter().map(|response| {
+                    let lsp_store = lsp_store.clone();
+                    let buffer = buffer.clone();
+                    let cx = cx.clone();
+                    async move {
+                        let server_id = LanguageServerId::from_proto(response.server_id);
+                        let links = GetDocumentLinks
+                            .response_from_proto(response.response, lsp_store, buffer, cx)
+                            .await;
+                        (server_id, links)
+                    }
+                }))
+                .await;
 
                 let mut has_errors = false;
                 let result = document_links
                     .into_iter()
                     .filter_map(|(server_id, links)| match links {
-                        Ok(links) => {
-                            Some((server_id, cap_document_links_for_response(server_id, links)))
-                        }
+                        Ok(links) => Some((server_id, links)),
                         Err(e) => {
                             has_errors = true;
                             log::error!(
@@ -300,27 +341,14 @@ impl LspStore {
                 Ok(Some(result))
             })
         } else {
-            let links_task =
-                self.request_multiple_lsp_locally(buffer, None::<usize>, GetDocumentLinks, cx);
-            cx.background_spawn(async move {
-                let links = links_task.await;
-                if links.len() > MAX_DOCUMENT_LINK_LSP_RESPONSES {
-                    log::warn!(
-                        "Skipping {} local document link LSP responses over cap {}",
-                        links.len() - MAX_DOCUMENT_LINK_LSP_RESPONSES,
-                        MAX_DOCUMENT_LINK_LSP_RESPONSES
-                    );
-                }
-                Ok(Some(
-                    links
-                        .into_iter()
-                        .take(MAX_DOCUMENT_LINK_LSP_RESPONSES)
-                        .map(|(server_id, links)| {
-                            (server_id, cap_document_links_for_response(server_id, links))
-                        })
-                        .collect(),
-                ))
-            })
+            let links_task = self.request_filtered_lsp_locally(
+                buffer,
+                None::<usize>,
+                GetDocumentLinks,
+                for_servers.as_ref(),
+                cx,
+            );
+            cx.background_spawn(async move { Ok(Some(links_task.await.into_iter().collect())) })
         }
     }
 

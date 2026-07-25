@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use acp_thread::AgentSessionListRequest;
 use agent::ThreadStore;
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use chrono::Utc;
 use collections::{HashMap, HashSet};
 use db::kvp::Dismissable;
@@ -14,6 +14,7 @@ use gpui::{
     Focusable, MouseDownEvent, Render, SharedString, Task, TaskExt, WeakEntity, Window,
     pulsating_between,
 };
+use itertools::Itertools as _;
 use notifications::status_toast::StatusToast;
 use project::{AgentId, AgentRegistryStore, AgentServerStore};
 use release_channel::ReleaseChannel;
@@ -30,21 +31,6 @@ use crate::{
     agent_connection_store::AgentConnectionStore,
     thread_metadata_store::{ThreadId, ThreadMetadata, ThreadMetadataStore, WorktreePaths},
 };
-
-const THREAD_IMPORT_AGENT_ENTRY_LIMIT: usize = 128;
-const THREAD_IMPORT_AGENT_SORT_KEY_CHAR_LIMIT: usize = 128;
-const THREAD_IMPORT_AGENT_ROW_LIMIT: usize = 128;
-const THREAD_IMPORT_CONNECTION_STORE_LIMIT: usize = 16;
-const THREAD_IMPORT_SESSION_LIMIT_PER_AGENT: usize = 1_000;
-const THREAD_IMPORT_THREAD_INSERT_LIMIT: usize = 2_000;
-
-fn thread_import_sort_key(display_name: &str) -> String {
-    display_name
-        .chars()
-        .take(THREAD_IMPORT_AGENT_SORT_KEY_CHAR_LIMIT)
-        .collect::<String>()
-        .to_lowercase()
-}
 
 pub struct AcpThreadImportOnboarding;
 pub struct CrossChannelImportOnboarding;
@@ -165,10 +151,9 @@ impl ThreadImportModal {
     ) -> Self {
         AcpThreadImportOnboarding::dismiss(cx);
 
-        let mut agent_entries = agent_server_store
+        let agent_entries = agent_server_store
             .read(cx)
             .external_agents()
-            .take(THREAD_IMPORT_AGENT_ENTRY_LIMIT)
             .map(|agent_id| {
                 let display_name = agent_server_store
                     .read(cx)
@@ -196,9 +181,8 @@ impl ThreadImportModal {
                     icon_path,
                 }
             })
+            .sorted_unstable_by_key(|entry| entry.display_name.to_lowercase())
             .collect::<Vec<_>>();
-        agent_entries
-            .sort_unstable_by_key(|entry| thread_import_sort_key(entry.display_name.as_ref()));
 
         let this = Self {
             focus_handle: cx.focus_handle(),
@@ -456,7 +440,6 @@ impl Render for ThreadImportModal {
         let agent_rows = self
             .agent_entries
             .iter()
-            .take(THREAD_IMPORT_AGENT_ROW_LIMIT)
             .enumerate()
             .map(|(ix, entry)| {
                 let status = self
@@ -589,7 +572,7 @@ impl Render for ThreadImportModal {
                         ModalHeader::new()
                             .headline("Import External Agent Threads")
                             .description(
-                                "Import threads from agents like Claude Agent, Codex, and more, whether started in Dx or another client. \
+                                "Import threads from agents like Claude Agent, Codex, and more, whether started in Zed or another client. \
                                 Choose which agents to include, and their threads will appear in your thread history."
                             )
                             .show_dismiss_button(true),
@@ -663,10 +646,6 @@ fn resolve_agent_connection_stores(
     let mut included_local_store = false;
 
     for workspace in multi_workspace.read(cx).workspaces() {
-        if stores.len() >= THREAD_IMPORT_CONNECTION_STORE_LIMIT {
-            break;
-        }
-
         let workspace = workspace.read(cx);
         let project = workspace.project().read(cx);
 
@@ -821,21 +800,13 @@ async fn collect_all_sessions(
     let mut sessions = Vec::new();
     let mut cursor: Option<String> = None;
     loop {
-        if sessions.len() >= THREAD_IMPORT_SESSION_LIMIT_PER_AGENT {
-            break;
-        }
-
         let request = AgentSessionListRequest {
             cursor: cursor.clone(),
             ..Default::default()
         };
         let task = cx.update(|cx| list.list_sessions(request, cx));
         let response = task.await?;
-        let remaining = THREAD_IMPORT_SESSION_LIMIT_PER_AGENT.saturating_sub(sessions.len());
-        sessions.extend(response.sessions.into_iter().take(remaining));
-        if sessions.len() >= THREAD_IMPORT_SESSION_LIMIT_PER_AGENT {
-            break;
-        }
+        sessions.extend(response.sessions);
         match response.next_cursor {
             Some(next) if Some(&next) != cursor.as_ref() => cursor = Some(next),
             _ => break,
@@ -892,13 +863,7 @@ fn collect_importable_threads(
         sessions,
     } in sessions_by_agent
     {
-        if to_insert.len() >= THREAD_IMPORT_THREAD_INSERT_LIMIT {
-            break;
-        }
         for session in sessions {
-            if to_insert.len() >= THREAD_IMPORT_THREAD_INSERT_LIMIT {
-                break;
-            }
             if !existing_sessions.insert(session.session_id.clone()) {
                 continue;
             }
@@ -954,12 +919,7 @@ fn import_threads_from_other_channels_in(
                     let new_threads = threads
                         .into_iter()
                         .filter(|thread| !existing_thread_ids.contains(&thread.thread_id));
-                    let remaining =
-                        THREAD_IMPORT_THREAD_INSERT_LIMIT.saturating_sub(imported_threads.len());
-                    imported_threads.extend(new_threads.take(remaining));
-                    if imported_threads.len() >= THREAD_IMPORT_THREAD_INSERT_LIMIT {
-                        break;
-                    }
+                    imported_threads.extend(new_threads);
                 }
                 Err(error) => {
                     log::warn!(

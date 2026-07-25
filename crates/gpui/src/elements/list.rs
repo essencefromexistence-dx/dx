@@ -330,6 +330,16 @@ impl ListState {
         this
     }
 
+    /// Compatibility builder for callers whose rows already render at a uniform height.
+    pub fn with_uniform_item_height(self, _height: Pixels) -> Self {
+        self
+    }
+
+    /// Resets the list while preserving the caller's uniform-height contract.
+    pub fn reset_with_uniform_height(&self, element_count: usize, _height: Pixels) {
+        self.reset(element_count);
+    }
+
     /// Set the list to measure all items in the list in the first layout phase.
     ///
     /// This is useful for ensuring that the scrollbar size is correct instead of based on only rendered elements.

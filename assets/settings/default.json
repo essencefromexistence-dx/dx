@@ -1827,6 +1827,7 @@
     // in the currently focused line.
     "inline_blame": {
       "enabled": true,
+      "location": "inline",
       // Sets a delay after which the inline blame information is shown.
       // Delay is restarted with every cursor movement.
       "delay_ms": 0,
@@ -2078,6 +2079,8 @@
     "copy_on_select": false,
     // Whether to keep the text selection after copying it to the clipboard.
     "keep_selection_on_copy": true,
+    // Whether modifier-click opens links while terminal mouse reporting is enabled.
+    "open_links_in_mouse_mode": true,
     // Whether to show the terminal button in the status bar
     "button": true,
     // Any key-value pairs added to this list will be added to the terminal's
@@ -2772,6 +2775,8 @@
     //
     // Default: 120
     "request_timeout": 120,
+    // Maximum line length processed by language servers.
+    "max_buffer_line_length": 20000,
     "notifications": {
       // Timeout in milliseconds for automatically dismissing language server notifications.
       // Set to 0 to disable auto-dismiss.

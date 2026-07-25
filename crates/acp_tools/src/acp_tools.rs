@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt::Display, rc::Rc, sync::Arc};
 
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use agent_servers::{AcpDebugMessage, AcpDebugMessageContent, AcpDebugMessageDirection};
 use agent_ui::agent_connection_store::AgentConnectionStatus;
 use agent_ui::{Agent, AgentConnectionStore, AgentPanel};
@@ -25,8 +25,6 @@ use workspace::{
 };
 
 actions!(dev, [OpenAcpLogs]);
-
-const MAX_REQUEST_ID_CHIP_CHARS: usize = 96;
 
 pub fn init(cx: &mut App) {
     cx.observe_new(
@@ -466,9 +464,10 @@ impl AcpTools {
                             .visible_on_hover("message"),
                     )
                     .children(
-                        message.request_id.as_ref().map(|req_id| {
-                            div().child(ui::Chip::new(request_id_chip_label(req_id)))
-                        }),
+                        message
+                            .request_id
+                            .as_ref()
+                            .map(|req_id| div().child(ui::Chip::new(req_id.to_string()))),
                     ),
             )
             // I'm aware using markdown is a hack. Trying to get something working for the demo.
@@ -647,17 +646,6 @@ fn expanded_params_md(
     let params_json = serde_json::to_string_pretty(params).unwrap_or_default();
     let params_md = format!("```json\n{}\n```", params_json);
     cx.new(|cx| Markdown::new(params_md.into(), Some(language_registry.clone()), None, cx))
-}
-
-fn request_id_chip_label(request_id: &acp::RequestId) -> SharedString {
-    let mut label = request_id.to_string();
-    let Some((truncate_at, _)) = label.char_indices().nth(MAX_REQUEST_ID_CHIP_CHARS) else {
-        return label.into();
-    };
-
-    label.truncate(truncate_at);
-    label.push_str("...");
-    label.into()
 }
 
 enum MessageType {

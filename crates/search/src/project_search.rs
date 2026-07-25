@@ -465,7 +465,10 @@ impl ProjectSearch {
         self.match_ranges.clear();
         self.search_state = SearchState::Running(SearchActivity::Searching);
         self.pending_search = Some(cx.spawn(async move |project_search, cx| {
-            let SearchResults { rx, _task_handle } = search;
+            let SearchResults {
+                rx,
+                task_handle: _task_handle,
+            } = search;
 
             let mut matches = pin!(rx.ready_chunks(1024));
             project_search

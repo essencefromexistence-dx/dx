@@ -1415,30 +1415,20 @@ impl Editor {
         let project = self.project()?;
         let buffer = project.read(cx).buffer_for_id(buffer_id, cx)?;
         let diff = self.buffer.read(cx).diff_for(buffer_id)?;
-        let buffer_snapshot = buffer.read(cx).snapshot();
-        let file_exists = buffer_snapshot
-            .file()
-            .is_some_and(|file| file.disk_state().exists());
-        diff.update(cx, |diff, cx| {
-            diff.stage_or_unstage_hunks(
-                stage,
-                &hunks
-                    .map(|hunk| buffer_diff::DiffHunk {
-                        buffer_range: hunk.buffer_range,
-                        // We don't need to pass in word diffs here because they're only used for rendering and
-                        // this function changes internal state
-                        base_word_diffs: Vec::default(),
-                        buffer_word_diffs: Vec::default(),
-                        diff_base_byte_range: hunk.diff_base_byte_range.start.0
-                            ..hunk.diff_base_byte_range.end.0,
-                        secondary_status: hunk.status.secondary,
-                        range: Point::zero()..Point::zero(), // unused
-                    })
-                    .collect::<Vec<_>>(),
-                &buffer_snapshot,
-                file_exists,
-                cx,
-            )
+        let ranges = hunks.map(|hunk| hunk.buffer_range).collect::<Vec<_>>();
+        if ranges.is_empty() {
+            return None;
+        }
+        let secondary_diff = diff.read(cx).secondary_diff();
+        project.update(cx, |project, cx| {
+            if stage {
+                let secondary_diff = secondary_diff?;
+                project.stage_hunks(buffer, secondary_diff, ranges, cx).ok()
+            } else {
+                project
+                    .unstage_uncommitted_hunks(buffer, diff, ranges, cx)
+                    .ok()
+            }
         });
         None
     }

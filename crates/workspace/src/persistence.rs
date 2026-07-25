@@ -1389,7 +1389,10 @@ impl WorkspaceDb {
                     let path: Arc<Path> = path.into();
                     map.entry(path.clone())
                         .or_default()
-                        .push(SerializedBookmark(bookmark.row))
+                        .push(SerializedBookmark {
+                            row: bookmark.row,
+                            label: String::new(),
+                        })
                 }
 
                 map
@@ -1490,7 +1493,8 @@ impl WorkspaceDb {
                     relative_worktree_path == String::default()
                 );
 
-                let Some(relative_path) = RelPath::unix(&relative_worktree_path).log_err() else {
+                let Some(relative_path) = RelPath::from_unix_str(&relative_worktree_path).log_err()
+                else {
                     continue;
                 };
                 if worktree_root_path != String::default()
@@ -1565,7 +1569,8 @@ impl WorkspaceDb {
                         conn.exec_bound(sql!(
                             INSERT INTO bookmarks (workspace_id, path, row)
                             VALUES (?1, ?2, ?3);
-                        ))?((workspace.id, path.as_ref(), bookmark.0)).context("Inserting bookmark")?;
+                        ))?((workspace.id, path.as_ref(), bookmark.row, bookmark.label))
+                            .context("Inserting bookmark")?;
                     }
                 }
 
@@ -2616,7 +2621,9 @@ impl WorkspaceDb {
                                 as_json: serde_json::Value::from_str(&json).ok()?,
                             },
                            Arc::from(worktree_root_path.as_ref()),
-                            RelPath::from_proto(&relative_worktree_path).log_err()?,
+                            RelPath::from_unix_str(&relative_worktree_path)
+                                .log_err()?
+                                .into(),
                         ))
                     },
                 )

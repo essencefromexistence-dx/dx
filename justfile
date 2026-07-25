@@ -27,7 +27,9 @@ run: ensure-build-headroom
     @$jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "8" } else { $env:CARGO_BUILD_JOBS }; $incremental = if ([string]::IsNullOrWhiteSpace($env:CARGO_INCREMENTAL)) { "1" } else { $env:CARGO_INCREMENTAL }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = $incremental; Write-Host "Using Cargo config: locked Cargo.lock, $jobs job(s), G:/Dx/code/target, rust-lld linker, debug incremental=$incremental"; cargo build --locked -p zed --bin dx-code
     @echo "Build complete! Copying binary to bin folder..."
     @New-Item -ItemType Directory -Force -Path G:\Dx\bin | Out-Null
+    @$loader = Get-ChildItem "{{build_target_dir}}/debug/build" -Recurse -Filter WebView2Loader.dll | Where-Object { $_.FullName -match '\\out\\x64\\WebView2Loader\.dll$' } | Select-Object -First 1; if (!$loader) { throw "WebView2Loader.dll was not produced for x64" }; Copy-Item $loader.FullName "{{build_target_dir}}/debug/WebView2Loader.dll" -Force
     @Copy-Item "{{build_target_dir}}/debug/dx-code.exe" G:\Dx\bin\dx-code.exe -Force
+    @Copy-Item "{{build_target_dir}}/debug/WebView2Loader.dll" G:\Dx\bin\WebView2Loader.dll -Force
     @echo "Launching Dx once..."
     @just launch-zed
 

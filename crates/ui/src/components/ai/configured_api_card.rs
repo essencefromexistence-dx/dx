@@ -1,8 +1,9 @@
 use crate::{Tooltip, prelude::*};
-use gpui::{ClickEvent, IntoElement, ParentElement, SharedString};
+use gpui::{ClickEvent, ElementId, IntoElement, ParentElement, SharedString};
 
 #[derive(IntoElement, RegisterComponent)]
 pub struct ConfiguredApiCard {
+    id: ElementId,
     label: SharedString,
     button_label: Option<SharedString>,
     button_tab_index: Option<isize>,
@@ -12,8 +13,9 @@ pub struct ConfiguredApiCard {
 }
 
 impl ConfiguredApiCard {
-    pub fn new(label: impl Into<SharedString>) -> Self {
+    pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>) -> Self {
         Self {
+            id: id.into(),
             label: label.into(),
             button_label: None,
             button_tab_index: None,
@@ -77,15 +79,21 @@ impl Component for ConfiguredApiCard {
             single_example(
                 "Default",
                 container()
-                    .child(ConfiguredApiCard::new("API key is configured"))
+                    .child(ConfiguredApiCard::new(
+                        "default-api-card",
+                        "API key is configured",
+                    ))
                     .into_any_element(),
             ),
             single_example(
                 "Custom Button Label",
                 container()
                     .child(
-                        ConfiguredApiCard::new("OpenAI API key configured")
-                            .button_label("Remove Key"),
+                        ConfiguredApiCard::new(
+                            "custom-button-api-card",
+                            "OpenAI API key configured",
+                        )
+                        .button_label("Remove Key"),
                     )
                     .into_any_element(),
             ),
@@ -93,7 +101,7 @@ impl Component for ConfiguredApiCard {
                 "With Tooltip",
                 container()
                     .child(
-                        ConfiguredApiCard::new("Anthropic API key configured")
+                        ConfiguredApiCard::new("tooltip-api-card", "Anthropic API key configured")
                             .tooltip_label("Click to reset your API key"),
                     )
                     .into_any_element(),
@@ -101,7 +109,10 @@ impl Component for ConfiguredApiCard {
             single_example(
                 "Disabled",
                 container()
-                    .child(ConfiguredApiCard::new("API key is configured").disabled(true))
+                    .child(
+                        ConfiguredApiCard::new("disabled-api-card", "API key is configured")
+                            .disabled(true),
+                    )
                     .into_any_element(),
             ),
         ];
@@ -113,7 +124,7 @@ impl Component for ConfiguredApiCard {
 impl RenderOnce for ConfiguredApiCard {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         let button_label = self.button_label.unwrap_or("Reset Key".into());
-        let button_id = SharedString::new(format!("id-{}", button_label));
+        let button_id = self.id;
 
         h_flex()
             .min_w_0()

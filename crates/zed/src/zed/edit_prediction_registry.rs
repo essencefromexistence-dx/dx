@@ -3,7 +3,7 @@ use codestral::{CodestralEditPredictionDelegate, load_codestral_api_key};
 use collections::HashMap;
 use copilot::CopilotEditPredictionDelegate;
 use edit_prediction::{EditPredictionModel, ZedEditPredictionDelegate};
-use editor::Editor;
+use editor::{EditPredictionRequestTrigger, Editor};
 use gpui::{AnyWindowHandle, App, AppContext as _, Context, Entity, WeakEntity};
 use language::{
     ZetaVersion,
@@ -52,6 +52,7 @@ pub fn init(client: Arc<Client>, user_store: Entity<UserStore>, cx: &mut App) {
             assign_edit_prediction_provider(
                 editor,
                 provider_config,
+                EditPredictionRequestTrigger::EditorCreated,
                 &client,
                 user_store.clone(),
                 window,
@@ -74,6 +75,7 @@ pub fn init(client: Arc<Client>, user_store: Entity<UserStore>, cx: &mut App) {
                 assign_edit_prediction_providers(
                     &editors,
                     provider_config,
+                    EditPredictionRequestTrigger::UserInfoChanged,
                     &client,
                     user_store,
                     cx,
@@ -100,6 +102,7 @@ pub fn init(client: Arc<Client>, user_store: Entity<UserStore>, cx: &mut App) {
                 assign_edit_prediction_providers(
                     &editors,
                     new_provider_config,
+                    EditPredictionRequestTrigger::ProviderChanged,
                     &client,
                     user_store.clone(),
                     cx,
@@ -201,6 +204,7 @@ fn clear_edit_prediction_store_edit_history(_: &edit_prediction::ClearHistory, c
 fn assign_edit_prediction_providers(
     editors: &Rc<RefCell<HashMap<WeakEntity<Editor>, AnyWindowHandle>>>,
     provider_config: Option<EditPredictionProviderConfig>,
+    trigger: EditPredictionRequestTrigger,
     client: &Arc<Client>,
     user_store: Entity<UserStore>,
     cx: &mut App,
@@ -214,6 +218,7 @@ fn assign_edit_prediction_providers(
                 assign_edit_prediction_provider(
                     editor,
                     provider_config,
+                    trigger,
                     client,
                     user_store.clone(),
                     window,
@@ -240,6 +245,7 @@ fn register_backward_compatible_actions(editor: &mut Editor, cx: &mut Context<Ed
 fn assign_edit_prediction_provider(
     editor: &mut Editor,
     provider_config: Option<EditPredictionProviderConfig>,
+    _trigger: EditPredictionRequestTrigger,
     client: &Arc<Client>,
     user_store: Entity<UserStore>,
     window: &mut Window,

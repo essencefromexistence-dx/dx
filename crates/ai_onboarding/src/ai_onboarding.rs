@@ -39,7 +39,8 @@ impl From<client::Status> for SignInStatus {
 }
 
 #[derive(RegisterComponent, IntoElement)]
-pub struct ZedAiOnboarding { // rebranded/repurposed as Dx onboarding (Zed-like editor onboarding, not webpreview)
+pub struct ZedAiOnboarding {
+    // rebranded/repurposed as Dx onboarding (Zed-like editor onboarding, not webpreview)
     pub sign_in_status: SignInStatus,
     pub plan: Option<Plan>,
     pub account_too_young: bool,
@@ -364,6 +365,7 @@ impl RenderOnce for ZedAiOnboarding {
                 Some(Plan::ZedFree) => self.render_free_plan_state(cx),
                 Some(Plan::ZedProTrial) => self.render_trial_state(cx),
                 Some(Plan::ZedPro) => self.render_pro_plan_state(cx),
+                Some(Plan::ZedVip) => self.render_pro_plan_state(cx),
                 Some(Plan::ZedBusiness) => self.render_business_plan_state(cx),
                 Some(Plan::ZedStudent) => self.render_student_plan_state(cx),
             }

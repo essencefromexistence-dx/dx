@@ -26,7 +26,7 @@ impl AgentServer for NativeAgentServer {
     }
 
     fn logo(&self) -> ui::IconName {
-        ui::IconName::Sparkle
+        ui::IconName::ZedAgent
     }
 
     fn connect(

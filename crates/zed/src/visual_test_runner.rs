@@ -95,7 +95,7 @@ fn main() {
 #[cfg(target_os = "macos")]
 use {
     acp_thread::{AgentConnection, StubAgentConnection},
-    agent_client_protocol::schema as acp,
+    agent_client_protocol::schema::v1 as acp,
     agent_servers::{AgentServer, AgentServerDelegate},
     anyhow::{Context as _, Result},
     assets::Assets,
@@ -1160,7 +1160,7 @@ fn run_breakpoint_hover_visual_tests(
 
     // Step 1: Initial draw to register mouse listeners
     cx.update_window(workspace_window.into(), |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })?;
     cx.run_until_parked();
 
@@ -1178,7 +1178,7 @@ fn run_breakpoint_hover_visual_tests(
 
     // Step 4: Draw again to pick up the indicator state change
     cx.update_window(workspace_window.into(), |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })?;
     cx.run_until_parked();
 
@@ -1192,7 +1192,7 @@ fn run_breakpoint_hover_visual_tests(
 
     // Step 6: Final draw
     cx.update_window(workspace_window.into(), |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })?;
     cx.run_until_parked();
 
@@ -1218,7 +1218,7 @@ fn run_breakpoint_hover_visual_tests(
 
     // Draw to register the button's tooltip hover listener
     cx.update_window(workspace_window.into(), |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })?;
     cx.run_until_parked();
 
@@ -1236,7 +1236,7 @@ fn run_breakpoint_hover_visual_tests(
 
     // Draw to render the tooltip
     cx.update_window(workspace_window.into(), |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })?;
     cx.run_until_parked();
 
@@ -2438,6 +2438,7 @@ fn run_tool_permissions_visual_tests(
                 "Terminal",
                 "Configure Tool Rules",
                 None,
+                true,
                 settings_ui::pages::render_terminal_tool_config,
                 window,
                 cx,
@@ -2455,7 +2456,7 @@ fn run_tool_permissions_visual_tests(
 
     // Refresh and redraw so the "Test Your Rules" input is present
     cx.update_window(settings_window, |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })
     .log_err();
     cx.run_until_parked();
@@ -2484,7 +2485,7 @@ fn run_tool_permissions_visual_tests(
 
     // Refresh and redraw
     cx.update_window(settings_window, |_, window, cx| {
-        window.draw(cx).clear();
+        window.draw(cx).clear(cx);
     })
     .log_err();
     cx.run_until_parked();
@@ -2730,7 +2731,6 @@ fn run_multi_workspace_sidebar_visual_tests(
                             request_token_usage: Default::default(),
                             model: None,
                             profile: None,
-                            imported: false,
                             subagent_context: None,
                             speed: None,
                             thinking_enabled: false,
@@ -2738,6 +2738,7 @@ fn run_multi_workspace_sidebar_visual_tests(
                             ui_scroll_position: None,
                             draft_prompt: None,
                             sandboxed_terminal_temp_dir: None,
+                            sandbox_grants: Default::default(),
                         },
                         path_list,
                         cx,

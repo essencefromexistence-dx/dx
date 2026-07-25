@@ -7,7 +7,7 @@ use fs::Fs;
 use gpui::{App, SharedString};
 use settings::{
     AgentProfileContent, ContextServerPresetContent, LanguageModelSelection, Settings as _,
-    SettingsContent, update_settings_file,
+    SettingsContent, SettingsStore, update_settings_file,
 };
 use util::ResultExt as _;
 
@@ -18,42 +18,11 @@ pub mod builtin_profiles {
 
     pub const WRITE: &str = "write";
     pub const ASK: &str = "ask";
-    pub const MEDIA: &str = "media";
-    pub const SEARCH: &str = "search";
-    pub const STUDY: &str = "study";
-    pub const LEGACY_MINIMAL: &str = "minimal";
-    pub const DX_PROFILE_ORDER: [&str; 4] = [WRITE, SEARCH, MEDIA, ASK];
+    pub const MINIMAL: &str = "minimal";
 
     pub fn is_builtin(profile_id: &AgentProfileId) -> bool {
-        matches!(profile_id.as_str(), WRITE | ASK | MEDIA | SEARCH)
+        profile_id.as_str() == WRITE || profile_id.as_str() == ASK || profile_id.as_str() == MINIMAL
     }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DxAiProfileKind {
-    Ask,
-    Agents,
-    Search,
-    Study,
-    Media,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DxAiProfileBackendState {
-    Wired,
-    EvidenceBacked,
-    ReceiptBacked,
-    ProviderPending,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct DxAiProfileMetadata {
-    pub id: &'static str,
-    pub kind: DxAiProfileKind,
-    pub display_name: &'static str,
-    pub summary: &'static str,
-    pub backend_state: DxAiProfileBackendState,
-    pub runtime_proof_backend_lane_id: Option<&'static str>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -72,141 +41,17 @@ impl AgentProfile {
         &self.id
     }
 
-    pub fn normalize_id(profile_id: AgentProfileId, cx: &App) -> AgentProfileId {
-        Self::normalize_id_from_profiles(profile_id, &AgentSettings::get_global(cx).profiles)
-    }
-
-    pub fn normalize_id_from_profiles(
-        profile_id: AgentProfileId,
-        profiles: &IndexMap<AgentProfileId, AgentProfileSettings>,
-    ) -> AgentProfileId {
-        let ask_profile = AgentProfileId(builtin_profiles::ASK.into());
-        if profile_id.as_str() == builtin_profiles::LEGACY_MINIMAL
-            && profiles.contains_key(&ask_profile)
-        {
-            return ask_profile;
-        }
-
-        if profiles.contains_key(&profile_id) {
-            return profile_id;
-        }
-
-        let write_profile = AgentProfileId(builtin_profiles::WRITE.into());
-        if profiles.contains_key(&write_profile) {
-            return write_profile;
-        }
-
-        if profiles.contains_key(&ask_profile) {
-            return ask_profile;
-        }
-
-        profile_id
-    }
-
-    pub fn display_name(profile_id: &AgentProfileId, name: &SharedString) -> SharedString {
-        if let Some(metadata) = Self::dx_builtin_metadata_for_id(profile_id.as_str()) {
-            metadata.display_name.into()
-        } else {
-            name.clone()
-        }
-    }
-
-    pub fn dx_builtin_metadata(profile_id: &AgentProfileId) -> Option<DxAiProfileMetadata> {
-        Self::dx_builtin_metadata_for_id(profile_id.as_str())
-    }
-
-    pub fn dx_builtin_metadata_for_id(profile_id: &str) -> Option<DxAiProfileMetadata> {
-        match profile_id {
-            builtin_profiles::ASK | builtin_profiles::LEGACY_MINIMAL => Some(DxAiProfileMetadata {
-                id: builtin_profiles::ASK,
-                kind: DxAiProfileKind::Ask,
-                display_name: "Ask",
-                summary: "Answers questions with lightweight local and web sources.",
-                backend_state: DxAiProfileBackendState::Wired,
-                runtime_proof_backend_lane_id: None,
-            }),
-            builtin_profiles::WRITE => Some(DxAiProfileMetadata {
-                id: builtin_profiles::WRITE,
-                kind: DxAiProfileKind::Agents,
-                display_name: "Agents",
-                summary: "Runs builder and worker flows for code, tools, goals, plans, and multitask work.",
-                backend_state: DxAiProfileBackendState::Wired,
-                runtime_proof_backend_lane_id: None,
-            }),
-            builtin_profiles::SEARCH => Some(DxAiProfileMetadata {
-                id: builtin_profiles::SEARCH,
-                kind: DxAiProfileKind::Search,
-                display_name: "Search",
-                summary: "Uses DX MetaSearch, source-pack evidence, and Web Preview inspection where available.",
-                backend_state: DxAiProfileBackendState::EvidenceBacked,
-                runtime_proof_backend_lane_id: Some("dx-metasearch-live-proof"),
-            }),
-            builtin_profiles::STUDY => Some(DxAiProfileMetadata {
-                id: builtin_profiles::STUDY,
-                kind: DxAiProfileKind::Study,
-                display_name: "Study",
-                summary: "Organizes attached sources, receipts, and study rails without inventing results.",
-                backend_state: DxAiProfileBackendState::ReceiptBacked,
-                runtime_proof_backend_lane_id: Some("study-source-workspace-execution"),
-            }),
-            builtin_profiles::MEDIA => Some(DxAiProfileMetadata {
-                id: builtin_profiles::MEDIA,
-                kind: DxAiProfileKind::Media,
-                display_name: "Media",
-                summary: "Plans and gates image, video, audio, music, 3D, and document providers while execution setup is pending.",
-                backend_state: DxAiProfileBackendState::ProviderPending,
-                runtime_proof_backend_lane_id: Some("media-provider-readiness-proof"),
-            }),
-            _ => None,
-        }
-    }
-
-    pub fn builtin_sort_index(profile_id: &AgentProfileId) -> Option<usize> {
-        builtin_profiles::DX_PROFILE_ORDER
-            .iter()
-            .position(|id| *id == profile_id.as_str())
-    }
-
     /// Saves a new profile to the settings.
     pub fn create(
         name: String,
         base_profile_id: Option<AgentProfileId>,
         fs: Arc<dyn Fs>,
         cx: &App,
-    ) -> Result<AgentProfileId> {
-        let name = name.trim().to_string();
-        if name.is_empty() {
-            bail!("Profile name is required.");
-        }
-
+    ) -> AgentProfileId {
         let id = AgentProfileId(name.to_case(Case::Kebab).into());
-        if id.as_str() == builtin_profiles::LEGACY_MINIMAL {
-            bail!(
-                "`{}` is reserved for legacy profile compatibility. Choose another profile name.",
-                name
-            );
-        }
 
-        let settings = AgentSettings::get_global(cx);
-        if settings.profiles.contains_key(&id) {
-            bail!("A profile named `{}` already exists.", name);
-        }
-        if settings
-            .profiles
-            .iter()
-            .filter(|(profile_id, _)| profile_id.as_str() != builtin_profiles::LEGACY_MINIMAL)
-            .any(|(profile_id, profile)| {
-                Self::display_name(profile_id, &profile.name)
-                    .as_ref()
-                    .eq_ignore_ascii_case(&name)
-            })
-        {
-            bail!("A profile named `{}` already exists.", name);
-        }
-
-        let base_profile = base_profile_id
-            .map(|id| Self::normalize_id(id, cx))
-            .and_then(|id| AgentSettings::get_global(cx).profiles.get(&id).cloned());
+        let base_profile =
+            base_profile_id.and_then(|id| AgentSettings::get_global(cx).profiles.get(&id).cloned());
 
         // Copy toggles from the base profile so the new profile starts with familiar defaults.
         let tools = base_profile
@@ -241,17 +86,14 @@ impl AgentProfile {
             }
         });
 
-        Ok(id)
+        id
     }
 
     /// Returns a map of AgentProfileIds to their names
     pub fn available_profiles(cx: &App) -> AvailableProfiles {
         let mut profiles = AvailableProfiles::default();
         for (id, profile) in AgentSettings::get_global(cx).profiles.iter() {
-            if id.as_str() == builtin_profiles::LEGACY_MINIMAL {
-                continue;
-            }
-            profiles.insert(id.clone(), Self::display_name(id, &profile.name));
+            profiles.insert(id.clone(), profile.name.clone());
         }
         profiles
     }
@@ -274,6 +116,32 @@ impl AgentProfileSettings {
         self.tools.get(tool_name) == Some(&true)
     }
 
+    /// Whether the built-in profile with the given id still matches the shipped
+    /// default — i.e. the user has neither customized the built-in profile nor
+    /// shadowed it with a custom profile of the same id. Custom profile ids are
+    /// never considered unmodified defaults.
+    pub fn is_unmodified_default(profile_id: &AgentProfileId, cx: &App) -> bool {
+        if !builtin_profiles::is_builtin(profile_id) {
+            return false;
+        }
+        let store = cx.global::<SettingsStore>();
+        let profile_in = |content: &SettingsContent| {
+            content
+                .agent
+                .as_ref()
+                .and_then(|agent| agent.profiles.as_ref())
+                .and_then(|profiles| profiles.get(profile_id.as_str()))
+                .cloned()
+        };
+        match (
+            profile_in(store.merged_settings()),
+            profile_in(store.raw_default_settings()),
+        ) {
+            (Some(merged), Some(default)) => merged == default,
+            _ => false,
+        }
+    }
+
     pub fn is_context_server_tool_enabled(&self, server_id: &str, tool_name: &str) -> bool {
         self.context_servers
             .get(server_id)
@@ -291,12 +159,6 @@ impl AgentProfileSettings {
             .get_or_insert_default()
             .profiles
             .get_or_insert_default();
-        if profile_id.as_str() == builtin_profiles::LEGACY_MINIMAL {
-            bail!(
-                "'{profile_id}' is reserved for legacy profile compatibility and cannot be saved as a custom profile"
-            );
-        }
-
         if profiles.contains_key(&profile_id.0) {
             bail!("profile with ID '{profile_id}' already exists");
         }
@@ -410,5 +272,38 @@ mod tests {
         assert!(profile.is_context_server_tool_enabled("server", "enabled_tool"));
         assert!(!profile.is_context_server_tool_enabled("server", "other_tool"));
         assert!(!profile.is_context_server_tool_enabled("other_server", "any_tool"));
+    }
+
+    #[gpui::test]
+    fn unmodified_default_detection(cx: &mut gpui::App) {
+        use gpui::UpdateGlobal as _;
+
+        let store = SettingsStore::test(cx);
+        cx.set_global(store);
+        project::DisableAiSettings::register(cx);
+        AgentSettings::register(cx);
+
+        let write = AgentProfileId(builtin_profiles::WRITE.into());
+        let minimal = AgentProfileId(builtin_profiles::MINIMAL.into());
+        let custom = AgentProfileId("custom".into());
+
+        // Fresh defaults: the shipped built-in profiles are unmodified.
+        assert!(AgentProfileSettings::is_unmodified_default(&write, cx));
+        assert!(AgentProfileSettings::is_unmodified_default(&minimal, cx));
+        // Custom (non-built-in) ids are never considered unmodified defaults.
+        assert!(!AgentProfileSettings::is_unmodified_default(&custom, cx));
+
+        // The user customizes the `write` profile; `minimal` stays untouched.
+        SettingsStore::update_global(cx, |store, cx| {
+            store
+                .set_user_settings(
+                    r#"{ "agent": { "profiles": { "write": { "name": "Write", "tools": { "fetch": false } } } } }"#,
+                    cx,
+                )
+                .unwrap();
+        });
+
+        assert!(!AgentProfileSettings::is_unmodified_default(&write, cx));
+        assert!(AgentProfileSettings::is_unmodified_default(&minimal, cx));
     }
 }

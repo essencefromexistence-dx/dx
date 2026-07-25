@@ -969,7 +969,7 @@ async fn build_buffer(
         cx.update(|_, cx| language_registry.language_for_file(&blob, Some(&text), cx))?;
     let language = if let Some(language) = language {
         language_registry
-            .load_language(&language)
+            .load_language(language)
             .await
             .ok()
             .and_then(|e| e.log_err())

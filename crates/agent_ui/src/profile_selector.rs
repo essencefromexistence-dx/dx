@@ -18,13 +18,9 @@ use std::{
 };
 use ui::{
     DocumentationAside, HighlightedLabel, KeyBinding, LabelSize, ListItem, ListItemSpacing,
-    PopoverMenuHandle, Tooltip, prelude::*,
+    PopoverMenuHandle, TintColor, Tooltip, prelude::*,
 };
-
-const MAX_PROFILE_SELECTOR_CANDIDATES: usize = 4096;
-const MAX_PROFILE_SELECTOR_MATCH_CANDIDATES: usize = MAX_PROFILE_SELECTOR_CANDIDATES;
-const MAX_PROFILE_SELECTOR_MATCHES: usize = 100;
-const MAX_PROFILE_SELECTOR_RENDER_ENTRIES: usize = MAX_PROFILE_SELECTOR_CANDIDATES + 1;
+use workspace::ToggleWorktreeSecurity;
 
 /// Trait for types that can provide and manage agent profiles
 pub trait ProfileProvider {
@@ -34,11 +30,27 @@ pub trait ProfileProvider {
     /// Set the profile ID
     fn set_profile(&self, profile_id: AgentProfileId, cx: &mut App);
 
-    /// Check if profiles are supported in the current context.
+    /// Check if profiles are supported in the current context (e.g. if the model that is selected has tool support)
     fn profiles_supported(&self, cx: &App) -> bool;
 
     /// Check if there is a model selected in the current context.
     fn model_selected(&self, cx: &App) -> bool;
+
+    /// Whether the current workspace is restricted (has untrusted worktrees).
+    ///
+    /// In a restricted workspace, profiles that enable tools forbidden in
+    /// restricted mode are flagged, and the active built-in `write`/`ask`
+    /// profiles are downgraded to `minimal`.
+    fn is_restricted(&self, _cx: &App) -> bool {
+        false
+    }
+
+    /// Whether the active profile has been downgraded to `minimal` because the
+    /// workspace is restricted (i.e. the user selected `write`/`ask`, but those
+    /// profiles aren't honored while restricted).
+    fn profile_downgraded(&self, _cx: &App) -> bool {
+        false
+    }
 }
 
 pub struct ProfileSelector {
@@ -90,58 +102,23 @@ impl ProfileSelector {
             return;
         }
 
-        let candidates = ProfilePickerDelegate::candidates_from(profiles);
-        if candidates.is_empty() {
-            return;
-        }
-
         let current_profile_id = self.provider.profile_id(cx);
-        let next_index = candidates
-            .iter()
-            .position(|profile| profile.id == current_profile_id)
-            .map_or(0, |current_index| (current_index + 1) % candidates.len());
+        let current_index = profiles
+            .keys()
+            .position(|id| id == &current_profile_id)
+            .unwrap_or(0);
 
-        if let Some(next_profile) = candidates.get(next_index) {
-            set_selected_profile(
-                self.fs.clone(),
-                self.provider.clone(),
-                next_profile.id.clone(),
-                "cycle",
-                cx,
+        let next_index = (current_index + 1) % profiles.len();
+
+        if let Some((next_profile_id, _)) = profiles.get_index(next_index) {
+            self.provider.set_profile(next_profile_id.clone(), cx);
+            telemetry::event!(
+                "Agent Profile Switched",
+                profile_id = next_profile_id.as_str(),
+                source = "cycle"
             );
             cx.notify();
         }
-    }
-
-    fn reconcile_current_profile(&mut self, cx: &mut Context<Self>) -> AgentProfileId {
-        let current_profile_id = self.provider.profile_id(cx);
-        let profiles: std::collections::HashMap<_, _> = AgentProfile::available_profiles(cx)
-            .into_iter()
-            .filter(|(id, _)| {
-                let s = id.to_string().to_lowercase();
-                !s.contains("search") && !s.contains("media") && !s.contains("study")
-            })
-            .collect();
-        if profiles.contains_key(&current_profile_id) {
-            return current_profile_id;
-        }
-
-        let normalized_profile_id = AgentProfile::normalize_id(current_profile_id.clone(), cx);
-        let fallback_profile_id = if profiles.contains_key(&normalized_profile_id) {
-            normalized_profile_id
-        } else {
-            profiles
-                .keys()
-                .next()
-                .cloned()
-                .unwrap_or(current_profile_id.clone())
-        };
-
-        if fallback_profile_id != current_profile_id {
-            self.provider.set_profile(fallback_profile_id.clone(), cx);
-        }
-
-        fallback_profile_id
     }
 
     fn ensure_picker(
@@ -163,8 +140,7 @@ impl ProfileSelector {
             let picker = cx.new(|cx| {
                 Picker::list(delegate, window, cx)
                     .show_scrollbar(true)
-                    .width(rems(18.))
-                    .max_height(Some(rems(20.).into()))
+                    .initial_width(rems(18.))
             });
 
             self.picker = Some(picker);
@@ -205,17 +181,22 @@ impl Render for ProfileSelector {
         }
 
         if !self.provider.profiles_supported(cx) {
-            return Empty.into_any_element();
+            return Button::new("tools-not-supported-button", "Tools Unsupported")
+                .disabled(true)
+                .label_size(LabelSize::Small)
+                .color(Color::Muted)
+                .tooltip(Tooltip::text("This model does not support tools."))
+                .into_any_element();
         }
 
         let picker = self.ensure_picker(window, cx);
 
-        let profile_id = self.reconcile_current_profile(cx);
         let settings = AgentSettings::get_global(cx);
+        let profile_id = self.provider.profile_id(cx);
         let profile = settings.profiles.get(&profile_id);
 
         let selected_profile = profile
-            .map(|profile| profile_display_name(&profile_id, &profile.name))
+            .map(|profile| profile.name.clone())
             .unwrap_or_else(|| "Unknown".into());
 
         let icon = if self.picker_handle.is_deployed() {
@@ -224,10 +205,23 @@ impl Render for ProfileSelector {
             IconName::ChevronDown
         };
 
+        // Warn when the active profile is affected by a restricted workspace:
+        // either it was downgraded to `minimal`, or it still enables tools that
+        // are forbidden while restricted.
+        let show_warning = self.provider.is_restricted(cx)
+            && (self.provider.profile_downgraded(cx)
+                || !ProfilePickerDelegate::restricted_forbidden_tools(&profile_id, cx).is_empty());
+
         let trigger_button = Button::new("profile-selector", selected_profile)
             .label_size(LabelSize::Small)
             .color(Color::Muted)
-            .truncate(true)
+            .when(show_warning, |this| {
+                this.start_icon(
+                    Icon::new(IconName::Warning)
+                        .size(IconSize::XSmall)
+                        .color(Color::Warning),
+                )
+            })
             .end_icon(Icon::new(icon).size(IconSize::XSmall).color(Color::Muted));
 
         let tooltip: Box<dyn Fn(&mut Window, &mut App) -> AnyView> = Box::new(Tooltip::element({
@@ -263,36 +257,6 @@ impl Render for ProfileSelector {
         .render(window, cx)
         .into_any_element()
     }
-}
-
-fn profile_display_name(profile_id: &AgentProfileId, name: &SharedString) -> SharedString {
-    AgentProfile::display_name(profile_id, name)
-}
-
-fn set_selected_profile(
-    fs: Arc<dyn Fs>,
-    provider: Arc<dyn ProfileProvider>,
-    profile_id: AgentProfileId,
-    source: &'static str,
-    cx: &mut App,
-) {
-    update_settings_file(fs, cx, {
-        let profile_id = profile_id.clone();
-        move |settings, _cx| {
-            settings
-                .agent
-                .get_or_insert_default()
-                .set_profile(profile_id.0);
-        }
-    });
-
-    provider.set_profile(profile_id.clone(), cx);
-
-    telemetry::event!(
-        "Agent Profile Switched",
-        profile_id = profile_id.as_str(),
-        source = source
-    );
 }
 
 #[derive(Clone)]
@@ -374,13 +338,12 @@ impl ProfilePickerDelegate {
         self.string_candidates = Arc::new(Self::string_candidates(&self.candidates));
         self.query = query;
 
-        let filtered_entries = if self.query.is_empty() {
-            Self::entries_from_candidates(&self.candidates)
+        if self.query.is_empty() {
+            self.filtered_entries = Self::entries_from_candidates(&self.candidates);
         } else {
             let matches = self.search_blocking(&self.query);
-            self.entries_from_matches(matches)
-        };
-        self.filtered_entries = filtered_entries;
+            self.filtered_entries = self.entries_from_matches(matches);
+        }
 
         self.selected_index = self
             .index_of_profile(&self.provider.profile_id(cx))
@@ -389,133 +352,81 @@ impl ProfilePickerDelegate {
     }
 
     fn candidates_from(profiles: AvailableProfiles) -> Vec<ProfileCandidate> {
-        let profile_count = profiles.len();
-        if profile_count > MAX_PROFILE_SELECTOR_CANDIDATES {
-            log::warn!(
-                "truncating agent profile selector candidates from {} to {}",
-                profile_count,
-                MAX_PROFILE_SELECTOR_CANDIDATES
-            );
-        }
-
-        let mut builtin_profiles = Vec::new();
-        let mut custom_profiles = Vec::new();
-
-        for (id, name) in profiles.into_iter().take(MAX_PROFILE_SELECTOR_CANDIDATES) {
-            let candidate = ProfileCandidate {
+        profiles
+            .into_iter()
+            .map(|(id, name)| ProfileCandidate {
                 is_builtin: builtin_profiles::is_builtin(&id),
-                name: profile_display_name(&id, &name),
                 id,
-            };
-            if candidate.is_builtin {
-                builtin_profiles.push(candidate);
-            } else {
-                custom_profiles.push(candidate);
-            }
-        }
-
-        builtin_profiles.sort_unstable_by(|a, b| {
-            AgentProfile::builtin_sort_index(&a.id)
-                .cmp(&AgentProfile::builtin_sort_index(&b.id))
-                .then_with(|| a.name.cmp(&b.name))
-        });
-        custom_profiles.sort_unstable_by(|a, b| a.name.cmp(&b.name));
-        builtin_profiles.extend(custom_profiles);
-        builtin_profiles
+                name,
+            })
+            .collect()
     }
 
     fn string_candidates(candidates: &[ProfileCandidate]) -> Vec<StringMatchCandidate> {
-        if candidates.len() > MAX_PROFILE_SELECTOR_MATCH_CANDIDATES {
-            log::warn!(
-                "truncating agent profile selector match candidates from {} to {}",
-                candidates.len(),
-                MAX_PROFILE_SELECTOR_MATCH_CANDIDATES
-            );
-        }
-
         candidates
             .iter()
-            .take(MAX_PROFILE_SELECTOR_MATCH_CANDIDATES)
             .enumerate()
             .map(|(index, candidate)| StringMatchCandidate::new(index, candidate.name.as_ref()))
             .collect()
     }
 
+    /// Tools enabled by a profile that are forbidden while the workspace is
+    /// restricted. Returns an empty list for profiles that are safe to use.
+    fn restricted_forbidden_tools(profile_id: &AgentProfileId, cx: &App) -> Vec<SharedString> {
+        let Some(profile) = AgentSettings::get_global(cx).profiles.get(profile_id) else {
+            return Vec::new();
+        };
+        profile
+            .tools
+            .iter()
+            .filter(|(name, enabled)| {
+                **enabled && !agent::tool_allowed_in_restricted_mode(name.as_ref())
+            })
+            .map(|(name, _)| SharedString::from(name.to_string()))
+            .collect()
+    }
+
     fn documentation(candidate: &ProfileCandidate) -> Option<&'static str> {
-        AgentProfile::dx_builtin_metadata(&candidate.id).map(|metadata| metadata.summary)
+        match candidate.id.as_str() {
+            builtin_profiles::WRITE => Some("Get help to write anything."),
+            builtin_profiles::ASK => Some("Chat about your codebase."),
+            builtin_profiles::MINIMAL => Some("Chat about anything with no tools."),
+            _ => None,
+        }
     }
 
     fn entries_from_candidates(candidates: &[ProfileCandidate]) -> Vec<ProfilePickerEntry> {
         let mut entries = Vec::new();
         let mut inserted_custom_header = false;
 
-        fn push_picker_entry(
-            entries: &mut Vec<ProfilePickerEntry>,
-            entry: ProfilePickerEntry,
-        ) -> bool {
-            if entries.len() >= MAX_PROFILE_SELECTOR_RENDER_ENTRIES {
-                return false;
-            }
-
-            entries.push(entry);
-            true
-        }
-
         for (idx, candidate) in candidates.iter().enumerate() {
             if !candidate.is_builtin && !inserted_custom_header {
                 if !entries.is_empty() {
-                    if !push_picker_entry(
-                        &mut entries,
-                        ProfilePickerEntry::Header("Custom Profiles".into()),
-                    ) {
-                        log::warn!(
-                            "truncating agent profile selector picker entries at {} rows",
-                            MAX_PROFILE_SELECTOR_RENDER_ENTRIES
-                        );
-                        return entries;
-                    }
+                    entries.push(ProfilePickerEntry::Header("Custom Profiles".into()));
                 }
                 inserted_custom_header = true;
             }
 
-            if !push_picker_entry(
-                &mut entries,
-                ProfilePickerEntry::Profile(ProfileMatchEntry {
-                    candidate_index: idx,
-                    positions: Vec::new(),
-                }),
-            ) {
-                log::warn!(
-                    "truncating agent profile selector picker entries at {} rows",
-                    MAX_PROFILE_SELECTOR_RENDER_ENTRIES
-                );
-                return entries;
-            }
+            entries.push(ProfilePickerEntry::Profile(ProfileMatchEntry {
+                candidate_index: idx,
+                positions: Vec::new(),
+            }));
         }
 
         entries
     }
 
     fn entries_from_matches(&self, matches: Vec<StringMatch>) -> Vec<ProfilePickerEntry> {
-        if matches.len() > MAX_PROFILE_SELECTOR_MATCHES {
-            log::warn!(
-                "truncating agent profile selector fuzzy matches from {} to {}",
-                matches.len(),
-                MAX_PROFILE_SELECTOR_MATCHES
-            );
-        }
-
-        matches
-            .into_iter()
-            .take(MAX_PROFILE_SELECTOR_MATCHES)
-            .filter_map(|mat| {
-                self.candidates.get(mat.candidate_id)?;
-                Some(ProfilePickerEntry::Profile(ProfileMatchEntry {
+        let mut entries = Vec::new();
+        for mat in matches {
+            if self.candidates.get(mat.candidate_id).is_some() {
+                entries.push(ProfilePickerEntry::Profile(ProfileMatchEntry {
                     candidate_index: mat.candidate_id,
                     positions: mat.positions,
-                }))
-            })
-            .collect()
+                }));
+            }
+        }
+        entries
     }
 
     fn first_selectable_index(&self) -> Option<usize> {
@@ -539,7 +450,6 @@ impl ProfilePickerDelegate {
             return self
                 .string_candidates
                 .iter()
-                .take(MAX_PROFILE_SELECTOR_MATCHES)
                 .map(|candidate| StringMatch {
                     candidate_id: candidate.id,
                     score: 0.0,
@@ -556,7 +466,7 @@ impl ProfilePickerDelegate {
             query,
             false,
             true,
-            MAX_PROFILE_SELECTOR_MATCHES,
+            100,
             &cancel_flag,
             self.background.clone(),
         ))
@@ -565,6 +475,10 @@ impl ProfilePickerDelegate {
 
 impl PickerDelegate for ProfilePickerDelegate {
     type ListItem = AnyElement;
+
+    fn name() -> &'static str {
+        "profile selector"
+    }
 
     fn placeholder_text(&self, _: &mut Window, _: &mut App) -> Arc<str> {
         "Search profiles…".into()
@@ -607,8 +521,7 @@ impl PickerDelegate for ProfilePickerDelegate {
     ) -> Task<()> {
         if query.is_empty() {
             self.query.clear();
-            let filtered_entries = Self::entries_from_candidates(&self.candidates);
-            self.filtered_entries = filtered_entries;
+            self.filtered_entries = Self::entries_from_candidates(&self.candidates);
             self.selected_index = self
                 .index_of_profile(&self.provider.profile_id(cx))
                 .unwrap_or_else(|| self.first_selectable_index().unwrap_or(0));
@@ -635,7 +548,7 @@ impl PickerDelegate for ProfilePickerDelegate {
                 &query,
                 false,
                 true,
-                MAX_PROFILE_SELECTOR_MATCHES,
+                100,
                 cancel_for_future.as_ref(),
                 background,
             )
@@ -646,8 +559,7 @@ impl PickerDelegate for ProfilePickerDelegate {
                     return;
                 }
 
-                let filtered_entries = this.delegate.entries_from_matches(matches);
-                this.delegate.filtered_entries = filtered_entries;
+                this.delegate.filtered_entries = this.delegate.entries_from_matches(matches);
                 this.delegate.selected_index = this
                     .delegate
                     .index_of_profile(&provider.profile_id(cx))
@@ -662,12 +574,26 @@ impl PickerDelegate for ProfilePickerDelegate {
         match self.filtered_entries.get(self.selected_index) {
             Some(ProfilePickerEntry::Profile(entry)) => {
                 if let Some(candidate) = self.candidates.get(entry.candidate_index) {
-                    set_selected_profile(
-                        self.fs.clone(),
-                        self.provider.clone(),
-                        candidate.id.clone(),
-                        "picker",
-                        cx,
+                    let profile_id = candidate.id.clone();
+                    let fs = self.fs.clone();
+                    let provider = self.provider.clone();
+
+                    update_settings_file(fs, cx, {
+                        let profile_id = profile_id.clone();
+                        move |settings, _cx| {
+                            settings
+                                .agent
+                                .get_or_insert_default()
+                                .set_profile(profile_id.0);
+                        }
+                    });
+
+                    provider.set_profile(profile_id.clone(), cx);
+
+                    telemetry::event!(
+                        "Agent Profile Switched",
+                        profile_id = profile_id.as_str(),
+                        source = "picker"
                     );
                 }
 
@@ -715,10 +641,17 @@ impl PickerDelegate for ProfilePickerDelegate {
                 let is_active = active_id == candidate.id;
                 let has_documentation = Self::documentation(candidate).is_some();
 
+                let has_warning = self.provider.is_restricted(cx)
+                    && !Self::restricted_forbidden_tools(&candidate.id, cx).is_empty();
+                // The warning details are merged into the documentation aside,
+                // so hovering either the row or the icon shows a single popup.
+                let track_hover = has_documentation || has_warning;
+                let has_end_slot = is_active || has_warning;
+
                 Some(
                     div()
                         .id(("profile-picker-item", ix))
-                        .when(has_documentation, |this| {
+                        .when(track_hover, |this| {
                             this.on_hover(cx.listener(move |picker, hovered, _, cx| {
                                 if *hovered {
                                     picker.delegate.hovered_index = Some(ix);
@@ -737,11 +670,23 @@ impl PickerDelegate for ProfilePickerDelegate {
                                     candidate.name.clone(),
                                     entry.positions.clone(),
                                 ))
-                                .when(is_active, |this| {
+                                .when(has_end_slot, |this| {
                                     this.end_slot(
-                                        div()
+                                        h_flex()
+                                            .gap_1()
                                             .pr_2()
-                                            .child(Icon::new(IconName::Check).color(Color::Accent)),
+                                            .when(has_warning, |this| {
+                                                this.child(
+                                                    Icon::new(IconName::Warning)
+                                                        .size(IconSize::Small)
+                                                        .color(Color::Warning),
+                                                )
+                                            })
+                                            .when(is_active, |this| {
+                                                this.child(
+                                                    Icon::new(IconName::Check).color(Color::Accent),
+                                                )
+                                            }),
                                     )
                                 }),
                         )
@@ -765,13 +710,61 @@ impl PickerDelegate for ProfilePickerDelegate {
         };
 
         let candidate = self.candidates.get(entry.candidate_index)?;
-        let docs_aside = Self::documentation(candidate)?.to_string();
+        let description = Self::documentation(candidate).map(|docs| docs.to_string());
+        let forbidden_tools = if self.provider.is_restricted(cx) {
+            Self::restricted_forbidden_tools(&candidate.id, cx)
+        } else {
+            Vec::new()
+        };
+
+        // Nothing to show: no description and no restricted-tool warning.
+        if description.is_none() && forbidden_tools.is_empty() {
+            return None;
+        }
 
         let side = documentation_aside_side(cx);
 
         Some(DocumentationAside {
             side,
-            render: Rc::new(move |_| Label::new(docs_aside.clone()).into_any_element()),
+            render: Rc::new(move |cx| {
+                v_flex()
+                    .gap_1p5()
+                    .when_some(description.clone(), |this, description| {
+                        this.child(Label::new(description))
+                    })
+                    .when(!forbidden_tools.is_empty(), |this| {
+                        this.when(description.is_some(), |this| {
+                            this.child(
+                                div()
+                                    .border_t_1()
+                                    .border_color(cx.theme().colors().border_variant),
+                            )
+                        })
+                        .child(
+                            v_flex()
+                                .gap_0p5()
+                                .child(
+                                    h_flex()
+                                        .gap_1()
+                                        .child(
+                                            Icon::new(IconName::Warning)
+                                                .size(IconSize::XSmall)
+                                                .color(Color::Warning),
+                                        )
+                                        .child(
+                                            Label::new("Disabled in Restricted Mode")
+                                                .size(LabelSize::Small),
+                                        ),
+                                )
+                                .children(forbidden_tools.iter().map(|tool| {
+                                    Label::new(format!("• {tool}"))
+                                        .size(LabelSize::Small)
+                                        .color(Color::Muted)
+                                })),
+                        )
+                    })
+                    .into_any_element()
+            }),
         })
     }
 
@@ -785,29 +778,66 @@ impl PickerDelegate for ProfilePickerDelegate {
         cx: &mut Context<Picker<Self>>,
     ) -> Option<gpui::AnyElement> {
         let focus_handle = self.focus_handle.clone();
+        let is_restricted = self.provider.is_restricted(cx);
 
         Some(
-            h_flex()
+            v_flex()
                 .w_full()
-                .border_t_1()
-                .border_color(cx.theme().colors().border_variant)
-                .p_1p5()
                 .child(
-                    Button::new("configure", "Configure")
-                        .full_width()
-                        .style(ButtonStyle::Outlined)
-                        .key_binding(
-                            KeyBinding::for_action_in(
-                                &ManageProfiles::default(),
-                                &focus_handle,
-                                cx,
-                            )
-                            .map(|kb| kb.size(rems_from_px(12.))),
-                        )
-                        .on_click(|_, window, cx| {
-                            window.dispatch_action(ManageProfiles::default().boxed_clone(), cx);
-                        }),
+                    h_flex()
+                        .w_full()
+                        .border_t_1()
+                        .border_color(cx.theme().colors().border_variant)
+                        .p_1p5()
+                        .child(
+                            Button::new("configure", "Configure")
+                                .full_width()
+                                .style(ButtonStyle::Outlined)
+                                .key_binding(
+                                    KeyBinding::for_action_in(
+                                        &ManageProfiles::default(),
+                                        &focus_handle,
+                                        cx,
+                                    )
+                                    .map(|kb| kb.size(rems_from_px(12.))),
+                                )
+                                .on_click(|_, window, cx| {
+                                    window.dispatch_action(
+                                        ManageProfiles::default().boxed_clone(),
+                                        cx,
+                                    );
+                                }),
+                        ),
                 )
+                .when(is_restricted, |this| {
+                    this.child(
+                        h_flex()
+                            .w_full()
+                            .border_t_1()
+                            .border_color(cx.theme().colors().border_variant)
+                            .p_1p5()
+                            .child(
+                                Button::new("restricted-mode", "Restricted Mode")
+                                    .full_width()
+                                    .style(ButtonStyle::Tinted(TintColor::Warning))
+                                    .color(Color::Warning)
+                                    .start_icon(
+                                        Icon::new(IconName::Warning)
+                                            .size(IconSize::Small)
+                                            .color(Color::Warning),
+                                    )
+                                    .tooltip(Tooltip::text(
+                                        "Some tools are disabled. Click to review trust settings.",
+                                    ))
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(
+                                            ToggleWorktreeSecurity.boxed_clone(),
+                                            cx,
+                                        );
+                                    }),
+                            ),
+                    )
+                })
                 .into_any(),
         )
     }

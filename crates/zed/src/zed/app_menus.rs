@@ -1,12 +1,11 @@
 use collab_ui::collab_panel;
+use git_ui::git_panel;
 use gpui::{App, Menu, MenuItem, OsAction};
 use release_channel::ReleaseChannel;
 use terminal_view::terminal_panel;
-use zed_actions::{debug_panel, dev};
+use zed_actions::{Quit, assistant, debug_panel, dev, project_panel};
 
 pub fn app_menus(cx: &mut App) -> Vec<Menu> {
-    use zed_actions::Quit;
-
     let mut view_items = vec![
         MenuItem::action(
             "Zoom In",
@@ -40,11 +39,13 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             ],
         }),
         MenuItem::separator(),
-        MenuItem::action("Project Panel", zed_actions::project_panel::ToggleFocus),
+        MenuItem::action("Project Panel", project_panel::ToggleFocus),
         MenuItem::action("Outline Panel", outline_panel::ToggleFocus),
         MenuItem::action("Collab Panel", collab_panel::ToggleFocus),
-        MenuItem::action("Terminal Panel", terminal_panel::ToggleFocus),
+        MenuItem::action("Terminal Panel", terminal_panel::Toggle),
         MenuItem::action("Debugger Panel", debug_panel::ToggleFocus),
+        MenuItem::action("Agent Panel", assistant::ToggleFocus),
+        MenuItem::action("Git Panel", git_panel::ToggleFocus),
         MenuItem::separator(),
         MenuItem::action("Diagnostics", diagnostics::Deploy),
         MenuItem::separator(),
@@ -60,10 +61,10 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
 
     vec![
         Menu {
-            name: "Dx".into(),
+            name: "Zed".into(),
             disabled: false,
             items: vec![
-                MenuItem::action("About Dx", zed_actions::About),
+                MenuItem::action("About Zed", zed_actions::About),
                 MenuItem::action("Check for Updates", auto_update::Check),
                 MenuItem::separator(),
                 MenuItem::submenu(Menu::new("Settings").items([
@@ -95,13 +96,13 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::action("Install CLI", install_cli::InstallCliBinary),
                 MenuItem::separator(),
                 #[cfg(target_os = "macos")]
-                MenuItem::action("Hide Dx", super::Hide),
+                MenuItem::action("Hide Zed", super::Hide),
                 #[cfg(target_os = "macos")]
                 MenuItem::action("Hide Others", super::HideOthers),
                 #[cfg(target_os = "macos")]
                 MenuItem::action("Show All", super::ShowAll),
                 MenuItem::separator(),
-                MenuItem::action("Quit Dx", Quit),
+                MenuItem::action("Quit Zed", Quit),
             ],
         },
         Menu {
@@ -232,7 +233,10 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 ),
                 MenuItem::action("Go to Line/Column...", editor::actions::ToggleGoToLine),
                 MenuItem::separator(),
-                MenuItem::action("Go to Definition", editor::actions::GoToDefinition),
+                MenuItem::action(
+                    "Go to Definition",
+                    editor::actions::GoToDefinition::default(),
+                ),
                 MenuItem::action("Go to Declaration", editor::actions::GoToDeclaration),
                 MenuItem::action("Go to Type Definition", editor::actions::GoToTypeDefinition),
                 MenuItem::action(
@@ -259,8 +263,8 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 ),
                 MenuItem::action("Start Debugger", debugger_ui::Start),
                 MenuItem::separator(),
-                MenuItem::action("Edit tasks.json...", crate::zed::OpenProjectTasks),
-                MenuItem::action("Edit debug.json...", zed_actions::OpenProjectDebugTasks),
+                MenuItem::action("Edit tasks.json…", zed_actions::OpenProjectTasks),
+                MenuItem::action("Edit debug.json…", zed_actions::OpenProjectDebugTasks),
                 MenuItem::separator(),
                 MenuItem::action("Continue", debugger_ui::Continue),
                 MenuItem::action("Step Over", debugger_ui::StepOver),
@@ -303,9 +307,9 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                         url: "https://zed.dev/docs".into(),
                     },
                 ),
-                MenuItem::action("Dx Repository", feedback::OpenZedRepo),
+                MenuItem::action("Zed Repository", feedback::OpenZedRepo),
                 MenuItem::action(
-                    "Dx Twitter",
+                    "Zed Twitter",
                     super::OpenBrowser {
                         url: "https://twitter.com/zeddotdev".into(),
                     },

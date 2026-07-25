@@ -600,7 +600,7 @@ impl Matches {
             return;
         };
 
-let worktree_name_by_id = worktree_names_for_history_matching(&worktree_store, cx);
+        let worktree_name_by_id = worktree_names_for_history_matching(&worktree_store, cx);
         let new_history_matches = matching_history_items(
             history_items,
             currently_opened,
@@ -1343,7 +1343,7 @@ impl FileFinderDelegate {
                     } else if let Some(worktree) = worktree {
                         let worktree_store = self.project.read(cx).worktree_store();
                         let full_path = if should_hide_root_in_entry_path(&worktree_store, cx) {
-                            entry_path.project.path.clone()
+                            entry_path.project.path.as_ref().to_owned()
                         } else {
                             worktree.read(cx).root_name().join(&entry_path.project.path)
                         };
@@ -1449,7 +1449,7 @@ impl FileFinderDelegate {
         }
 
         (
-            HighlightedLabel::new(file_name, file_name_positions),
+            HighlightedLabel::new(&file_name, file_name_positions),
             HighlightedLabel::new(full_path, full_path_positions)
                 .size(LabelSize::Small)
                 .color(Color::Muted),
@@ -1834,7 +1834,10 @@ impl PickerDelegate for FileFinderDelegate {
                     .all(|worktree| {
                         worktree
                             .read(cx)
-                            .entry_for_path(RelPath::unix(prefix.split_at(1).0).unwrap())
+                            .entry_for_path(
+                                RelPath::from_unix_str(prefix.split_at(1).0)
+                                    .unwrap_or(RelPath::empty()),
+                            )
                             .is_none_or(|entry| !entry.is_dir())
                     })
                 {

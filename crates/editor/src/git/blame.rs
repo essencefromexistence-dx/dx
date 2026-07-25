@@ -557,7 +557,9 @@ impl GitBlame {
                             let mut errors = vec![];
                             for (id, snapshot, buffer_edits, blame, remote_url) in blame {
                                 match blame {
-                                    Ok(Some(Blame { entries, messages })) => {
+                                    Ok(Some(Blame {
+                                        entries, messages, ..
+                                    })) => {
                                         let entries = build_blame_entry_sum_tree(
                                             entries,
                                             snapshot.max_point().row,

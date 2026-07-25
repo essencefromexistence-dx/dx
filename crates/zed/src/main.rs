@@ -1,7 +1,6 @@
-// Keep local `just run` launches from opening a transient console window on Windows.
-#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+// Disable command line from opening on release mode
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod dx_config;
 mod reliability;
 mod zed;
 
@@ -15,17 +14,6 @@ const _: () = assert!(
      Forks: update APP_NAME in crates/paths/src/paths.rs when renaming the binary.",
 );
 
-const MAX_BUILTIN_JSON_SCHEMA_BYTES: usize = 8 * 1024 * 1024;
-const MAX_USER_THEME_BYTES: u64 = 4 * 1024 * 1024;
-const MAX_USER_THEME_DIR_ENTRIES: usize = 256;
-const MAX_USER_THEME_WATCH_EVENT_PATHS: usize = 256;
-const MAX_CHANNEL_NOTE_OPEN_PROMISES: usize = 256;
-const MAX_DUMP_GPUI_ACTION_DEFINITIONS: usize = 16_384;
-#[cfg(debug_assertions)]
-const MAX_DEBUG_LANGUAGE_WATCH_DIR_ENTRIES: usize = 256;
-
-use agent::{SharedThread, ThreadStore};
-use agent_client_protocol::schema as acp;
 use agent_ui::AgentPanel;
 use anyhow::{Context as _, Result};
 use clap::Parser;
@@ -42,8 +30,7 @@ use futures::{StreamExt, channel::oneshot, future};
 use git::GitHostingProviderRegistry;
 use git_ui::clone::clone_and_open;
 use gpui::{
-    App, AppContext, Application, AsyncApp, Focusable as _, QuitMode, ReadGlobal, Task, TaskExt,
-    UpdateGlobal as _, block_on,
+    App, AppContext, Application, AsyncApp, QuitMode, Task, TaskExt, UpdateGlobal as _, block_on,
 };
 use gpui_platform;
 
@@ -58,8 +45,7 @@ use reqwest_client::ReqwestClient;
 use assets::Assets;
 use node_runtime::{NodeBinaryOptions, NodeRuntime};
 use parking_lot::Mutex;
-use project::{DisableAiSettings, project_settings::ProjectSettings, trusted_worktrees};
-use proto;
+use project::{project_settings::ProjectSettings, trusted_worktrees};
 use recent_projects::{RemoteSettings, open_remote_project};
 use release_channel::{AppCommitSha, AppVersion, ReleaseChannel};
 use session::{AppSession, Session};
@@ -68,7 +54,7 @@ use smol::future::poll_once;
 use std::{
     cell::RefCell,
     env,
-    io::{self, IsTerminal, Read as _},
+    io::{self, IsTerminal},
     path::{Path, PathBuf},
     process,
     rc::Rc,
@@ -77,11 +63,13 @@ use std::{
 };
 use theme::{ActiveTheme, GlobalTheme, ThemeRegistry};
 use theme_settings::load_user_theme;
-use util::{ResultExt, TryFutureExt, maybe};
+use util::{ResultExt, maybe};
 use uuid::Uuid;
 use workspace::{
     AppState, MultiWorkspace, SerializedWorkspaceLocation, SessionWorkspace, Toast,
-    WorkspaceSettings, WorkspaceStore, notifications::NotificationId, restore_multiworkspace,
+    WorkspaceSettings, WorkspaceStore,
+    notifications::{NotificationId, NotifyResultExt},
+    restore_multiworkspace,
 };
 use zed::{
     OpenListener, OpenRequest, RawOpenRequest, app_menus, build_window_options,
@@ -105,7 +93,7 @@ fn build_application() -> Application {
 }
 
 fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
-    let message = "Dx failed to launch";
+    let message = "Zed failed to launch";
     let error_details = errors
         .into_iter()
         .flat_map(|(kind, paths)| {
@@ -167,7 +155,7 @@ fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
 
 fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
     eprintln!(
-        "Dx failed to open a window: {e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
+        "Zed failed to open a window: {e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
     );
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
     {
@@ -187,7 +175,7 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
             proxy
                 .add_notification(
                     notification_id,
-                    Notification::new("Dx failed to launch")
+                    Notification::new("Zed failed to launch")
                         .body(Some(
                             format!(
                                 "{e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
@@ -207,21 +195,16 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
         .detach();
     }
 }
-
-fn should_open_untitled_for_empty_workspace(cx: &App) -> bool {
-    SettingsStore::global(cx)
-        .get::<DisableAiSettings>(None)
-        .disable_ai
-}
-
 static STARTUP_TIME: OnceLock<Instant> = OnceLock::new();
 
 fn main() {
-    let _dx = dx_config::CodeDxConfig::load();
-    let _ = std::fs::create_dir_all(&_dx.sr_dir);
-    let _ = std::fs::create_dir_all(&_dx.receipts_dir);
-
     STARTUP_TIME.get_or_init(|| Instant::now());
+
+    // If this process was re-executed as a Linux sandbox helper, run that mode
+    // without returning. Must run before argument parsing: the wrapped command's
+    // args are appended verbatim and would otherwise be misinterpreted as Zed's
+    // own arguments.
+    sandbox::run_sandbox_launcher_if_invoked();
 
     #[cfg(unix)]
     util::prevent_root_execution();
@@ -333,7 +316,7 @@ fn main() {
             client::telemetry::os_name(),
             client::telemetry::os_version(),
         );
-        println!("Dx System Specs (from CLI):\n{}", system_specs);
+        println!("Zed System Specs (from CLI):\n{}", system_specs);
         return;
     }
 
@@ -399,11 +382,8 @@ fn main() {
         return;
     }
 
-    let should_install_crash_handler = matches!(
-        env::var("ZED_GENERATE_MINIDUMPS").as_deref(),
-        Ok("true" | "1")
-    ) || *release_channel::RELEASE_CHANNEL
-        != ReleaseChannel::Dev;
+    let should_install_crash_handler =
+        client::telemetry::should_install_crash_handler(*release_channel::RELEASE_CHANNEL);
 
     let crash_handler = if should_install_crash_handler {
         Some(
@@ -519,7 +499,7 @@ fn main() {
         handle_keymap_file_changes(user_keymap_file_rx, user_keymap_watcher, cx);
 
         let user_agent = format!(
-            "Dx/{} ({}; {})",
+            "Zed/{} ({}; {})",
             AppVersion::global(cx),
             std::env::consts::OS,
             std::env::consts::ARCH
@@ -676,7 +656,7 @@ fn main() {
         auto_update::init(client.clone(), cx);
         dap_adapters::init(cx);
         auto_update_ui::init(cx);
-        reliability::init(client.clone(), cx);
+        reliability::init(client.clone(), app_state.workspace_store.clone(), cx);
         extension_host::init(
             extension_host_proxy.clone(),
             app_state.fs.clone(),
@@ -761,10 +741,6 @@ fn main() {
         project_symbols::init(cx);
         project_panel::init(cx);
         outline_panel::init(cx);
-        icon_picker::init(cx);
-        font_panel::init(cx);
-        media_panel::init(cx);
-        shadcn_ui_panel::init(cx);
         tasks_ui::init(cx);
         snippets_ui::init(cx);
         channel::init(&app_state.client.clone(), app_state.user_store.clone(), cx);
@@ -796,8 +772,6 @@ fn main() {
         markdown_preview::init(cx);
         csv_preview::init(cx);
         svg_preview::init(cx);
-        liquid_glass::init(cx);
-        web_preview::init(cx);
         onboarding::init(cx);
         settings_ui::init(cx);
         keymap_editor::init(cx);
@@ -1072,106 +1046,6 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                 })
                 .detach_and_log_err(cx);
             }
-            OpenRequestKind::SharedAgentThread { session_id } => {
-                cx.spawn(async move |cx| {
-                    let multi_workspace =
-                        workspace::get_any_active_multi_workspace(app_state.clone(), cx.clone())
-                            .await?;
-
-                    let workspace =
-                        multi_workspace.read_with(cx, |mw, _| mw.workspace().clone())?;
-
-                    let import_state = multi_workspace.update(cx, |_, window, cx| {
-                        workspace.update(cx, |workspace, cx| {
-                            if workspace.root_paths(cx).is_empty() {
-                                workspace.focus_panel::<AgentPanel>(window, cx);
-
-                                struct OpenProjectForSharedThreadToast;
-                                workspace.show_toast(
-                                    Toast::new(
-                                        NotificationId::unique::<OpenProjectForSharedThreadToast>(),
-                                        "Open a project to import shared threads",
-                                    )
-                                    .autohide(),
-                                    cx,
-                                );
-
-                                return anyhow::Ok(None);
-                            }
-
-                            let client = workspace.project().read(cx).client();
-                            let thread_store: Option<gpui::Entity<ThreadStore>> = workspace
-                                .panel::<AgentPanel>(cx)
-                                .map(|panel| panel.read(cx).thread_store().clone());
-                            anyhow::Ok(Some((client, thread_store)))
-                        })
-                    })??;
-
-                    let Some((client, thread_store)) = import_state else {
-                        return Ok(());
-                    };
-
-                    let Some(thread_store): Option<gpui::Entity<ThreadStore>> = thread_store else {
-                        anyhow::bail!("Agent panel not available");
-                    };
-
-                    let response = client
-                        .request(proto::GetSharedAgentThread {
-                            session_id: session_id.clone(),
-                        })
-                        .await
-                        .context("Failed to fetch shared thread")?;
-
-                    let shared_thread = SharedThread::from_bytes(&response.thread_data)?;
-                    let db_thread = shared_thread.to_db_thread();
-                    let session_id = acp::SessionId::new(session_id);
-
-                    let save_session_id = session_id.clone();
-
-                    thread_store
-                        .update(&mut cx.clone(), |store, cx| {
-                            store.save_thread(
-                                save_session_id.clone(),
-                                db_thread,
-                                Default::default(),
-                                cx,
-                            )
-                        })
-                        .await?;
-
-                    let sharer_username = response.sharer_username.clone();
-
-                    multi_workspace.update(cx, |_, window, cx| {
-                        workspace.update(cx, |workspace, cx| {
-                            if let Some(panel) = workspace.panel::<AgentPanel>(cx) {
-                                panel.update(cx, |panel, cx| {
-                                    panel.open_thread(
-                                        session_id,
-                                        None,
-                                        Some(format!("🔗 {}", response.title).into()),
-                                        window,
-                                        cx,
-                                    );
-                                });
-                                panel.focus_handle(cx).focus(window, cx);
-                            }
-
-                            struct ImportedThreadToast;
-                            workspace.show_toast(
-                                Toast::new(
-                                    NotificationId::unique::<ImportedThreadToast>(),
-                                    format!("Imported shared thread from {}", sharer_username),
-                                )
-                                .autohide(),
-                                cx,
-                            );
-                        });
-                    })?;
-
-                    anyhow::Ok(())
-                })
-                .detach_and_log_err(cx);
-            }
             OpenRequestKind::InstallSkill { content } => {
                 cx.spawn(async move |cx| {
                     let multi_workspace =
@@ -1204,13 +1078,6 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                             let json_schema_content =
                                 json_schema_store::handle_schema_request(lsp_store, uri, cx)
                                     .await?;
-                            if json_schema_content.len() > MAX_BUILTIN_JSON_SCHEMA_BYTES {
-                                anyhow::bail!(
-                                    "Built-in JSON Schema {schema_path} is {} bytes, exceeding the {} byte limit",
-                                    json_schema_content.len(),
-                                    MAX_BUILTIN_JSON_SCHEMA_BYTES
-                                );
-                            }
                             let json_schema_value: serde_json::Value =
                                 serde_json::from_str(&json_schema_content)
                                     .context("Failed to parse JSON Schema")?;
@@ -1419,9 +1286,9 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                     task.await?;
                 }
                 let client = app_state.client.clone();
-                // we continue even if authentication fails as join_channel/ open channel notes will
+                // we continue even if connection fails as join_channel/ open channel notes will
                 // show a visible error message.
-                authenticate(client, cx).await.log_err();
+                client.connect(true, cx).await.into_response().log_err();
 
                 if let Some(channel_id) = request.join_channel {
                     cx.update(|cx| {
@@ -1440,24 +1307,10 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                     workspace::get_any_active_multi_workspace(app_state, cx.clone()).await?;
 
                 let workspace = workspace_window.read_with(cx, |mw, _| mw.workspace().clone())?;
+                let weak_workspace = workspace.downgrade();
 
-                let open_channel_notes = request.open_channel_notes;
-                if open_channel_notes.len() > MAX_CHANNEL_NOTE_OPEN_PROMISES {
-                    log::warn!(
-                        "Channel-note open fanout truncated to {MAX_CHANNEL_NOTE_OPEN_PROMISES} notes; skipped {} additional notes",
-                        open_channel_notes.len() - MAX_CHANNEL_NOTE_OPEN_PROMISES
-                    );
-                }
-
-                let mut promises = Vec::with_capacity(
-                    open_channel_notes
-                        .len()
-                        .min(MAX_CHANNEL_NOTE_OPEN_PROMISES),
-                );
-                for (channel_id, heading) in open_channel_notes
-                    .into_iter()
-                    .take(MAX_CHANNEL_NOTE_OPEN_PROMISES)
-                {
+                let mut promises = Vec::new();
+                for (channel_id, heading) in request.open_channel_notes {
                     promises.push(cx.update_window(workspace_window.into(), |_, window, cx| {
                         ChannelView::open(
                             client::ChannelId(channel_id),
@@ -1466,10 +1319,11 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                             window,
                             cx,
                         )
-                        .log_err()
                     })?)
                 }
-                future::join_all(promises).await;
+                for result in future::join_all(promises).await {
+                    result.notify_workspace_async_err(weak_workspace.clone(), cx);
+                }
                 anyhow::Ok(())
             })
             .await;
@@ -1664,10 +1518,9 @@ pub(crate) async fn restore_or_create_workspace(
                             WorkspaceSettings::get_global(cx).restore_on_startup;
                         match restore_on_startup {
                             workspace::RestoreOnStartupBehavior::Launchpad => {}
-                            _ if should_open_untitled_for_empty_workspace(cx) => {
+                            _ => {
                                 Editor::new_file(workspace, &Default::default(), window, cx);
                             }
-                            _ => {}
                         }
                     },
                 )
@@ -1686,10 +1539,9 @@ pub(crate) async fn restore_or_create_workspace(
                     let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
                     match restore_on_startup {
                         workspace::RestoreOnStartupBehavior::Launchpad => {}
-                        _ if should_open_untitled_for_empty_workspace(cx) => {
+                        _ => {
                             Editor::new_file(workspace, &Default::default(), window, cx);
                         }
-                        _ => {}
                     }
                 },
             )
@@ -1810,7 +1662,7 @@ fn stdout_is_a_pty() -> bool {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "dx", disable_version_flag = true, max_term_width = 100)] // rebranded binary
+#[command(name = "zed", disable_version_flag = true, max_term_width = 100)]
 struct Args {
     /// A sequence of space-separated paths or urls that you want to open.
     ///
@@ -1974,28 +1826,6 @@ fn load_embedded_fonts(cx: &App) {
         .unwrap();
 }
 
-async fn load_limited_user_theme_bytes(
-    fs: &Arc<dyn fs::Fs>,
-    path: &Path,
-) -> Result<Option<Vec<u8>>> {
-    let file = fs.open_sync(path).await?;
-    let mut bytes = Vec::new();
-    let mut limited_file = file.take(MAX_USER_THEME_BYTES + 1);
-    limited_file.read_to_end(&mut bytes)?;
-
-    if bytes.len() as u64 > MAX_USER_THEME_BYTES {
-        log::warn!(
-            "User theme file {:?} is too large to load: {} bytes read (limit {} bytes)",
-            path,
-            bytes.len(),
-            MAX_USER_THEME_BYTES
-        );
-        return Ok(None);
-    }
-
-    Ok(Some(bytes))
-}
-
 /// Spawns a background task to load the user themes from the themes directory.
 fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
     cx.spawn({
@@ -2025,26 +1855,11 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
                 .await
                 .with_context(|| format!("reading themes from {themes_dir:?}"))?;
 
-            let mut scanned_entries = 0;
-            loop {
-                if scanned_entries >= MAX_USER_THEME_DIR_ENTRIES {
-                    log::debug!(
-                        "User theme scan reached {MAX_USER_THEME_DIR_ENTRIES} entries; skipping remaining files"
-                    );
-                    break;
-                }
-                let Some(theme_path) = theme_paths.next().await else {
-                    break;
-                };
-                scanned_entries += 1;
+            while let Some(theme_path) = theme_paths.next().await {
                 let Some(theme_path) = theme_path.log_err() else {
                     continue;
                 };
-                let Some(bytes) = load_limited_user_theme_bytes(&fs, &theme_path)
-                    .await
-                    .log_err()
-                    .flatten()
-                else {
+                let Some(bytes) = fs.load_bytes(&theme_path).await.log_err() else {
                     continue;
                 };
 
@@ -2067,13 +1882,16 @@ fn watch_themes(fs: Arc<dyn fs::Fs>, cx: &mut App) {
             .await;
 
         while let Some(paths) = events.next().await {
-            for event in paths.into_iter().take(MAX_USER_THEME_WATCH_EVENT_PATHS) {
-                if fs.metadata(&event.path).await.ok().flatten().is_some() {
+            for event in paths {
+                if fs
+                    .metadata(&event.path)
+                    .await
+                    .ok()
+                    .flatten()
+                    .is_some_and(|m| !m.is_dir)
+                {
                     let theme_registry = cx.update(|cx| ThemeRegistry::global(cx));
-                    if let Some(bytes) = load_limited_user_theme_bytes(&fs, &event.path)
-                        .await
-                        .log_err()
-                        .flatten()
+                    if let Some(bytes) = fs.load_bytes(&event.path).await.log_err()
                         && load_user_theme(&theme_registry, &bytes).log_err().is_some()
                     {
                         cx.update(theme_settings::reload_theme);
@@ -2099,18 +1917,7 @@ fn watch_languages(fs: Arc<dyn fs::Fs>, languages: Arc<LanguageRegistry>, cx: &m
 
         // add subdirectories since fs.watch is not recursive on Linux
         if let Some(mut paths) = fs.read_dir(&languages_src).await.log_err() {
-            let mut scanned_entries = 0;
-            loop {
-                if scanned_entries >= MAX_DEBUG_LANGUAGE_WATCH_DIR_ENTRIES {
-                    log::debug!(
-                        "Debug language watcher reached {MAX_DEBUG_LANGUAGE_WATCH_DIR_ENTRIES} entries; skipping remaining directories"
-                    );
-                    break;
-                }
-                let Some(path) = paths.next().await else {
-                    break;
-                };
-                scanned_entries += 1;
+            while let Some(path) = paths.next().await {
                 if let Some(path) = path.log_err()
                     && fs.is_dir(&path).await
                 {
@@ -2142,31 +1949,20 @@ fn dump_all_gpui_actions() {
         documentation: Option<&'static str>,
     }
     let mut generator = settings::KeymapFile::action_schema_generator();
-    let mut actions = Vec::with_capacity(MAX_DUMP_GPUI_ACTION_DEFINITIONS);
-    let mut truncated_actions = 0usize;
-    for action in gpui::generate_list_of_all_registered_actions() {
-        if actions.len() >= MAX_DUMP_GPUI_ACTION_DEFINITIONS {
-            truncated_actions += 1;
-            continue;
-        }
-
-        let schema = (action.json_schema)(&mut generator)
-            .map(|s| serde_json::to_value(s).expect("Failed to serialize action schema"));
-        actions.push(ActionDef {
-            name: action.name,
-            human_name: command_palette::humanize_action_name(action.name),
-            schema,
-            deprecated_aliases: action.deprecated_aliases,
-            deprecation_message: action.deprecation_message,
-            documentation: action.documentation,
-        });
-    }
-
-    if truncated_actions > 0 {
-        eprintln!(
-            "Dx action definition dump truncated to {MAX_DUMP_GPUI_ACTION_DEFINITIONS} actions; skipped {truncated_actions} additional actions"
-        );
-    }
+    let mut actions = gpui::generate_list_of_all_registered_actions()
+        .map(|action| {
+            let schema = (action.json_schema)(&mut generator)
+                .map(|s| serde_json::to_value(s).expect("Failed to serialize action schema"));
+            ActionDef {
+                name: action.name,
+                human_name: command_palette::humanize_action_name(action.name),
+                schema,
+                deprecated_aliases: action.deprecated_aliases,
+                deprecation_message: action.deprecation_message,
+                documentation: action.documentation,
+            }
+        })
+        .collect::<Vec<ActionDef>>();
 
     actions.sort_by_key(|a| a.name);
 

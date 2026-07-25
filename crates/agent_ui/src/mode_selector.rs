@@ -1,5 +1,5 @@
 use acp_thread::AgentSessionModes;
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use agent_servers::AgentServer;
 
 use fs::Fs;
@@ -60,10 +60,6 @@ impl ModeSelector {
 
     pub fn mode(&self) -> acp::SessionModeId {
         self.connection.current_mode()
-    }
-
-    pub fn modes(&self) -> Vec<acp::SessionMode> {
-        self.connection.all_modes()
     }
 
     pub fn set_mode(&mut self, mode: acp::SessionModeId, cx: &mut Context<Self>) {
@@ -155,7 +151,6 @@ impl Render for ModeSelector {
         let trigger_button = Button::new("mode-selector-trigger", current_mode_name)
             .label_size(LabelSize::Small)
             .color(Color::Muted)
-            .truncate(true)
             .end_icon(Icon::new(icon).size(IconSize::XSmall).color(Color::Muted))
             .disabled(self.setting_mode);
 
@@ -243,7 +238,7 @@ mod tests {
 
     impl AgentServer for TestAgentServer {
         fn logo(&self) -> IconName {
-            IconName::Sparkle
+            IconName::ZedAssistant
         }
 
         fn agent_id(&self) -> AgentId {

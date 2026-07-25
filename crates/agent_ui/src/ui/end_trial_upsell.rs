@@ -33,7 +33,7 @@ impl RenderOnce for EndTrialUpsell {
             )
             .child(PlanDefinitions.pro_plan())
             .child(
-                Button::new("cta-button", "Upgrade to Dx Pro")
+                Button::new("cta-button", "Upgrade to Zed Pro")
                     .full_width()
                     .style(ButtonStyle::Tinted(ui::TintColor::Accent))
                     .on_click(move |_, _window, cx| {
@@ -65,16 +65,10 @@ impl RenderOnce for EndTrialUpsell {
             .child(PlanDefinitions.free_plan());
 
         AgentPanelOnboardingCard::new()
-            .child(Headline::new("Your Dx Pro Trial has expired"))
+            .child(Headline::new("Your Zed Pro Trial has expired"))
             .child(
                 Label::new("You've been automatically reset to the Free plan.")
                     .color(Color::Muted)
-                    .mb_1(),
-            )
-            .child(
-                Label::new("Note: subscriptions and Pro features are provided by the Zed agent (this Dx Code editor is a fork of Zed and includes its full agent/subscription capabilities).")
-                    .color(Color::Muted)
-                    .size(LabelSize::XSmall)
                     .mb_2(),
             )
             .child(pro_section)

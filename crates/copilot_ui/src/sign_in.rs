@@ -475,6 +475,10 @@ pub enum ConfigurationMode {
 }
 
 impl ConfigurationView {
+    pub fn compact(self) -> Self {
+        self
+    }
+
     pub fn new(
         is_authenticated: impl Fn(&mut App) -> bool + 'static,
         mode: ConfigurationMode,
@@ -689,7 +693,7 @@ impl Render for ConfigurationView {
         let is_authenticated = &self.is_authenticated;
 
         if is_authenticated(cx) {
-            return ConfiguredApiCard::new("Authorized")
+            return ConfiguredApiCard::new("copilot-authorized", "Authorized")
                 .button_label("Sign Out")
                 .on_click(|_, window, cx| {
                     if let Some(auth) = GlobalCopilotAuth::try_global(cx) {
