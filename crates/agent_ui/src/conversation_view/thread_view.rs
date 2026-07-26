@@ -4278,9 +4278,10 @@ impl ThreadView {
 
         let max_content_width = AgentSettings::get_global(cx).max_content_width;
         let has_messages = self.list_state.item_count() > 0;
-        let fills_container = !has_messages || editor_expanded;
+        let fills_container = has_messages && editor_expanded;
 
         h_flex()
+            .w_full()
             .py_2()
             .bg(editor_bg_color)
             .justify_center()
@@ -4292,16 +4293,22 @@ impl ThreadView {
                         .border_color(cx.theme().colors().border)
                         .when(editor_expanded, |this| this.h(vh(0.8, window)))
                 } else {
-                    this.flex_1().size_full()
+                    this.w_full()
                 }
             })
             .child(
                 v_flex()
-                    .when_some(max_content_width, |this, max_w| this.flex_basis(max_w))
-                    .when(max_content_width.is_none(), |this| this.w_full())
+                    .w_full()
+                    .max_w(rems(56.))
+                    .when_some(max_content_width, |this, max_w| {
+                        this.max_w(max_w).flex_basis(max_w)
+                    })
                     .min_w_0()
                     .when(fills_container, |this| this.h_full())
-                    .px_2()
+                    .p_2()
+                    .border_1()
+                    .border_color(cx.theme().colors().border)
+                    .rounded_lg()
                     .flex_shrink_1()
                     .flex_grow_0()
                     .justify_between()

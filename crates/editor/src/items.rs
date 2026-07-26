@@ -19,15 +19,13 @@ use gpui::{
     IntoElement, ParentElement, Pixels, SharedString, Styled, Task, WeakEntity, Window, point,
 };
 use language::{
-    Bias, Buffer, BufferRow, CharKind, CharScopeContext, HighlightedText, LocalFile, PLAIN_TEXT,
-    Point, SelectionGoal,
-    language_settings::{FormatOnSave, LanguageSettings},
-    proto::serialize_anchor as serialize_text_anchor,
+    Bias, Buffer, BufferRow, CharKind, CharScopeContext, HighlightedText, LocalFile, Point,
+    SelectionGoal, proto::serialize_anchor as serialize_text_anchor,
 };
 use lsp::DiagnosticSeverity;
 use multi_buffer::{BufferOffset, MultiBufferOffset, PathKey};
 use project::{
-    File, Project, ProjectItem as _, ProjectPath, git_store::GitStore, lsp_store::FormatTrigger,
+    File, Project, ProjectItem as _, ProjectPath, lsp_store::FormatTrigger,
     project_settings::ProjectSettings, search::SearchQuery,
 };
 use rope::TextSummary;
@@ -37,15 +35,18 @@ use std::{
     any::{Any, TypeId},
     borrow::Cow,
     cmp::{self, Ordering},
+    fs as std_fs,
     num::NonZeroU32,
     ops::Range,
     path::{Path, PathBuf},
     sync::Arc,
 };
-use text::{BufferId, BufferSnapshot, OffsetRangeExt, Selection, ToPoint as _};
-use ui::{IconDecorationKind, prelude::*};
-use util::{ResultExt, TryFutureExt, asset_str, debug_panic, paths::PathExt, rel_path::RelPath};
-use workspace::item::{Dedup, ItemSettings, SerializableItem, TabContentParams};
+use text::{BufferId, BufferSnapshot, OffsetRangeExt, Selection};
+use ui::{IconDecorationKind, dx_icon_data_dir, prelude::*};
+use util::{ResultExt, TryFutureExt, asset_str, paths::PathExt, rel_path::RelPath};
+use workspace::item::{
+    Dedup, ItemSettings, SerializableItem, TabContentParams, WorkspaceScreenKind,
+};
 use workspace::{
     CollaboratorId, ItemId, ItemNavHistory, ToolbarItemLocation, ViewId, Workspace, WorkspaceId,
     invalid_item_view::InvalidItemView,
@@ -56,8 +57,8 @@ use workspace::{
     },
 };
 use workspace::{
-    DraggedIconAsset, DraggedMediaAsset, DraggedMediaKind, DraggedShadcnAsset, Pane,
-    TabBarSettings, WorkspaceSettings,
+    DraggedIconAsset, DraggedMediaAsset, DraggedMediaKind, DraggedShadcnAsset, Pane, TabBarSettings,
+    WorkspaceSettings,
     item::{FollowEvent, ProjectItemKind},
     searchable::SearchOptions,
 };
@@ -74,31 +75,162 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<SharedString> {
-        let svg = icon
-            .svg
-            .as_ref()
-            .map(|svg| svg.trim().to_string())
-            .or_else(|| {
-                icon.icon_name.map(|icon_name| {
-                    asset_str::<Assets>(icon_name.path().as_ref())
-                        .trim()
-                        .to_string()
-                })
-            })
-            .ok_or_else(|| anyhow!("No SVG source is available for {}", icon.label))?;
+        let svg = icon_svg_source(icon);
+
+        if let Some(active_path) = target_file_abs_path_for_app(self, cx) {
+            if is_react_editor_path(&active_path)
+                && let Some((project_root, active_path)) =
+                    self.active_project_path(cx).and_then(|path| {
+                        let project = self.project()?.read(cx);
+                        Some((
+                            project.get_workspace_root(&path, cx)?,
+                            project.absolute_path(&path, cx)?,
+                        ))
+                    })
+            {
+                return self.insert_react_icon_asset(
+                    icon,
+                    &svg,
+                    project_root,
+                    active_path,
+                    window,
+                    cx,
+                );
+            }
+
+            if !is_basic_icon_editor_path(&active_path) {
+                return Err(anyhow!(
+                    "Icon insertion is available in TSX, JSX, HTML, SVG, Markdown, MDX, and untitled editors."
+                ));
+            }
+        }
 
         self.insert(&svg, window, cx);
-        Ok(format!("Inserted {}", icon.label).into())
+        Ok(format!("Inserted {}", icon.label.as_ref()).into())
     }
 
-    pub fn insert_shadcn_asset(
+    fn insert_react_icon_asset(
         &mut self,
-        asset: &DraggedShadcnAsset,
+        icon: &DraggedIconAsset,
+        svg: &str,
+        project_root: PathBuf,
+        active_path: PathBuf,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<SharedString> {
-        self.insert(asset.jsx.as_ref(), window, cx);
-        Ok(format!("Inserted {}", asset.title).into())
+        let asset_dir = icon_asset_dir(&project_root);
+        std_fs::create_dir_all(&asset_dir)
+            .with_context(|| format!("creating {}", asset_dir.display()))?;
+
+        let svg_path = asset_dir.join(icon_asset_file_name(icon.stem.as_ref()));
+        if !svg_path.exists() {
+            std_fs::write(&svg_path, format!("{svg}\n"))
+                .with_context(|| format!("writing {}", svg_path.display()))?;
+        }
+
+        let import_path = relative_import_path(&active_path, &svg_path).with_context(|| {
+            format!(
+                "building import from {} to {}",
+                active_path.display(),
+                svg_path.display()
+            )
+        })?;
+        let component_name = react_icon_component_name(icon.stem.as_ref());
+        let import_statement = format!("import {component_name} from \"{import_path}?react\";\n");
+
+        let text = self.text(cx);
+        if !react_import_exists(&text, &component_name, &import_path) {
+            let offset = import_insertion_offset(&text);
+            self.edit(
+                [(
+                    MultiBufferOffset(offset)..MultiBufferOffset(offset),
+                    import_statement,
+                )],
+                cx,
+            );
+        }
+
+        self.insert(&format!("<{component_name} />"), window, cx);
+        Ok(format!("Inserted {component_name}").into())
+    }
+
+    fn insert_icon_asset_on_drop(
+        &mut self,
+        icon: &DraggedIconAsset,
+        cx: &mut App,
+    ) -> Result<SharedString> {
+        let svg = icon_svg_source(icon);
+
+        if let Some(active_path) = target_file_abs_path_for_app(self, cx) {
+            if is_react_editor_path(&active_path)
+                && let Some((project_root, active_path)) =
+                    self.active_project_path(cx).and_then(|path| {
+                        let project = self.project()?.read(cx);
+                        Some((
+                            project.get_workspace_root(&path, cx)?,
+                            project.absolute_path(&path, cx)?,
+                        ))
+                    })
+            {
+                return self.insert_react_icon_asset_on_drop(
+                    icon,
+                    &svg,
+                    project_root,
+                    active_path,
+                    cx,
+                );
+            }
+
+            if !is_basic_icon_editor_path(&active_path) {
+                return Err(anyhow!(
+                    "Icon insertion is available in TSX, JSX, HTML, SVG, Markdown, MDX, and untitled editors."
+                ));
+            }
+        }
+
+        self.insert_text_on_drop(svg, cx);
+        Ok(format!("Inserted {}", icon.label.as_ref()).into())
+    }
+
+    fn insert_react_icon_asset_on_drop(
+        &mut self,
+        icon: &DraggedIconAsset,
+        svg: &str,
+        project_root: PathBuf,
+        active_path: PathBuf,
+        cx: &mut App,
+    ) -> Result<SharedString> {
+        let asset_dir = icon_asset_dir(&project_root);
+        std_fs::create_dir_all(&asset_dir)
+            .with_context(|| format!("creating {}", asset_dir.display()))?;
+
+        let svg_path = asset_dir.join(icon_asset_file_name(icon.stem.as_ref()));
+        if !svg_path.exists() {
+            std_fs::write(&svg_path, format!("{svg}\n"))
+                .with_context(|| format!("writing {}", svg_path.display()))?;
+        }
+
+        let import_path = relative_import_path(&active_path, &svg_path).with_context(|| {
+            format!(
+                "building import from {} to {}",
+                active_path.display(),
+                svg_path.display()
+            )
+        })?;
+        let component_name = react_icon_component_name(icon.stem.as_ref());
+        let import_statement = format!("import {component_name} from \"{import_path}?react\";\n");
+
+        let text = self.text(cx);
+        if !react_import_exists(&text, &component_name, &import_path) {
+            self.insert_text_at_offset_on_drop(
+                import_insertion_offset(&text),
+                import_statement,
+                cx,
+            );
+        }
+
+        self.insert_text_on_drop(format!("<{component_name} />"), cx);
+        Ok(format!("Inserted {component_name}").into())
     }
 
     pub fn insert_media_asset(
@@ -107,8 +239,128 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<SharedString> {
-        self.insert(&media.path.to_string_lossy(), window, cx);
-        Ok(format!("Inserted {}", media.label).into())
+        let Some(_active_path) = self.target_file_abs_path(cx) else {
+            let path = media.path.to_string_lossy().to_string();
+            self.insert(&path, window, cx);
+            return Ok(format!("Inserted {}", media.label.as_ref()).into());
+        };
+
+        let Some((project_root, active_path)) = self.active_project_path(cx).and_then(|path| {
+            let project = self.project()?.read(cx);
+            Some((
+                project.get_workspace_root(&path, cx)?,
+                project.absolute_path(&path, cx)?,
+            ))
+        }) else {
+            let path = media.path.to_string_lossy().to_string();
+            self.insert(&path, window, cx);
+            return Ok(format!("Inserted {}", media.label.as_ref()).into());
+        };
+
+        let asset_path = copy_media_asset_into_project(media, &project_root)?;
+        let reference_path =
+            relative_import_path(&active_path, &asset_path).with_context(|| {
+                format!(
+                    "building media reference from {} to {}",
+                    active_path.display(),
+                    asset_path.display()
+                )
+            })?;
+
+        if is_react_editor_path(&active_path) {
+            let identifier = media_asset_identifier(&asset_path);
+            let import_statement = format!("import {identifier} from \"{reference_path}\";\n");
+            let text = self.text(cx);
+            if !media_import_exists(&text, &identifier, &reference_path) {
+                let offset = import_insertion_offset(&text);
+                self.edit(
+                    [(
+                        MultiBufferOffset(offset)..MultiBufferOffset(offset),
+                        import_statement,
+                    )],
+                    cx,
+                );
+            }
+            self.insert(
+                &react_media_element(media.kind, &identifier, media.label.as_ref()),
+                window,
+                cx,
+            );
+        } else {
+            self.insert(
+                &media_reference_for_path(
+                    &active_path,
+                    media.kind,
+                    media.label.as_ref(),
+                    &reference_path,
+                ),
+                window,
+                cx,
+            );
+        }
+
+        Ok(format!("Inserted {}", media.label.as_ref()).into())
+    }
+
+    fn insert_media_asset_on_drop(
+        &mut self,
+        media: &DraggedMediaAsset,
+        cx: &mut App,
+    ) -> Result<SharedString> {
+        let Some(_active_path) = target_file_abs_path_for_app(self, cx) else {
+            self.insert_text_on_drop(media.path.to_string_lossy().to_string(), cx);
+            return Ok(format!("Inserted {}", media.label.as_ref()).into());
+        };
+
+        let Some((project_root, active_path)) = self.active_project_path(cx).and_then(|path| {
+            let project = self.project()?.read(cx);
+            Some((
+                project.get_workspace_root(&path, cx)?,
+                project.absolute_path(&path, cx)?,
+            ))
+        }) else {
+            self.insert_text_on_drop(media.path.to_string_lossy().to_string(), cx);
+            return Ok(format!("Inserted {}", media.label.as_ref()).into());
+        };
+
+        let asset_path = copy_media_asset_into_project(media, &project_root)?;
+        let reference_path =
+            relative_import_path(&active_path, &asset_path).with_context(|| {
+                format!(
+                    "building media reference from {} to {}",
+                    active_path.display(),
+                    asset_path.display()
+                )
+            })?;
+
+        if is_react_editor_path(&active_path) {
+            let identifier = media_asset_identifier(&asset_path);
+            let import_statement = format!("import {identifier} from \"{reference_path}\";\n");
+            let text = self.text(cx);
+            if !media_import_exists(&text, &identifier, &reference_path) {
+                self.insert_text_at_offset_on_drop(
+                    import_insertion_offset(&text),
+                    import_statement,
+                    cx,
+                );
+            }
+            self.insert_text_on_drop(
+                react_media_element(media.kind, &identifier, media.label.as_ref()),
+                cx,
+            );
+        } else {
+            self.insert_text_on_drop(
+                media_reference_for_path(
+                    &active_path,
+                    media.kind,
+                    media.label.as_ref(),
+                    &reference_path,
+                ),
+                cx,
+            );
+        }
+
+        Ok(format!("Inserted {}", media.label.as_ref()).into())
     }
 
     pub fn insert_media_url(
@@ -119,14 +371,629 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> SharedString {
-        let reference = match kind {
-            DraggedMediaKind::Image => format!("![{label}]({url})"),
-            DraggedMediaKind::Video => format!("<video controls src=\"{url}\"></video>"),
-            DraggedMediaKind::Audio => format!("<audio controls src=\"{url}\"></audio>"),
+        let Some(active_path) = self.target_file_abs_path(cx) else {
+            self.insert(url, window, cx);
+            return format!("Inserted {label}").into();
         };
-        self.insert(&reference, window, cx);
+
+        if is_react_editor_path(&active_path) {
+            self.insert(&react_media_url_element(kind, url, label), window, cx);
+        } else {
+            self.insert(
+                &media_reference_for_path(&active_path, kind, label, url),
+                window,
+                cx,
+            );
+        }
+
         format!("Inserted {label}").into()
     }
+
+    pub fn insert_shadcn_asset(
+        &mut self,
+        asset: &DraggedShadcnAsset,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Result<SharedString> {
+        let Some(_active_path) = self.target_file_abs_path(cx) else {
+            self.insert(asset.jsx.as_ref(), window, cx);
+            return Ok(format!("Inserted {}", asset.title.as_ref()).into());
+        };
+
+        let Some((project_root, active_path)) = self.active_project_path(cx).and_then(|path| {
+            let project = self.project()?.read(cx);
+            Some((
+                project.get_workspace_root(&path, cx)?,
+                project.absolute_path(&path, cx)?,
+            ))
+        }) else {
+            self.insert(asset.jsx.as_ref(), window, cx);
+            return Ok(format!("Inserted {}", asset.title.as_ref()).into());
+        };
+
+        let install_report = shadcn_ui::install_asset(asset, &project_root)?;
+        if !install_report.insert_snippet {
+            return Ok(install_report.status_message(asset.title.as_ref()).into());
+        }
+
+        if is_react_editor_path(&active_path) {
+            let text = self.text(cx);
+            let import_statement = asset.import_statement.as_ref();
+            if !import_statement.is_empty() && !shadcn_import_exists(&text, import_statement) {
+                let offset = import_insertion_offset(&text);
+                self.edit(
+                    [(
+                        MultiBufferOffset(offset)..MultiBufferOffset(offset),
+                        format!("{import_statement}\n"),
+                    )],
+                    cx,
+                );
+            }
+            self.insert(asset.jsx.as_ref(), window, cx);
+        } else {
+            self.insert(
+                &format!(
+                    "Installed {} into {}",
+                    asset.title.as_ref(),
+                    install_report.installed_path.as_str()
+                ),
+                window,
+                cx,
+            );
+        }
+
+        Ok(install_report.status_message(asset.title.as_ref()).into())
+    }
+
+    fn insert_shadcn_asset_on_drop(
+        &mut self,
+        asset: &DraggedShadcnAsset,
+        cx: &mut App,
+    ) -> Result<SharedString> {
+        let Some(_active_path) = target_file_abs_path_for_app(self, cx) else {
+            self.insert_text_on_drop(asset.jsx.to_string(), cx);
+            return Ok(format!("Inserted {}", asset.title.as_ref()).into());
+        };
+
+        let Some((project_root, active_path)) = self.active_project_path(cx).and_then(|path| {
+            let project = self.project()?.read(cx);
+            Some((
+                project.get_workspace_root(&path, cx)?,
+                project.absolute_path(&path, cx)?,
+            ))
+        }) else {
+            self.insert_text_on_drop(asset.jsx.to_string(), cx);
+            return Ok(format!("Inserted {}", asset.title.as_ref()).into());
+        };
+
+        let install_report = shadcn_ui::install_asset(asset, &project_root)?;
+        if !install_report.insert_snippet {
+            return Ok(install_report.status_message(asset.title.as_ref()).into());
+        }
+
+        if is_react_editor_path(&active_path) {
+            let text = self.text(cx);
+            let import_statement = asset.import_statement.as_ref();
+            if !import_statement.is_empty() && !shadcn_import_exists(&text, import_statement) {
+                self.insert_text_at_offset_on_drop(
+                    import_insertion_offset(&text),
+                    format!("{import_statement}\n"),
+                    cx,
+                );
+            }
+            self.insert_text_on_drop(asset.jsx.to_string(), cx);
+        } else {
+            self.insert_text_on_drop(
+                format!(
+                    "Installed {} into {}",
+                    asset.title.as_ref(),
+                    install_report.installed_path.as_str()
+                ),
+                cx,
+            );
+        }
+
+        Ok(install_report.status_message(asset.title.as_ref()).into())
+    }
+
+    fn insert_text_on_drop(&mut self, text: impl Into<Arc<str>>, cx: &mut App) {
+        if self.read_only(cx) {
+            return;
+        }
+
+        let text = text.into();
+        let selections = self.selections.all_adjusted(&self.display_snapshot(cx));
+        self.buffer.update(cx, |buffer, cx| {
+            buffer.edit(
+                selections
+                    .iter()
+                    .map(|selection| (selection.start..selection.end, text.clone())),
+                None,
+                cx,
+            );
+        });
+    }
+
+    fn insert_text_at_offset_on_drop(
+        &mut self,
+        offset: usize,
+        text: impl Into<Arc<str>>,
+        cx: &mut App,
+    ) {
+        if self.read_only(cx) {
+            return;
+        }
+
+        let offset = MultiBufferOffset(offset);
+        let text = text.into();
+        self.buffer.update(cx, |buffer, cx| {
+            buffer.edit([(offset..offset, text)], None, cx);
+        });
+    }
+}
+
+fn shadcn_import_exists(text: &str, import_statement: &str) -> bool {
+    text.contains(import_statement)
+}
+
+fn target_file_abs_path_for_app(editor: &Editor, cx: &App) -> Option<PathBuf> {
+    if let Some(project_path) = editor.active_project_path(cx) {
+        let project = editor.project()?.read(cx);
+        return project.absolute_path(&project_path, cx);
+    }
+
+    editor
+        .buffer()
+        .read(cx)
+        .as_singleton()
+        .and_then(|buffer| buffer.read(cx).file())
+        .and_then(|file| file.as_local().map(|file| file.abs_path(cx)))
+}
+
+fn is_react_editor_path(path: &Path) -> bool {
+    matches!(
+        path.extension().and_then(|extension| extension.to_str()),
+        Some("tsx" | "jsx")
+    )
+}
+
+fn is_basic_icon_editor_path(path: &Path) -> bool {
+    matches!(
+        path.extension().and_then(|extension| extension.to_str()),
+        Some("html" | "htm" | "svg" | "md" | "mdx")
+    )
+}
+
+fn icon_svg_source(icon: &DraggedIconAsset) -> String {
+    icon.svg
+        .as_ref()
+        .map(|svg| svg.trim().to_string())
+        .or_else(|| {
+            icon.icon_name.map(|icon_name| {
+                asset_str::<Assets>(icon_name.path().as_ref())
+                    .trim()
+                    .to_string()
+            })
+        })
+        .or_else(|| {
+            let pack = icon.external_pack.as_ref()?;
+            let name = icon.external_name.as_ref()?;
+            iconify_svg_source(
+                pack.as_ref(),
+                name.as_ref(),
+                icon.external_width.unwrap_or(24),
+                icon.external_height.unwrap_or(24),
+            )
+        })
+        .unwrap_or_default()
+}
+
+#[derive(serde::Deserialize)]
+struct IconifyBodyPack {
+    icons: HashMap<String, IconifyBody>,
+    #[serde(default)]
+    aliases: HashMap<String, IconifyAlias>,
+}
+
+#[derive(serde::Deserialize)]
+struct IconifyBody {
+    body: String,
+    #[serde(default)]
+    width: Option<u32>,
+    #[serde(default)]
+    height: Option<u32>,
+}
+
+#[derive(serde::Deserialize)]
+struct IconifyAlias {
+    parent: String,
+    #[serde(default)]
+    width: Option<u32>,
+    #[serde(default)]
+    height: Option<u32>,
+    #[serde(default, rename = "hFlip")]
+    h_flip: bool,
+    #[serde(default, rename = "vFlip")]
+    v_flip: bool,
+    #[serde(default)]
+    rotate: Option<u8>,
+}
+
+fn iconify_svg_source(pack: &str, name: &str, width: u32, height: u32) -> Option<String> {
+    let path = dx_icon_data_dir().join(format!("{pack}.json"));
+    let text = std_fs::read_to_string(path).ok()?;
+    let pack = serde_json::from_str::<IconifyBodyPack>(&text).ok()?;
+    let (body, icon_width, icon_height) = if let Some(icon) = pack.icons.get(name) {
+        (icon.body.trim().to_string(), icon.width, icon.height)
+    } else {
+        let alias = pack.aliases.get(name)?;
+        let parent = pack.icons.get(alias.parent.as_str())?;
+        let icon_width = alias.width.or(parent.width);
+        let icon_height = alias.height.or(parent.height);
+        (
+            transform_iconify_alias_body(
+                parent.body.trim(),
+                icon_width.unwrap_or(width).max(1),
+                icon_height.unwrap_or(height).max(1),
+                alias.h_flip,
+                alias.v_flip,
+                alias.rotate,
+            ),
+            icon_width,
+            icon_height,
+        )
+    };
+    let width = icon_width.unwrap_or(width).max(1);
+    let height = icon_height.unwrap_or(height).max(1);
+    Some(format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">{body}</svg>"#
+    ))
+}
+
+fn transform_iconify_alias_body(
+    body: &str,
+    width: u32,
+    height: u32,
+    h_flip: bool,
+    v_flip: bool,
+    rotate: Option<u8>,
+) -> String {
+    let mut transforms = Vec::new();
+
+    if h_flip {
+        transforms.push(format!("translate({width} 0) scale(-1 1)"));
+    }
+    if v_flip {
+        transforms.push(format!("translate(0 {height}) scale(1 -1)"));
+    }
+    if let Some(rotate) = rotate
+        .map(|rotate| rotate % 4)
+        .filter(|rotate| *rotate != 0)
+    {
+        transforms.push(format!(
+            "rotate({} {} {})",
+            rotate as u16 * 90,
+            width as f32 / 2.,
+            height as f32 / 2.
+        ));
+    }
+
+    if transforms.is_empty() {
+        body.to_string()
+    } else {
+        format!(r#"<g transform="{}">{body}</g>"#, transforms.join(" "))
+    }
+}
+
+fn icon_asset_dir(project_root: &Path) -> PathBuf {
+    let src_dir = project_root.join("src");
+    if src_dir.is_dir() {
+        src_dir.join("assets").join("icons")
+    } else {
+        project_root.join("assets").join("icons")
+    }
+}
+
+fn icon_asset_file_name(stem: &str) -> String {
+    let mut file_name = String::with_capacity(stem.len() + ".svg".len());
+    let mut wrote_file_name_char = false;
+    let mut last_was_separator = false;
+
+    for ch in stem.chars() {
+        if ch.is_ascii_alphanumeric() {
+            file_name.push(ch);
+            wrote_file_name_char = true;
+            last_was_separator = false;
+        } else if wrote_file_name_char && !last_was_separator {
+            file_name.push('-');
+            last_was_separator = true;
+        }
+    }
+
+    while file_name.ends_with('-') {
+        file_name.pop();
+    }
+
+    if file_name.is_empty() {
+        file_name.push_str("icon");
+    }
+
+    file_name.push_str(".svg");
+    file_name
+}
+
+fn copy_media_asset_into_project(
+    media: &DraggedMediaAsset,
+    project_root: &Path,
+) -> Result<PathBuf> {
+    let asset_dir = media_asset_dir(project_root, media.kind);
+    std_fs::create_dir_all(&asset_dir)
+        .with_context(|| format!("creating {}", asset_dir.display()))?;
+
+    let file_name = media
+        .path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("media");
+    let destination = unique_media_destination(&asset_dir, file_name, &media.path)?;
+    if !paths_equivalent(&destination, &media.path) {
+        std_fs::copy(&media.path, &destination).with_context(|| {
+            format!(
+                "copying media asset from {} to {}",
+                media.path.display(),
+                destination.display()
+            )
+        })?;
+    }
+
+    Ok(destination)
+}
+
+fn unique_media_destination(
+    asset_dir: &Path,
+    file_name: &str,
+    source_path: &Path,
+) -> Result<PathBuf> {
+    let destination = asset_dir.join(file_name);
+    if !destination.exists() || paths_equivalent(&destination, source_path) {
+        return Ok(destination);
+    }
+
+    let file_path = Path::new(file_name);
+    let stem = file_path
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .filter(|stem| !stem.is_empty())
+        .unwrap_or("media");
+    let extension = file_path
+        .extension()
+        .and_then(|extension| extension.to_str());
+
+    for suffix in 2..=999 {
+        let file_name = match extension {
+            Some(extension) if !extension.is_empty() => format!("{stem}-{suffix}.{extension}"),
+            _ => format!("{stem}-{suffix}"),
+        };
+        let destination = asset_dir.join(file_name);
+        if !destination.exists() || paths_equivalent(&destination, source_path) {
+            return Ok(destination);
+        }
+    }
+
+    Err(anyhow!(
+        "could not find an available media filename for {}",
+        file_name
+    ))
+}
+
+fn paths_equivalent(left: &Path, right: &Path) -> bool {
+    if left == right {
+        return true;
+    }
+
+    let Ok(left) = std_fs::canonicalize(left) else {
+        return false;
+    };
+    let Ok(right) = std_fs::canonicalize(right) else {
+        return false;
+    };
+
+    left == right
+}
+
+fn media_asset_dir(project_root: &Path, kind: DraggedMediaKind) -> PathBuf {
+    let category = match kind {
+        DraggedMediaKind::Image => "images",
+        DraggedMediaKind::Video => "videos",
+        DraggedMediaKind::Audio => "audio",
+    };
+    let src_dir = project_root.join("src");
+    if src_dir.is_dir() {
+        src_dir.join("assets").join("media").join(category)
+    } else {
+        project_root.join("assets").join("media").join(category)
+    }
+}
+
+fn relative_import_path(from_file: &Path, to_file: &Path) -> Option<String> {
+    let from_dir = from_file.parent()?;
+    let relative = pathdiff::diff_paths(to_file, from_dir)?;
+    let mut relative = relative.to_string_lossy().replace('\\', "/");
+    if !relative.starts_with('.') {
+        relative = format!("./{relative}");
+    }
+    Some(relative)
+}
+
+fn react_icon_component_name(stem: &str) -> String {
+    let mut name = String::new();
+    let mut segment = String::new();
+    for ch in stem.chars() {
+        if ch.is_ascii_alphanumeric() {
+            segment.push(ch);
+        } else {
+            push_react_component_name_segment(&mut name, &segment);
+            segment.clear();
+        }
+    }
+    push_react_component_name_segment(&mut name, &segment);
+
+    if name.is_empty() {
+        name.push_str("Svg");
+    }
+    if name
+        .chars()
+        .next()
+        .is_some_and(|first| first.is_ascii_digit())
+    {
+        name.insert_str(0, "Svg");
+    }
+    if !name.ends_with("Icon") {
+        name.push_str("Icon");
+    }
+    name
+}
+
+fn push_react_component_name_segment(name: &mut String, segment: &str) {
+    let mut chars = segment.chars();
+    let Some(first) = chars.next() else {
+        return;
+    };
+
+    name.push(first.to_ascii_uppercase());
+    for ch in chars {
+        name.push(ch.to_ascii_lowercase());
+    }
+}
+
+fn react_import_exists(text: &str, component_name: &str, import_path: &str) -> bool {
+    text.contains(&format!(
+        "import {component_name} from \"{import_path}?react\""
+    )) || text.contains(&format!(
+        "import {component_name} from '{import_path}?react'"
+    ))
+}
+
+fn media_import_exists(text: &str, identifier: &str, import_path: &str) -> bool {
+    text.contains(&format!("import {identifier} from \"{import_path}\""))
+        || text.contains(&format!("import {identifier} from '{import_path}'"))
+}
+
+fn media_asset_identifier(path: &Path) -> String {
+    let stem = path
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("media");
+    let mut name = String::from("media");
+    for segment in stem
+        .split(|character: char| !character.is_ascii_alphanumeric())
+        .filter(|segment| !segment.is_empty())
+    {
+        let mut chars = segment.chars();
+        if let Some(first) = chars.next() {
+            name.extend(first.to_uppercase());
+            name.push_str(chars.as_str());
+        }
+    }
+    name
+}
+
+fn react_media_element(kind: DraggedMediaKind, identifier: &str, label: &str) -> String {
+    match kind {
+        DraggedMediaKind::Image => format!("<img src={{{identifier}}} alt=\"{label}\" />"),
+        DraggedMediaKind::Video => format!("<video controls src={{{identifier}}} />"),
+        DraggedMediaKind::Audio => format!("<audio controls src={{{identifier}}} />"),
+    }
+}
+
+fn react_media_url_element(kind: DraggedMediaKind, url: &str, label: &str) -> String {
+    let url = escape_html_attr(url);
+    let label = escape_html_attr(label);
+    match kind {
+        DraggedMediaKind::Image => format!("<img src=\"{url}\" alt=\"{label}\" />"),
+        DraggedMediaKind::Video => format!("<video controls src=\"{url}\" />"),
+        DraggedMediaKind::Audio => format!("<audio controls src=\"{url}\" />"),
+    }
+}
+
+fn media_reference_for_path(
+    active_path: &Path,
+    kind: DraggedMediaKind,
+    label: &str,
+    reference_path: &str,
+) -> String {
+    match active_path
+        .extension()
+        .and_then(|extension| extension.to_str())
+    {
+        Some("md" | "mdx") => match kind {
+            DraggedMediaKind::Image => format!("![{label}]({reference_path})"),
+            DraggedMediaKind::Video => format!("<video controls src=\"{reference_path}\"></video>"),
+            DraggedMediaKind::Audio => format!("<audio controls src=\"{reference_path}\"></audio>"),
+        },
+        Some("html" | "htm") => match kind {
+            DraggedMediaKind::Image => format!(
+                "<img src=\"{}\" alt=\"{}\">",
+                escape_html_attr(reference_path),
+                escape_html_attr(label)
+            ),
+            DraggedMediaKind::Video => format!(
+                "<video controls src=\"{}\"></video>",
+                escape_html_attr(reference_path)
+            ),
+            DraggedMediaKind::Audio => format!(
+                "<audio controls src=\"{}\"></audio>",
+                escape_html_attr(reference_path)
+            ),
+        },
+        Some("css" | "scss" | "sass" | "less") => format!("url(\"{reference_path}\")"),
+        _ => reference_path.to_string(),
+    }
+}
+
+fn escape_html_attr(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for character in text.chars() {
+        match character {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '"' => escaped.push_str("&quot;"),
+            '\'' => escaped.push_str("&#39;"),
+            _ => escaped.push(character),
+        }
+    }
+    escaped
+}
+
+fn import_insertion_offset(text: &str) -> usize {
+    let mut offset = 0;
+    let mut first_code_line_seen = false;
+
+    for line in text.split_inclusive('\n') {
+        let trimmed = line.trim();
+        if trimmed.is_empty() && !first_code_line_seen {
+            offset += line.len();
+            continue;
+        }
+
+        first_code_line_seen = true;
+        if is_use_directive(trimmed) {
+            offset += line.len();
+            continue;
+        }
+
+        break;
+    }
+
+    offset
+}
+
+fn is_use_directive(line: &str) -> bool {
+    ((line.starts_with("\"use ") && line.ends_with("\";"))
+        || (line.starts_with("'use ") && line.ends_with("';")))
+        || ((line.starts_with("\"use ") && line.ends_with('"'))
+            || (line.starts_with("'use ") && line.ends_with('\'')))
 }
 
 impl FollowableItem for Editor {
@@ -773,6 +1640,10 @@ impl Item for Editor {
         None
     }
 
+    fn screen_kind(&self) -> WorkspaceScreenKind {
+        WorkspaceScreenKind::Editor
+    }
+
     fn tab_content_text(&self, detail: usize, cx: &App) -> SharedString {
         if let Some(path) = path_for_buffer(&self.buffer, detail, true, cx) {
             path.to_string().into()
@@ -783,22 +1654,7 @@ impl Item for Editor {
     }
 
     fn suggested_filename(&self, cx: &App) -> SharedString {
-        let multi_buffer = self.buffer.read(cx);
-        let title = multi_buffer.title(cx);
-        if let Some(buffer) = multi_buffer.as_singleton() {
-            let buffer = buffer.read(cx);
-            if buffer.file().is_none()
-                && let Some(language) = buffer.language()
-                && *language != *PLAIN_TEXT
-                && let Some(suffix) = language.path_suffixes().first()
-                && !suffix.is_empty()
-                && !title.ends_with(&format!(".{suffix}"))
-            {
-                return format!("{title}.{suffix}").into();
-            }
-        }
-
-        title.to_string().into()
+        self.buffer.read(cx).title(cx).to_string().into()
     }
 
     fn tab_icon(&self, _: &Window, cx: &App) -> Option<Icon> {
@@ -1028,13 +1884,7 @@ impl Item for Editor {
         } else {
             buffers
                 .into_iter()
-                // Skip untitled buffers: a multi-buffer (e.g. project search results) can
-                // excerpt a buffer with no file on disk, which can only be persisted via
-                // `save_as`. Trying to save it here errors and aborts the whole save.
-                .filter(|buffer| {
-                    let buffer = buffer.read(cx);
-                    buffer.is_dirty() && buffer.file().is_some()
-                })
+                .filter(|buffer| buffer.read(cx).is_dirty())
                 .collect()
         };
 
@@ -1046,21 +1896,16 @@ impl Item for Editor {
 
         cx.spawn_in(window, async move |this, cx| {
             if options.format {
-                let format_task = this.update_in(cx, |editor, window, cx| {
-                    let format_target = compute_format_target(
-                        &buffers_to_save,
+                this.update_in(cx, |editor, window, cx| {
+                    editor.perform_format(
+                        project.clone(),
                         format_trigger,
-                        editor.buffer(),
-                        project.read(cx).git_store(),
+                        FormatTarget::Buffers(buffers_to_save.clone()),
+                        window,
                         cx,
-                    );
-                    format_target.map(|target| {
-                        editor.perform_format(project.clone(), format_trigger, target, window, cx)
-                    })
-                })?;
-                if let Some(format_task) = format_task {
-                    format_task.await?;
-                }
+                    )
+                })?
+                .await?;
             }
 
             if !buffers_to_save.is_empty() {
@@ -1239,7 +2084,7 @@ impl Item for Editor {
                 f(ItemEvent::UpdateBreadcrumbs);
             }
 
-            EditorEvent::BreadcrumbsChanged | EditorEvent::OutlineSymbolsChanged => {
+            EditorEvent::BreadcrumbsChanged => {
                 f(ItemEvent::UpdateBreadcrumbs);
             }
 
@@ -1257,6 +2102,30 @@ impl Item for Editor {
             }
 
             _ => {}
+        }
+    }
+
+    fn handle_drop(
+        &mut self,
+        _active_pane: &Pane,
+        dropped: &dyn Any,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> bool {
+        if let Some(icon) = dropped.downcast_ref::<DraggedIconAsset>() {
+            self.focus_handle.focus(window, cx);
+            self.insert_icon_asset_on_drop(icon, cx).log_err();
+            true
+        } else if let Some(media) = dropped.downcast_ref::<DraggedMediaAsset>() {
+            self.focus_handle.focus(window, cx);
+            self.insert_media_asset_on_drop(media, cx).log_err();
+            true
+        } else if let Some(shadcn) = dropped.downcast_ref::<DraggedShadcnAsset>() {
+            self.focus_handle.focus(window, cx);
+            self.insert_shadcn_asset_on_drop(shadcn, cx).log_err();
+            true
+        } else {
+            false
         }
     }
 
@@ -1865,8 +2734,12 @@ impl SearchableItem for Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.unfold_ranges(&[matches[index].clone()], false, true, cx);
-        let range = self.range_for_match(&matches[index]);
+        let Some(search_match) = matches.get(index).cloned() else {
+            return;
+        };
+
+        self.unfold_ranges(std::slice::from_ref(&search_match), false, true, cx);
+        let range = self.range_for_match(&search_match);
         let autoscroll = if EditorSettings::get_global(cx).search.center_on_match {
             Autoscroll::center()
         } else {
@@ -1973,14 +2846,22 @@ impl SearchableItem for Editor {
         _: &mut Window,
         cx: &mut Context<Self>,
     ) -> usize {
+        let Some(last_match_index) = matches.len().checked_sub(1) else {
+            return 0;
+        };
+        let current_match_index = current_index.min(last_match_index);
+
         if count == 0 {
-            return current_index;
+            return current_match_index;
         }
 
         let cursor = if self.selections.disjoint_anchors_arc().len() == 1 {
             self.selections.newest_anchor().head()
         } else {
-            matches[current_index].start
+            let Some(current_match) = matches.get(current_match_index) else {
+                return current_match_index;
+            };
+            current_match.start
         };
 
         let buffer = self.buffer().read(cx).snapshot(cx);
@@ -1992,7 +2873,7 @@ impl SearchableItem for Editor {
             Direction::Prev => matches
                 .iter()
                 .rposition(|m| m.end.cmp(&cursor, &buffer).is_lt())
-                .unwrap_or(matches.len() - 1),
+                .unwrap_or(last_match_index),
         } as isize;
 
         // We'll use `count - 1` because the first jump to the next or previous
@@ -2170,75 +3051,6 @@ pub fn active_match_index(
     }
 }
 
-/// Opens a path-like target (e.g. `items.rs:100:5`) in the workspace, moving the cursor
-/// to the one-based row/column if present. Returns whether the target was opened.
-pub async fn open_resolved_target(
-    workspace: &WeakEntity<Workspace>,
-    open_target: &workspace::path_link::OpenTarget,
-    cx: &mut AsyncWindowContext,
-) -> Result<bool> {
-    let path_to_open = open_target.path();
-    let mut opened_items = workspace
-        .update_in(cx, |workspace, window, cx| {
-            workspace.open_paths(
-                vec![path_to_open.path.clone()],
-                workspace::OpenOptions {
-                    visible: Some(workspace::OpenVisible::OnlyDirectories),
-                    ..Default::default()
-                },
-                None,
-                window,
-                cx,
-            )
-        })
-        .context("workspace update")?
-        .await;
-    if opened_items.len() != 1 {
-        debug_panic!(
-            "Received {} items for one path {path_to_open:?}",
-            opened_items.len(),
-        );
-    }
-    let Some(opened_item) = opened_items.pop() else {
-        return Ok(false);
-    };
-
-    if open_target.is_file() {
-        let Some(opened_item) = opened_item else {
-            return Ok(false);
-        };
-        let opened_item =
-            opened_item.with_context(|| format!("opening {:?}", path_to_open.path))?;
-        if let Some(row) = path_to_open.row
-            && let Some(editor) = opened_item.downcast::<Editor>()
-        {
-            let column = path_to_open.column.unwrap_or(0);
-            editor
-                .downgrade()
-                .update_in(cx, |editor, window, cx| {
-                    if let Some(buffer) = editor.buffer().read(cx).as_singleton() {
-                        let point = buffer.read(cx).snapshot().point_from_external_input(
-                            row.saturating_sub(1),
-                            column.saturating_sub(1),
-                        );
-                        editor.go_to_singleton_buffer_point(point, window, cx);
-                    }
-                })
-                .log_err();
-        }
-        Ok(true)
-    } else if open_target.is_dir() {
-        workspace.update(cx, |workspace, cx| {
-            workspace.project().update(cx, |_, cx| {
-                cx.emit(project::Event::ActivateProjectPanel);
-            })
-        })?;
-        Ok(true)
-    } else {
-        Ok(false)
-    }
-}
-
 pub fn entry_label_color(selected: bool) -> Color {
     if selected {
         Color::Default
@@ -2413,115 +3225,6 @@ fn chunk_search_range(
     }))
 }
 
-/// Decides what to format based on the `format_on_save` settings of the saved buffers.
-///
-/// In the modifications modes, only lines with unstaged changes are formatted.
-/// When no git diff is available for a buffer, `modifications` skips formatting while `modifications_if_available`
-/// falls back to formatting entire buffers.
-/// When a diff is available but empty, nothing is formatted in either mode.
-fn compute_format_target(
-    buffers: &HashSet<Entity<Buffer>>,
-    trigger: FormatTrigger,
-    multi_buffer: &Entity<MultiBuffer>,
-    git_store: &Entity<GitStore>,
-    cx: &App,
-) -> Option<FormatTarget> {
-    if trigger == FormatTrigger::Manual {
-        return Some(FormatTarget::Buffers(buffers.clone()));
-    }
-
-    let multi_buffer_snapshot = multi_buffer.read(cx).snapshot(cx);
-    let git_store = git_store.read(cx);
-
-    let mut fall_back_to_full_format = false;
-    let mut modified_ranges: Vec<Range<Point>> = Vec::new();
-
-    for buffer_entity in buffers.iter() {
-        let buffer = buffer_entity.read(cx);
-        let settings = LanguageSettings::for_buffer(buffer, cx);
-        match settings.format_on_save {
-            FormatOnSave::On | FormatOnSave::Off => {
-                return Some(FormatTarget::Buffers(buffers.clone()));
-            }
-            FormatOnSave::Modifications | FormatOnSave::ModificationsIfAvailable => {}
-        }
-
-        let Some(diff_snapshot) = git_store
-            .get_unstaged_diff(buffer.remote_id(), cx)
-            .map(|diff| diff.read(cx).snapshot(cx))
-        else {
-            if settings.format_on_save == FormatOnSave::ModificationsIfAvailable {
-                fall_back_to_full_format = true;
-            }
-            continue;
-        };
-
-        let anchor_ranges = compute_modified_ranges(&buffer.snapshot(), &diff_snapshot);
-        let flat_anchors = anchor_ranges
-            .iter()
-            .flat_map(|range| [range.start, range.end])
-            .collect::<Vec<_>>();
-        let multi_buffer_anchors =
-            multi_buffer_snapshot.text_anchors_to_visible_anchors(flat_anchors);
-        for pair in multi_buffer_anchors.chunks_exact(2) {
-            let (Some(start), Some(end)) = (&pair[0], &pair[1]) else {
-                continue;
-            };
-            modified_ranges
-                .push(start.to_point(&multi_buffer_snapshot)..end.to_point(&multi_buffer_snapshot));
-        }
-    }
-
-    if fall_back_to_full_format {
-        Some(FormatTarget::Buffers(buffers.clone()))
-    } else if modified_ranges.is_empty() {
-        None
-    } else {
-        Some(FormatTarget::Ranges(modified_ranges))
-    }
-}
-
-/// Computes the buffer ranges that have unstaged changes, expanded to full lines and
-/// with adjacent hunks merged, for use with format-on-save. An empty result means the
-/// buffer has no formatable modifications.
-fn compute_modified_ranges(
-    buffer_snapshot: &language::BufferSnapshot,
-    diff_snapshot: &buffer_diff::BufferDiffSnapshot,
-) -> Vec<Range<text::Anchor>> {
-    let mut merged: Vec<Range<text::Anchor>> = Vec::new();
-    for hunk in diff_snapshot.hunks(buffer_snapshot) {
-        let range = hunk.buffer_range;
-        if range.start.cmp(&range.end, buffer_snapshot).is_eq() {
-            // Deletion-only hunks produce no buffer content to format.
-            continue;
-        }
-        let start_point = range.start.to_point(buffer_snapshot);
-        let end_point = range.end.to_point(buffer_snapshot);
-        let start_row = start_point.row;
-        let end_row = if end_point.column == 0 && end_point.row > start_point.row {
-            end_point.row - 1
-        } else {
-            end_point.row
-        };
-        let line_start = text::Point::new(start_row, 0);
-        let line_end = text::Point::new(end_row, buffer_snapshot.line_len(end_row));
-        let expanded =
-            buffer_snapshot.anchor_before(line_start)..buffer_snapshot.anchor_after(line_end);
-
-        if let Some(last) = merged.last_mut() {
-            let last_end_point = last.end.to_point(buffer_snapshot);
-            if start_row <= last_end_point.row + 1 {
-                if expanded.end.to_point(buffer_snapshot) > last_end_point {
-                    last.end = expanded.end;
-                }
-                continue;
-            }
-        }
-        merged.push(expanded);
-    }
-    merged
-}
-
 #[cfg(test)]
 mod tests {
     use crate::editor_tests::init_test;
@@ -2535,8 +3238,7 @@ mod tests {
     use project::FakeFs;
     use serde_json::json;
     use std::path::{Path, PathBuf};
-    use util::{path, paths::PathWithPosition, rel_path::RelPath};
-    use workspace::path_link::{OpenTarget, OpenTargetFoundBy};
+    use util::{path, rel_path::RelPath};
 
     #[gpui::test]
     fn test_path_for_file(cx: &mut App) {
@@ -2655,95 +3357,6 @@ mod tests {
                 window[0], window[1],
             );
         }
-    }
-
-    #[gpui::test]
-    async fn test_suggested_filename_uses_language_extension_for_untitled_buffer(
-        cx: &mut gpui::TestAppContext,
-    ) {
-        init_test(cx, |_| {});
-
-        let buffer = cx.update(|cx| {
-            cx.new(|cx| Buffer::local("", cx).with_language(languages::rust_lang(), cx))
-        });
-        let (editor, cx) =
-            cx.add_window_view(|window, cx| Editor::for_buffer(buffer, None, window, cx));
-
-        editor.read_with(cx, |editor, cx| {
-            assert_eq!(editor.suggested_filename(cx).as_ref(), "untitled.rs");
-        });
-    }
-
-    #[gpui::test]
-    async fn test_suggested_filename_appends_extension_to_content_title(
-        cx: &mut gpui::TestAppContext,
-    ) {
-        init_test(cx, |_| {});
-
-        let buffer = cx.update(|cx| {
-            cx.new(|cx| {
-                Buffer::local("sadsdsads\nmore text", cx).with_language(languages::rust_lang(), cx)
-            })
-        });
-        let (editor, cx) =
-            cx.add_window_view(|window, cx| Editor::for_buffer(buffer, None, window, cx));
-
-        editor.read_with(cx, |editor, cx| {
-            assert_eq!(editor.tab_content_text(0, cx).as_ref(), "sadsdsads");
-            assert_eq!(editor.suggested_filename(cx).as_ref(), "sadsdsads.rs");
-        });
-    }
-
-    #[gpui::test]
-    async fn test_suggested_filename_does_not_duplicate_extension(cx: &mut gpui::TestAppContext) {
-        init_test(cx, |_| {});
-
-        let buffer = cx.update(|cx| {
-            cx.new(|cx| {
-                Buffer::local("main.rs\nfn main() {}", cx).with_language(languages::rust_lang(), cx)
-            })
-        });
-        let (editor, cx) =
-            cx.add_window_view(|window, cx| Editor::for_buffer(buffer, None, window, cx));
-
-        editor.read_with(cx, |editor, cx| {
-            assert_eq!(editor.suggested_filename(cx).as_ref(), "main.rs");
-        });
-    }
-
-    #[gpui::test]
-    async fn test_suggested_filename_keeps_content_title_for_plain_text(
-        cx: &mut gpui::TestAppContext,
-    ) {
-        init_test(cx, |_| {});
-
-        let buffer = cx.update(|cx| {
-            cx.new(|cx| {
-                Buffer::local("shopping list\nmilk", cx)
-                    .with_language(language::PLAIN_TEXT.clone(), cx)
-            })
-        });
-        let (editor, cx) =
-            cx.add_window_view(|window, cx| Editor::for_buffer(buffer, None, window, cx));
-
-        editor.read_with(cx, |editor, cx| {
-            assert_eq!(editor.suggested_filename(cx).as_ref(), "shopping list");
-        });
-    }
-
-    #[gpui::test]
-    async fn test_suggested_filename_keeps_content_title_without_language(
-        cx: &mut gpui::TestAppContext,
-    ) {
-        init_test(cx, |_| {});
-
-        let buffer = cx.update(|cx| cx.new(|cx| Buffer::local("shopping list\nmilk", cx)));
-        let (editor, cx) =
-            cx.add_window_view(|window, cx| Editor::for_buffer(buffer, None, window, cx));
-
-        editor.read_with(cx, |editor, cx| {
-            assert_eq!(editor.suggested_filename(cx).as_ref(), "shopping list");
-        });
     }
 
     async fn deserialize_editor(
@@ -3176,267 +3789,5 @@ mod tests {
             pane_items_before, pane_items_after,
             "Editor::deserialize should not add items to panes as a side effect"
         );
-    }
-
-    #[gpui::test]
-    async fn test_open_resolved_target_at_non_ascii_column(cx: &mut gpui::TestAppContext) {
-        init_test(cx, |_| {});
-
-        let fs = FakeFs::new(cx.executor());
-        fs.insert_tree(
-            path!("/root"),
-            json!({
-                "src": {
-                    "main.rs": "first\naéøbc\n",
-                },
-            }),
-        )
-        .await;
-
-        let project = Project::test(fs.clone(), [path!("/root").as_ref()], cx).await;
-        let (multi_workspace, cx) =
-            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
-        let workspace = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
-
-        let open_target = OpenTarget::Path(
-            PathWithPosition {
-                path: PathBuf::from(path!("/root/src/main.rs")),
-                row: Some(2),
-                column: Some(4),
-            },
-            false,
-            OpenTargetFoundBy::BackgroundPathResolution,
-        );
-
-        let opened = workspace
-            .update_in(cx, |_, window, cx| {
-                cx.spawn_in(window, async move |workspace, cx| {
-                    open_resolved_target(&workspace, &open_target, cx).await
-                })
-            })
-            .await
-            .expect("opening the target should succeed");
-        assert!(opened, "target should open as a file");
-
-        let editor = workspace.read_with(cx, |workspace, cx| {
-            workspace
-                .active_item(cx)
-                .and_then(|item| item.act_as::<Editor>(cx))
-                .expect("active item should be an editor")
-        });
-        let cursor = editor.update_in(cx, |editor, _, cx| {
-            editor
-                .selections
-                .newest::<language::Point>(&editor.display_snapshot(cx))
-                .head()
-        });
-        // Column 4 is the fourth character of `aéøbc` (the `b`), which starts at byte 5.
-        assert_eq!(cursor, language::Point::new(1, 5));
-    }
-
-    #[gpui::test]
-    fn test_compute_modified_ranges_git_diff(cx: &mut gpui::TestAppContext) {
-        let base_text = "line0\nline1\nline2\nline3\nline4\nline5\nline6\n";
-        // Modify line1 and line5 to create two non-adjacent hunks.
-        let buffer_text = "line0\nMOD1\nline2\nline3\nline4\nMOD5\nline6\n";
-
-        let buffer = cx.new(|cx| language::Buffer::local(buffer_text, cx));
-        let diff_snapshot = buffer.update(cx, |buffer, cx| {
-            let diff = cx.new(|cx| {
-                buffer_diff::BufferDiff::new_with_base_text(base_text, &buffer.text_snapshot(), cx)
-            });
-            diff.read(cx).snapshot(cx)
-        });
-
-        let ranges = buffer.update(cx, |buffer, _cx| {
-            compute_modified_ranges(&buffer.snapshot(), &diff_snapshot)
-        });
-
-        assert_eq!(ranges.len(), 2, "expected 2 non-adjacent ranges");
-
-        buffer.update(cx, |buffer, _cx| {
-            let text_snapshot: &text::BufferSnapshot = buffer;
-            let r0 = ranges[0].start.to_point(text_snapshot)..ranges[0].end.to_point(text_snapshot);
-            let r1 = ranges[1].start.to_point(text_snapshot)..ranges[1].end.to_point(text_snapshot);
-            assert_eq!(r0.start.row, 1, "first hunk should start at row 1");
-            assert_eq!(r0.end.row, 1, "first hunk should end at row 1");
-            assert_eq!(r1.start.row, 5, "second hunk should start at row 5");
-            assert_eq!(r1.end.row, 5, "second hunk should end at row 5");
-        });
-    }
-
-    #[gpui::test]
-    fn test_compute_modified_ranges_unchanged_buffer(cx: &mut gpui::TestAppContext) {
-        let buffer_text = "line0\nline1\nline2\n";
-        let buffer = cx.new(|cx| language::Buffer::local(buffer_text, cx));
-        let diff_snapshot = buffer.update(cx, |buffer, cx| {
-            let diff = cx.new(|cx| {
-                buffer_diff::BufferDiff::new_with_base_text(
-                    buffer_text,
-                    &buffer.text_snapshot(),
-                    cx,
-                )
-            });
-            diff.read(cx).snapshot(cx)
-        });
-
-        let ranges = buffer.update(cx, |buffer, _cx| {
-            compute_modified_ranges(&buffer.snapshot(), &diff_snapshot)
-        });
-
-        assert_eq!(
-            ranges,
-            Vec::new(),
-            "buffer that matches its diff base should produce no modified ranges"
-        );
-    }
-
-    #[gpui::test]
-    fn test_compute_modified_ranges_deletion_only(cx: &mut gpui::TestAppContext) {
-        let base_text = "line0\nline1\nline2\n";
-        // Buffer has line1 deleted (pure deletion).
-        let buffer_text = "line0\nline2\n";
-
-        let buffer = cx.new(|cx| language::Buffer::local(buffer_text, cx));
-        let diff_snapshot = buffer.update(cx, |buffer, cx| {
-            let diff = cx.new(|cx| {
-                buffer_diff::BufferDiff::new_with_base_text(base_text, &buffer.text_snapshot(), cx)
-            });
-            diff.read(cx).snapshot(cx)
-        });
-
-        // Verify the diff has a deletion hunk.
-        let hunk_count = buffer.update(cx, |buffer, _cx| {
-            let text_snapshot: &text::BufferSnapshot = buffer;
-            diff_snapshot.hunks(text_snapshot).count()
-        });
-        assert!(hunk_count > 0, "diff should have hunks");
-
-        let ranges = buffer.update(cx, |buffer, _cx| {
-            compute_modified_ranges(&buffer.snapshot(), &diff_snapshot)
-        });
-
-        assert_eq!(
-            ranges,
-            Vec::new(),
-            "deletion-only hunks should be skipped, leaving no ranges"
-        );
-    }
-
-    #[gpui::test]
-    fn test_compute_modified_ranges_adjacent_hunks(cx: &mut gpui::TestAppContext) {
-        let base_text = "line0\nline1\nline2\nline3\nline4\n";
-        // Modify lines 2 and 3 which are adjacent; they should merge into one range.
-        let buffer_text = "line0\nline1\nMOD2\nMOD3\nline4\n";
-
-        let buffer = cx.new(|cx| language::Buffer::local(buffer_text, cx));
-        let diff_snapshot = buffer.update(cx, |buffer, cx| {
-            let diff = cx.new(|cx| {
-                buffer_diff::BufferDiff::new_with_base_text(base_text, &buffer.text_snapshot(), cx)
-            });
-            diff.read(cx).snapshot(cx)
-        });
-
-        let ranges = buffer.update(cx, |buffer, _cx| {
-            compute_modified_ranges(&buffer.snapshot(), &diff_snapshot)
-        });
-
-        assert_eq!(
-            ranges.len(),
-            1,
-            "adjacent hunks (rows 2 and 3) should be merged into one range"
-        );
-        buffer.update(cx, |buffer, _cx| {
-            let text_snapshot: &text::BufferSnapshot = buffer;
-            let r = ranges[0].start.to_point(text_snapshot)..ranges[0].end.to_point(text_snapshot);
-            assert_eq!(r.start.row, 2, "merged range should start at row 2");
-            assert_eq!(r.end.row, 3, "merged range should end at row 3");
-        });
-    }
-
-    // Regression test for a multi-buffer (e.g. project search results) that excerpts
-    // an untitled buffer alongside a file-backed one. Saving used to error out with
-    // "buffer doesn't have a file", which aborted `workspace: reload` and quit flows.
-    #[gpui::test]
-    async fn test_save_multi_buffer_with_untitled_buffer_skips_untitled(
-        cx: &mut gpui::TestAppContext,
-    ) {
-        init_test(cx, |_| {});
-
-        let fs = FakeFs::new(cx.executor());
-        fs.insert_tree(path!("/dir"), json!({ "file.txt": "the cat sat" }))
-            .await;
-        let project = Project::test(fs.clone(), [path!("/dir").as_ref()], cx).await;
-        let window =
-            cx.add_window(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
-        let cx = &mut VisualTestContext::from_window(*window, cx);
-
-        let file_buffer = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer(path!("/dir/file.txt"), cx)
-            })
-            .await
-            .unwrap();
-        let untitled_buffer = project.update(cx, |project, cx| {
-            project.create_local_buffer("the cat", None, false, cx)
-        });
-
-        // Make both buffers dirty so both are candidates to be saved.
-        file_buffer.update(cx, |buffer, cx| {
-            buffer.edit([(0..0, "X")], None, cx);
-        });
-        untitled_buffer.update(cx, |buffer, cx| {
-            buffer.edit([(0..0, "Y")], None, cx);
-        });
-
-        let multi_buffer = cx.new(|cx| {
-            let mut multi_buffer = MultiBuffer::new(project.read(cx).capability());
-            multi_buffer.set_excerpts_for_path(
-                PathKey::sorted(0),
-                file_buffer.clone(),
-                [Point::new(0, 0)..Point::new(0, 3)],
-                0,
-                cx,
-            );
-            multi_buffer.set_excerpts_for_path(
-                PathKey::sorted(1),
-                untitled_buffer.clone(),
-                [Point::new(0, 0)..Point::new(0, 3)],
-                0,
-                cx,
-            );
-            multi_buffer
-        });
-        let editor = cx.new_window_entity(|window, cx| {
-            Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx)
-        });
-        cx.run_until_parked();
-
-        editor.update(cx, |editor, cx| {
-            assert!(!editor.buffer().read(cx).is_singleton());
-        });
-
-        let save = editor.update_in(cx, |editor, window, cx| {
-            editor.save(
-                SaveOptions {
-                    format: false,
-                    force_format: false,
-                    autosave: false,
-                },
-                project.clone(),
-                window,
-                cx,
-            )
-        });
-        save.await
-            .expect("saving a multi-buffer that excerpts an untitled buffer should not error");
-        cx.run_until_parked();
-
-        // The file-backed buffer is saved; the untitled buffer is skipped and stays dirty.
-        file_buffer.update(cx, |buffer, _| assert!(!buffer.is_dirty()));
-        untitled_buffer.update(cx, |buffer, _| {
-            assert!(buffer.file().is_none());
-            assert!(buffer.is_dirty());
-        });
     }
 }
