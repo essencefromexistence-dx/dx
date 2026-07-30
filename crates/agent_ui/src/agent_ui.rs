@@ -6,6 +6,7 @@ mod agent_panel;
 mod agent_registry_ui;
 mod agent_screen;
 pub mod agent_thread_www_preview;
+mod automation_screen;
 mod buffer_codegen;
 mod completion_provider;
 mod config_options;
@@ -14,8 +15,72 @@ mod context_server_configuration;
 pub(crate) mod conversation_view;
 mod diagnostics;
 pub mod draft_prompt_store;
+#[allow(dead_code)]
+mod dx_agent_bridge;
+mod dx_check_panel;
+mod dx_check_panel_view;
+mod dx_check_score;
+#[allow(dead_code)]
+mod dx_deploy_capabilities;
+mod dx_deploy_check_roots;
+#[allow(dead_code)]
+mod dx_deploy_gate_rail;
+mod dx_deploy_hub_roots;
+mod dx_deploy_invalid_receipts;
+#[allow(dead_code)]
+mod dx_deploy_launch_action_labels;
+mod dx_deploy_launch_actions;
+#[allow(dead_code)]
+mod dx_deploy_launch_actions_rail;
+#[allow(dead_code)]
+mod dx_deploy_launch_approval_evidence;
+#[allow(dead_code)]
+mod dx_deploy_launch_buckets;
+#[allow(dead_code)]
+mod dx_deploy_launch_evidence;
+#[allow(dead_code)]
+mod dx_deploy_launch_evidence_rail;
+#[allow(dead_code)]
+mod dx_deploy_launch_gate;
+#[allow(dead_code)]
+mod dx_deploy_launch_gate_rail;
+#[allow(dead_code)]
+mod dx_deploy_launch_notices;
+#[allow(dead_code)]
+mod dx_deploy_launch_outcome;
+mod dx_deploy_launch_prompts;
+#[allow(dead_code)]
+mod dx_deploy_launch_scope;
+mod dx_deploy_launch_score;
+mod dx_deploy_local_files;
+#[allow(dead_code)]
+mod dx_deploy_matrix_rail;
+mod dx_deploy_prompts;
+#[allow(dead_code)]
+mod dx_deploy_provider_gate_summary;
+#[allow(dead_code)]
+mod dx_deploy_rail;
+#[allow(dead_code)]
+mod dx_deploy_rail_ui;
+#[allow(dead_code)]
+mod dx_deploy_receipt_buckets;
+mod dx_deploy_receipt_extract;
+mod dx_deploy_receipt_fields;
+mod dx_deploy_receipt_files;
+mod dx_deploy_receipt_rank;
+mod dx_deploy_receipt_roots;
+#[allow(dead_code)]
+mod dx_deploy_receipt_summary;
 mod dx_deploy_root_key;
 pub mod dx_project_context;
+mod dx_proof_freshness;
+mod dx_receipt_history;
+mod dx_receipts;
+mod dx_runtime_proof_status;
+mod dx_skill_panel;
+mod dx_source_sets;
+mod dx_style_panel;
+mod dx_www_launch_evidence;
 mod entry_view_state;
 mod external_source_prompt;
 mod favorite_models;
@@ -478,8 +543,10 @@ impl Agent {
 
     pub fn icon(&self) -> Option<IconName> {
         match self {
-            Self::NativeAgent => None,
-            Self::Custom { .. } => Some(IconName::Sparkle),
+            Self::NativeAgent => Some(IconName::Sparkle),
+            Self::Custom { id } => {
+                Some(default_agent_icon(id.as_ref()).unwrap_or(IconName::Sparkle))
+            }
             #[cfg(any(test, feature = "test-support"))]
             Self::Stub => None,
         }
@@ -498,6 +565,25 @@ impl Agent {
             #[cfg(any(test, feature = "test-support"))]
             Self::Stub => Rc::new(crate::test_support::StubAgentServer::default_response()),
         }
+    }
+}
+
+pub fn default_agent_icon(id: &str) -> Option<IconName> {
+    match id {
+        "claude-acp" => Some(IconName::AiClaude),
+        "codex-acp" => Some(IconName::AiOpenAi),
+        "github-copilot-acp" => Some(IconName::Copilot),
+        "cursor-acp" => Some(IconName::EditorCursor),
+        "opencode-acp" => Some(IconName::Sparkle),
+        _ => None,
+    }
+}
+
+pub fn default_agent_icon_path(id: &str, is_light: bool) -> Option<SharedString> {
+    match id {
+        "zai-acp" if is_light => Some("icons/zai-light.svg".into()),
+        "zai-acp" => Some("icons/zai-dark.svg".into()),
+        _ => None,
     }
 }
 

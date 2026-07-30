@@ -159,13 +159,21 @@ pub enum Model {
     MiniMaxM2_7,
     #[serde(rename = "minimax-m3")]
     MiniMaxM3,
+    #[serde(rename = "minimax-m3-free", alias = "low")]
+    MiniMaxM3Free,
     #[serde(rename = "mimo-v2.5-pro")]
     MimoV2_5Pro,
     #[serde(rename = "mimo-v2.5")]
     MimoV2_5,
-    #[serde(rename = "big-pickle")]
+    #[serde(rename = "big-pickle", alias = "high")]
     BigPickle,
-    #[serde(rename = "nemotron-3-ultra-free")]
+    #[serde(rename = "deepseek-v4-flash-free", alias = "xhigh")]
+    DeepSeekV4FlashFree,
+    #[serde(rename = "mimo-v2.5-free", alias = "default")]
+    MimoV2_5Free,
+    #[serde(rename = "nemotron-3-super-free", alias = "medium")]
+    Nemotron3SuperFree,
+    #[serde(rename = "nemotron-3-ultra-free", alias = "xlow")]
     Nemotron3UltraFree,
     #[serde(rename = "qwen3.5-plus")]
     Qwen3_5Plus,
@@ -235,7 +243,14 @@ impl Model {
             }
 
             // Free models
-            Self::Nemotron3UltraFree | Self::BigPickle => &[OpenCodeSubscription::Free],
+            Self::BigPickle
+            | Self::DeepSeekV4FlashFree
+            | Self::MimoV2_5Free
+            | Self::Nemotron3UltraFree => &[OpenCodeSubscription::Free],
+
+            // These former free models are retained for settings compatibility,
+            // but OpenCode's public catalog no longer advertises them.
+            Self::MiniMaxM3Free | Self::Nemotron3SuperFree => &[],
 
             // Custom models get their subscription from settings, not from here
             Self::Custom { .. } => &[],
@@ -304,6 +319,10 @@ impl Model {
             Self::Qwen3_7Plus => "qwen3.7-plus",
             Self::Qwen3_7Max => "qwen3.7-max",
             Self::BigPickle => "big-pickle",
+            Self::DeepSeekV4FlashFree => "deepseek-v4-flash-free",
+            Self::MimoV2_5Free => "mimo-v2.5-free",
+            Self::MiniMaxM3Free => "minimax-m3-free",
+            Self::Nemotron3SuperFree => "nemotron-3-super-free",
             Self::Nemotron3UltraFree => "nemotron-3-ultra-free",
 
             Self::Custom { name, .. } => name,
@@ -369,6 +388,10 @@ impl Model {
             Self::Qwen3_7Plus => "Qwen3.7 Plus",
             Self::Qwen3_7Max => "Qwen3.7 Max",
             Self::BigPickle => "Big Pickle",
+            Self::DeepSeekV4FlashFree => "DeepSeek V4 Flash Free",
+            Self::MimoV2_5Free => "MiMo V2.5 Free",
+            Self::MiniMaxM3Free => "MiniMax M3 Free",
+            Self::Nemotron3SuperFree => "Nemotron 3 Super Free",
             Self::Nemotron3UltraFree => "Nemotron 3 Ultra Free",
 
             Self::Custom {

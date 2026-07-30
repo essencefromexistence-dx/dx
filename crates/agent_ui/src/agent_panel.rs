@@ -17,7 +17,9 @@ use agent_servers::AgentServer;
 use agent_settings::UserAgentsMd;
 use collections::HashSet;
 use db::kvp::{Dismissable, KeyValueStore};
-use itertools::Itertools;
+
+use crate::{default_agent_icon, default_agent_icon_path};
+
 use project::{AgentId, ProjectItem};
 use serde::{Deserialize, Serialize};
 
@@ -29,8 +31,9 @@ use zed_actions::{
         ResolveConflictsWithAgent, ReviewBranchDiff, SelectAgent,
     },
     assistant::{
-        FocusAgent, ManageSkills, OpenGlobalAgentsMdRules, OpenProjectAgentsMdRules, Toggle,
-        ToggleFocus,
+        CreateSkillFromUrl, FocusAgent, FocusAgentFullscreen, ManageSkills, OpenAutomations,
+        OpenConnections, OpenGlobalAgentsMdRules, OpenProjectAgentsMdRules, OpenSkillCreator,
+        OpenTools, Toggle, ToggleFocus,
     },
 };
 
@@ -3494,11 +3497,56 @@ impl AgentPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        window.dispatch_action(
-            Box::new(zed_actions::OpenSettingsAt {
-                path: zed_actions::AGENT_SKILLS_SETTINGS_PATH.to_string(),
-                target: None,
-            }),
+        // The legacy Rules action is rerouted to the skill creator so the
+        // existing keyboard shortcut (still bound to `OpenRulesLibrary` in
+        // the default keymaps) and any persisted user keymap entries keep
+        // working.
+        self.deploy_skill_creator(&OpenSkillCreator, window, cx);
+    }
+
+    fn deploy_skill_creator(
+        &mut self,
+        _action: &OpenSkillCreator,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let workspace_handle = window
+            .window_handle()
+            .downcast::<workspace::MultiWorkspace>();
+        settings_ui::open_skill_creator(
+            settings_ui::pages::SkillCreatorOpenMode::Form,
+            workspace_handle,
+            cx,
+        );
+    }
+
+    fn deploy_skill_creator_from_url(
+        &mut self,
+        _action: &CreateSkillFromUrl,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let initial_url = cx
+            .read_from_clipboard()
+            .and_then(|clipboard| clipboard.text())
+            .map(|text| text.trim().to_string());
+        let workspace_handle = window
+            .window_handle()
+            .downcast::<workspace::MultiWorkspace>();
+        settings_ui::open_skill_creator(
+            settings_ui::pages::SkillCreatorOpenMode::Url { initial_url },
+            workspace_handle,
+            cx,
+        );
+    }
+
+    /// Open the skill creator pre-filled with a skill received from a
+    /// `zed://skill` share link, so the user can review it and choose a scope
+    /// before installing.
+    pub fn install_shared_skill(&mut self, content: String, cx: &mut Context<Self>) {
+        settings_ui::open_skill_creator(
+            settings_ui::pages::SkillCreatorOpenMode::Install { content },
+            None,
             cx,
         );
     }
@@ -5820,7 +5868,20 @@ impl AgentPanel {
             (None, SharedString::from("Terminal"))
         } else if let Agent::Custom { id, .. } = &self.selected_agent {
             let store = agent_server_store.read(cx);
-            let icon = store.agent_icon(&id);
+            let icon = if let Some(icon_path) =
+                default_agent_icon_path(id.as_ref(), cx.theme().appearance().is_light())
+            {
+                Some(icon_path)
+            } else if default_agent_icon(id.as_ref()).is_some() {
+                None
+            } else {
+                store.agent_icon(&id).or_else(|| {
+                    project::AgentRegistryStore::try_global(cx)
+                        .as_ref()
+                        .and_then(|s| s.read(cx).agent(&id))
+                        .and_then(|a| a.icon_path().cloned())
+                })
+            };
 
             let label = store
                 .agent_display_name(&id)
@@ -5922,9 +5983,29 @@ impl AgentPanel {
                                 display_name: SharedString,
                             }
 
-                            let agent_items = agent_server_store
-                                .external_agents()
-                                .map(|agent_id| {
+                            // Always include default ACP agents (codex, claude, github copilot, cursor, opencode) by default in AI screen topbar dropdown, even if not yet downloaded.
+                            let default_agent_specs: &[(&str, &str)] = &[
+                                ("codex-acp", "Codex"),
+                                ("claude-acp", "Claude"),
+                                ("github-copilot-acp", "GitHub Copilot"),
+                                ("cursor-acp", "Cursor"),
+                                ("zai-acp", "ZAI"),
+                                ("opencode-acp", "OpenCode"),
+                            ];
+                            let mut agent_items: Vec<AgentMenuItem> = default_agent_specs
+                                .iter()
+                                .map(|(id, label)| AgentMenuItem {
+                                    id: AgentId(id.to_string().into()),
+                                    display_name: (*label).into(),
+                                })
+                                .collect();
+
+                            // Add any other discovered external agents not already in defaults
+                            for agent_id in agent_server_store.external_agents() {
+                                if !default_agent_specs
+                                    .iter()
+                                    .any(|(d, _)| *d == agent_id.0.as_ref())
+                                {
                                     let display_name = agent_server_store
                                         .agent_display_name(agent_id)
                                         .or_else(|| {
@@ -5948,13 +6029,23 @@ impl AgentPanel {
                             for item in &agent_items {
                                 let mut entry = ContextMenuEntry::new(item.display_name.clone());
 
-                                let icon_path =
-                                    agent_server_store.agent_icon(&item.id).or_else(|| {
-                                        registry_store_ref
-                                            .as_ref()
-                                            .and_then(|store| store.agent(&item.id))
-                                            .and_then(|a| a.icon_path().cloned())
-                                    });
+                                if let Some(icon_name) = default_agent_icon(item.id.0.as_ref()) {
+                                    entry = entry.icon(icon_name);
+                                } else if item.id.0.as_ref() == "zai-acp" {
+                                    if let Some(icon_path) = default_agent_icon_path(
+                                        item.id.0.as_ref(),
+                                        cx.theme().appearance().is_light(),
+                                    ) {
+                                        entry = entry.custom_icon_path(icon_path);
+                                    }
+                                } else {
+                                    let icon_path =
+                                        agent_server_store.agent_icon(&item.id).or_else(|| {
+                                            registry_store_ref
+                                                .as_ref()
+                                                .and_then(|store| store.agent(&item.id))
+                                                .and_then(|a| a.icon_path().cloned())
+                                        });
 
                                 if let Some(icon_path) = icon_path {
                                     entry = entry.custom_icon_svg(icon_path);

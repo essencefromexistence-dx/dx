@@ -21,7 +21,8 @@ use agent_ui::{
     AcpThreadImportOnboarding, Agent, AgentPanel, AgentPanelEvent, AgentThreadSource,
     ArchiveSelectedThread, CrossChannelImportOnboarding, DEFAULT_THREAD_TITLE, NewTerminalThread,
     NewThread, RemoveSelectedThread, RenameSelectedThread, TerminalId, ThreadId, ThreadImportModal,
-    ThreadTitleRegenerationResult, channels_with_threads, import_threads_from_other_channels,
+    ThreadTitleRegenerationResult, channels_with_threads, default_agent_icon,
+    default_agent_icon_path, import_threads_from_other_channels,
 };
 use agent_ui::{MessageEditorEvent, StateChange, thread_worktree_archive};
 use audio::{Audio, AudioSettings, DxSoundEvent};
@@ -2062,15 +2063,18 @@ impl Sidebar {
 
         let resolve_agent_icon = |agent_id: &AgentId| -> (IconName, Option<SharedString>) {
             let agent = Agent::from(agent_id.clone());
-            let icon = match agent {
-                Agent::NativeAgent => dx_icon(DxUiIcon::Agent),
-                Agent::Custom { .. } => IconName::Terminal,
-
-                _ => dx_icon(DxUiIcon::Agent),
-            };
-            let icon_from_external_svg = agent_server_store
-                .as_ref()
-                .and_then(|store| store.read(cx).agent_icon(&agent_id));
+            let icon = agent.icon().unwrap_or(dx_icon(DxUiIcon::Agent));
+            let icon_from_external_svg =
+                default_agent_icon_path(agent_id.as_ref(), cx.theme().appearance().is_light())
+                    .or_else(|| {
+                        if default_agent_icon(agent_id.as_ref()).is_some() {
+                            None
+                        } else {
+                            agent_server_store
+                                .as_ref()
+                                .and_then(|store| store.read(cx).agent_icon(&agent_id))
+                        }
+                    });
             (icon, icon_from_external_svg)
         };
 

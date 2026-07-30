@@ -546,11 +546,15 @@ impl LanguageModel for OpenCodeLanguageModel {
     }
 
     fn name(&self) -> LanguageModelName {
-        LanguageModelName::from(format!(
-            "{}: {}",
-            self.subscription.display_name(),
-            self.model.display_name()
-        ))
+        if self.subscription == OpenCodeSubscription::Free {
+            LanguageModelName::from(self.model.display_name().to_string())
+        } else {
+            LanguageModelName::from(format!(
+                "{}: {}",
+                self.subscription.display_name(),
+                self.model.display_name()
+            ))
+        }
     }
 
     fn provider_id(&self) -> LanguageModelProviderId {
@@ -1003,5 +1007,204 @@ impl Render for ConfigurationView {
                 .children(no_subscriptions_warning)
                 .into_any()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui::TestAppContext;
+    use http_client::{FakeHttpClient, Response};
+    use language_model::{LanguageModelRequestMessage, MessageContent, Role};
+    use parking_lot::Mutex;
+    use std::future::Future;
+    use std::pin::Pin;
+
+    struct FakeCredentialsProvider {
+        credentials: Mutex<Option<(String, Vec<u8>)>>,
+    }
+
+    impl FakeCredentialsProvider {
+        fn new() -> Self {
+            Self {
+                credentials: Mutex::new(None),
+            }
+        }
+    }
+
+    impl CredentialsProvider for FakeCredentialsProvider {
+        fn read_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _cx: &'a AsyncApp,
+        ) -> Pin<Box<dyn Future<Output = Result<Option<(String, Vec<u8>)>>> + 'a>> {
+            Box::pin(async { Ok(self.credentials.lock().clone()) })
+        }
+
+        fn write_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            username: &'a str,
+            password: &'a [u8],
+            _cx: &'a AsyncApp,
+        ) -> Pin<Box<dyn Future<Output = Result<()>> + 'a>> {
+            self.credentials
+                .lock()
+                .replace((username.to_string(), password.to_vec()));
+            Box::pin(async { Ok(()) })
+        }
+
+        fn delete_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _cx: &'a AsyncApp,
+        ) -> Pin<Box<dyn Future<Output = Result<()>> + 'a>> {
+            *self.credentials.lock() = None;
+            Box::pin(async { Ok(()) })
+        }
+    }
+
+    fn init_test(cx: &mut App) -> OpenCodeLanguageModelProvider {
+        let settings_store = SettingsStore::test(cx);
+        cx.set_global(settings_store);
+        crate::AllLanguageModelSettings::register(cx);
+        OpenCodeLanguageModelProvider::new(
+            FakeHttpClient::with_404_response(),
+            Arc::new(FakeCredentialsProvider::new()),
+            cx,
+        )
+    }
+
+    fn request_with_user_message(message: &str) -> LanguageModelRequest {
+        LanguageModelRequest {
+            messages: vec![LanguageModelRequestMessage {
+                role: Role::User,
+                content: vec![MessageContent::Text(message.to_string())],
+                cache: false,
+                reasoning_details: None,
+            }],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn opencode_free_model_ids_are_bare_for_registry_composition() {
+        let model = opencode::Model::default_free();
+
+        assert_eq!(
+            opencode_language_model_id(&model),
+            LanguageModelId::from("mimo-v2.5-free".to_string())
+        );
+        assert_eq!(opencode_model_registry_key(&model), "mimo-v2.5-free");
+    }
+
+    #[test]
+    fn opencode_external_model_id_omits_subscription_prefix() {
+        let model = opencode::Model::default_free_fast();
+
+        assert_eq!(
+            opencode_external_model_id(&model),
+            "opencode/deepseek-v4-flash-free"
+        );
+    }
+
+    #[test]
+    fn opencode_shared_model_registry_key_keeps_one_entry_preferring_later_subscription() {
+        let model = opencode::Model::KimiK2_5;
+        let mut models = BTreeMap::default();
+
+        for &subscription in model.available_subscriptions() {
+            models.insert(opencode_model_registry_key(&model), subscription);
+        }
+
+        assert_eq!(models.len(), 1);
+        assert_eq!(
+            models.get(model.id()),
+            Some(&OpenCodeSubscription::Go),
+            "Zen is inserted first and Go should replace it for shared model ids"
+        );
+    }
+
+    #[gpui::test]
+    async fn opencode_public_free_mode_authenticates_without_stored_key(cx: &mut TestAppContext) {
+        let provider = cx.update(init_test);
+
+        assert!(cx.read(|cx| provider.is_authenticated(cx)));
+    }
+
+    #[gpui::test]
+    async fn opencode_public_free_mode_lists_only_builtin_free_models_without_stored_key(
+        cx: &mut TestAppContext,
+    ) {
+        let provider = cx.update(init_test);
+
+        let (default_id, default_fast_id, provided_ids) = cx.read(|cx| {
+            let default_id = provider
+                .default_model(cx)
+                .map(|model| model.id().0.to_string());
+            let default_fast_id = provider
+                .default_fast_model(cx)
+                .map(|model| model.id().0.to_string());
+            let provided_ids = provider
+                .provided_models(cx)
+                .into_iter()
+                .map(|model| model.id().0.to_string())
+                .collect::<Vec<_>>();
+            (default_id, default_fast_id, provided_ids)
+        });
+
+        assert_eq!(default_id.as_deref(), Some("mimo-v2.5-free"));
+        assert_eq!(default_fast_id.as_deref(), Some("deepseek-v4-flash-free"));
+        assert_eq!(
+            provided_ids,
+            [
+                "big-pickle",
+                "deepseek-v4-flash-free",
+                "mimo-v2.5-free",
+                "nemotron-3-ultra-free",
+            ]
+        );
+    }
+
+    #[gpui::test]
+    async fn opencode_public_free_mode_uses_public_key_for_free_request(cx: &mut TestAppContext) {
+        let captured_authorization = Arc::new(Mutex::new(None));
+        let captured_authorization_clone = captured_authorization.clone();
+        let http_client = FakeHttpClient::create(move |request| {
+            let captured_authorization = captured_authorization_clone.clone();
+            async move {
+                let authorization = request
+                    .headers()
+                    .get("authorization")
+                    .and_then(|value| value.to_str().ok())
+                    .map(ToOwned::to_owned);
+                *captured_authorization.lock() = authorization;
+                Ok(Response::builder()
+                    .status(200)
+                    .body("data: [DONE]\n".into())
+                    .expect("failed to build fake OpenCode response"))
+            }
+        });
+        let provider = cx.update(|cx| {
+            let settings_store = SettingsStore::test(cx);
+            cx.set_global(settings_store);
+            crate::AllLanguageModelSettings::register(cx);
+            OpenCodeLanguageModelProvider::new(
+                http_client,
+                Arc::new(FakeCredentialsProvider::new()),
+                cx,
+            )
+        });
+
+        let model = provider
+            .create_language_model(opencode::Model::default_free(), OpenCodeSubscription::Free);
+        let request = request_with_user_message("Hello");
+        let result = model.stream_completion(request, &cx.to_async()).await;
+
+        assert!(result.is_ok());
+        assert_eq!(
+            captured_authorization.lock().as_deref(),
+            Some("Bearer public")
+        );
     }
 }
