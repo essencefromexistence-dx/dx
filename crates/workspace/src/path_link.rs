@@ -22,6 +22,15 @@ pub enum BackgroundFsChecks {
     Disabled,
 }
 
+/// How a path-like string gets matched against files by [`resolve_open_target`].
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum PathMatching {
+    /// Only exact matches (absolute, `cwd`-relative, or worktree-root-relative), so broken document links resolve to `None`.
+    Exact,
+    /// Additionally guess terminal-output paths: strip git diff `a/`/`b/` prefixes and scan worktrees for trailing path matches.
+    Heuristic,
+}
+
 #[derive(Debug, Clone)]
 pub enum OpenTarget {
     Worktree(
@@ -122,18 +131,20 @@ pub fn first_unbalanced_open_paren(text: &str) -> Option<usize> {
     first_unmatched.filter(|_| balance > 0)
 }
 
-pub fn possible_open_target(
+pub fn resolve_open_target(
     workspace: &WeakEntity<Workspace>,
+    matching: PathMatching,
     maybe_path: &str,
     cwd: Option<&Path>,
     cx: &App,
 ) -> Task<Option<OpenTarget>> {
-    possible_open_target_internal(workspace, maybe_path, cwd, cx, None)
+    resolve_open_target_internal(workspace, matching, maybe_path, cwd, cx, None)
 }
 
 #[cfg(any(test, feature = "test-support"))]
-pub fn possible_open_target_with_fs_checks(
+pub fn resolve_open_target_with_fs_checks(
     workspace: &WeakEntity<Workspace>,
+    matching: PathMatching,
     maybe_path: &str,
     cwd: Option<&Path>,
     cx: &App,
@@ -142,8 +153,9 @@ pub fn possible_open_target_with_fs_checks(
     possible_open_target_internal(workspace, maybe_path, cwd, cx, Some(background_fs_checks))
 }
 
-fn possible_open_target_internal(
+fn resolve_open_target_internal(
     workspace: &WeakEntity<Workspace>,
+    matching: PathMatching,
     maybe_path: &str,
     cwd: Option<&Path>,
     cx: &App,
@@ -168,8 +180,11 @@ fn possible_open_target_internal(
         })
         .collect::<Vec<_>>();
 
-    const GIT_DIFF_PATH_PREFIXES: &[&str] = &["a", "b"];
-    for prefix_str in GIT_DIFF_PATH_PREFIXES.iter().chain(std::iter::once(&".")) {
+    let prefixes_to_strip: &[&str] = match matching {
+        PathMatching::Heuristic => &["a", "b", "."],
+        PathMatching::Exact => &["."],
+    };
+    for prefix_str in prefixes_to_strip {
         if let Some(stripped) = original_path.path.strip_prefix(prefix_str).ok() {
             potential_paths.push(PathWithPosition {
                 path: stripped.to_owned(),

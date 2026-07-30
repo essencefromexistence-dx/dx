@@ -155,6 +155,19 @@ impl MarkdownPreviewView {
             .and_then(|view| pane.index_for_item(&view))
     }
 
+    fn is_previewing(&self, buffer: &Entity<Buffer>, cx: &App) -> bool {
+        self.active_editor.as_ref().is_some_and(|state| {
+            state
+                .editor
+                .read(cx)
+                .buffer()
+                .read(cx)
+                .as_singleton()
+                .as_ref()
+                == Some(buffer)
+        })
+    }
+
     pub fn resolve_active_item_as_markdown_editor(
         workspace: &Workspace,
         cx: &mut Context<Workspace>,
@@ -769,6 +782,7 @@ fn handle_url_click(
         open_preview_url(
             SharedString::from(path_part.to_string()),
             base_directory,
+            Some(view.clone()),
             workspace,
             window,
             cx,
@@ -779,6 +793,7 @@ fn handle_url_click(
 fn open_preview_url(
     url: SharedString,
     base_directory: Option<PathBuf>,
+    source_view: Option<WeakEntity<MarkdownPreviewView>>,
     workspace: &WeakEntity<Workspace>,
     window: &mut Window,
     cx: &mut App,

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use terminal::PathLikeTarget;
 use util::{ResultExt, debug_panic};
 #[cfg(not(test))]
-use workspace::path_link::possible_open_target;
+use workspace::path_link::resolve_open_target;
 #[cfg(test)]
 use workspace::path_link::{
     BackgroundFsChecks, OpenTargetFoundBy, possible_open_target_with_fs_checks,
@@ -43,15 +43,17 @@ fn possible_hover_target(
     #[cfg(test)] background_fs_checks: BackgroundFsChecks,
 ) -> Task<()> {
     #[cfg(not(test))]
-    let file_to_open_task = possible_open_target(
+    let file_to_open_task = resolve_open_target(
         workspace,
+        PathMatching::Heuristic,
         &path_like_target.maybe_path,
         path_like_target.terminal_dir.as_deref(),
         cx,
     );
     #[cfg(test)]
-    let file_to_open_task = possible_open_target_with_fs_checks(
+    let file_to_open_task = resolve_open_target_with_fs_checks(
         workspace,
+        PathMatching::Heuristic,
         &path_like_target.maybe_path,
         path_like_target.terminal_dir.as_deref(),
         cx,
@@ -120,8 +122,9 @@ fn possibly_open_target(
             .update(cx, |_, cx| {
                 #[cfg(not(test))]
                 {
-                    possible_open_target(
+                    resolve_open_target(
                         &workspace,
+                        PathMatching::Heuristic,
                         &path_like_target.maybe_path,
                         path_like_target.terminal_dir.as_deref(),
                         cx,
@@ -129,8 +132,9 @@ fn possibly_open_target(
                 }
                 #[cfg(test)]
                 {
-                    possible_open_target_with_fs_checks(
+                    resolve_open_target_with_fs_checks(
                         &workspace,
+                        PathMatching::Heuristic,
                         &path_like_target.maybe_path,
                         path_like_target.terminal_dir.as_deref(),
                         cx,

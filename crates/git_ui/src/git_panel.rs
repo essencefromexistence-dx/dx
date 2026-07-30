@@ -1427,10 +1427,19 @@ impl GitPanel {
             let prompt = if skip_prompt {
                 Task::ready(Ok(0))
             } else {
+                let (message, confirm_text) = if entry.status.is_deleted() {
+                    ("Are you sure you want to restore ", "Restore File")
+                } else {
+                    (
+                        "Are you sure you want to discard changes to ",
+                        "Discard Changes",
+                    )
+                };
                 let prompt = window.prompt(
                     PromptLevel::Warning,
                     &format!(
-                        "Are you sure you want to discard changes to {}?",
+                        "{}{}?",
+                        message,
                         MarkdownInlineCode(
                             entry
                                 .repo_path
@@ -1439,7 +1448,7 @@ impl GitPanel {
                         ),
                     ),
                     None,
-                    &["Discard Changes", "Cancel"],
+                    &[confirm_text, "Cancel"],
                     cx,
                 );
                 cx.background_spawn(prompt)
@@ -6089,6 +6098,8 @@ impl GitPanel {
         };
         let restore_title = if entry.status.is_created() {
             "Trash File"
+        } else if entry.status.is_deleted() {
+            "Restore File"
         } else {
             "Discard Changes"
         };
@@ -6159,7 +6170,7 @@ impl GitPanel {
                 if this.context_menu.as_ref().is_some_and(|context_menu| {
                     context_menu.0.focus_handle(cx).contains_focused(window, cx)
                 }) {
-                    cx.focus_self(window);
+                    this.activation_focus_handle(cx).focus(window, cx);
                 }
                 this.context_menu.take();
                 cx.notify();
@@ -6955,6 +6966,14 @@ impl editor::Addon for GitPanelAddon {
 }
 
 impl Panel for GitPanel {
+    fn activation_focus_handle(&self, cx: &App) -> FocusHandle {
+        if self.entries.is_empty() || self.commit_editor_expanded {
+            self.commit_editor.focus_handle(cx)
+        } else {
+            self.focus_handle.clone()
+        }
+    }
+
     fn persistent_name() -> &'static str {
         "GitPanel"
     }

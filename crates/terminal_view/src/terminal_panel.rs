@@ -82,6 +82,7 @@ pub fn init(cx: &mut App) {
 pub struct TerminalPanel {
     pub(crate) active_pane: Entity<Pane>,
     pub(crate) center: PaneGroup,
+    focus_handle: FocusHandle,
     fs: Arc<dyn Fs>,
     workspace: WeakEntity<Workspace>,
     pending_serialization: Task<Option<()>>,
@@ -100,6 +101,7 @@ impl TerminalPanel {
         let terminal_panel = Self {
             center,
             active_pane: pane,
+            focus_handle: cx.focus_handle(),
             fs: workspace.app_state().fs.clone(),
             workspace: workspace.weak_handle(),
             pending_serialization: Task::ready(None),
@@ -1584,12 +1586,16 @@ impl Render for TerminalPanel {
 }
 
 impl Focusable for TerminalPanel {
-    fn focus_handle(&self, cx: &App) -> FocusHandle {
-        self.active_pane.focus_handle(cx)
+    fn focus_handle(&self, _cx: &App) -> FocusHandle {
+        self.focus_handle.clone()
     }
 }
 
 impl Panel for TerminalPanel {
+    fn activation_focus_handle(&self, cx: &App) -> FocusHandle {
+        self.active_pane.focus_handle(cx)
+    }
+
     fn position(&self, _window: &Window, cx: &App) -> DockPosition {
         TerminalSettings::get_global(cx).dock.into()
     }

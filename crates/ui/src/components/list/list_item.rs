@@ -17,6 +17,12 @@ pub enum ListItemSpacing {
     Sparse,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum DockSide {
+    Left,
+    Right,
+}
+
 #[derive(Default)]
 enum EndSlotVisibility {
     #[default]
@@ -281,13 +287,14 @@ impl RenderOnce for ListItem {
             })
             .when(!self.inset, |this| {
                 this.when_some(self.focused, |this, focused| {
-                    if focused && !self.disabled {
-                        this.border_1()
-                            .when(self.docked_right, |this| this.border_r_2())
-                            .border_color(cx.theme().colors().border_focused)
-                    } else {
-                        this.border_1()
-                    }
+                    this.border_1()
+                        .when_some(self.dock, |this, dock| match dock {
+                            DockSide::Left => this.border_l_2(),
+                            DockSide::Right => this.border_r_2(),
+                        })
+                        .when(focused && !self.disabled, |this| {
+                            this.border_color(cx.theme().colors().border_focused)
+                        })
                 })
                 .when(self.selectable && !self.disabled, |this| {
                     this.hover(|style| style.bg(cx.theme().colors().ghost_element_hover))
