@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use crate::{
     dx_serializer_rlm_execution_preview::{
         DX_SERIALIZER_RLM_EXECUTION_PREVIEW_RECEIPT_SCHEMA,

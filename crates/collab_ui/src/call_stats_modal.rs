@@ -238,26 +238,47 @@ impl Focusable for CallStatsModal {
 
 impl Render for CallStatsModal {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let room = active_room(cx);
-        let is_connected = room.is_some();
-        let Some(stats) = room.and_then(|room| {
-            let diagnostics = room.read(cx).diagnostics()?;
-            Some(diagnostics.read(cx).stats().clone())
-        }) else {
-            return v_flex()
-                .key_context("CallStatsModal")
-                .on_action(cx.listener(Self::dismiss))
-                .track_focus(&self.focus_handle)
-                .elevation_3(cx)
-                .w(rems(24.))
-                .p_4()
-                .gap_3()
-                .child(
-                    Label::new("Unable to fetch call statistics")
-                        .size(LabelSize::Large)
-                        .color(Color::Error),
-                );
-        };
+        let is_connected = ActiveCall::try_global(cx)
+            .is_some_and(|active_call| active_call.read(cx).room().is_some());
+        let diagnostics = call_diagnostics(cx);
+        let (latest, sample_count, retained_duration, recent_issue_count) = diagnostics
+            .as_ref()
+            .map(|diagnostics| {
+                let diagnostics = diagnostics.read(cx);
+                let retained_duration = diagnostics
+                    .history()
+                    .front()
+                    .zip(diagnostics.history().back())
+                    .and_then(|(first, last)| last.elapsed.0.checked_sub(first.elapsed.0))
+                    .unwrap_or_default();
+                let recent_issue_count = diagnostics
+                    .history()
+                    .iter()
+                    .rev()
+                    .take(60)
+                    .filter(|snapshot| {
+                        snapshot
+                            .remote_audio
+                            .iter()
+                            .any(|audio| audio_issue_score(audio) > 0)
+                    })
+                    .count();
+                (
+                    diagnostics.latest().cloned(),
+                    diagnostics.history().len(),
+                    retained_duration,
+                    recent_issue_count,
+                )
+            })
+            .unwrap_or_default();
+        let stats = latest
+            .as_ref()
+            .map(|snapshot| snapshot.stats.clone())
+            .unwrap_or_default();
+        let mut remote_audio = latest
+            .map(|snapshot| snapshot.remote_audio)
+            .unwrap_or_default();
+        remote_audio.sort_by_key(|audio| Reverse(audio_issue_score(audio)));
 
         let (quality_text, quality_color) =
             quality_label(stats.connection_quality.map(|inner| inner.0));

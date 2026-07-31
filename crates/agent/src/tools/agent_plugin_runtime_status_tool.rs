@@ -63,7 +63,7 @@ use super::{
     dx_plugin_runtime_aliases::dx_plugin_runtime_aliases,
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -2811,11 +2811,10 @@ fn runtime_green_blocker_summary(runtime_status: &str, roots: &AgentPluginRuntim
     }
 
     let asset_summary = asset_readiness_summary_probe(&roots.asset_provisioning_receipt);
-    if asset_summary
+    if !asset_summary
         .get("ready")
         .and_then(Value::as_bool)
         .unwrap_or(false)
-        == false
     {
         blockers.push(serde_json::json!({
             "area": "managed_chrome.assets",
@@ -4189,7 +4188,7 @@ fn runtime_green_proof_path(
                 final_runtime_proof_capacity
             ),
             "final_runtime_headroom_cleanup_result_status": final_runtime_headroom_cleanup_result_status,
-            "regression_watch_rollup": regression_watch_rollup.clone(),
+            "regression_watch_rollup": regression_watch_rollup,
             "final_validation_result": blocker_summary
                 .pointer("/latest_evidence/browser_final_validation_result/summary")
                 .cloned()
@@ -5036,7 +5035,7 @@ fn runtime_green_report_gate(readiness: &Value) -> Value {
         "label": label,
         "severity": if can_report { "success" } else { "blocked" },
         "can_report_runtime_green": can_report,
-        "blocker": blocker.clone(),
+        "blocker": blocker,
         "primary_blocker": blocker,
         "blockers": blockers,
         "blocker_count": blocker_count,
@@ -5420,12 +5419,12 @@ fn runtime_green_final_report_packet(
         "root_mode": root_mode,
         "may_report_runtime_green": can_report,
         "blocker": if can_report { "none" } else { report_gate_blocker },
-        "blockers": report_gate_blockers.clone(),
+        "blockers": report_gate_blockers,
         "blocker_count": report_gate_blocker_count,
         "next_action": next_action,
         "final_manual_command": "just run",
-        "final_runtime_capacity": final_runtime_capacity.clone(),
-        "browser_panel_live_proof_status": browser_panel_live_proof_status.clone(),
+        "final_runtime_capacity": final_runtime_capacity,
+        "browser_panel_live_proof_status": browser_panel_live_proof_status,
         "regression_watch": regression_watch,
         "report_gate": {
             "schema": AGENT_PLUGIN_RUNTIME_GREEN_REPORT_GATE_SCHEMA,
@@ -7252,10 +7251,10 @@ fn observability_proof_freshness(roots: &AgentPluginRuntimeRoots) -> Value {
 fn observability_recovery_actions(missing: &[&str], stale: &[&str]) -> Value {
     let mut actions = Vec::with_capacity(missing.len() + stale.len() + 1);
     for label in missing {
-        actions.push(observability_recovery_action(*label, "missing"));
+        actions.push(observability_recovery_action(label, "missing"));
     }
     for label in stale {
-        actions.push(observability_recovery_action(*label, "stale"));
+        actions.push(observability_recovery_action(label, "stale"));
     }
 
     if actions.is_empty() {

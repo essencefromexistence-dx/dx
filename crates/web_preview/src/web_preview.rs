@@ -1,5 +1,6 @@
 #![recursion_limit = "1024"]
 #![allow(dead_code, unused)]
+#![allow(clippy::redundant_clone)]
 
 #[cfg(target_os = "windows")]
 use gpui::{App, actions};

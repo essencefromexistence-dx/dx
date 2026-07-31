@@ -1,4 +1,27 @@
+#![recursion_limit = "512"]
+
 mod db;
+mod dx_catalog_agent_bridge;
+mod dx_catalog_provider_settings_mutation;
+mod dx_forge_backup_executor;
+mod dx_forge_backup_runner_gate;
+mod dx_forge_restore_approval;
+mod dx_forge_restore_executor;
+mod dx_forge_restore_target_plan;
+mod dx_forge_safety_policy;
+mod dx_media_tool_plan;
+mod dx_media_tool_runner;
+mod dx_media_tool_runner_gate;
+mod dx_metasearch_agent_bridge;
+mod dx_metasearch_context_adapter;
+mod dx_runtime_proof_import;
+mod dx_runtime_proof_plan;
+mod dx_serializer_rlm_execution_plan;
+mod dx_serializer_rlm_execution_preview;
+mod dx_serializer_rlm_external_execution;
+mod dx_serializer_rlm_reduced_context;
+mod dx_serializer_rlm_runner_gate;
+mod dx_source_attachment;
 mod legacy_thread;
 mod native_agent_server;
 pub mod outline;

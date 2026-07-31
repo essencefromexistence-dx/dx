@@ -3,8 +3,8 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use ::util::ResultExt;
 use anyhow::{Context, Result};
+use gpui_util::ResultExt;
 use windows::{
     Win32::{
         Foundation::HWND,
@@ -16,7 +16,7 @@ use windows::{
             Dxgi::{Common::*, *},
         },
     },
-    core::Interface,
+    core::{HSTRING, Interface},
 };
 
 use crate::directx_renderer::shader_resources::{RawShaderBytes, ShaderModule, ShaderTarget};
@@ -63,6 +63,7 @@ pub(crate) struct DirectXRendererDevices {
     pub(crate) device: ID3D11Device,
     pub(crate) device_context: ID3D11DeviceContext,
     dxgi_device: Option<IDXGIDevice>,
+    annotation: Option<ID3DUserDefinedAnnotation>,
 }
 
 struct DirectXResources {
@@ -70,8 +71,6 @@ struct DirectXResources {
     swap_chain: IDXGISwapChain1,
     render_target: Option<ID3D11Texture2D>,
     render_target_view: Option<ID3D11RenderTargetView>,
-    liquid_glass_backdrop_texture: ID3D11Texture2D,
-    liquid_glass_backdrop_srv: Option<ID3D11ShaderResourceView>,
 
     // Path intermediate textures (with MSAA)
     path_intermediate_texture: ID3D11Texture2D,
@@ -92,12 +91,26 @@ struct DirectXRenderPipelines {
     mono_sprites: PipelineState<MonochromeSprite>,
     subpixel_sprites: PipelineState<SubpixelSprite>,
     poly_sprites: PipelineState<PolychromeSprite>,
-    liquid_glass: PipelineState<LiquidGlass>,
 }
 
 struct DirectXGlobalElements {
     global_params_buffer: Option<ID3D11Buffer>,
     sampler: Option<ID3D11SamplerState>,
+}
+
+struct Annotation<'a>(&'a ID3DUserDefinedAnnotation);
+
+impl<'a> Annotation<'a> {
+    fn new(annotation: &'a ID3DUserDefinedAnnotation, label: HSTRING) -> Self {
+        unsafe { annotation.BeginEvent(&label) };
+        Self(annotation)
+    }
+}
+
+impl Drop for Annotation<'_> {
+    fn drop(&mut self) {
+        unsafe { self.0.EndEvent() };
+    }
 }
 
 struct DirectComposition {
@@ -123,6 +136,7 @@ impl DirectXRendererDevices {
         } else {
             Some(device.cast().context("Creating DXGI device")?)
         };
+        let annotation = device_context.cast().ok();
 
         Ok(Self {
             adapter: adapter.clone(),
@@ -130,6 +144,7 @@ impl DirectXRendererDevices {
             device: device.clone(),
             device_context: device_context.clone(),
             dxgi_device,
+            annotation,
         })
     }
 }
@@ -347,91 +362,50 @@ impl DirectXRenderer {
         })?;
 
         self.upload_scene_buffers(scene)?;
-        let mut needs_backdrop_refresh = true;
 
+        let annotation = self
+            .devices
+            .as_ref()
+            .and_then(|devices| devices.annotation.clone())
+            .filter(|annotation| unsafe { annotation.GetStatus().as_bool() });
         for batch in scene.batches() {
+            let _annotation = annotation
+                .as_ref()
+                .map(|annotation| Annotation::new(annotation, HSTRING::from(batch.label())));
             match batch {
-                PrimitiveBatch::Shadows(range) => {
-                    let result = self.draw_shadows(range.start, range.len());
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
-                }
-                PrimitiveBatch::Quads(range) => {
-                    let result = self.draw_quads(range.start, range.len());
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
-                }
+                PrimitiveBatch::Shadows(range) => self.draw_shadows(range.start, range.len()),
+                PrimitiveBatch::Quads(range) => self.draw_quads(range.start, range.len()),
                 PrimitiveBatch::Paths(range) => {
                     let paths = &scene.paths[range];
                     self.draw_paths_to_intermediate(paths)?;
-                    let result = self.draw_paths_from_intermediate(paths);
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
+                    self.draw_paths_from_intermediate(paths)
                 }
-                PrimitiveBatch::Underlines(range) => {
-                    let result = self.draw_underlines(range.start, range.len());
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
-                }
+                PrimitiveBatch::Underlines(range) => self.draw_underlines(range.start, range.len()),
                 PrimitiveBatch::MonochromeSprites { texture_id, range } => {
-                    let result =
-                        self.draw_monochrome_sprites(texture_id, range.start, range.len());
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
+                    self.draw_monochrome_sprites(texture_id, range.start, range.len())
                 }
                 PrimitiveBatch::SubpixelSprites { texture_id, range } => {
-                    let result = self.draw_subpixel_sprites(texture_id, range.start, range.len());
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
+                    self.draw_subpixel_sprites(texture_id, range.start, range.len())
                 }
                 PrimitiveBatch::PolychromeSprites { texture_id, range } => {
-                    let result =
-                        self.draw_polychrome_sprites(texture_id, range.start, range.len());
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
+                    self.draw_polychrome_sprites(texture_id, range.start, range.len())
                 }
-                PrimitiveBatch::LiquidGlass { texture_id, range } => {
-                    if needs_backdrop_refresh {
-                        self.refresh_liquid_glass_backdrop()?;
-                        needs_backdrop_refresh = false;
-                    }
-                    self.draw_liquid_glass(texture_id, range.start, range.len())
-                }
-                PrimitiveBatch::Surfaces(range) => {
-                    let result = self.draw_surfaces(&scene.surfaces[range]);
-                    if result.is_ok() {
-                        needs_backdrop_refresh = true;
-                    }
-                    result
-                }
+                PrimitiveBatch::Surfaces(range) => self.draw_surfaces(&scene.surfaces[range]),
             }
-            .context(format!(
-                "scene too large:\
-                {} paths, {} shadows, {} quads, {} underlines, {} mono, {} subpixel, {} poly, {} liquid glass, {} surfaces",
-                scene.paths.len(),
-                scene.shadows.len(),
-                scene.quads.len(),
-                scene.underlines.len(),
-                scene.monochrome_sprites.len(),
-                scene.subpixel_sprites.len(),
-                scene.polychrome_sprites.len(),
-                scene.liquid_glass.len(),
-                scene.surfaces.len(),
-            ))?;
+            .with_context(|| {
+                format!(
+                    "scene too large:\
+                    {} paths, {} shadows, {} quads, {} underlines, {} mono, {} subpixel, {} poly, {} surfaces",
+                    scene.paths.len(),
+                    scene.shadows.len(),
+                    scene.quads.len(),
+                    scene.underlines.len(),
+                    scene.monochrome_sprites.len(),
+                    scene.subpixel_sprites.len(),
+                    scene.polychrome_sprites.len(),
+                    scene.surfaces.len(),
+                )
+            })?;
         }
         self.present()
     }
@@ -528,14 +502,6 @@ impl DirectXRenderer {
                 &devices.device,
                 &devices.device_context,
                 &scene.polychrome_sprites,
-            )?;
-        }
-
-        if !scene.liquid_glass.is_empty() {
-            self.pipelines.liquid_glass.update_buffer(
-                &devices.device,
-                &devices.device_context,
-                &scene.liquid_glass,
             )?;
         }
 
@@ -786,62 +752,6 @@ impl DirectXRenderer {
         )
     }
 
-    fn draw_liquid_glass(
-        &mut self,
-        texture_id: AtlasTextureId,
-        start: usize,
-        len: usize,
-    ) -> Result<()> {
-        if len == 0 {
-            return Ok(());
-        }
-        let devices = self.devices.as_ref().context("devices missing")?;
-        let resources = self.resources.as_ref().context("resources missing")?;
-        let texture_view = self.atlas.get_texture_view(texture_id);
-        let backdrop_view = resources
-            .liquid_glass_backdrop_srv
-            .as_ref()
-            .context("missing liquid glass backdrop SRV")?
-            .clone();
-        self.pipelines.liquid_glass.draw_range_with_textures(
-            &devices.device,
-            &devices.device_context,
-            &texture_view[0],
-            &Some(backdrop_view),
-            slice::from_ref(&resources.viewport),
-            slice::from_ref(&self.globals.global_params_buffer),
-            slice::from_ref(&self.globals.sampler),
-            start as u32,
-            len as u32,
-        )
-    }
-
-    fn refresh_liquid_glass_backdrop(&self) -> Result<()> {
-        let devices = self.devices.as_ref().context("devices missing")?;
-        let resources = self.resources.as_ref().context("resources missing")?;
-        let render_target = resources
-            .render_target
-            .as_ref()
-            .context("missing render target")?;
-        unsafe {
-            let null_resources: [Option<ID3D11ShaderResourceView>; 2] = [None, None];
-            let null_backdrop: [Option<ID3D11ShaderResourceView>; 1] = [None];
-            devices
-                .device_context
-                .VSSetShaderResources(0, Some(&null_resources));
-            devices
-                .device_context
-                .PSSetShaderResources(0, Some(&null_resources));
-            devices
-                .device_context
-                .PSSetShaderResources(2, Some(&null_backdrop));
-            devices
-                .device_context
-                .CopyResource(&resources.liquid_glass_backdrop_texture, render_target);
-        }
-        Ok(())
-    }
-
     fn draw_surfaces(&mut self, surfaces: &[PaintSurface]) -> Result<()> {
         if surfaces.is_empty() {
             return Ok(());
@@ -869,10 +779,8 @@ impl DirectXRenderer {
             _ => dxgi::get_driver_version(&devices.adapter),
         }
         .context("Failed to get gpu driver info")
-        .unwrap_or_else(|error| {
-            log::debug!("{error:#}");
-            "Unknown Driver".to_string()
-        });
+        .log_err()
+        .unwrap_or("Unknown Driver".to_string());
         Ok(GpuSpecs {
             is_software_emulated,
             device_name,
@@ -923,8 +831,6 @@ impl DirectXResources {
         let (
             render_target,
             render_target_view,
-            liquid_glass_backdrop_texture,
-            liquid_glass_backdrop_srv,
             path_intermediate_texture,
             path_intermediate_srv,
             path_intermediate_msaa_texture,
@@ -937,8 +843,6 @@ impl DirectXResources {
             swap_chain,
             render_target: Some(render_target),
             render_target_view,
-            liquid_glass_backdrop_texture,
-            liquid_glass_backdrop_srv,
             path_intermediate_texture,
             path_intermediate_msaa_texture,
             path_intermediate_msaa_view,
@@ -957,8 +861,6 @@ impl DirectXResources {
         let (
             render_target,
             render_target_view,
-            liquid_glass_backdrop_texture,
-            liquid_glass_backdrop_srv,
             path_intermediate_texture,
             path_intermediate_srv,
             path_intermediate_msaa_texture,
@@ -967,8 +869,6 @@ impl DirectXResources {
         ) = create_resources(devices, &self.swap_chain, width, height)?;
         self.render_target = Some(render_target);
         self.render_target_view = render_target_view;
-        self.liquid_glass_backdrop_texture = liquid_glass_backdrop_texture;
-        self.liquid_glass_backdrop_srv = liquid_glass_backdrop_srv;
         self.path_intermediate_texture = path_intermediate_texture;
         self.path_intermediate_msaa_texture = path_intermediate_msaa_texture;
         self.path_intermediate_msaa_view = path_intermediate_msaa_view;
@@ -1036,13 +936,6 @@ impl DirectXRenderPipelines {
             16,
             create_blend_state(device)?,
         )?;
-        let liquid_glass = PipelineState::new(
-            device,
-            "liquid_glass_pipeline",
-            ShaderModule::LiquidGlass,
-            16,
-            create_blend_state(device)?,
-        )?;
 
         Ok(Self {
             shadow_pipeline,
@@ -1053,7 +946,6 @@ impl DirectXRenderPipelines {
             mono_sprites,
             subpixel_sprites,
             poly_sprites,
-            liquid_glass,
         })
     }
 }
@@ -1064,12 +956,6 @@ impl DirectComposition {
         let comp_target = unsafe { comp_device.CreateTargetForHwnd(hwnd, true) }?;
         let root_visual = unsafe { comp_device.CreateVisual() }?;
         let gpui_visual = unsafe { comp_device.CreateVisual() }?;
-
-        unsafe {
-            root_visual.AddVisual(&gpui_visual, true, None::<&IDCompositionVisual>)?;
-            comp_target.SetRoot(&root_visual)?;
-            comp_device.Commit()?;
-        }
 
         Ok(Self {
             comp_device,
@@ -1082,6 +968,7 @@ impl DirectComposition {
     pub fn set_swap_chain(&self, swap_chain: &IDXGISwapChain1) -> Result<()> {
         unsafe {
             self.gpui_visual.SetContent(swap_chain)?;
+            self.root_visual.AddVisual(&self.gpui_visual, true, None)?;
             self.comp_target.SetRoot(&self.root_visual)?;
             self.comp_device.Commit()?;
         }
@@ -1348,39 +1235,6 @@ impl<T> PipelineState<T> {
         }
         Ok(())
     }
-
-    fn draw_range_with_textures(
-        &self,
-        device: &ID3D11Device,
-        device_context: &ID3D11DeviceContext,
-        sprite_texture: &Option<ID3D11ShaderResourceView>,
-        backdrop_texture: &Option<ID3D11ShaderResourceView>,
-        viewport: &[D3D11_VIEWPORT],
-        global_params: &[Option<ID3D11Buffer>],
-        sampler: &[Option<ID3D11SamplerState>],
-        first_instance: u32,
-        instance_count: u32,
-    ) -> Result<()> {
-        let view = create_buffer_view_range(device, &self.buffer, first_instance, instance_count)?;
-        set_pipeline_state(
-            device_context,
-            slice::from_ref(&view),
-            D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
-            viewport,
-            &self.vertex,
-            &self.fragment,
-            global_params,
-            &self.blend_state,
-        );
-        unsafe {
-            device_context.PSSetSamplers(0, Some(sampler));
-            device_context.VSSetShaderResources(0, Some(slice::from_ref(sprite_texture)));
-            device_context.PSSetShaderResources(0, Some(slice::from_ref(sprite_texture)));
-            device_context.PSSetShaderResources(2, Some(slice::from_ref(backdrop_texture)));
-            device_context.DrawInstanced(4, instance_count, 0, 0);
-        }
-        Ok(())
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -1481,15 +1335,11 @@ fn create_resources(
     ID3D11Texture2D,
     Option<ID3D11ShaderResourceView>,
     ID3D11Texture2D,
-    Option<ID3D11ShaderResourceView>,
-    ID3D11Texture2D,
     Option<ID3D11RenderTargetView>,
     D3D11_VIEWPORT,
 )> {
     let (render_target, render_target_view) =
         create_render_target_and_its_view(swap_chain, &devices.device)?;
-    let (liquid_glass_backdrop_texture, liquid_glass_backdrop_srv) =
-        create_liquid_glass_backdrop_texture(&devices.device, width, height)?;
     let (path_intermediate_texture, path_intermediate_srv) =
         create_path_intermediate_texture(&devices.device, width, height)?;
     let (path_intermediate_msaa_texture, path_intermediate_msaa_view) =
@@ -1498,8 +1348,6 @@ fn create_resources(
     Ok((
         render_target,
         render_target_view,
-        liquid_glass_backdrop_texture,
-        liquid_glass_backdrop_srv,
         path_intermediate_texture,
         path_intermediate_srv,
         path_intermediate_msaa_texture,
@@ -1539,39 +1387,6 @@ fn create_path_intermediate_texture(
             },
             Usage: D3D11_USAGE_DEFAULT,
             BindFlags: (D3D11_BIND_RENDER_TARGET.0 | D3D11_BIND_SHADER_RESOURCE.0) as u32,
-            CPUAccessFlags: 0,
-            MiscFlags: 0,
-        };
-        device.CreateTexture2D(&desc, None, Some(&mut output))?;
-        output.unwrap()
-    };
-
-    let mut shader_resource_view = None;
-    unsafe { device.CreateShaderResourceView(&texture, None, Some(&mut shader_resource_view))? };
-
-    Ok((texture, Some(shader_resource_view.unwrap())))
-}
-
-#[inline]
-fn create_liquid_glass_backdrop_texture(
-    device: &ID3D11Device,
-    width: u32,
-    height: u32,
-) -> Result<(ID3D11Texture2D, Option<ID3D11ShaderResourceView>)> {
-    let texture = unsafe {
-        let mut output = None;
-        let desc = D3D11_TEXTURE2D_DESC {
-            Width: width,
-            Height: height,
-            MipLevels: 1,
-            ArraySize: 1,
-            Format: RENDER_TARGET_FORMAT,
-            SampleDesc: DXGI_SAMPLE_DESC {
-                Count: 1,
-                Quality: 0,
-            },
-            Usage: D3D11_USAGE_DEFAULT,
-            BindFlags: D3D11_BIND_SHADER_RESOURCE.0 as u32,
             CPUAccessFlags: 0,
             MiscFlags: 0,
         };
@@ -1878,7 +1693,6 @@ pub(crate) mod shader_resources {
         MonochromeSprite,
         SubpixelSprite,
         PolychromeSprite,
-        LiquidGlass,
         EmojiRasterization,
     }
 
@@ -1952,10 +1766,6 @@ pub(crate) mod shader_resources {
                 ShaderModule::PolychromeSprite => match target {
                     ShaderTarget::Vertex => POLYCHROME_SPRITE_VERTEX_BYTES,
                     ShaderTarget::Fragment => POLYCHROME_SPRITE_FRAGMENT_BYTES,
-                },
-                ShaderModule::LiquidGlass => match target {
-                    ShaderTarget::Vertex => LIQUID_GLASS_VERTEX_BYTES,
-                    ShaderTarget::Fragment => LIQUID_GLASS_FRAGMENT_BYTES,
                 },
                 ShaderModule::EmojiRasterization => match target {
                     ShaderTarget::Vertex => EMOJI_RASTERIZATION_VERTEX_BYTES,
@@ -2047,7 +1857,6 @@ pub(crate) mod shader_resources {
                 ShaderModule::MonochromeSprite => "monochrome_sprite",
                 ShaderModule::SubpixelSprite => "subpixel_sprite",
                 ShaderModule::PolychromeSprite => "polychrome_sprite",
-                ShaderModule::LiquidGlass => "liquid_glass",
                 ShaderModule::EmojiRasterization => "emoji_rasterization",
             }
         }

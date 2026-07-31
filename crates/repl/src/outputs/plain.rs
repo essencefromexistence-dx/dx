@@ -362,7 +362,7 @@ impl Render for TerminalOutput {
 
         let text_style = text_style(window, cx);
         let minimum_contrast = TerminalSettings::get_global(cx).minimum_contrast;
-        let (rects, batched_text_runs) = terminal.read(cx).with_renderable_cells(|cells| {
+        let (rects, batched_text_runs, _) = terminal.read(cx).with_renderable_cells(|cells| {
             TerminalElement::layout_grid(cells, 0, &text_style, None, minimum_contrast, cx)
         });
 

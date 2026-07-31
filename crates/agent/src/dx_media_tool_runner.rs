@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)]
+
 use crate::dx_media_tool_runner_gate::DX_MEDIA_TOOL_RUNNER_GATE_SCHEMA;
 use serde::Serialize;
 use serde_json::Value;

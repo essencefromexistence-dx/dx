@@ -1891,6 +1891,17 @@ impl MessageEditor {
         });
     }
 
+    pub fn insert_transcript_text(
+        &mut self,
+        transcript: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !transcript.trim().is_empty() {
+            self.insert_text(transcript, window, cx);
+        }
+    }
+
     pub fn set_placeholder_text(
         &mut self,
         placeholder: &str,

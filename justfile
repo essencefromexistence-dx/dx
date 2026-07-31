@@ -8,23 +8,24 @@ set shell := ["powershell.exe", "-NoLogo", "-Command"]
 build_target_dir := "G:/Dx/desktop/target"
 min_build_free_gb := "18"
 min_incremental_free_gb := "4"
+rustc_wrapper := "G:/Dx/desktop/target/dx-rustc-memory-wrapper.exe"
 
 # Default recipe - shows available commands
 default:
     @just --list
 
-# Guard runnable builds before Cargo starts filling the incremental cache.
+# Guard runnable builds before Cargo starts filling the build target.
 ensure-build-headroom:
     @$targetDir = "{{build_target_dir}}"; $zedBinary = Join-Path $targetDir "debug/dx-desktop.exe"; $requiredGb = [int64]{{min_incremental_free_gb}}; $driveName = (Split-Path -Qualifier $targetDir).TrimEnd(":"); $drive = Get-PSDrive -Name $driveName; $freeGb = [math]::Round($drive.Free / 1GB, 2); $minBytes = $requiredGb * 1GB; if ($drive.Free -lt $minBytes) { throw "Dx build target drive $($drive.Name): has only $freeGb GB free; need at least $requiredGb GB before running Cargo. Free rebuildable target/cache space on the configured G-drive target, then rerun this recipe." } else { Write-Host "Build target headroom OK: $freeGb GB free on $($drive.Name):" }
 
 launch-zed:
-    @$zed = "{{build_target_dir}}/debug/dx-desktop.exe"; if (!(Test-Path -LiteralPath $zed)) { $zed = "{{build_target_dir}}/release/dx-desktop.exe"; if (!(Test-Path -LiteralPath $zed)) { throw "Built Dx binary not found at $zed" } }; $startedAt = Get-Date; $logPath = Join-Path $env:LOCALAPPDATA "Dx/logs/Dx.log"; $launchPath = (Get-Location).ProviderPath; $process = Start-Process -FilePath $zed -ArgumentList @($launchPath) -WorkingDirectory (Get-Location) -WindowStyle Normal -PassThru; for ($i = 0; $i -lt 600; $i++) { Start-Sleep -Milliseconds 500; $process.Refresh(); if ($process.HasExited) { if ($process.ExitCode -eq 0 -and (Get-Process dx -ErrorAction SilentlyContinue)) { Write-Host "Dx launch request was handed to an existing process"; exit 0 }; throw "Dx exited during startup with code $($process.ExitCode)" }; if ($process.MainWindowHandle -ne [IntPtr]::Zero) { Start-Sleep -Seconds 3; $process.Refresh(); if ($process.HasExited) { throw "Dx exited during startup with code $($process.ExitCode)" }; Write-Host "Launched Dx process $($process.Id) for $launchPath and detected its main window"; exit 0 }; if (Test-Path -LiteralPath $logPath) { $renderedLine = Get-Content -Path $logPath -Tail 160 -ErrorAction SilentlyContinue | Where-Object { $_ -match "INFO\\s+\\[workspace\\]\\s+Rendered first frame" } | Select-Object -Last 1; if ($renderedLine -match "^([^ ]+)") { try { $renderedAt = [DateTimeOffset]::Parse($Matches[1]).LocalDateTime; if ($renderedAt -ge $startedAt.AddSeconds(-2)) { Start-Sleep -Seconds 3; $process.Refresh(); if ($process.HasExited) { if ($process.ExitCode -eq 0 -and (Get-Process dx -ErrorAction SilentlyContinue)) { Write-Host "Dx rendered first frame in an existing process"; exit 0 }; throw "Dx exited during startup with code $($process.ExitCode)" }; Write-Host "Launched Dx process $($process.Id) for $launchPath and observed Rendered first frame"; exit 0 } } catch {} } } }; throw "Dx process $($process.Id) stayed alive but did not report a main window or fresh first-frame log within 300s"
+    @$zed = "{{build_target_dir}}/debug/dx-desktop.exe"; if (!(Test-Path -LiteralPath $zed)) { $zed = "{{build_target_dir}}/release/dx-desktop.exe"; if (!(Test-Path -LiteralPath $zed)) { throw "Built Dx binary not found at $zed" } }; $startedAt = Get-Date; $logPath = Join-Path $env:LOCALAPPDATA "Dx-Desktop/logs/Dx-Desktop.log"; $launchPath = (Get-Location).ProviderPath; $process = Start-Process -FilePath $zed -ArgumentList @($launchPath) -WorkingDirectory (Get-Location) -WindowStyle Normal -PassThru; for ($i = 0; $i -lt 600; $i++) { Start-Sleep -Milliseconds 500; $process.Refresh(); if ($process.HasExited) { if ($process.ExitCode -eq 0 -and (Get-Process -Name dx-desktop -ErrorAction SilentlyContinue)) { Write-Host "Dx launch request was handed to an existing process"; exit 0 }; throw "Dx exited during startup with code $($process.ExitCode)" }; if ($process.MainWindowHandle -ne [IntPtr]::Zero) { Start-Sleep -Seconds 3; $process.Refresh(); if ($process.HasExited) { throw "Dx exited during startup with code $($process.ExitCode)" }; Write-Host "Launched Dx process $($process.Id) for $launchPath and detected its main window"; exit 0 }; if (Test-Path -LiteralPath $logPath) { $renderedLine = Get-Content -Path $logPath -Tail 160 -ErrorAction SilentlyContinue | Where-Object { $_ -match "INFO\\s+\\[workspace\\]\\s+Rendered first frame" } | Select-Object -Last 1; if ($renderedLine -match "^([^ ]+)") { try { $renderedAt = [DateTimeOffset]::Parse($Matches[1]).LocalDateTime; if ($renderedAt -ge $startedAt.AddSeconds(-2)) { Start-Sleep -Seconds 3; $process.Refresh(); if ($process.HasExited) { if ($process.ExitCode -eq 0 -and (Get-Process -Name dx-desktop -ErrorAction SilentlyContinue)) { Write-Host "Dx rendered first frame in an existing process"; exit 0 }; throw "Dx exited during startup with code $($process.ExitCode)" }; Write-Host "Launched Dx process $($process.Id) for $launchPath and observed Rendered first frame"; exit 0 } } catch {} } } }; throw "Dx process $($process.Id) stayed alive but did not report a main window or fresh first-frame log within 300s"
 
-# RECOMMENDED: Fast local UI loop. Builds only the Zed app with incremental cache.
+# RECOMMENDED: Memory-safe local UI loop. Builds the Zed app and its CLI companion.
 run: ensure-build-headroom
-    @echo "Running Dx with fast incremental G-drive build settings..."
-    @echo "Building the dx binary (debug)"
-    @$jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $incremental = if ([string]::IsNullOrWhiteSpace($env:CARGO_INCREMENTAL)) { "1" } else { $env:CARGO_INCREMENTAL }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = $incremental; Write-Host "Using Cargo config: locked Cargo.lock, $jobs job(s), G:/Dx/desktop/target, rust-lld linker, debug incremental=$incremental"; cargo build --locked -p zed --bin dx-desktop
+    @echo "Running Dx with memory-safe G-drive build settings..."
+    @echo "Building the dx binary and CLI companion (debug)"
+    @$wrapper = "{{rustc_wrapper}}"; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $wrapper) | Out-Null; if (!(Test-Path -LiteralPath $wrapper)) { Write-Host "Building the local rustc memory gate..."; rustc --edition=2021 script/rustc-memory-wrapper.rs -o $wrapper; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }; $jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = "0"; $env:CARGO_PROFILE_DEV_DEBUG = "0"; $env:CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG = "0"; $env:RUSTC_WRAPPER = $wrapper; $env:DX_RUSTC_MAX_CONCURRENCY = "3"; Write-Host "Using Cargo config: locked Cargo.lock, $jobs job(s), G:/Dx/desktop/target, rust-lld linker, debug symbols off, rustc memory gate=3"; cargo build --locked -p zed --bin dx-desktop -j $jobs; $code = $LASTEXITCODE; if ($code -eq 0) { cargo build --locked -p cli --bin cli -j $jobs; $code = $LASTEXITCODE }; Remove-Item Env:RUSTC_WRAPPER -ErrorAction SilentlyContinue; Remove-Item Env:DX_RUSTC_MAX_CONCURRENCY -ErrorAction SilentlyContinue; if ($code -ne 0) { exit $code }
     @echo "Build complete! Launching Dx immediately..."
     @just launch-zed
     @echo "Copying the built binary to the bin folder..."
@@ -33,9 +34,9 @@ run: ensure-build-headroom
 
 # Full validation path when the development CLI companion also needs rebuilding.
 run-full: ensure-build-headroom
-    @echo "Running Dx with full incremental G-drive build settings..."
+    @echo "Running Dx with full memory-safe G-drive build settings..."
     @echo "Building the dx binary plus the development CLI companion"
-    @$jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $incremental = if ([string]::IsNullOrWhiteSpace($env:CARGO_INCREMENTAL)) { "1" } else { $env:CARGO_INCREMENTAL }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = $incremental; Write-Host "Using Cargo config: locked Cargo.lock, $jobs job(s), G:/Dx/desktop/target, rust-lld linker, no debug info, incremental=$incremental"; cargo build --locked -p zed --bin dx-desktop; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; cargo build --locked -p cli --bin cli
+    @$wrapper = "{{rustc_wrapper}}"; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $wrapper) | Out-Null; if (!(Test-Path -LiteralPath $wrapper)) { rustc --edition=2021 script/rustc-memory-wrapper.rs -o $wrapper; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }; $jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = "0"; $env:CARGO_PROFILE_DEV_DEBUG = "0"; $env:CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG = "0"; $env:RUSTC_WRAPPER = $wrapper; $env:DX_RUSTC_MAX_CONCURRENCY = "3"; Write-Host "Using Cargo config: locked Cargo.lock, $jobs job(s), G:/Dx/desktop/target, rust-lld linker, debug symbols off, rustc memory gate=3"; cargo build --locked -p zed --bin dx-desktop -j $jobs; $code = $LASTEXITCODE; if ($code -eq 0) { cargo build --locked -p cli --bin cli -j $jobs; $code = $LASTEXITCODE }; Remove-Item Env:RUSTC_WRAPPER -ErrorAction SilentlyContinue; Remove-Item Env:DX_RUSTC_MAX_CONCURRENCY -ErrorAction SilentlyContinue; if ($code -ne 0) { exit $code }
     @echo "Build complete! Launching Dx once..."
     @just launch-zed
 
@@ -43,38 +44,37 @@ run-full: ensure-build-headroom
 run-cranelift: ensure-build-headroom
     @echo "Building with Cranelift backend (nightly required)..."
     @echo "Cranelift can reduce linker pressure on very large Rust builds"
-    $env:CARGO_INCREMENTAL = "0"; cargo +nightly build --locked -p zed --bin dx-desktop -Z codegen-backend
-    $env:CARGO_INCREMENTAL = "0"; cargo +nightly build --locked -p cli --bin cli -Z codegen-backend
+    @$wrapper = "{{rustc_wrapper}}"; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $wrapper) | Out-Null; if (!(Test-Path -LiteralPath $wrapper)) { rustc --edition=2021 script/rustc-memory-wrapper.rs -o $wrapper; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }; $env:CARGO_BUILD_JOBS = "12"; $env:CARGO_INCREMENTAL = "0"; $env:RUSTC_WRAPPER = $wrapper; $env:DX_RUSTC_MAX_CONCURRENCY = "3"; cargo +nightly build --locked -p zed --bin dx-desktop -Z codegen-backend -j 12; $code = $LASTEXITCODE; if ($code -eq 0) { cargo +nightly build --locked -p cli --bin cli -Z codegen-backend -j 12; $code = $LASTEXITCODE }; Remove-Item Env:RUSTC_WRAPPER -ErrorAction SilentlyContinue; Remove-Item Env:DX_RUSTC_MAX_CONCURRENCY -ErrorAction SilentlyContinue; if ($code -ne 0) { exit $code }
     @echo "Build complete! Running Dx..."
     @just launch-zed
 
 # Continue interrupted build
 continue: ensure-build-headroom
     @echo "Continuing interrupted build..."
-    @$jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $incremental = if ([string]::IsNullOrWhiteSpace($env:CARGO_INCREMENTAL)) { "1" } else { $env:CARGO_INCREMENTAL }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = $incremental; cargo build --locked -p zed --bin dx-desktop
+    @$wrapper = "{{rustc_wrapper}}"; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $wrapper) | Out-Null; if (!(Test-Path -LiteralPath $wrapper)) { rustc --edition=2021 script/rustc-memory-wrapper.rs -o $wrapper; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }; $jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = "0"; $env:CARGO_PROFILE_DEV_DEBUG = "0"; $env:CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG = "0"; $env:RUSTC_WRAPPER = $wrapper; $env:DX_RUSTC_MAX_CONCURRENCY = "3"; cargo build --locked -p zed --bin dx-desktop -j $jobs; $code = $LASTEXITCODE; Remove-Item Env:RUSTC_WRAPPER -ErrorAction SilentlyContinue; Remove-Item Env:DX_RUSTC_MAX_CONCURRENCY -ErrorAction SilentlyContinue; if ($code -ne 0) { exit $code }
     @echo "Build complete! Running Dx..."
     @just launch-zed
 
 # Build only (no run)
 build: ensure-build-headroom
-    @echo "Building Dx with balanced G-drive settings (release)..."
-    @$jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = "1"; cargo build --release --locked -p zed --bin dx-desktop
+    @echo "Building Dx with memory-safe G-drive settings (release)..."
+    @$wrapper = "{{rustc_wrapper}}"; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $wrapper) | Out-Null; if (!(Test-Path -LiteralPath $wrapper)) { rustc --edition=2021 script/rustc-memory-wrapper.rs -o $wrapper; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }; $jobs = if ([string]::IsNullOrWhiteSpace($env:CARGO_BUILD_JOBS)) { "12" } else { $env:CARGO_BUILD_JOBS }; $env:CARGO_BUILD_JOBS = $jobs; $env:CARGO_INCREMENTAL = "0"; $env:RUSTC_WRAPPER = $wrapper; $env:DX_RUSTC_MAX_CONCURRENCY = "3"; cargo build --release --locked -p zed --bin dx-desktop -j $jobs; $code = $LASTEXITCODE; Remove-Item Env:RUSTC_WRAPPER -ErrorAction SilentlyContinue; Remove-Item Env:DX_RUSTC_MAX_CONCURRENCY -ErrorAction SilentlyContinue; if ($code -ne 0) { exit $code }
 
 # Check code without building
 check:
     @echo "Checking code (no build)..."
-    cargo check -p zed
+    cargo check -p zed -j 12
 
 # Format code with rustfmt
 fmt:
     @echo "Formatting workspace with rustfmt..."
     cargo fmt --all
 
-# Lint a single package with clippy using the local 6-worker profile
+# Lint a single package with the standard 12-job profile
 lint package="web_preview":
     @echo "Linting package '{{package}}' with balanced clippy settings..."
     @echo "Tip: run 'just lint zed' for the main app or 'just lint web_preview' for the preview crate"
-    cargo clippy -p {{package}} --all-targets -j 6 -- -D warnings
+    cargo clippy -p {{package}} --all-targets -j 12 -- -D warnings
 
 # Clean build artifacts
 clean:
@@ -85,7 +85,7 @@ clean:
 
 # Clean only the final binary (keeps incremental cache)
 clean-binary:
-    @echo "Cleaning only the final binary (keeps incremental build cache)..."
+    @echo "Cleaning only the final binary (keeps compiled build artifacts)..."
     Remove-Item -LiteralPath "{{build_target_dir}}/debug/dx-desktop","{{build_target_dir}}/debug/dx-desktop.exe" -Force -ErrorAction SilentlyContinue
 
 # Install nightly Rust and Cranelift (one-time setup)
@@ -105,7 +105,7 @@ show-memory-guide:
     @echo "  Build output: G:/Dx/desktop/target"
     @echo "  Cargo workers: 12 by default, override with CARGO_BUILD_JOBS"
     @echo "  Runnable build preflight: at least 18 GB free on G:"
-    @echo "  Runnable build mode: CARGO_INCREMENTAL=1 for faster local UI iteration"
+    @echo "  Runnable build mode: CARGO_INCREMENTAL=0 with a 3-slot rustc memory gate"
     @echo "  Full zed + cli build: just run-full"
     @echo ""
     @echo "If builds still hit memory pressure, configure Windows virtual memory:"
@@ -125,13 +125,13 @@ help:
     @echo ""
     @echo "RECOMMENDED BUILD COMMANDS:"
     @echo "  just ensure-build-headroom - Check G: free space before any runnable Cargo build"
-    @echo "  just run           - Build dx incrementally and launch the editor"
-    @echo "  just run-full      - Build dx + cli incrementally and launch the editor"
+    @echo "  just run           - Build dx with the memory gate and launch the editor"
+    @echo "  just run-full      - Build dx + cli with the memory gate and launch the editor"
     @echo "  just run-cranelift - Build dx + cli with Cranelift backend"
     @echo "  just continue      - Resume interrupted dx build and launch"
     @echo "  just fmt           - Format the workspace with rustfmt"
-    @echo "  just lint          - Lint web_preview with 6 workers"
-    @echo "  just lint zed      - Lint the main app with 6 workers"
+    @echo "  just lint          - Lint web_preview with 12 jobs"
+    @echo "  just lint zed      - Lint the main app with 12 jobs"
     @echo ""
     @echo "SETUP:"
     @echo "  just setup-cranelift   - Install nightly Rust + Cranelift (one-time)"

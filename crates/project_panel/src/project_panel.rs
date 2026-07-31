@@ -27,13 +27,13 @@ use git_ui::file_diff_view::FileDiffView;
 use gpui::{
     Action, AnyElement, App, AsyncWindowContext, Bounds, ClipboardEntry as GpuiClipboardEntry,
     ClipboardItem, Context, CursorStyle, DismissEvent, Div, DragMoveEvent, Entity, EventEmitter,
-    ExternalPaths, FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement, KeyContext,
-    ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent,
-    MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement, PathPromptOptions,
-    Pixels, Point, PromptLevel, Render, ScrollStrategy, Stateful, Styled, Subscription, Task,
-    UniformListDecoration, UniformListScrollHandle, WeakEntity, Window, actions, anchored,
-    deferred, div, hsla, linear_color_stop, linear_gradient, point, px, size, transparent_white,
-    uniform_list,
+    ExternalDragPayload, ExternalPaths, FileDragPaths, FocusHandle, Focusable, FontWeight, Hsla,
+    InteractiveElement, KeyContext, ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers,
+    ModifiersChangedEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    ParentElement, PathPromptOptions, Pixels, Point, PromptLevel, Render, ScrollStrategy, Stateful,
+    Styled, Subscription, Task, UniformListDecoration, UniformListScrollHandle, WeakEntity, Window,
+    actions, anchored, deferred, div, hsla, linear_color_stop, linear_gradient, point, px, size,
+    transparent_white, uniform_list,
 };
 use language::DiagnosticSeverity;
 use menu::{Confirm, SelectFirst, SelectLast, SelectNext, SelectPrevious};
@@ -4789,7 +4789,7 @@ impl ProjectPanel {
         let new_folder_focus_handle = header_focus_handle.clone();
         let new_folder_tooltip_focus_handle = new_folder_focus_handle.clone();
         let storage_details_focus_handle = header_focus_handle.clone();
-        let project_options_focus_handle = header_focus_handle.clone();
+        let project_options_focus_handle = header_focus_handle;
         let panel_for_project_options = cx.entity().downgrade();
         let panel_id = cx.entity().entity_id();
         let project_options_menu_id =
@@ -4964,8 +4964,7 @@ impl ProjectPanel {
                     )
                     .anchor(gpui::Anchor::TopRight)
                     .menu(move |window, cx| {
-                        let panel = panel_for_project_options.clone();
-                        let panel_for_storage_details = panel.clone();
+                        let panel_for_storage_details = panel_for_project_options.clone();
                         Some(ContextMenu::build(window, cx, move |menu, _window, _cx| {
                             menu.header("Project View")
                                 .action_checked_with_disabled(
@@ -5089,7 +5088,7 @@ impl ProjectPanel {
         let paste_selection_tooltip_focus_handle = paste_selection_focus_handle.clone();
         let trash_selection_focus_handle = toolbar_focus_handle.clone();
         let trash_selection_tooltip_focus_handle = trash_selection_focus_handle.clone();
-        let clear_selection_focus_handle = toolbar_focus_handle.clone();
+        let clear_selection_focus_handle = toolbar_focus_handle;
 
         h_flex()
             .id("project-panel-selection-toolbar")
@@ -5941,8 +5940,7 @@ impl ProjectPanel {
                                     < MAX_PROJECT_PANEL_BACKGROUND_FOLDER_STORAGE_DIRS
                                 {
                                     let mut summary = storage::FolderStorageSummary::default();
-                                    let mut child_file_count = 0usize;
-                                    for child in worktree_snapshot
+                                    for (child_file_count, child) in worktree_snapshot
                                         .child_entries_with_options(
                                             &entry.path,
                                             ChildEntriesOptions {
@@ -5952,6 +5950,7 @@ impl ProjectPanel {
                                             },
                                         )
                                         .filter(|child| !hide_hidden || !child.is_hidden)
+                                        .enumerate()
                                     {
                                         if child_file_count
                                             >= MAX_PROJECT_PANEL_FOLDER_STORAGE_CHILD_FILES
@@ -5966,7 +5965,6 @@ impl ProjectPanel {
                                             break;
                                         }
                                         summary.record_file(child);
-                                        child_file_count += 1;
                                     }
                                     folder_storage_summary_updates.push((cache_key, summary));
                                 } else if !folder_storage_background_cap_reported {

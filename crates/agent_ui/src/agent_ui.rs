@@ -1,3 +1,5 @@
+#![allow(dead_code, unused)]
+
 mod agent_configuration;
 pub mod agent_connection_store;
 mod agent_diff;
@@ -72,6 +74,10 @@ mod dx_deploy_receipt_roots;
 #[allow(dead_code)]
 mod dx_deploy_receipt_summary;
 mod dx_deploy_root_key;
+#[allow(dead_code)]
+mod dx_deploy_target_detection;
+#[allow(dead_code)]
+mod dx_deploy_targets;
 pub mod dx_project_context;
 mod dx_proof_freshness;
 mod dx_receipt_history;
@@ -84,6 +90,7 @@ mod dx_www_launch_evidence;
 mod entry_view_state;
 mod external_source_prompt;
 mod favorite_models;
+mod flow_speech_runtime;
 mod inline_assistant;
 mod inline_prompt_editor;
 mod language_model_selector;
@@ -101,6 +108,7 @@ pub mod test_support;
 mod thread_import;
 pub mod thread_metadata_store;
 pub mod thread_worktree_archive;
+mod workflow_node_icons;
 
 pub mod threads_archive_view;
 mod ui;
@@ -145,6 +153,9 @@ pub use crate::agent_panel::{
 };
 use crate::agent_registry_ui::AgentRegistryPage;
 pub use crate::agent_screen::AgentScreen;
+pub use crate::automation_screen::AutomationScreen;
+pub use crate::dx_check_panel_view::DxCheckPanel;
+pub use crate::dx_skill_panel::DxSkillPanel;
 pub use crate::inline_assistant::InlineAssistant;
 pub use crate::message_editor::MessageEditorEvent;
 pub use crate::thread_metadata_store::ThreadId;
@@ -1116,6 +1127,7 @@ mod tests {
             show_merge_conflict_indicator: true,
             sidebar_side: Default::default(),
             thinking_display: Default::default(),
+            liquid_glass: Default::default(),
         };
 
         cx.update(|cx| {

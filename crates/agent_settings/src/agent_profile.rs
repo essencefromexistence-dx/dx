@@ -19,10 +19,45 @@ pub mod builtin_profiles {
     pub const WRITE: &str = "write";
     pub const ASK: &str = "ask";
     pub const MINIMAL: &str = "minimal";
+    pub const MEDIA: &str = "media";
+    pub const SEARCH: &str = "search";
+    pub const STUDY: &str = "study";
+    pub const LEGACY_MINIMAL: &str = MINIMAL;
+    pub const DX_PROFILE_ORDER: [&str; 4] = [WRITE, SEARCH, MEDIA, ASK];
 
     pub fn is_builtin(profile_id: &AgentProfileId) -> bool {
-        profile_id.as_str() == WRITE || profile_id.as_str() == ASK || profile_id.as_str() == MINIMAL
+        matches!(
+            profile_id.as_str(),
+            WRITE | ASK | MINIMAL | MEDIA | SEARCH | STUDY
+        )
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DxAiProfileKind {
+    Ask,
+    Agents,
+    Search,
+    Study,
+    Media,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DxAiProfileBackendState {
+    Wired,
+    EvidenceBacked,
+    ReceiptBacked,
+    ProviderPending,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DxAiProfileMetadata {
+    pub id: &'static str,
+    pub kind: DxAiProfileKind,
+    pub display_name: &'static str,
+    pub summary: &'static str,
+    pub backend_state: DxAiProfileBackendState,
+    pub runtime_proof_backend_lane_id: Option<&'static str>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -39,6 +74,68 @@ impl AgentProfile {
 
     pub fn id(&self) -> &AgentProfileId {
         &self.id
+    }
+
+    pub fn display_name(profile_id: &AgentProfileId, name: &SharedString) -> SharedString {
+        Self::dx_builtin_metadata_for_id(profile_id.as_str())
+            .map(|metadata| metadata.display_name.into())
+            .unwrap_or_else(|| name.clone())
+    }
+
+    pub fn dx_builtin_metadata(profile_id: &AgentProfileId) -> Option<DxAiProfileMetadata> {
+        Self::dx_builtin_metadata_for_id(profile_id.as_str())
+    }
+
+    pub fn dx_builtin_metadata_for_id(profile_id: &str) -> Option<DxAiProfileMetadata> {
+        match profile_id {
+            builtin_profiles::ASK | builtin_profiles::LEGACY_MINIMAL => Some(DxAiProfileMetadata {
+                id: builtin_profiles::ASK,
+                kind: DxAiProfileKind::Ask,
+                display_name: "Ask",
+                summary: "Answers questions with lightweight local and web sources.",
+                backend_state: DxAiProfileBackendState::Wired,
+                runtime_proof_backend_lane_id: None,
+            }),
+            builtin_profiles::WRITE => Some(DxAiProfileMetadata {
+                id: builtin_profiles::WRITE,
+                kind: DxAiProfileKind::Agents,
+                display_name: "Agents",
+                summary: "Runs builder and worker flows for code, tools, goals, plans, and multitask work.",
+                backend_state: DxAiProfileBackendState::Wired,
+                runtime_proof_backend_lane_id: None,
+            }),
+            builtin_profiles::SEARCH => Some(DxAiProfileMetadata {
+                id: builtin_profiles::SEARCH,
+                kind: DxAiProfileKind::Search,
+                display_name: "Search",
+                summary: "Uses DX MetaSearch, source-pack evidence, and Web Preview inspection where available.",
+                backend_state: DxAiProfileBackendState::EvidenceBacked,
+                runtime_proof_backend_lane_id: Some("dx-metasearch-live-proof"),
+            }),
+            builtin_profiles::STUDY => Some(DxAiProfileMetadata {
+                id: builtin_profiles::STUDY,
+                kind: DxAiProfileKind::Study,
+                display_name: "Study",
+                summary: "Organizes attached sources, receipts, and study rails without inventing results.",
+                backend_state: DxAiProfileBackendState::ReceiptBacked,
+                runtime_proof_backend_lane_id: Some("study-source-workspace-execution"),
+            }),
+            builtin_profiles::MEDIA => Some(DxAiProfileMetadata {
+                id: builtin_profiles::MEDIA,
+                kind: DxAiProfileKind::Media,
+                display_name: "Media",
+                summary: "Plans and gates image, video, audio, music, 3D, and document providers while execution setup is pending.",
+                backend_state: DxAiProfileBackendState::ProviderPending,
+                runtime_proof_backend_lane_id: Some("media-provider-readiness-proof"),
+            }),
+            _ => None,
+        }
+    }
+
+    pub fn builtin_sort_index(profile_id: &AgentProfileId) -> Option<usize> {
+        builtin_profiles::DX_PROFILE_ORDER
+            .iter()
+            .position(|id| *id == profile_id.as_str())
     }
 
     /// Saves a new profile to the settings.

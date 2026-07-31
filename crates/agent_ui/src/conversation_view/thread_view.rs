@@ -1,12 +1,21 @@
 use crate::{
     DEFAULT_THREAD_TITLE, SelectPermissionGranularity,
     agent_configuration::configure_context_server_modal::default_markdown_style,
+    agent_thread_www_preview::{
+        AgentThreadCenterSurface, agent_thread_www_preview_hooks,
+        is_agent_www_tool_preview_enabled, placeholder_preview_html_data_url,
+        preview_url_for_agent_www_tool,
+    },
     conversation_view::thread_search_bar::{ThreadSearchBar, ThreadSearchBarEvent},
+    dx_agent_bridge::DxConfiguredPluginSummary,
     open_abs_path_at_point,
     thread_metadata_store::{ThreadId, ThreadMetadataStore},
+    workflow_node_icons::{
+        WorkflowNodeIconAsset, workflow_node_element_id, workflow_node_icon_asset_for,
+    },
 };
 use agent_client_protocol::schema::v1 as acp;
-use std::cell::RefCell;
+use std::{cell::RefCell, ops::Range};
 
 use acp_thread::{
     Elicitation, ElicitationEntryId, ElicitationStatus, PlanEntry, SandboxAuthorizationDetails,
@@ -42,23 +51,63 @@ use language_model::{
 use notifications::status_toast::StatusToast;
 use settings::{update_settings_file, update_settings_file_with_completion};
 use ui::{
-    ButtonLike, CalloutBorderPosition, Checkbox, SpinnerLabel, SpinnerVariant, SplitButton,
+    ButtonLike, CalloutBorderPosition, Checkbox, Chip, SpinnerLabel, SpinnerVariant, SplitButton,
     SplitButtonStyle, Tab, ToggleState,
 };
 use util::markdown::{source_position_from_fragment, split_local_url_fragment};
+use workspace::notifications::NotificationId;
 use workspace::{OpenOptions, SERIALIZATION_THROTTLE_TIME};
 
+use super::composer_profile_options::{
+    ComposerOptionEntry, ComposerOptionSlot, ComposerProfileKind,
+};
 use super::elicitation::{
     ElicitationCard, ElicitationCardHandlers, ElicitationFormState, should_render_elicitation,
 };
+use super::voice_controls::{
+    ComposerVoiceAvailability, ComposerVoicePhase, ComposerVoiceState, render_voice_buttons,
+    render_voice_recording_panel,
+};
 use super::*;
+use crate::flow_speech_runtime::{
+    FlowRecordingSession, FlowSpeechCancellation, FlowSpeechRuntime, MAX_RECORDING_SECONDS,
+};
 
 const DATA_RETENTION_LEARN_MORE_URL: &str = "https://support.claude.com/en/articles/15425996-data-retention-practices-for-mythos-class-models";
+const FLOATING_MESSAGE_EDITOR_SAFE_PADDING_PX: f32 = 118.0;
+const MAX_VISIBLE_PROFILE_OPTION_SLOTS: usize = 4;
+const MAX_VISIBLE_CONFIGURED_PLUGIN_OPTIONS: usize = 6;
+const MAX_CONFIGURED_PLUGIN_TRIGGER_LABEL_CHARS: usize = 18;
+const MAX_CONFIGURED_PLUGIN_MENU_LABEL_CHARS: usize = 40;
+const COMPOSER_COLLAPSED_MAX_HEIGHT_REMS: f32 = 18.0;
+const COMPOSER_COLLAPSED_EDITOR_MAX_HEIGHT_REMS: f32 = 9.0;
 
 #[derive(Default)]
 struct ThreadFeedbackState {
     feedback: Option<ThreadFeedback>,
     comments_editor: Option<Entity<Editor>>,
+}
+
+struct FlowTextToSpeechRequest {
+    text: String,
+    empty_message: &'static str,
+    #[cfg(feature = "audio")]
+    speaking_message: &'static str,
+    #[cfg(feature = "audio")]
+    finished_message: &'static str,
+}
+
+impl FlowTextToSpeechRequest {
+    fn agent_response(text: String) -> Self {
+        Self {
+            text,
+            empty_message: "No agent response is available for Kokoro read-aloud",
+            #[cfg(feature = "audio")]
+            speaking_message: "Kokoro is reading the latest agent response",
+            #[cfg(feature = "audio")]
+            finished_message: "Kokoro finished reading the latest agent response",
+        }
+    }
 }
 
 impl ThreadFeedbackState {
@@ -621,6 +670,18 @@ pub struct ThreadView {
     pub in_flight_prompt: Option<Vec<acp::ContentBlock>>,
     pub _subscriptions: Vec<Subscription>,
     pub message_editor: Entity<MessageEditor>,
+    composer_voice_state: ComposerVoiceState,
+    composer_voice_availability: ComposerVoiceAvailability,
+    flow_voice_runtime: FlowSpeechRuntime,
+    flow_recording_session: Option<FlowRecordingSession>,
+    flow_speech_cancellation: Option<FlowSpeechCancellation>,
+    configured_plugins: Vec<DxConfiguredPluginSummary>,
+    #[cfg(feature = "audio")]
+    flow_playback_handle: Option<AudioPlaybackHandle>,
+    flow_transcription_id: u64,
+    flow_playback_id: u64,
+    _flow_speech_task: Option<Task<()>>,
+    _flow_voice_runtime_refresh_task: Option<Task<()>>,
     pub add_context_menu_handle: PopoverMenuHandle<ContextMenu>,
     pub thinking_effort_menu_handle: PopoverMenuHandle<ContextMenu>,
     pub fast_mode_menu_handle: PopoverMenuHandle<ContextMenu>,
@@ -636,6 +697,7 @@ pub struct ThreadView {
     pending_sandbox_status_key: Option<SandboxStatusKey>,
     pub multi_root_callout_dismissed: bool,
     pub generating_indicator_in_list: bool,
+    transparent_header_height: Option<gpui::Pixels>,
     pub skill_loading_issues: Vec<SkillLoadingIssue>,
     /// Issues the user has explicitly dismissed. Each entry is matched against
     /// emitted issues by full equality; when an issue no longer appears in the
@@ -643,12 +705,26 @@ pub struct ThreadView {
     /// dropped from this set so a future regression of the same kind would
     /// re-show.
     dismissed_skill_loading_issues: HashSet<SkillLoadingIssue>,
+    center_surface: AgentThreadCenterSurface,
+    www_preview: Option<gpui::AnyEntity>,
+    launched_dx_web_tool: Option<&'static str>,
     pub(crate) thread_search_bar: Option<Entity<super::thread_search_bar::ThreadSearchBar>>,
     pub(crate) thread_search_visible: bool,
 }
-impl Focusable for ThreadView {
-    fn focus_handle(&self, _cx: &App) -> FocusHandle {
-        self.focus_handle.clone()
+struct DxWebToolLogo {
+    id: &'static str,
+    label: &'static str,
+    light_path: &'static str,
+    dark_path: &'static str,
+}
+
+impl DxWebToolLogo {
+    fn path_for_theme(&self, is_light: bool) -> &'static str {
+        if is_light {
+            self.light_path
+        } else {
+            self.dark_path
+        }
     }
 }
 
@@ -723,6 +799,16 @@ struct ResponseAnchorScrollRequest {
 
 impl Focusable for ThreadView {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
+        if self.parent_session_id.is_some() {
+            self.focus_handle.clone()
+        } else {
+            self.active_editor(cx).focus_handle(cx)
+        }
+    }
+}
+
+impl ThreadView {
+    pub(crate) fn activation_focus_handle(&self, cx: &App) -> FocusHandle {
         if self.parent_session_id.is_some() {
             self.focus_handle.clone()
         } else {
@@ -1048,6 +1134,14 @@ impl ThreadView {
             }));
         }));
 
+        let flow_voice_runtime = FlowSpeechRuntime::detect();
+        let composer_voice_availability = ComposerVoiceAvailability {
+            stt_ready: flow_voice_runtime.stt_available(),
+            stt_status: flow_voice_runtime.stt_readiness_summary().into(),
+            tts_ready: flow_voice_runtime.tts_available(),
+            tts_status: flow_voice_runtime.tts_readiness_summary().into(),
+        };
+
         let mut this = Self {
             root_thread_id,
             session_id,
@@ -1103,6 +1197,18 @@ impl ThreadView {
             hovered_edited_file_buttons: None,
             in_flight_prompt: None,
             message_editor,
+            composer_voice_state: ComposerVoiceState::default(),
+            composer_voice_availability,
+            flow_voice_runtime,
+            flow_recording_session: None,
+            flow_speech_cancellation: None,
+            configured_plugins: Vec::new(),
+            #[cfg(feature = "audio")]
+            flow_playback_handle: None,
+            flow_transcription_id: 0,
+            flow_playback_id: 0,
+            _flow_speech_task: None,
+            _flow_voice_runtime_refresh_task: None,
             add_context_menu_handle: PopoverMenuHandle::default(),
             thinking_effort_menu_handle: PopoverMenuHandle::default(),
             fast_mode_menu_handle: PopoverMenuHandle::default(),
@@ -1115,10 +1221,14 @@ impl ThreadView {
             pending_sandbox_status_key: None,
             multi_root_callout_dismissed: false,
             generating_indicator_in_list: false,
+            transparent_header_height: None,
             skill_loading_issues: Vec::new(),
             dismissed_skill_loading_issues: HashSet::default(),
             thread_search_bar: None,
             thread_search_visible: false,
+            center_surface: AgentThreadCenterSurface::Messages,
+            www_preview: None,
+            launched_dx_web_tool: None,
         };
 
         this.sync_generating_indicator(cx);
@@ -4406,6 +4516,13 @@ impl ThreadView {
         let max_content_width = AgentSettings::get_global(cx).max_content_width;
         let has_messages = self.list_state.item_count() > 0;
         let fills_container = has_messages && editor_expanded;
+        let showing_www_preview = matches!(
+            self.center_surface,
+            AgentThreadCenterSurface::WwwPreview { .. }
+        );
+        let dx_compact_icon_bar_only = showing_www_preview || self.launched_dx_web_tool.is_some();
+        let overlay_chat_input = has_messages || showing_www_preview;
+        let expands_editor_area = editor_expanded && overlay_chat_input;
 
         h_flex()
             .w_full()
@@ -4639,6 +4756,836 @@ impl ThreadView {
             .on_click(cx.listener(move |this, _, _, cx| {
                 this.toggle_queue_entry_steer(entry_id, cx);
             }))
+    }
+
+    pub(crate) fn set_transparent_header_height(
+        &mut self,
+        height: Option<gpui::Pixels>,
+        cx: &mut Context<Self>,
+    ) {
+        if self.transparent_header_height == height {
+            return;
+        }
+
+        self.transparent_header_height = height;
+        cx.notify();
+    }
+
+    pub(crate) fn set_configured_plugin_options(
+        &mut self,
+        configured_plugins: Vec<DxConfiguredPluginSummary>,
+        cx: &mut Context<Self>,
+    ) {
+        if self.configured_plugins != configured_plugins {
+            self.configured_plugins = configured_plugins;
+            cx.notify();
+        }
+    }
+
+    fn render_configured_plugin_strip(&self, _cx: &mut Context<Self>) -> AnyElement {
+        let configured_plugins = &self.configured_plugins;
+        if configured_plugins.is_empty() {
+            return div().into_any_element();
+        }
+
+        let overflow_plugins = configured_plugins
+            .iter()
+            .skip(MAX_VISIBLE_CONFIGURED_PLUGIN_OPTIONS)
+            .cloned()
+            .collect::<Vec<_>>();
+
+        h_flex()
+            .id("agent-configured-plugin-strip")
+            .w_full()
+            .pb_1()
+            .gap_1()
+            .overflow_x_hidden()
+            .child(
+                h_flex()
+                    .flex_none()
+                    .gap_1()
+                    .child(
+                        Label::new("Configured Plugins")
+                            .size(LabelSize::XSmall)
+                            .color(Color::Muted)
+                            .truncate(),
+                    )
+                    .child(Chip::new(format!("{} total", configured_plugins.len())).truncate()),
+            )
+            .child(
+                h_flex().min_w_0().gap_0p5().overflow_x_hidden().children(
+                    configured_plugins
+                        .iter()
+                        .take(MAX_VISIBLE_CONFIGURED_PLUGIN_OPTIONS)
+                        .cloned()
+                        .map(|plugin| self.render_configured_plugin_menu(plugin)),
+                ),
+            )
+            .when(!overflow_plugins.is_empty(), |this| {
+                this.child(self.render_configured_plugin_overflow_menu(overflow_plugins))
+            })
+            .into_any_element()
+    }
+
+    fn render_configured_plugin_menu(&self, plugin: DxConfiguredPluginSummary) -> AnyElement {
+        let icon = configured_plugin_icon(&plugin);
+        PopoverMenu::new(workflow_node_element_id(
+            "agent-configured-plugin-menu",
+            &plugin.id,
+        ))
+        .trigger_with_tooltip(
+            ButtonLike::new(workflow_node_element_id(
+                "agent-configured-plugin-trigger",
+                &plugin.id,
+            ))
+            .style(ButtonStyle::Subtle)
+            .size(ButtonSize::Compact)
+            .height(rems(1.75).into())
+            .width(rems(10.))
+            .child(
+                div().min_w_0().overflow_hidden().child(
+                    h_flex()
+                        .min_w_0()
+                        .gap_1()
+                        .child(icon.render(IconSize::Small, Color::Muted))
+                        .child(
+                            Label::new(configured_plugin_trigger_label(&plugin))
+                                .size(LabelSize::XSmall)
+                                .color(Color::Muted)
+                                .truncate(),
+                        ),
+                ),
+            ),
+            Tooltip::text(configured_plugin_tooltip(&plugin)),
+        )
+        .anchor(gpui::Anchor::BottomLeft)
+        .offset(gpui::Point {
+            x: px(0.0),
+            y: px(-2.0),
+        })
+        .menu({
+            let message_editor = self.message_editor.clone();
+            move |window, cx| {
+                let plugin = plugin.clone();
+                let message_editor = message_editor.clone();
+                let action_label = configured_plugin_menu_action_label(&plugin);
+                Some(ContextMenu::build(window, cx, move |menu, _window, _cx| {
+                    menu.header(bounded_configured_plugin_label(
+                        &plugin.display_name,
+                        MAX_CONFIGURED_PLUGIN_MENU_LABEL_CHARS,
+                    ))
+                    .custom_row({
+                        let plugin = plugin.clone();
+                        move |_window, _cx| configured_plugin_status_row(&plugin)
+                    })
+                    .custom_row({
+                        let plugin = plugin.clone();
+                        move |_window, _cx| configured_plugin_prompt_only_row(&plugin)
+                    })
+                    .entry(action_label, None, {
+                        let plugin = plugin.clone();
+                        let message_editor = message_editor.clone();
+                        move |window, cx| {
+                            Self::insert_configured_plugin_prompt(
+                                message_editor.clone(),
+                                plugin.clone(),
+                                window,
+                                cx,
+                            );
+                        }
+                    })
+                }))
+            }
+        })
+        .into_any_element()
+    }
+
+    fn render_configured_plugin_overflow_menu(
+        &self,
+        plugins: Vec<DxConfiguredPluginSummary>,
+    ) -> AnyElement {
+        let overflow_count = plugins.len();
+        PopoverMenu::new("agent-configured-plugin-overflow-menu")
+            .trigger_with_tooltip(
+                ButtonLike::new("agent-configured-plugin-overflow-trigger")
+                    .style(ButtonStyle::Subtle)
+                    .size(ButtonSize::Compact)
+                    .height(rems(1.75).into())
+                    .child(
+                        h_flex()
+                            .gap_1()
+                            .child(Icon::new(IconName::Ellipsis).size(IconSize::Small))
+                            .child(
+                                Label::new(format!("+{overflow_count}"))
+                                    .size(LabelSize::XSmall)
+                                    .color(Color::Muted),
+                            ),
+                    ),
+                Tooltip::text(format!("{overflow_count} more configured plugins")),
+            )
+            .anchor(gpui::Anchor::BottomLeft)
+            .offset(gpui::Point {
+                x: px(0.0),
+                y: px(-2.0),
+            })
+            .menu({
+                let message_editor = self.message_editor.clone();
+                move |window, cx| {
+                    let plugins = plugins.clone();
+                    let message_editor = message_editor.clone();
+                    Some(ContextMenu::build(
+                        window,
+                        cx,
+                        move |mut menu, _window, _cx| {
+                            menu = menu.header("More configured plugins");
+                            for plugin in plugins.iter() {
+                                let status_plugin = plugin.clone();
+                                menu = menu.custom_row(move |_window, _cx| {
+                                    configured_plugin_status_row(&status_plugin)
+                                });
+
+                                let prompt_plugin = plugin.clone();
+                                menu = menu.custom_row(move |_window, _cx| {
+                                    configured_plugin_prompt_only_row(&prompt_plugin)
+                                });
+
+                                let action_label = configured_plugin_menu_action_label(plugin);
+                                let entry_plugin = plugin.clone();
+                                let entry_message_editor = message_editor.clone();
+                                menu = menu.entry(action_label, None, move |window, cx| {
+                                    Self::insert_configured_plugin_prompt(
+                                        entry_message_editor.clone(),
+                                        entry_plugin.clone(),
+                                        window,
+                                        cx,
+                                    );
+                                });
+                            }
+                            menu
+                        },
+                    ))
+                }
+            })
+            .into_any_element()
+    }
+
+    fn insert_configured_plugin_prompt(
+        message_editor: Entity<MessageEditor>,
+        plugin: DxConfiguredPluginSummary,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        let prompt = format!(
+            "Request DX Agent to review the configured plugin \"{}\" for this task.\n- prompt_only: true\n- credential_status: {}\n- bridge: resolve the plugin action from trusted DX receipts before acting\n- safety: keep secrets and raw action metadata out of the response\n",
+            plugin.display_name, plugin.credential_status
+        );
+        message_editor.focus_handle(cx).focus(window, cx);
+        message_editor.update(cx, |editor, cx| {
+            editor.insert_text(&prompt, window, cx);
+        });
+    }
+
+    fn render_profile_option_slots(&self, cx: &mut Context<Self>) -> Vec<AnyElement> {
+        let Some(profile_kind) = self.composer_profile_kind(cx) else {
+            return Vec::new();
+        };
+        let slots = profile_kind.slots();
+        let mut rendered = slots
+            .iter()
+            .take(MAX_VISIBLE_PROFILE_OPTION_SLOTS)
+            .copied()
+            .map(Self::render_composer_option_slot)
+            .collect::<Vec<_>>();
+
+        // if slots.len() > MAX_VISIBLE_PROFILE_OPTION_SLOTS {
+        //     let overflow_slots: &'static [ComposerOptionSlot] =
+        //         &slots[MAX_VISIBLE_PROFILE_OPTION_SLOTS..];
+        //     rendered.push(Self::render_composer_option_overflow(overflow_slots));
+        // }
+
+        rendered
+    }
+
+    fn composer_profile_kind(&self, cx: &App) -> Option<ComposerProfileKind> {
+        if let Some(profile_id) = self.current_mode_id(cx) {
+            match Self::composer_profile_kind_for_id(profile_id.as_ref()) {
+                Some(kind) => return Some(kind),
+                None => {}
+            }
+        }
+
+        if let Some(mode_selector) = &self.mode_selector {
+            let mode_selector = mode_selector.read(cx);
+            let current_mode = mode_selector.mode();
+            if let Some(kind) = Self::composer_profile_kind_for_id(current_mode.0.as_ref()) {
+                return Some(kind);
+            }
+        }
+
+        None
+    }
+
+    fn composer_profile_kind_for_id(profile_id: &str) -> Option<ComposerProfileKind> {
+        ComposerProfileKind::for_profile_id(profile_id)
+    }
+
+    fn render_composer_option_slot(slot: ComposerOptionSlot) -> AnyElement {
+        PopoverMenu::new(format!("agent-composer-profile-slot-{}", slot.id))
+            .trigger_with_tooltip(
+                IconButton::new(
+                    format!("agent-composer-profile-slot-trigger-{}", slot.id),
+                    slot.icon.icon_name(),
+                )
+                .icon_size(IconSize::Small)
+                .icon_color(Color::Muted),
+                Tooltip::text(slot.tooltip),
+            )
+            .anchor(gpui::Anchor::BottomLeft)
+            .offset(gpui::Point {
+                x: px(0.0),
+                y: px(-2.0),
+            })
+            .menu(move |window, cx| {
+                Some(ContextMenu::build(
+                    window,
+                    cx,
+                    move |mut menu, _window, _cx| {
+                        menu = menu.header(slot.label);
+                        menu =
+                            menu.custom_row(move |_window, _cx| composer_slot_contract_row(slot));
+                        for option in slot.options {
+                            let option = *option;
+                            menu = menu.custom_row(move |_window, _cx| {
+                                composer_option_menu_row(slot, option)
+                            });
+                        }
+                        menu
+                    },
+                ))
+            })
+            .into_any_element()
+    }
+
+    // fn render_composer_option_overflow(slots: &'static [ComposerOptionSlot]) -> AnyElement {
+    //     PopoverMenu::new("agent-composer-profile-slots-more")
+    //         .trigger_with_tooltip(
+    //             IconButton::new(
+    //                 "agent-composer-profile-slots-more-trigger",
+    //                 IconName::Ellipsis,
+    //             )
+    //             .icon_size(IconSize::Small)
+    //             .icon_color(Color::Muted),
+    //             Tooltip::text("More profile options"),
+    //         )
+    //         .anchor(gpui::Anchor::BottomLeft)
+    //         .offset(gpui::Point {
+    //             x: px(0.0),
+    //             y: px(-2.0),
+    //         })
+    //         .menu(move |window, cx| {
+    //             Some(ContextMenu::build(
+    //                 window,
+    //                 cx,
+    //                 move |mut menu, _window, _cx| {
+    //                     menu = menu.header("More profile options");
+    //                     for slot in slots {
+    //                         let slot = *slot;
+    //                         menu = menu.header(slot.label);
+    //                         menu = menu
+    //                             .custom_row(move |_window, _cx| composer_slot_contract_row(slot));
+    //                         for option in slot.options {
+    //                             let option = *option;
+    //                             menu = menu.custom_row(move |_window, _cx| {
+    //                                 composer_option_menu_row(slot, option)
+    //                             });
+    //                         }
+    //                     }
+    //                     menu
+    //                 },
+    //             ))
+    //         })
+    //         .into_any_element()
+    // }
+
+    fn render_mode_shortcuts(&self, cx: &mut Context<Self>) -> Vec<AnyElement> {
+        let Some(mode_selector) = self.mode_selector.clone() else {
+            return Vec::new();
+        };
+
+        let current_mode = mode_selector.read(cx).mode();
+        let modes = mode_selector.read(cx).modes();
+        let mut shortcuts = Vec::new();
+
+        for target in ["plan", "goal", "multitask"] {
+            let Some(mode) = modes.iter().find(|mode| {
+                let id = mode.id.0.to_lowercase();
+                let name = mode.name.to_lowercase();
+                id == target || name == target
+            }) else {
+                continue;
+            };
+
+            let selected = mode.id == current_mode;
+            let label = mode.name.clone();
+            let mode_id = mode.id.clone();
+            let button_id = format!("agent-composer-mode-{target}");
+            let selector = mode_selector.clone();
+            shortcuts.push(
+                Button::new(button_id, label.clone())
+                    .label_size(LabelSize::Small)
+                    .color(if selected {
+                        Color::Accent
+                    } else {
+                        Color::Muted
+                    })
+                    .style(if selected {
+                        ButtonStyle::Tinted(TintColor::Accent)
+                    } else {
+                        ButtonStyle::Subtle
+                    })
+                    .start_icon(
+                        Icon::new(match target {
+                            "plan" => IconName::ListTodo,
+                            "goal" => IconName::Crosshair,
+                            _ => IconName::ListTree,
+                        })
+                        .size(IconSize::XSmall)
+                        .color(if selected {
+                            Color::Accent
+                        } else {
+                            Color::Muted
+                        }),
+                    )
+                    .tooltip(Tooltip::text(format!("Switch to {label} mode")))
+                    .on_click(move |_, _window, cx| {
+                        selector.update(cx, |selector, cx| {
+                            selector.set_mode(mode_id.clone(), cx);
+                        });
+                    })
+                    .into_any_element(),
+            );
+        }
+
+        shortcuts
+    }
+
+    fn render_voice_controls(
+        &self,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        render_voice_buttons(
+            &self.composer_voice_state,
+            self.composer_voice_availability.clone(),
+            cx.listener(|this, _event, window, cx| {
+                this.toggle_flow_voice_recording(window, cx);
+            }),
+        )
+    }
+
+    fn refresh_flow_voice_runtime_availability(&mut self, runtime: &FlowSpeechRuntime) {
+        self.flow_voice_runtime = runtime.clone();
+        self.composer_voice_availability.stt_ready = runtime.stt_available();
+        self.composer_voice_availability.stt_status = runtime.stt_readiness_summary().into();
+        self.composer_voice_availability.tts_ready = runtime.tts_available();
+        self.composer_voice_availability.tts_status = runtime.tts_readiness_summary().into();
+    }
+
+    fn toggle_flow_voice_recording(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        match self.composer_voice_state.phase() {
+            ComposerVoicePhase::Recording => self.stop_flow_voice_recording(window, cx),
+            ComposerVoicePhase::Transcribing => self.cancel_flow_speech_operation(cx),
+            ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking => {}
+            ComposerVoicePhase::Ready | ComposerVoicePhase::Error => {
+                self.start_flow_voice_recording(window, cx)
+            }
+        }
+    }
+
+    fn stop_flow_voice_action(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        match self.composer_voice_state.phase() {
+            ComposerVoicePhase::Recording => self.stop_flow_voice_recording(window, cx),
+            ComposerVoicePhase::Transcribing => self.cancel_flow_speech_operation(cx),
+            ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking => {
+                self.stop_flow_voice_playback(cx)
+            }
+            ComposerVoicePhase::Ready | ComposerVoicePhase::Error => {}
+        }
+    }
+
+    fn cancel_active_flow_voice_action(&mut self, cx: &mut Context<Self>) {
+        match self.composer_voice_state.phase() {
+            ComposerVoicePhase::Recording => self.cancel_flow_voice_recording(cx),
+            ComposerVoicePhase::Transcribing => self.cancel_flow_speech_operation(cx),
+            ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking => {
+                self.stop_flow_voice_playback(cx)
+            }
+            ComposerVoicePhase::Ready | ComposerVoicePhase::Error => {}
+        }
+    }
+
+    fn start_flow_voice_recording(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        #[cfg(feature = "audio")]
+        let input_audio_device = AudioSettings::get_global(cx).input_audio_device.clone();
+        #[cfg(not(feature = "audio"))]
+        let input_audio_device = None;
+        let runtime = self.flow_voice_runtime.clone();
+        self.refresh_flow_voice_runtime_availability(&runtime);
+
+        match runtime.start_recording(input_audio_device.as_ref()) {
+            Ok(session) => self.install_flow_recording_session(session, window, cx),
+            Err(error) => {
+                log::debug!("Cached Flow voice runtime failed to start recording: {error:#}");
+                let runtime = FlowSpeechRuntime::detect();
+                self.refresh_flow_voice_runtime_availability(&runtime);
+                match runtime.start_recording(input_audio_device.as_ref()) {
+                    Ok(session) => self.install_flow_recording_session(session, window, cx),
+                    Err(error) => {
+                        self.report_flow_voice_error("Flow voice recording failed", error, cx);
+                    }
+                }
+            }
+        }
+    }
+
+    fn install_flow_recording_session(
+        &mut self,
+        session: FlowRecordingSession,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let input_device_label = session.input_device_label().to_string();
+        self.flow_recording_session = Some(session);
+        self.composer_voice_state
+            .set_recording(format!("Listening on {input_device_label}"));
+        self.message_editor
+            .read(cx)
+            .focus_handle(cx)
+            .focus(window, cx);
+        self._flow_speech_task = Some(cx.spawn_in(window, async move |this, cx| {
+            loop {
+                cx.background_executor()
+                    .timer(Duration::from_millis(500))
+                    .await;
+                let Ok(keep_recording) = this.update_in(cx, |this, window, cx| {
+                    let is_recording =
+                        this.composer_voice_state.phase() == ComposerVoicePhase::Recording;
+                    if is_recording {
+                        if let Some(telemetry) = this
+                            .flow_recording_session
+                            .as_ref()
+                            .and_then(|session| session.telemetry().ok())
+                        {
+                            let captured_duration = telemetry.captured_duration();
+                            let telemetry_changed =
+                                this.composer_voice_state.update_recording_telemetry(
+                                    captured_duration,
+                                    telemetry.input_level(),
+                                );
+                            if captured_duration
+                                >= Duration::from_secs(MAX_RECORDING_SECONDS as u64)
+                            {
+                                this.stop_flow_voice_recording(window, cx);
+                                return false;
+                            }
+                            if telemetry_changed {
+                                cx.notify();
+                            }
+                        }
+                    }
+                    is_recording
+                }) else {
+                    break;
+                };
+                if !keep_recording {
+                    break;
+                }
+            }
+        }));
+        cx.notify();
+    }
+
+    fn stop_flow_voice_recording(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(session) = self.flow_recording_session.take() else {
+            self.composer_voice_state
+                .set_error("Flow voice recording was not active");
+            cx.notify();
+            return;
+        };
+
+        let elapsed = session.elapsed();
+        let (runtime, recording) = match session.finish() {
+            Ok(recording) => recording,
+            Err(error) => {
+                self.report_flow_voice_error("Flow voice recording failed", error, cx);
+                return;
+            }
+        };
+
+        self.composer_voice_state.set_transcribing(format!(
+            "Captured {:.1}s for Flow STT",
+            elapsed.as_secs_f32()
+        ));
+        self.flow_transcription_id = self.flow_transcription_id.wrapping_add(1);
+        let transcription_id = self.flow_transcription_id;
+        let cancellation = FlowSpeechCancellation::new();
+        self.flow_speech_cancellation = Some(cancellation.clone());
+        cx.notify();
+
+        self._flow_speech_task = Some(cx.spawn_in(window, async move |this, cx| {
+            let task = cx
+                .background_executor()
+                .spawn(async move { runtime.transcribe_recording(recording, &cancellation) });
+            let result = task.await;
+            this.update_in(cx, |this, window, cx| {
+                if this.flow_transcription_id != transcription_id {
+                    return;
+                }
+                this.flow_speech_cancellation = None;
+                match result {
+                    Ok(transcript) => {
+                        if transcript.trim().is_empty() {
+                            this.composer_voice_state
+                                .set_error("Flow STT returned an empty transcript");
+                            this.show_flow_voice_toast("Flow STT returned an empty transcript", cx);
+                        } else {
+                            this.message_editor
+                                .read(cx)
+                                .focus_handle(cx)
+                                .focus(window, cx);
+                            this.message_editor.update(cx, |editor, cx| {
+                                editor.insert_transcript_text(&transcript, window, cx);
+                            });
+                            this.composer_voice_state
+                                .set_ready("Flow transcript inserted into the composer");
+                        }
+                    }
+                    Err(error) => {
+                        this.report_flow_voice_error("Flow STT transcription failed", error, cx);
+                    }
+                }
+                cx.notify();
+            })
+            .ok();
+        }));
+    }
+
+    fn cancel_flow_voice_recording(&mut self, cx: &mut Context<Self>) {
+        if self.flow_recording_session.take().is_some() {
+            self.composer_voice_state
+                .set_ready("Flow voice recording discarded");
+        } else {
+            self.composer_voice_state
+                .set_error("Flow voice recording was not active");
+        }
+        cx.notify();
+    }
+
+    fn cancel_flow_speech_operation(&mut self, cx: &mut Context<Self>) {
+        if let Some(cancellation) = self.flow_speech_cancellation.take() {
+            cancellation.cancel();
+        }
+        self.flow_transcription_id = self.flow_transcription_id.wrapping_add(1);
+        self.flow_playback_id = self.flow_playback_id.wrapping_add(1);
+        #[cfg(feature = "audio")]
+        {
+            if let Some(handle) = self.flow_playback_handle.take() {
+                handle.cancel();
+            }
+        }
+        self.composer_voice_state.set_ready("Flow STT canceled");
+        cx.notify();
+    }
+
+    fn dismiss_flow_voice_error(&mut self, cx: &mut Context<Self>) {
+        if self.composer_voice_state.phase() == ComposerVoicePhase::Error {
+            self.composer_voice_state
+                .set_ready("Flow voice error dismissed");
+            cx.notify();
+        }
+    }
+
+    fn speak_agent_response_text(&mut self, text: String, cx: &mut Context<Self>) {
+        self.speak_flow_text(FlowTextToSpeechRequest::agent_response(text), cx);
+    }
+
+    fn speak_flow_text(&mut self, request: FlowTextToSpeechRequest, cx: &mut Context<Self>) {
+        match self.composer_voice_state.phase() {
+            ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking => {
+                self.stop_flow_voice_playback(cx);
+                return;
+            }
+            ComposerVoicePhase::Recording | ComposerVoicePhase::Transcribing => {
+                self.show_flow_voice_toast("Finish Flow voice action before reading aloud", cx);
+                return;
+            }
+            ComposerVoicePhase::Ready | ComposerVoicePhase::Error => {}
+        }
+
+        let text = request.text.trim().to_string();
+        if text.is_empty() {
+            self.composer_voice_state.set_error(request.empty_message);
+            self.show_flow_voice_toast(request.empty_message, cx);
+            cx.notify();
+            return;
+        }
+
+        let mut runtime = self.flow_voice_runtime.clone();
+        self.refresh_flow_voice_runtime_availability(&runtime);
+        if let Err(error) = runtime.ensure_tts_ready() {
+            log::debug!("Cached Flow voice runtime failed TTS readiness: {error:#}");
+            runtime = FlowSpeechRuntime::detect();
+            self.refresh_flow_voice_runtime_availability(&runtime);
+            if let Err(error) = runtime.ensure_tts_ready() {
+                let message = format!("Friday Kokoro TTS is not ready: {error}");
+                self.composer_voice_state.set_error(message.clone());
+                self.show_flow_voice_toast(message, cx);
+                cx.notify();
+                return;
+            }
+        }
+        self.composer_voice_state
+            .set_synthesizing("Generating Kokoro audio");
+        self.flow_playback_id = self.flow_playback_id.wrapping_add(1);
+        let playback_id = self.flow_playback_id;
+        let cancellation = FlowSpeechCancellation::new();
+        self.flow_speech_cancellation = Some(cancellation.clone());
+        #[cfg(feature = "audio")]
+        let speaking_message = request.speaking_message;
+        #[cfg(feature = "audio")]
+        let finished_message = request.finished_message;
+        cx.notify();
+
+        self._flow_speech_task = Some(cx.spawn(async move |this, cx| {
+            let task = cx
+                .background_executor()
+                .spawn(async move { runtime.speak_text(&text, &cancellation) });
+            let mut result = Some(task.await);
+            let update_result = this.update(cx, |this, cx| {
+                if this.flow_playback_id != playback_id {
+                    if let Some(Ok(audio_path)) = result.take() {
+                        let _ = std::fs::remove_file(audio_path);
+                    }
+                    return;
+                }
+
+                this.flow_speech_cancellation = None;
+                match result
+                    .take()
+                    .expect("Kokoro synthesis result already handled")
+                {
+                    Ok(audio_path) => {
+                        #[cfg(feature = "audio")]
+                        {
+                            match Audio::play_wav_file_tracked(&audio_path, cx) {
+                                Ok(playback_handle) => {
+                                    let _ = std::fs::remove_file(&audio_path);
+                                    this.flow_playback_handle = Some(playback_handle.clone());
+                                    this.composer_voice_state.set_speaking(speaking_message);
+                                    this._flow_speech_task =
+                                        Some(cx.spawn(async move |this, cx| {
+                                            loop {
+                                                cx.background_executor()
+                                                    .timer(Duration::from_millis(150))
+                                                    .await;
+                                                let Ok(is_current) = this.update(cx, |this, cx| {
+                                                    if this.flow_playback_id != playback_id {
+                                                        return false;
+                                                    }
+                                                    if playback_handle.is_complete() {
+                                                        this.flow_playback_handle = None;
+                                                        this.composer_voice_state
+                                                            .set_ready(finished_message);
+                                                        cx.notify();
+                                                        false
+                                                    } else {
+                                                        true
+                                                    }
+                                                }) else {
+                                                    break;
+                                                };
+                                                if !is_current {
+                                                    break;
+                                                }
+                                            }
+                                        }));
+                                }
+                                Err(error) => {
+                                    let _ = std::fs::remove_file(&audio_path);
+                                    this.report_flow_voice_error(
+                                        "Kokoro playback failed",
+                                        error,
+                                        cx,
+                                    );
+                                }
+                            }
+                        }
+                        #[cfg(not(feature = "audio"))]
+                        {
+                            let _ = std::fs::remove_file(&audio_path);
+                            this.composer_voice_state
+                                .set_error("Dx audio playback is not available in this build");
+                            this.show_flow_voice_toast(
+                                "Dx audio playback is not available in this build",
+                                cx,
+                            );
+                        }
+                    }
+                    Err(error) => {
+                        this.report_flow_voice_error("Flow Kokoro read-aloud failed", error, cx);
+                    }
+                }
+                cx.notify();
+            });
+            if update_result.is_err() {
+                if let Some(Ok(audio_path)) = result {
+                    let _ = std::fs::remove_file(audio_path);
+                }
+            }
+        }));
+    }
+
+    fn stop_flow_voice_playback(&mut self, cx: &mut Context<Self>) {
+        if let Some(cancellation) = self.flow_speech_cancellation.take() {
+            cancellation.cancel();
+        }
+        #[cfg(feature = "audio")]
+        {
+            if let Some(handle) = self.flow_playback_handle.take() {
+                handle.cancel();
+            }
+        }
+        self.flow_playback_id = self.flow_playback_id.wrapping_add(1);
+        self.composer_voice_state
+            .set_ready("Kokoro read-aloud stopped");
+        cx.notify();
+    }
+
+    fn report_flow_voice_error(
+        &mut self,
+        label: &'static str,
+        error: anyhow::Error,
+        cx: &mut Context<Self>,
+    ) {
+        let message = format!("{label}: {error}");
+        self.composer_voice_state.set_error(message.clone());
+        self.show_flow_voice_toast(message, cx);
+        cx.notify();
+    }
+
+    fn show_flow_voice_toast(&self, message: impl Into<String>, cx: &mut Context<Self>) {
+        if let Some(workspace) = self.workspace.upgrade() {
+            workspace.update(cx, |workspace, cx| {
+                workspace.show_toast(
+                    Toast::new(
+                        NotificationId::named("agent-composer-flow-voice".into()),
+                        message.into(),
+                    )
+                    .autohide(),
+                    cx,
+                );
+            });
+        }
     }
 
     fn render_message_queue_entries(
@@ -7316,74 +8263,9 @@ impl ThreadView {
             .into_any_element()
     }
 
-        let agent_response_text =
-            Self::latest_agent_response_content(thread.read(cx).entries(), cx);
-        if let Some(agent_response_text) = agent_response_text {
-            container = container.child(
-                IconButton::new("copy-agent-response", IconName::Copy)
-                    .shape(ui::IconButtonShape::Square)
-                    .icon_size(IconSize::Small)
-                    .icon_color(Color::Ignored)
-                    .tooltip(Tooltip::text("Copy Agent Response"))
-                    .on_click({
-                        let agent_response_text = agent_response_text.clone();
-                        move |_, _window, cx| {
-                            cx.stop_propagation();
-                            cx.write_to_clipboard(ClipboardItem::new_string(
-                                agent_response_text.clone(),
-                            ));
-                        }
-                    }),
-            );
-
-            let voice_phase = self.composer_voice_state.phase();
-            let read_aloud_disabled = matches!(
-                voice_phase,
-                ComposerVoicePhase::Recording | ComposerVoicePhase::Transcribing
-            );
-            let read_aloud_icon = if matches!(
-                voice_phase,
-                ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking
-            ) {
-                IconName::Stop
-            } else {
-                IconName::AudioOn
-            };
-            let read_aloud_color = if matches!(
-                voice_phase,
-                ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking
-            ) {
-                Color::Accent
-            } else if !self.composer_voice_availability.tts_ready {
-                Color::Warning
-            } else {
-                Color::Ignored
-            };
-
-            container = container.child(
-                IconButton::new("agent-response-text-to-speech", read_aloud_icon)
-                    .shape(ui::IconButtonShape::Square)
-                    .icon_size(IconSize::Small)
-                    .icon_color(Color::Accent)
-                    .disabled(Color::Ignored)
-                    .tooltip(Tooltip::text(
-                        if matches!(
-                            voice_phase,
-                            ComposerVoicePhase::Synthesizing | ComposerVoicePhase::Speaking
-                        ) {
-                            "Stop read-aloud"
-                        } else {
-                            "Read latest agent response aloud"
-                        },
-                    ))
-                    .on_click(cx.listener(move |this, _, _window, cx| {
-                        this.speak_agent_response_text(agent_response_text.clone(), cx);
-                    })),
-            );
-        }
-
-        let enable_thread_feedback = util::maybe!({
-            let project = thread.read(cx).project().read(cx);
+    fn is_thread_feedback_enabled(&self, cx: &App) -> bool {
+        util::maybe!({
+            let project = self.thread.read(cx).project().read(cx);
             let user_store = project.user_store();
             if let Some(configuration) = user_store.read(cx).current_organization_configuration() {
                 if !configuration.is_agent_thread_feedback_enabled {
@@ -12919,6 +13801,172 @@ impl Render for ThreadView {
             .children(self.render_request_elicitations(cx))
             .child(self.render_message_editor(window, cx))
     }
+}
+
+fn configured_plugin_status_row(plugin: &DxConfiguredPluginSummary) -> AnyElement {
+    let icon = configured_plugin_icon(plugin);
+    h_flex()
+        .id(workflow_node_element_id(
+            "agent-configured-plugin-status",
+            &plugin.id,
+        ))
+        .min_w(rems(16.))
+        .max_w(rems(28.))
+        .gap_2()
+        .child(icon.render(IconSize::Small, Color::Muted))
+        .child(
+            v_flex()
+                .min_w_0()
+                .gap_0p5()
+                .child(
+                    Label::new(bounded_configured_plugin_label(
+                        &plugin.display_name,
+                        MAX_CONFIGURED_PLUGIN_MENU_LABEL_CHARS,
+                    ))
+                    .size(LabelSize::Small)
+                    .color(Color::Default)
+                    .truncate(),
+                )
+                .child(configured_plugin_status_chips(plugin)),
+        )
+        .into_any_element()
+}
+
+fn configured_plugin_tooltip(plugin: &DxConfiguredPluginSummary) -> String {
+    format!(
+        "{}: prompt-only request, status {}, credentials {}. DX Agent resolves action details from trusted receipts; it does not execute the plugin.",
+        plugin.display_name, plugin.status, plugin.credential_status
+    )
+}
+
+fn configured_plugin_prompt_only_row(plugin: &DxConfiguredPluginSummary) -> AnyElement {
+    h_flex()
+        .id(workflow_node_element_id(
+            "agent-configured-plugin-prompt-only",
+            &plugin.id,
+        ))
+        .min_w(rems(16.))
+        .max_w(rems(28.))
+        .gap_2()
+        .child(
+            Icon::new(IconName::Info)
+                .size(IconSize::Small)
+                .color(Color::Muted),
+        )
+        .child(
+            Label::new("Prompt-only. Inserts a request into the chat input; it does not execute this plugin.")
+                .size(LabelSize::XSmall)
+                .color(Color::Muted)
+                .line_height_style(LineHeightStyle::UiLabel),
+        )
+        .into_any_element()
+}
+
+fn configured_plugin_menu_action_label(_plugin: &DxConfiguredPluginSummary) -> String {
+    "Insert plugin request".to_string()
+}
+
+fn configured_plugin_trigger_label(plugin: &DxConfiguredPluginSummary) -> String {
+    bounded_configured_plugin_label(
+        &plugin.display_name,
+        MAX_CONFIGURED_PLUGIN_TRIGGER_LABEL_CHARS,
+    )
+}
+
+fn configured_plugin_status_chips(plugin: &DxConfiguredPluginSummary) -> AnyElement {
+    h_flex()
+        .gap_1()
+        .flex_wrap()
+        .child(Chip::new(plugin.status.clone()).truncate())
+        .child(Chip::new(plugin.credential_status.clone()).truncate())
+        .into_any_element()
+}
+
+fn bounded_configured_plugin_label(value: &str, max_chars: usize) -> String {
+    let trimmed = value.trim();
+    if trimmed.chars().count() <= max_chars {
+        return trimmed.to_string();
+    }
+
+    let keep = max_chars.saturating_sub(3);
+    let mut bounded = trimmed.chars().take(keep).collect::<String>();
+    bounded.push_str("...");
+    bounded
+}
+
+fn configured_plugin_icon(plugin: &DxConfiguredPluginSummary) -> WorkflowNodeIconAsset {
+    workflow_node_icon_asset_for(
+        plugin.icon.as_deref(),
+        Some(plugin.node_id.as_str()),
+        plugin.display_name.as_str(),
+    )
+}
+
+fn composer_slot_contract_row(slot: ComposerOptionSlot) -> AnyElement {
+    let (icon, color, detail) = match slot.contract.control_state {
+        super::composer_profile_options::ComposerSlotControlState::DisplayOnly => (
+            IconName::Info,
+            Color::Muted,
+            format!(
+                "Backed by {}. Choices are informational until profile preferences can be saved with the request.",
+                slot.contract.backing
+            ),
+        ),
+        super::composer_profile_options::ComposerSlotControlState::BackendPending => (
+            IconName::Warning,
+            Color::Warning,
+            format!(
+                "{} backend is pending. No generation starts from this menu.",
+                slot.contract.backing
+            ),
+        ),
+    };
+
+    h_flex()
+        .id(format!("agent-composer-slot-contract-{}", slot.id))
+        .min_w(rems(16.))
+        .max_w(rems(26.))
+        .gap_2()
+        .child(Icon::new(icon).size(IconSize::Small).color(color))
+        .child(
+            Label::new(detail)
+                .size(LabelSize::XSmall)
+                .color(color)
+                .line_height_style(LineHeightStyle::UiLabel),
+        )
+        .into_any_element()
+}
+
+fn composer_option_menu_row(slot: ComposerOptionSlot, option: ComposerOptionEntry) -> AnyElement {
+    let detail = match slot.contract.control_state {
+        super::composer_profile_options::ComposerSlotControlState::DisplayOnly => option.detail,
+        super::composer_profile_options::ComposerSlotControlState::BackendPending => {
+            "Provider setup is required before this choice can start generation."
+        }
+    };
+
+    h_flex()
+        .id(format!("agent-composer-option-{}", option.id))
+        .min_w(rems(16.))
+        .max_w(rems(26.))
+        .gap_2()
+        .child(
+            Icon::new(option.icon.icon_name())
+                .size(IconSize::Small)
+                .color(Color::Muted),
+        )
+        .child(
+            v_flex()
+                .gap_0p5()
+                .child(Label::new(option.label).size(LabelSize::Small))
+                .child(
+                    Label::new(detail)
+                        .size(LabelSize::XSmall)
+                        .color(Color::Muted)
+                        .line_height_style(LineHeightStyle::UiLabel),
+                ),
+        )
+        .into_any_element()
 }
 
 pub(crate) fn open_link(

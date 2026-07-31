@@ -15,7 +15,7 @@ use agent_servers::{AgentServer, GEMINI_TERMINAL_AUTH_METHOD_ID};
 use agent_settings::{AgentProfileId, AgentSettings};
 use anyhow::{Result, anyhow};
 #[cfg(feature = "audio")]
-use audio::{Audio, Sound};
+use audio::{Audio, AudioPlaybackHandle, AudioSettings, DxSoundEvent, Sound};
 use buffer_diff::BufferDiff;
 use client::zed_urls;
 use collections::{HashMap, HashSet, IndexMap};
@@ -71,7 +71,8 @@ use util::{
     time::duration_alt_display,
 };
 use workspace::{
-    CollaboratorId, MultiWorkspace, NewTerminal, PathList, Workspace, path_link::sanitize_path_text,
+    CollaboratorId, MultiWorkspace, NewTerminal, PathList, Toast, Workspace,
+    path_link::sanitize_path_text,
 };
 use zed_actions::agent::{Chat, ToggleModelSelector};
 
@@ -107,10 +108,13 @@ const TOKEN_THRESHOLD: u64 = 250;
 
 pub(crate) const DRAFT_PROMPT_PERSIST_DEBOUNCE: Duration = Duration::from_millis(250);
 
+mod composer_profile_options;
 pub(crate) mod elicitation;
+mod liquid_glass_composer;
 mod message_queue;
 mod thread_search_bar;
 mod thread_view;
+mod voice_controls;
 pub use message_queue::*;
 pub use thread_view::*;
 

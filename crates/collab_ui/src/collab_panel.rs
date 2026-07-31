@@ -35,9 +35,9 @@ use std::{mem, sync::Arc, time::Duration};
 use theme::ActiveTheme;
 use theme_settings::ThemeSettings;
 use ui::{
-    Avatar, AvatarAvailabilityIndicator, CollabNotification, ContextMenu, CopyButton, Facepile,
-    HighlightedLabel, IconButtonShape, Indicator, ListHeader, ListItem, Tab, TintColor, Tooltip,
-    prelude::*, tooltip_container,
+    Avatar, AvatarAvailabilityIndicator, CollabNotification, ContextMenu, CopyButton, DockSide,
+    Facepile, HighlightedLabel, IconButtonShape, Indicator, ListHeader, ListItem, Tab, TintColor,
+    Tooltip, prelude::*, tooltip_container,
 };
 use util::{ResultExt, TryFutureExt, maybe};
 use workspace::{
@@ -1138,6 +1138,13 @@ impl CollabPanel {
         }
 
         cx.notify();
+    }
+
+    fn dock_side(&self, cx: &App) -> DockSide {
+        match CollaborationPanelSettings::get_global(cx).dock {
+            DockPosition::Right => DockSide::Right,
+            _ => DockSide::Left,
+        }
     }
 
     fn render_call_participant(

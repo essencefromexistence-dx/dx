@@ -1,5 +1,5 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use anyhow::Result;
 use gpui::{App, SharedString, Task};
 use schemars::JsonSchema;
@@ -201,7 +201,7 @@ fn target_namespaces(include_examples: bool) -> Vec<Value> {
                 "coordinates_not_agent_supplied": true,
             });
             if include_examples {
-                namespace["example_target_id"] = example_target_id(*prefix);
+                namespace["example_target_id"] = example_target_id(prefix);
             }
             namespace
         })

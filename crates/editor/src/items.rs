@@ -43,7 +43,7 @@ use std::{
 };
 use text::{BufferId, BufferSnapshot, OffsetRangeExt, Selection};
 use ui::{IconDecorationKind, dx_icon_data_dir, prelude::*};
-use util::{ResultExt, TryFutureExt, asset_str, paths::PathExt, rel_path::RelPath};
+use util::{ResultExt, TryFutureExt, asset_str, debug_panic, paths::PathExt, rel_path::RelPath};
 use workspace::item::{
     Dedup, ItemSettings, SerializableItem, TabContentParams, WorkspaceScreenKind,
 };
@@ -67,6 +67,75 @@ use zed_actions::preview::{
 };
 
 pub const MAX_TAB_TITLE_LEN: usize = 24;
+
+/// Opens a path-like target in the workspace and moves the cursor to its
+/// one-based row and column when supplied.
+pub async fn open_resolved_target(
+    workspace: &WeakEntity<Workspace>,
+    open_target: &workspace::path_link::OpenTarget,
+    cx: &mut AsyncWindowContext,
+) -> Result<bool> {
+    let path_to_open = open_target.path();
+    let mut opened_items = workspace
+        .update_in(cx, |workspace, window, cx| {
+            workspace.open_paths(
+                vec![path_to_open.path.clone()],
+                workspace::OpenOptions {
+                    visible: Some(workspace::OpenVisible::OnlyDirectories),
+                    ..Default::default()
+                },
+                None,
+                window,
+                cx,
+            )
+        })
+        .context("workspace update")?
+        .await;
+    if opened_items.len() != 1 {
+        debug_panic!(
+            "Received {} items for one path {path_to_open:?}",
+            opened_items.len(),
+        );
+    }
+    let Some(opened_item) = opened_items.pop() else {
+        return Ok(false);
+    };
+
+    if open_target.is_file() {
+        let Some(opened_item) = opened_item else {
+            return Ok(false);
+        };
+        let opened_item =
+            opened_item.with_context(|| format!("opening {:?}", path_to_open.path))?;
+        if let Some(row) = path_to_open.row
+            && let Some(editor) = opened_item.downcast::<Editor>()
+        {
+            let column = path_to_open.column.unwrap_or(0);
+            editor
+                .downgrade()
+                .update_in(cx, |editor, window, cx| {
+                    if let Some(buffer) = editor.buffer().read(cx).as_singleton() {
+                        let point = buffer.read(cx).snapshot().point_from_external_input(
+                            row.saturating_sub(1),
+                            column.saturating_sub(1),
+                        );
+                        editor.go_to_singleton_buffer_point(point, window, cx);
+                    }
+                })
+                .log_err();
+        }
+        Ok(true)
+    } else if open_target.is_dir() {
+        workspace.update(cx, |workspace, cx| {
+            workspace.project().update(cx, |_, cx| {
+                cx.emit(project::Event::ActivateProjectPanel);
+            })
+        })?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
 
 impl Editor {
     pub fn insert_icon_asset(

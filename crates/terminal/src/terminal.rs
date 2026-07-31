@@ -2739,7 +2739,8 @@ impl Terminal {
 
                 Some(new_offset - old_offset)
             }
-            TouchPhase::Ended => None,
+            // Cancellation does not commit a scroll, same as a plain end.
+            TouchPhase::Ended | TouchPhase::Cancelled => None,
         }
     }
 

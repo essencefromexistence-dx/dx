@@ -77,10 +77,6 @@ impl Panel for DxStylePanel {
         "Style"
     }
 
-    fn legacy_persistent_names() -> &'static [&'static str] {
-        &["DxStylePanel", "DX Style"]
-    }
-
     fn panel_key() -> &'static str {
         DX_STYLE_PANEL_KEY
     }

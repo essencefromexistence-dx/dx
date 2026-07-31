@@ -229,12 +229,15 @@ impl Render for ToastLayer {
             return div();
         };
 
-        div().absolute().top(px(12.)).right(px(12.)).child(
+        div().absolute().size_full().bottom_0().left_0().child(
             v_flex()
                 .id(("toast-layer-container", active_toast.id))
+                .absolute()
+                .w_full()
+                .bottom(px(0.))
                 .flex()
                 .flex_col()
-                .items_end()
+                .items_center()
                 .track_focus(&active_toast.focus_handle)
                 .child(
                     h_flex()
@@ -259,7 +262,7 @@ impl Render for ToastLayer {
                         )
                         .child(active_toast.toast.view()),
                 )
-                .animate_in(AnimationDirection::FromTop, true),
+                .animate_in(AnimationDirection::FromBottom, true),
         )
     }
 }

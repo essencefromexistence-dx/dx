@@ -57,6 +57,12 @@ impl IconButton {
         this
     }
 
+    /// Sets the label announced by assistive technology.
+    pub fn aria_label(mut self, label: impl Into<SharedString>) -> Self {
+        self.base = self.base.aria_label(label);
+        self
+    }
+
     pub fn shape(mut self, shape: IconButtonShape) -> Self {
         self.shape = shape;
         self

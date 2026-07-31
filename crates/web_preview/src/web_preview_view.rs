@@ -22217,9 +22217,9 @@ impl WebPreviewView {
         serde_json::to_string_pretty(bridge).unwrap_or_else(|_| "{}".to_string())
     }
 
-    fn extract_agent_browser_executor_payload_from_value<'a>(
-        value: &'a Value,
-    ) -> Option<&'a serde_json::Map<String, Value>> {
+    fn extract_agent_browser_executor_payload_from_value(
+        value: &Value,
+    ) -> Option<&serde_json::Map<String, Value>> {
         let candidates = [
             value.pointer("/payload"),
             value.pointer("/action_payload/payload"),
@@ -22682,9 +22682,9 @@ impl WebPreviewView {
         self.show_toast("Sent browser payload import receipt to the agent panel", cx);
     }
 
-    fn extract_type_text_payload_from_value<'a>(
-        value: &'a Value,
-    ) -> Option<&'a serde_json::Map<String, Value>> {
+    fn extract_type_text_payload_from_value(
+        value: &Value,
+    ) -> Option<&serde_json::Map<String, Value>> {
         let candidates = [
             value.pointer("/bridge/executor_payloads/type_text/payload"),
             value.pointer("/executor_payloads/type_text/payload"),
@@ -34279,7 +34279,7 @@ fn prune_browser_event_queue(queue: &mut Vec<BrowserEvent>) {
 fn queued_browser_event_count(queue: &[BrowserEvent]) -> usize {
     queue
         .iter()
-        .filter(|event| is_bounded_browser_event(*event))
+        .filter(|event| is_bounded_browser_event(event))
         .count()
 }
 

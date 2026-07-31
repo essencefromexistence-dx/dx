@@ -4540,16 +4540,18 @@ impl OutlinePanel {
             .collect::<Vec<_>>();
 
         let depth = if is_singleton { 0 } else { parent_depth + 1 };
-        let mut pushed_matches = 0usize;
-        for (match_range, search_data) in buffer_matches.iter().filter(|(match_range, _)| {
-            excerpt_ranges.iter().any(|excerpt_range| {
-                excerpt_range.overlaps(match_range, &search.multi_buffer_snapshot)
+        for (pushed_matches, (match_range, search_data)) in buffer_matches
+            .iter()
+            .filter(|(match_range, _)| {
+                excerpt_ranges.iter().any(|excerpt_range| {
+                    excerpt_range.overlaps(match_range, &search.multi_buffer_snapshot)
+                })
             })
-        }) {
+            .enumerate()
+        {
             if pushed_matches >= MAX_OUTLINE_PANEL_SEARCH_MATCHES_PER_BUFFER {
                 break;
             }
-            pushed_matches += 1;
             self.push_entry(
                 state,
                 track_matches,

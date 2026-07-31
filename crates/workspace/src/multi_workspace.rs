@@ -2,9 +2,9 @@ use anyhow::Result;
 use fs::Fs;
 
 use gpui::{
-    AnyElement, AnyView, App, Context, DragMoveEvent, Entity, EntityId, EventEmitter, FocusHandle,
-    Focusable, ManagedView, MouseButton, Pixels, Render, Subscription, Task, TaskExt, Tiling,
-    WeakEntity, Window, WindowControlArea, WindowId, actions, deferred, px,
+    AnyView, App, Context, DragMoveEvent, Entity, EntityId, EventEmitter, FocusHandle, Focusable,
+    ManagedView, MouseButton, Pixels, Render, Subscription, Task, TaskExt, WeakEntity, Window,
+    WindowId, actions, deferred, px,
 };
 pub use project::ProjectGroupKey;
 use project::{DisableAiSettings, Project};
@@ -12,15 +12,12 @@ use remote::RemoteConnectionOptions;
 use settings::Settings;
 pub use settings::SidebarSide;
 use std::cell::Cell;
-use std::collections::HashSet;
 use std::future::Future;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::rc::Rc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use ui::prelude::*;
+use util::ResultExt;
 use util::path_list::PathList;
-use util::{ResultExt, paths::home_dir};
-use uuid::Uuid;
 use zed_actions::agents_sidebar::ToggleThreadSwitcher;
 
 use agent_settings::AgentSettings;
@@ -28,25 +25,11 @@ use settings::SidebarDockPosition;
 use ui::{ContextMenu, right_click_menu};
 
 const SIDEBAR_RESIZE_HANDLE_SIZE: Pixels = px(6.0);
-const MAX_SPACE_SEED_SCAN_ENTRIES: usize = 128;
-const MAX_SPACE_SEED_CHILDREN: usize = 24;
-const MAX_SIBLING_HOME_SCAN_ENTRIES: usize = 32;
-const MAX_SIBLING_HOME_SEEDS: usize = 8;
-const COMMON_SPACE_FOLDER_NAMES: [&str; 8] = [
-    "Desktop",
-    "Documents",
-    "Downloads",
-    "Projects",
-    "Source",
-    "Code",
-    "Repos",
-    "Workspace",
-];
 
 use crate::open_remote_project_with_existing_connection;
 use crate::{
     CloseIntent, CloseWindow, DockPosition, Event as WorkspaceEvent, Item, ModalView, OpenMode,
-    Panel, Workspace, WorkspaceId, client_side_decorations_with_content_flush,
+    Panel, Workspace, WorkspaceId, client_side_decorations,
     persistence::model::MultiWorkspaceState,
 };
 
@@ -125,10 +108,7 @@ pub enum MultiWorkspaceEvent {
         source_workspace: Option<WeakEntity<Workspace>>,
     },
     WorkspaceAdded(Entity<Workspace>),
-    WorkspaceRemoved {
-        removed_workspace: EntityId,
-        active_workspace: WeakEntity<Workspace>,
-    },
+    WorkspaceRemoved(EntityId),
     ProjectGroupsChanged,
 }
 
@@ -162,8 +142,6 @@ pub trait Sidebar: Focusable + Render + EventEmitter<SidebarEvent> + Sized {
     /// Activates the next or previous thread in sidebar order.
     fn cycle_thread(&mut self, _forward: bool, _window: &mut Window, _cx: &mut Context<Self>) {}
 
-    /// Toggles any sidebar-specific expanded/collapsed state.
-    /// Returns true when the sidebar handled the action without closing.
     fn toggle_expanded_state(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> bool {
         false
     }
@@ -339,61 +317,6 @@ pub struct MultiWorkspace {
 
 impl EventEmitter<MultiWorkspaceEvent> for MultiWorkspace {}
 
-fn is_space_candidate_name(name: &str) -> bool {
-    !name.starts_with('.')
-        && !matches!(
-            name,
-            "AppData" | "Library" | "node_modules" | ".cargo" | ".git" | ".rustup" | "tmp" | "Temp"
-        )
-}
-
-fn push_space_candidate(
-    path: PathBuf,
-    existing_paths: &HashSet<PathBuf>,
-    seen: &mut HashSet<PathBuf>,
-    candidates: &mut Vec<PathBuf>,
-) {
-    if !path.is_dir() || existing_paths.contains(&path) || !seen.insert(path.clone()) {
-        return;
-    }
-
-    candidates.push(path);
-}
-
-fn collect_space_candidates_from_seed(
-    seed: &Path,
-    existing_paths: &HashSet<PathBuf>,
-    seen: &mut HashSet<PathBuf>,
-    candidates: &mut Vec<PathBuf>,
-) {
-    push_space_candidate(seed.to_path_buf(), existing_paths, seen, candidates);
-
-    for folder_name in COMMON_SPACE_FOLDER_NAMES {
-        push_space_candidate(seed.join(folder_name), existing_paths, seen, candidates);
-    }
-
-    let mut child_dirs = std::fs::read_dir(seed)
-        .ok()
-        .into_iter()
-        .flatten()
-        .flatten()
-        .take(MAX_SPACE_SEED_SCAN_ENTRIES)
-        .filter_map(|entry| {
-            let path = entry.path();
-            let file_name = path.file_name()?.to_str()?;
-            if !entry.file_type().ok()?.is_dir() || !is_space_candidate_name(file_name) {
-                return None;
-            }
-            Some(path)
-        })
-        .collect::<Vec<_>>();
-    child_dirs.sort();
-
-    for child_dir in child_dirs.into_iter().take(MAX_SPACE_SEED_CHILDREN) {
-        push_space_candidate(child_dir, existing_paths, seen, candidates);
-    }
-}
-
 impl MultiWorkspace {
     pub fn sidebar_side(&self, cx: &App) -> SidebarSide {
         self.sidebar
@@ -443,7 +366,7 @@ impl MultiWorkspace {
             active_workspace: workspace,
             active_workspace_id,
             sidebar: None,
-            sidebar_open: true,
+            sidebar_open: false,
             sidebar_overlay: None,
             pending_removal_tasks: Vec::new(),
             _serialize_task: None,
@@ -468,11 +391,6 @@ impl MultiWorkspace {
                 }
             }));
         self.sidebar = Some(Box::new(sidebar));
-        if self.sidebar_open {
-            let active_workspace = self.active_workspace.clone();
-            self.retain_active_workspace(cx);
-            self.sync_sidebar_to_workspace(&active_workspace, cx);
-        }
     }
 
     pub fn sidebar(&self) -> Option<&dyn SidebarHandle> {
@@ -510,11 +428,6 @@ impl MultiWorkspace {
         }
 
         if self.sidebar_open() {
-            if let Some(sidebar) = &self.sidebar
-                && sidebar.toggle_expanded_state(window, cx)
-            {
-                return;
-            }
             self.close_sidebar(window, cx);
         } else {
             self.previous_focus_handle = window.focused(cx);
@@ -908,42 +821,6 @@ impl MultiWorkspace {
             .iter()
             .map(|group| group.key.clone())
             .collect()
-    }
-
-    pub fn reorder_project_group(
-        &mut self,
-        dragged_key: &ProjectGroupKey,
-        target_key: &ProjectGroupKey,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        let Some(from_ix) = self
-            .project_groups
-            .iter()
-            .position(|group| &group.key == dragged_key)
-        else {
-            return false;
-        };
-        let Some(target_ix) = self
-            .project_groups
-            .iter()
-            .position(|group| &group.key == target_key)
-        else {
-            return false;
-        };
-        if from_ix == target_ix {
-            return false;
-        }
-
-        let dragged_group = self.project_groups.remove(from_ix);
-        let insert_ix = if from_ix < target_ix {
-            target_ix.saturating_sub(1)
-        } else {
-            target_ix
-        };
-        self.project_groups.insert(insert_ix, dragged_group);
-        self.serialize(cx);
-        cx.notify();
-        true
     }
 
     fn derived_project_groups(&self, cx: &App) -> Vec<ProjectGroup> {
@@ -1361,7 +1238,9 @@ impl MultiWorkspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Task<Result<Entity<Workspace>>> {
-        if let Some(workspace) = self.workspace_for_paths(&paths, host.as_ref(), cx) {
+        if let Some(workspace) =
+            self.workspace_for_paths_excluding(&paths, host.as_ref(), excluding, cx)
+        {
             self.activate(workspace.clone(), source_workspace, window, cx);
             return Task::ready(Ok(workspace));
         }
@@ -1570,142 +1449,6 @@ impl MultiWorkspace {
         })
     }
 
-    pub fn create_empty_local_workspace(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<Entity<Workspace>>> {
-        let app_state = self.workspace().read(cx).app_state().clone();
-        let requesting_window = window.window_handle().downcast::<MultiWorkspace>();
-
-        cx.spawn(async move |_this, cx| {
-            let result = cx
-                .update(|cx| {
-                    Workspace::new_local(
-                        Vec::new(),
-                        app_state,
-                        requesting_window,
-                        None,
-                        None,
-                        OpenMode::Activate,
-                        cx,
-                    )
-                })
-                .await?;
-            Ok(result.workspace)
-        })
-    }
-
-    pub fn create_random_local_workspace(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<Entity<Workspace>>> {
-        let existing_paths = self
-            .project_group_keys()
-            .iter()
-            .flat_map(|key| key.path_list().paths().iter().cloned())
-            .collect::<HashSet<_>>();
-
-        let home = home_dir().clone();
-        let mut seeds = vec![home.clone()];
-        if let Some(users_root) = home.parent() {
-            let mut sibling_homes = std::fs::read_dir(users_root)
-                .ok()
-                .into_iter()
-                .flatten()
-                .flatten()
-                .take(MAX_SIBLING_HOME_SCAN_ENTRIES)
-                .filter_map(|entry| entry.file_type().ok()?.is_dir().then_some(entry.path()))
-                .collect::<Vec<_>>();
-            sibling_homes.sort();
-            sibling_homes.truncate(MAX_SIBLING_HOME_SEEDS);
-            seeds.extend(sibling_homes);
-        }
-
-        let mut seen = HashSet::default();
-        let mut candidates = Vec::new();
-        for seed in seeds {
-            collect_space_candidates_from_seed(&seed, &existing_paths, &mut seen, &mut candidates);
-        }
-
-        let chosen_path = if candidates.is_empty() {
-            let fallback_root = home.join(".zed-generated-spaces");
-            let fallback = fallback_root.join(format!("space-{}", Uuid::new_v4()));
-            std::fs::create_dir_all(&fallback).log_err();
-            fallback
-        } else {
-            let salt = self.project_group_keys().len().saturating_mul(31)
-                + self.workspaces().count().saturating_mul(17);
-            let tick = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos() as usize;
-            let index = tick.wrapping_add(salt) % candidates.len();
-            candidates.swap_remove(index)
-        };
-
-        self.find_or_create_local_workspace(
-            PathList::new(&[chosen_path]),
-            None,
-            &[],
-            None,
-            OpenMode::default(),
-            window,
-            cx,
-        )
-    }
-
-    pub fn create_generated_space_workspace(
-        &mut self,
-        name: &str,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<Entity<Workspace>>> {
-        let generated_spaces_root = home_dir().join(".zed-generated-spaces");
-        std::fs::create_dir_all(&generated_spaces_root).log_err();
-
-        let sanitized_name = name
-            .chars()
-            .map(|ch| match ch {
-                '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*' => '-',
-                _ if ch.is_control() => '-',
-                _ => ch,
-            })
-            .collect::<String>()
-            .trim()
-            .trim_matches('.')
-            .to_string();
-        let base_name = if sanitized_name.is_empty() {
-            format!("space-{}", Uuid::new_v4())
-        } else {
-            sanitized_name
-        };
-
-        let chosen_path = loop {
-            let candidate =
-                generated_spaces_root.join(if generated_spaces_root.join(&base_name).exists() {
-                    format!("{base_name}-{}", Uuid::new_v4())
-                } else {
-                    base_name.clone()
-                });
-            if !candidate.exists() {
-                std::fs::create_dir_all(&candidate).log_err();
-                break candidate;
-            }
-        };
-
-        self.find_or_create_local_workspace(
-            PathList::new(&[chosen_path]),
-            None,
-            &[],
-            None,
-            OpenMode::default(),
-            window,
-            cx,
-        )
-    }
-
     pub fn workspace(&self) -> &Entity<Workspace> {
         &self.active_workspace
     }
@@ -1877,10 +1620,7 @@ impl MultiWorkspace {
                 group.last_active_workspace = None;
             }
         }
-        cx.emit(MultiWorkspaceEvent::WorkspaceRemoved {
-            removed_workspace: workspace.entity_id(),
-            active_workspace: self.active_workspace.downgrade(),
-        });
+        cx.emit(MultiWorkspaceEvent::WorkspaceRemoved(workspace.entity_id()));
         workspace.update(cx, |workspace, _cx| {
             workspace.session_id.take();
             workspace._schedule_serialize_workspace.take();
@@ -2061,19 +1801,38 @@ impl MultiWorkspace {
             .cloned()
     }
 
+    pub fn create_empty_local_workspace(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<Entity<Workspace>>> {
+        let app_state = self.workspace().read(cx).app_state().clone();
+        let requesting_window = window.window_handle().downcast::<MultiWorkspace>();
+
+        cx.spawn(async move |_this, cx| {
+            let result = cx
+                .update(|cx| {
+                    Workspace::new_local(
+                        Vec::new(),
+                        app_state,
+                        requesting_window,
+                        None,
+                        None,
+                        OpenMode::Activate,
+                        cx,
+                    )
+                })
+                .await?;
+            Ok(result.workspace)
+        })
+    }
+
     pub fn take_pending_removal_tasks(&mut self) -> Vec<Task<()>> {
         let tasks: Vec<Task<()>> = std::mem::take(&mut self.pending_removal_tasks)
             .into_iter()
             .filter(|task| !task.is_ready())
             .collect();
         tasks
-    }
-
-    pub fn pending_removal_task_count(&self) -> usize {
-        self.pending_removal_tasks
-            .iter()
-            .filter(|task| !task.is_ready())
-            .count()
     }
 
     #[cfg(any(test, feature = "test-support"))]
@@ -2470,40 +2229,8 @@ impl Render for MultiWorkspace {
         let workspace = self.workspace().clone();
         let workspace_key_context = workspace.update(cx, |workspace, cx| workspace.key_context(cx));
         let root = workspace.update(cx, |workspace, cx| workspace.actions(h_flex(), window, cx));
-        let active_full_window_overlay = workspace.update(cx, |workspace, cx| {
-            workspace.active_full_window_overlay(window, cx)
-        });
 
-        if let Some(active_full_window_overlay) = active_full_window_overlay {
-            return client_side_decorations_with_content_flush(
-                root.key_context(workspace_key_context)
-                    .relative()
-                    .size_full()
-                    .font(ui_font)
-                    .text_color(text_color)
-                    .on_action(cx.listener(Self::close_window))
-                    .child(active_full_window_overlay)
-                    .child(render_full_window_overlay_system_controls(window, cx)),
-                window,
-                cx,
-                Tiling {
-                    top: true,
-                    left: true,
-                    right: true,
-                    bottom: true,
-                },
-                Tiling {
-                    top: true,
-                    left: true,
-                    right: true,
-                    bottom: true,
-                },
-            );
-        }
-
-        let agent_fullscreen_flush_right = false;
-
-        client_side_decorations_with_content_flush(
+        client_side_decorations(
             root.key_context(workspace_key_context)
                 .relative()
                 .size_full()
@@ -2614,104 +2341,6 @@ impl Render for MultiWorkspace {
                 })),
             window,
             cx,
-            Tiling {
-                left: !sidebar_on_right && multi_workspace_enabled && self.sidebar_open(),
-                right: (sidebar_on_right && multi_workspace_enabled && self.sidebar_open())
-                    || agent_fullscreen_flush_right,
-                ..Tiling::default()
-            },
-            Tiling {
-                right: agent_fullscreen_flush_right,
-                ..Tiling::default()
-            },
         )
     }
-}
-
-fn render_full_window_overlay_system_controls(window: &mut Window, cx: &App) -> AnyElement {
-    const HEIGHT: Pixels = px(32.0);
-
-    let controls = div()
-        .id("full-window-overlay-system-controls")
-        .absolute()
-        .top_0()
-        .left_0()
-        .right_0()
-        .h(HEIGHT)
-        .window_control_area(WindowControlArea::Drag);
-
-    #[cfg(target_os = "windows")]
-    {
-        let max_button = if window.is_maximized() {
-            full_window_overlay_caption_button(
-                "full-window-overlay-restore",
-                "\u{e923}",
-                WindowControlArea::Max,
-                cx,
-            )
-        } else {
-            full_window_overlay_caption_button(
-                "full-window-overlay-maximize",
-                "\u{e922}",
-                WindowControlArea::Max,
-                cx,
-            )
-        };
-
-        controls
-            .child(
-                h_flex()
-                    .absolute()
-                    .top_0()
-                    .right_0()
-                    .h(HEIGHT)
-                    .font_family("Segoe Fluent Icons")
-                    .child(full_window_overlay_caption_button(
-                        "full-window-overlay-minimize",
-                        "\u{e921}",
-                        WindowControlArea::Min,
-                        cx,
-                    ))
-                    .child(max_button)
-                    .child(full_window_overlay_caption_button(
-                        "full-window-overlay-close",
-                        "\u{e8bb}",
-                        WindowControlArea::Close,
-                        cx,
-                    )),
-            )
-            .into_any_element()
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let _ = (window, cx);
-        controls.into_any_element()
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn full_window_overlay_caption_button(
-    id: &'static str,
-    icon: &'static str,
-    control_area: WindowControlArea,
-    cx: &App,
-) -> impl IntoElement {
-    let hover_bg = cx.theme().colors().ghost_element_hover;
-    let active_bg = cx.theme().colors().ghost_element_active;
-    let text_color = cx.theme().colors().text;
-
-    h_flex()
-        .id(id)
-        .justify_center()
-        .items_center()
-        .occlude()
-        .w(px(40.0))
-        .h_full()
-        .text_size(px(10.0))
-        .text_color(text_color)
-        .hover(move |style| style.bg(hover_bg))
-        .active(move |style| style.bg(active_bg))
-        .window_control_area(control_area)
-        .child(icon)
 }

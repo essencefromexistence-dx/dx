@@ -181,6 +181,8 @@
   // E.g. 0.25 == If you drop onto the top/bottom quarter of the pane a new vertical split will be used
   //              If you drop onto the left/right quarter of the pane a new horizontal split will be used
   "drop_target_size": 0.2,
+  // Whether to optimize the interface for assistive technology such as screen readers.
+  "accessible_mode": false,
   // Whether the window should be closed when using 'close active item' on a window with no tabs.
   // May take 3 values:
   //  1. Use the current platform's convention

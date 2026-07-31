@@ -2,7 +2,7 @@ use crate::{
     AgentTool, ToolCallEventStream, ToolInput, dx_runtime_proof_import,
     dx_runtime_proof_import::DxRuntimeProofOperatorStatus,
 };
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;

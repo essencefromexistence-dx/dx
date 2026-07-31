@@ -196,6 +196,10 @@ impl TabStopMap {
         self.insertion_history.len()
     }
 
+    pub(crate) fn tab_stop_count(&self) -> usize {
+        self.by_id.values().filter(|node| node.tab_stop).count()
+    }
+
     fn focus_handle_for_order(&self, order: &TabStopNode) -> Option<FocusHandle> {
         let handle = self.insertion_history[order.node_insertion_index].focus_handle();
         debug_assert!(
@@ -321,16 +325,12 @@ mod tests {
         let mut tab_index_map = TabStopMap::default();
 
         let focus_handles = [
-            FocusHandle::new(&focus_map)
-                .tab_stop(true)
-                .tab_index(0_isize),
+            FocusHandle::new(&focus_map).tab_stop(true).tab_index(0),
             FocusHandle::new(&focus_map).tab_stop(true).tab_index(1),
             FocusHandle::new(&focus_map).tab_stop(true).tab_index(1),
             FocusHandle::new(&focus_map),
             FocusHandle::new(&focus_map).tab_index(2),
-            FocusHandle::new(&focus_map)
-                .tab_stop(true)
-                .tab_index(0_isize),
+            FocusHandle::new(&focus_map).tab_stop(true).tab_index(0),
             FocusHandle::new(&focus_map).tab_stop(true).tab_index(2),
         ];
 
@@ -422,12 +422,8 @@ mod tests {
         assert_eq!(result.id, tab_stop_2.id);
 
         // Check that we skip over non-stop tabs
-        let tab_stop_0 = FocusHandle::new(&focus_map)
-            .tab_stop(true)
-            .tab_index(0_isize);
-        let tab_non_stop_0 = FocusHandle::new(&focus_map)
-            .tab_stop(false)
-            .tab_index(0_isize);
+        let tab_stop_0 = FocusHandle::new(&focus_map).tab_stop(true).tab_index(0);
+        let tab_non_stop_0 = FocusHandle::new(&focus_map).tab_stop(false).tab_index(0);
         tab_index_map.insert(&tab_stop_0);
         tab_index_map.insert(&tab_non_stop_0);
         let result = tab_index_map.next(Some(&tab_stop_0.id)).unwrap();

@@ -1,3 +1,25 @@
+mod agent_browser_payload_queue_inspect_tool;
+mod agent_browser_payload_tool;
+mod agent_chrome_payload_queue_inspect_tool;
+mod agent_chrome_payload_tool;
+mod agent_chrome_playwright_adapter_tool;
+mod agent_chrome_playwright_execution_inspect_tool;
+mod agent_chrome_playwright_invoke_tool;
+mod agent_chrome_runner_gate_tool;
+mod agent_pc_use_inspect_tool;
+mod agent_pc_use_payload_queue_inspect_tool;
+mod agent_pc_use_payload_tool;
+mod agent_pc_use_runner_gate_tool;
+mod agent_pc_use_runner_receipt_inspect_tool;
+mod agent_pc_use_target_manifest_tool;
+mod agent_pc_use_target_snapshot_tool;
+mod agent_pc_use_ui_snapshot_contract_tool;
+mod agent_pc_use_ui_snapshot_tool;
+mod agent_plugin_asset_provisioner_tool;
+mod agent_plugin_bootstrap_tool;
+mod agent_plugin_catalog_tool;
+mod agent_plugin_contracts;
+mod agent_plugin_runtime_status_tool;
 mod apply_code_action_tool;
 mod context_server_registry;
 mod copy_path_tool;
@@ -5,6 +27,33 @@ mod create_directory_tool;
 mod create_thread_tool;
 mod delete_path_tool;
 mod diagnostics_tool;
+mod dx_catalog_provider_settings_registration_tool;
+mod dx_catalog_provider_settings_tool;
+mod dx_forge_backup_executor_tool;
+mod dx_forge_backup_runner_gate_tool;
+mod dx_forge_history_tool;
+mod dx_forge_restore_approval_tool;
+mod dx_forge_restore_executor_tool;
+mod dx_forge_restore_target_plan_tool;
+mod dx_forge_safety_policy_tool;
+mod dx_launch_demo_recipes_tool;
+mod dx_media_tool_plan_tool;
+mod dx_media_tool_runner_gate_tool;
+mod dx_media_tool_runner_tool;
+mod dx_metasearch_context_adapter_tool;
+mod dx_metasearch_source_extract_tool;
+mod dx_metasearch_status_tool;
+mod dx_metasearch_tool;
+mod dx_plugin_manifest;
+mod dx_plugin_runtime_aliases;
+mod dx_runtime_proof_import_tool;
+mod dx_runtime_proof_plan_tool;
+mod dx_serializer_rlm_execution_plan_tool;
+mod dx_serializer_rlm_execution_preview_tool;
+mod dx_serializer_rlm_external_execution_tool;
+mod dx_serializer_rlm_reduced_context_tool;
+mod dx_serializer_rlm_runner_gate_tool;
+mod dx_source_attachment_tool;
 mod edit_file_tool;
 mod edit_session;
 #[cfg(all(test, feature = "unit-eval"))]
@@ -29,6 +78,7 @@ mod web_search_tool;
 mod write_file_tool;
 
 use crate::AgentTool;
+pub use crate::dx_runtime_proof_import::DxRuntimeProofOperatorStatus;
 use feature_flags::{
     CreateThreadToolFeatureFlag, FeatureFlagAppExt as _, LspToolFeatureFlag, RenameToolFeatureFlag,
 };
@@ -69,6 +119,27 @@ where
     }
 }
 
+pub use agent_browser_payload_queue_inspect_tool::*;
+pub use agent_browser_payload_tool::*;
+pub use agent_chrome_payload_queue_inspect_tool::*;
+pub use agent_chrome_payload_tool::*;
+pub use agent_chrome_playwright_adapter_tool::*;
+pub use agent_chrome_playwright_execution_inspect_tool::*;
+pub use agent_chrome_playwright_invoke_tool::*;
+pub use agent_chrome_runner_gate_tool::*;
+pub use agent_pc_use_inspect_tool::*;
+pub use agent_pc_use_payload_queue_inspect_tool::*;
+pub use agent_pc_use_payload_tool::*;
+pub use agent_pc_use_runner_gate_tool::*;
+pub use agent_pc_use_runner_receipt_inspect_tool::*;
+pub use agent_pc_use_target_manifest_tool::*;
+pub use agent_pc_use_target_snapshot_tool::*;
+pub use agent_pc_use_ui_snapshot_contract_tool::*;
+pub use agent_pc_use_ui_snapshot_tool::*;
+pub use agent_plugin_asset_provisioner_tool::*;
+pub use agent_plugin_bootstrap_tool::*;
+pub use agent_plugin_catalog_tool::*;
+pub use agent_plugin_runtime_status_tool::*;
 pub use apply_code_action_tool::*;
 pub use context_server_registry::*;
 pub use copy_path_tool::*;
@@ -76,6 +147,31 @@ pub use create_directory_tool::*;
 pub use create_thread_tool::*;
 pub use delete_path_tool::*;
 pub use diagnostics_tool::*;
+pub use dx_catalog_provider_settings_registration_tool::*;
+pub use dx_catalog_provider_settings_tool::*;
+pub use dx_forge_backup_executor_tool::*;
+pub use dx_forge_backup_runner_gate_tool::*;
+pub use dx_forge_history_tool::*;
+pub use dx_forge_restore_approval_tool::*;
+pub use dx_forge_restore_executor_tool::*;
+pub use dx_forge_restore_target_plan_tool::*;
+pub use dx_forge_safety_policy_tool::*;
+pub use dx_launch_demo_recipes_tool::*;
+pub use dx_media_tool_plan_tool::*;
+pub use dx_media_tool_runner_gate_tool::*;
+pub use dx_media_tool_runner_tool::*;
+pub use dx_metasearch_context_adapter_tool::*;
+pub use dx_metasearch_source_extract_tool::*;
+pub use dx_metasearch_status_tool::*;
+pub use dx_metasearch_tool::*;
+pub use dx_runtime_proof_import_tool::*;
+pub use dx_runtime_proof_plan_tool::*;
+pub use dx_serializer_rlm_execution_plan_tool::*;
+pub use dx_serializer_rlm_execution_preview_tool::*;
+pub use dx_serializer_rlm_external_execution_tool::*;
+pub use dx_serializer_rlm_reduced_context_tool::*;
+pub use dx_serializer_rlm_runner_gate_tool::*;
+pub use dx_source_attachment_tool::*;
 pub use edit_file_tool::*;
 pub use fetch_tool::*;
 pub use find_path_tool::*;
@@ -193,12 +289,62 @@ macro_rules! tools {
 //    are dropped unless it is active. The agent-profile UI uses the same gate so
 //    it never offers a tool the agent can't actually use.
 tools! {
+    AgentPluginAssetProvisionerTool,
+    AgentPluginBootstrapTool,
+    AgentBrowserPayloadTool,
+    AgentBrowserPayloadStageTool,
+    AgentBrowserPayloadQueueTool,
+    AgentBrowserPayloadQueueInspectTool,
+    AgentChromePayloadTool,
+    AgentChromePayloadQueueTool,
+    AgentChromePayloadQueueInspectTool,
+    AgentChromeRunnerGateTool,
+    AgentChromePlaywrightAdapterTool,
+    AgentChromePlaywrightInvokeTool,
+    AgentChromePlaywrightExecutionInspectTool,
+    AgentPcUseInspectTool,
+    AgentPcUsePayloadTool,
+    AgentPcUsePayloadStageTool,
+    AgentPcUsePayloadQueueTool,
+    AgentPcUsePayloadQueueInspectTool,
+    AgentPcUseRunnerGateTool,
+    AgentPcUseRunnerReceiptInspectTool,
+    AgentPcUseTargetManifestTool,
+    AgentPcUseTargetSnapshotTool,
+    AgentPcUseUiSnapshotTool,
+    AgentPcUseUiSnapshotContractTool,
+    AgentPluginCatalogTool,
+    AgentPluginRuntimeStatusTool,
     ApplyCodeActionTool,
     CopyPathTool,
     CreateDirectoryTool,
     CreateThreadTool,
     DeletePathTool,
     DiagnosticsTool,
+    DxForgeBackupExecutorTool,
+    DxForgeBackupRunnerGateTool,
+    DxForgeHistoryTool,
+    DxForgeRestoreApprovalTool,
+    DxForgeRestoreExecutorTool,
+    DxForgeRestoreTargetPlanTool,
+    DxForgeSafetyPolicyTool,
+    DxLaunchDemoRecipesTool,
+    DxMediaToolPlanTool,
+    DxMediaToolRunnerGateTool,
+    DxMediaToolRunnerTool,
+    DxMetasearchContextAdapterTool,
+    DxMetasearchSourceExtractTool,
+    DxMetasearchStatusTool,
+    DxMetasearchTool,
+    DxRuntimeProofPlanTool,
+    DxSerializerRlmExternalExecutionTool,
+    DxSerializerRlmExecutionPreviewTool,
+    DxSerializerRlmExecutionPlanTool,
+    DxSerializerRlmReducedContextTool,
+    DxSerializerRlmRunnerGateTool,
+    DxSourceAttachmentTool,
+    DxCatalogProviderSettingsRegistrationTool,
+    DxCatalogProviderSettingsTool,
     EditFileTool,
     FetchTool,
     FindPathTool,

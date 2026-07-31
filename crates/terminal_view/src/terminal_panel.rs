@@ -3,9 +3,7 @@ use std::{cmp, path::PathBuf, process::ExitStatus, sync::Arc, time::Duration};
 use crate::{
     TerminalView, default_working_directory,
     persistence::{
-        MAX_SERIALIZED_TERMINAL_PANEL_JSON_BYTES, SerializedItems, SerializedTerminalPanel,
-        deserialize_serialized_terminal_panel_json, deserialize_terminal_panel,
-        serialize_pane_group,
+        SerializedItems, SerializedTerminalPanel, deserialize_terminal_panel, serialize_pane_group,
     },
 };
 use breadcrumbs::Breadcrumbs;
@@ -13,9 +11,9 @@ use collections::HashMap;
 use db::kvp::KeyValueStore;
 use futures::{channel::oneshot, future::join_all};
 use gpui::{
-    Action, Anchor, AnyView, App, AsyncApp, AsyncWindowContext, Context, Entity, EventEmitter,
-    FocusHandle, Focusable, IntoElement, ParentElement, Pixels, Render, Styled, Task, TaskExt,
-    WeakEntity, Window, actions,
+    Action, Anchor, App, AsyncApp, AsyncWindowContext, Context, Entity, EventEmitter, FocusHandle,
+    Focusable, IntoElement, ParentElement, Pixels, Render, Styled, Task, TaskExt, WeakEntity,
+    Window, actions,
 };
 use itertools::Itertools;
 use project::{Fs, Project};
@@ -43,9 +41,6 @@ use anyhow::{Result, anyhow};
 use zed_actions::assistant::InlineAssist;
 
 const TERMINAL_PANEL_KEY: &str = "TerminalPanel";
-const MAX_TERMINAL_PANEL_TASK_MATCHES: usize = 1_024;
-const MAX_TERMINAL_PANEL_TASK_JOIN_HANDLES: usize = 1_024;
-const MAX_TERMINAL_PANEL_SELECTIONS: usize = 1_024;
 
 actions!(
     terminal_panel,
@@ -89,7 +84,6 @@ pub struct TerminalPanel {
     pending_terminals_to_add: usize,
     deferred_tasks: HashMap<TaskId, Task<()>>,
     assistant_enabled: bool,
-    assistant_tab_bar_button: Option<AnyView>,
     active: bool,
 }
 
@@ -108,7 +102,6 @@ impl TerminalPanel {
             pending_terminals_to_add: 0,
             deferred_tasks: HashMap::default(),
             assistant_enabled: false,
-            assistant_tab_bar_button: None,
             active: false,
         };
         terminal_panel.apply_tab_bar_buttons(&terminal_panel.active_pane, cx);
@@ -117,20 +110,6 @@ impl TerminalPanel {
 
     pub fn set_assistant_enabled(&mut self, enabled: bool, cx: &mut Context<Self>) {
         self.assistant_enabled = enabled;
-        if enabled {
-            let focus_handle = self
-                .active_pane
-                .read(cx)
-                .active_item()
-                .map(|item| item.item_focus_handle(cx))
-                .unwrap_or(self.focus_handle(cx));
-            self.assistant_tab_bar_button = Some(
-                cx.new(move |_| InlineAssistTabBarButton { focus_handle })
-                    .into(),
-            );
-        } else {
-            self.assistant_tab_bar_button = None;
-        }
         for pane in self.center.panes() {
             self.apply_tab_bar_buttons(pane, cx);
         }
@@ -141,7 +120,7 @@ impl TerminalPanel {
         terminal_pane: &Entity<Pane>,
         cx: &mut Context<Self>,
     ) {
-        let assistant_tab_bar_button = self.assistant_tab_bar_button.clone();
+        let assistant_enabled = self.assistant_enabled;
         terminal_pane.update(cx, |pane, cx| {
             pane.set_render_tab_bar_buttons(cx, move |pane, window, cx| {
                 let split_context = pane
@@ -189,7 +168,11 @@ impl TerminalPanel {
                                 Some(menu)
                             }),
                     )
-                    .children(assistant_tab_bar_button.clone())
+                    .when(assistant_enabled, |this| {
+                        this.when_some(split_context.clone(), |this, focus_handle| {
+                            this.child(InlineAssistTabBarButton { focus_handle })
+                        })
+                    })
                     .child(
                         PopoverMenu::new("terminal-pane-tab-bar-split")
                             .trigger_with_tooltip(
@@ -267,7 +250,10 @@ impl TerminalPanel {
                 .await
                 .log_err()
                 .flatten()
-                .and_then(|panel| deserialize_serialized_terminal_panel_json(&panel))
+                .map(|panel| serde_json::from_str::<SerializedTerminalPanel>(&panel))
+                .transpose()
+                .log_err()
+                .flatten()
             && let Ok(serialized) = workspace
                 .update_in(&mut cx, |workspace, window, cx| {
                     deserialize_terminal_panel(
@@ -723,8 +709,7 @@ impl TerminalPanel {
                 .map(move |(index, terminal_view)| (index, pane.clone(), terminal_view))
         };
 
-        let mut matching_terminals = self
-            .center
+        self.center
             .panes()
             .into_iter()
             .cloned()
@@ -737,20 +722,8 @@ impl TerminalPanel {
                     .cloned()
                     .flat_map(pane_terminal_views),
             )
-            .take(MAX_TERMINAL_PANEL_TASK_MATCHES.saturating_add(1))
             .sorted_by_key(|(_, _, terminal_view)| terminal_view.entity_id())
-            .collect::<Vec<_>>();
-
-        if matching_terminals.len() > MAX_TERMINAL_PANEL_TASK_MATCHES {
-            log::warn!(
-                "Capping terminal task match fanout from at least {} to {}",
-                matching_terminals.len(),
-                MAX_TERMINAL_PANEL_TASK_MATCHES
-            );
-            matching_terminals.truncate(MAX_TERMINAL_PANEL_TASK_MATCHES);
-        }
-
-        matching_terminals
+            .collect()
     }
 
     fn activate_terminal_view(
@@ -796,7 +769,17 @@ impl TerminalPanel {
                         cx,
                     )
                 });
-                workspace.add_item_to_active_pane(Box::new(terminal_view), None, true, window, cx);
+                // Don't steal focus from an open modal (e.g. the command palette):
+                // a background terminal can finish starting up after the user has
+                // moved on, and focusing it would dismiss whatever they opened.
+                let focus_item = !workspace.has_active_modal(window, cx);
+                workspace.add_item_to_active_pane(
+                    Box::new(terminal_view),
+                    None,
+                    focus_item,
+                    window,
+                    cx,
+                );
             })?;
             Ok(terminal.downgrade())
         })
@@ -987,21 +970,12 @@ impl TerminalPanel {
             });
             cx.background_spawn(
                 async move {
-                    let serialized_panel = serde_json::to_string(&SerializedTerminalPanel {
-                        items,
-                        active_item_id: None,
-                    })?;
-                    if serialized_panel.len() > MAX_SERIALIZED_TERMINAL_PANEL_JSON_BYTES {
-                        log::warn!(
-                            "Skipping terminal panel serialization: JSON is {} bytes, above the {} byte limit",
-                            serialized_panel.len(),
-                            MAX_SERIALIZED_TERMINAL_PANEL_JSON_BYTES
-                        );
-                        return anyhow::Ok(());
-                    }
                     kvp.write_kvp(
                         serialization_key,
-                        serialized_panel,
+                        serde_json::to_string(&SerializedTerminalPanel {
+                            items,
+                            active_item_id: None,
+                        })?,
                     )
                     .await?;
                     anyhow::Ok(())
@@ -1133,8 +1107,7 @@ impl TerminalPanel {
 
     /// Returns all non-empty terminal selections from all terminal views in all panes.
     pub fn terminal_selections(&self, cx: &App) -> Vec<String> {
-        let mut selections = self
-            .center
+        self.center
             .panes()
             .iter()
             .flat_map(|pane| {
@@ -1150,19 +1123,7 @@ impl TerminalPanel {
                         .filter(|text| !text.is_empty())
                 })
             })
-            .take(MAX_TERMINAL_PANEL_SELECTIONS.saturating_add(1))
-            .collect::<Vec<_>>();
-
-        if selections.len() > MAX_TERMINAL_PANEL_SELECTIONS {
-            log::warn!(
-                "Capping terminal selections from at least {} to {}",
-                selections.len(),
-                MAX_TERMINAL_PANEL_SELECTIONS
-            );
-            selections.truncate(MAX_TERMINAL_PANEL_SELECTIONS);
-        }
-
-        selections
+            .collect()
     }
 
     fn is_enabled(&self, cx: &App) -> bool {
@@ -1315,24 +1276,13 @@ async fn wait_for_terminals_tasks(
     terminals_for_task: Vec<(usize, Entity<Pane>, Entity<TerminalView>)>,
     cx: &mut AsyncApp,
 ) {
-    if terminals_for_task.len() > MAX_TERMINAL_PANEL_TASK_JOIN_HANDLES {
-        log::warn!(
-            "Capping terminal task wait joins from {} to {}",
-            terminals_for_task.len(),
-            MAX_TERMINAL_PANEL_TASK_JOIN_HANDLES
-        );
-    }
-
-    let pending_tasks = terminals_for_task
-        .iter()
-        .take(MAX_TERMINAL_PANEL_TASK_JOIN_HANDLES)
-        .map(|(_, _, terminal)| {
-            terminal.update(cx, |terminal_view, cx| {
-                terminal_view
-                    .terminal()
-                    .update(cx, |terminal, cx| terminal.wait_for_completed_task(cx))
-            })
-        });
+    let pending_tasks = terminals_for_task.iter().map(|(_, _, terminal)| {
+        terminal.update(cx, |terminal_view, cx| {
+            terminal_view
+                .terminal()
+                .update(cx, |terminal, cx| terminal.wait_for_completed_task(cx))
+        })
+    });
     join_all(pending_tasks).await;
 }
 
@@ -1424,19 +1374,23 @@ impl Render for TerminalPanel {
             .unwrap_or_else(div);
         self.workspace
             .update(cx, |workspace, cx| {
-                registrar.size_full().child(self.center.render(
-                    workspace.zoomed_item(),
-                    &workspace::PaneRenderContext {
-                        follower_states: &HashMap::default(),
-                        active_call: workspace.active_call(),
-                        active_pane: &self.active_pane,
-                        app_state: workspace.app_state(),
-                        project: workspace.project(),
-                        workspace: &workspace.weak_handle(),
-                    },
-                    window,
-                    cx,
-                ))
+                registrar
+                    .track_focus(&self.focus_handle)
+                    .size_full()
+                    .child(self.center.render(
+                        workspace.zoomed_item(),
+                        None,
+                        &workspace::PaneRenderContext {
+                            follower_states: &HashMap::default(),
+                            active_call: workspace.active_call(),
+                            active_pane: &self.active_pane,
+                            app_state: workspace.app_state(),
+                            project: workspace.project(),
+                            workspace: &workspace.weak_handle(),
+                        },
+                        window,
+                        cx,
+                    ))
             })
             .ok()
             .map(|div| {
@@ -1472,9 +1426,7 @@ impl Render for TerminalPanel {
                             .position(|pane| **pane == terminal_panel.active_pane)
                         {
                             let next_ix = (ix + 1) % panes.len();
-                            if let Some(&pane) = panes.get(next_ix) {
-                                window.focus(&pane.focus_handle(cx), cx);
-                            }
+                            window.focus(&panes[next_ix].focus_handle(cx), cx);
                         }
                     }),
                 )
@@ -1486,9 +1438,7 @@ impl Render for TerminalPanel {
                             .position(|pane| **pane == terminal_panel.active_pane)
                         {
                             let prev_ix = cmp::min(ix.wrapping_sub(1), panes.len() - 1);
-                            if let Some(&pane) = panes.get(prev_ix) {
-                                window.focus(&pane.focus_handle(cx), cx);
-                            }
+                            window.focus(&panes[prev_ix].focus_handle(cx), cx);
                         }
                     },
                 ))
@@ -1763,18 +1713,22 @@ impl workspace::TerminalProvider for TerminalProvider {
     }
 }
 
+#[derive(IntoElement)]
 struct InlineAssistTabBarButton {
     focus_handle: FocusHandle,
 }
 
-impl Render for InlineAssistTabBarButton {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let focus_handle = self.focus_handle.clone();
+impl RenderOnce for InlineAssistTabBarButton {
+    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+        let focus_handle = self.focus_handle;
         IconButton::new("terminal_inline_assistant", IconName::ZedAssistant)
             .icon_size(IconSize::Small)
-            .on_click(cx.listener(|_, _, window, cx| {
-                window.dispatch_action(InlineAssist::default().boxed_clone(), cx);
-            }))
+            .on_click({
+                let focus_handle = focus_handle.clone();
+                move |_, window, cx| {
+                    focus_handle.dispatch_action(&InlineAssist::default(), window, cx);
+                }
+            })
             .tooltip(move |_window, cx| {
                 Tooltip::for_action_in("Inline Assist", &InlineAssist::default(), &focus_handle, cx)
             })
@@ -1786,7 +1740,7 @@ mod tests {
     use std::num::NonZero;
 
     use super::*;
-    use gpui::{TestAppContext, UpdateGlobal as _};
+    use gpui::{Modifiers, TestAppContext, UpdateGlobal as _, VisualTestContext};
     use pretty_assertions::assert_eq;
     use project::FakeFs;
     use settings::SettingsStore;
@@ -1975,6 +1929,165 @@ mod tests {
         assert!(
             result.is_ok(),
             "local terminal should successfully create in local project"
+        );
+    }
+
+    struct FocusOnlyModal {
+        focus_handle: gpui::FocusHandle,
+    }
+    impl gpui::EventEmitter<gpui::DismissEvent> for FocusOnlyModal {}
+    impl gpui::Focusable for FocusOnlyModal {
+        fn focus_handle(&self, _: &gpui::App) -> gpui::FocusHandle {
+            self.focus_handle.clone()
+        }
+    }
+    impl Render for FocusOnlyModal {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            gpui::div().track_focus(&self.focus_handle)
+        }
+    }
+    impl workspace::ModalView for FocusOnlyModal {}
+
+    async fn open_center_display_terminal(
+        workspace: &Entity<Workspace>,
+        cx: &mut VisualTestContext,
+    ) {
+        workspace
+            .update_in(cx, |workspace, window, cx| {
+                TerminalPanel::add_center_terminal(workspace, window, cx, |_, cx| {
+                    let terminal = cx.new(|cx| {
+                        terminal::TerminalBuilder::new_display_only(
+                            terminal::terminal_settings::CursorShape::default(),
+                            terminal::terminal_settings::AlternateScroll::On,
+                            None,
+                            0,
+                            cx.background_executor(),
+                            util::paths::PathStyle::local(),
+                        )
+                        .subscribe(cx)
+                    });
+                    gpui::Task::ready(Ok(terminal))
+                })
+            })
+            .await
+            .unwrap();
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn test_center_terminal_keeps_focus_on_active_modal(cx: &mut TestAppContext) {
+        cx.executor().allow_parking();
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let window_handle =
+            cx.add_window(|window, cx| MultiWorkspace::test_new(project, window, cx));
+        let workspace = window_handle
+            .update(cx, |multi_workspace, _, _| {
+                multi_workspace.workspace().clone()
+            })
+            .unwrap();
+        let cx = &mut VisualTestContext::from_window(window_handle.into(), cx);
+
+        let modal_focus_handle = workspace.update_in(cx, |workspace, window, cx| {
+            let focus_handle = cx.focus_handle();
+            workspace.toggle_modal(window, cx, {
+                let focus_handle = focus_handle.clone();
+                move |_, _| FocusOnlyModal { focus_handle }
+            });
+            focus_handle
+        });
+
+        workspace.update_in(cx, |workspace, window, cx| {
+            assert!(workspace.has_active_modal(window, cx));
+            assert!(
+                modal_focus_handle.is_focused(window),
+                "the modal should hold focus before the terminal is created"
+            );
+        });
+
+        open_center_display_terminal(&workspace, cx).await;
+
+        workspace.update_in(cx, |_, window, _| {
+            assert!(
+                modal_focus_handle.is_focused(window),
+                "a background center terminal must not steal focus from an active modal"
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn test_center_terminal_takes_focus_without_modal(cx: &mut TestAppContext) {
+        cx.executor().allow_parking();
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.executor());
+        let project = Project::test(fs, [], cx).await;
+        let window_handle =
+            cx.add_window(|window, cx| MultiWorkspace::test_new(project, window, cx));
+        let workspace = window_handle
+            .update(cx, |multi_workspace, _, _| {
+                multi_workspace.workspace().clone()
+            })
+            .unwrap();
+        let cx = &mut VisualTestContext::from_window(window_handle.into(), cx);
+
+        open_center_display_terminal(&workspace, cx).await;
+
+        workspace.update_in(cx, |workspace, window, cx| {
+            assert!(!workspace.has_active_modal(window, cx));
+            let terminal_view = workspace
+                .active_pane()
+                .read(cx)
+                .active_item()
+                .and_then(|item| item.downcast::<TerminalView>())
+                .expect("the new center terminal should be the active item");
+            assert!(
+                terminal_view.focus_handle(cx).contains_focused(window, cx),
+                "with no modal open, a new center terminal should take focus"
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn test_inline_assist_tooltip_shows_keybinding_of_active_terminal(
+        cx: &mut TestAppContext,
+    ) {
+        cx.executor().allow_parking();
+        init_test(cx);
+
+        cx.update(|cx| {
+            cx.bind_keys([gpui::KeyBinding::new(
+                "ctrl-enter",
+                InlineAssist::default(),
+                Some("Terminal"),
+            )])
+        });
+
+        let (window_handle, terminal_panel) = init_workspace_with_panel(cx).await;
+        let cx = &mut VisualTestContext::from_window(window_handle.into(), cx);
+
+        terminal_panel.update(cx, |panel, cx| panel.set_assistant_enabled(true, cx));
+        terminal_panel
+            .update_in(cx, |panel, window, cx| {
+                panel.add_terminal_shell(None, RevealStrategy::Always, window, cx)
+            })
+            .await
+            .unwrap();
+        cx.run_until_parked();
+
+        let button_bounds = cx
+            .debug_bounds("ICON-ZedAssistant")
+            .expect("inline assist button should be rendered in the terminal tab bar");
+        cx.simulate_mouse_move(button_bounds.center(), None, Modifiers::default());
+
+        cx.executor().advance_clock(Duration::from_millis(600));
+        cx.run_until_parked();
+
+        assert!(
+            cx.debug_bounds("KEY_BINDING-enter").is_some(),
+            "tooltip should show the InlineAssist keybinding resolved in the terminal's context"
         );
     }
 

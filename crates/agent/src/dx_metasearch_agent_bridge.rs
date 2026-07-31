@@ -1289,7 +1289,7 @@ fn compact_source_pack_text(text: &str, max_chars: usize) -> String {
 }
 
 fn estimate_token_count(chars: usize) -> usize {
-    (chars + SOURCE_PACK_APPROX_CHARS_PER_TOKEN - 1) / SOURCE_PACK_APPROX_CHARS_PER_TOKEN
+    chars.div_ceil(SOURCE_PACK_APPROX_CHARS_PER_TOKEN)
 }
 
 fn current_unix_ms() -> u64 {

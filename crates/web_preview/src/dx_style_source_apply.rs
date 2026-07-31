@@ -1311,7 +1311,7 @@ pub(crate) fn source_apply_review_receipt(payload: &Value) -> Value {
             .get("proposed_declaration")
             .and_then(Value::as_str);
         match css_dry_run_proposed_declaration {
-            Some(value) if value.is_empty() => {
+            Some("") => {
                 reasons.push(
                     "CSS declaration dry-run preview is missing proposed declaration".to_string(),
                 );
@@ -3218,9 +3218,7 @@ fn validate_reverse_delta_preview_replacement_policy(
     let replacement_utility_strings = collect_reverse_delta_replacement_utilities(preview, reasons);
     if let Some(target_utility) = target_utility
         && let Some(replacement_utility_strings) = replacement_utility_strings.as_ref()
-        && !replacement_utility_strings
-            .iter()
-            .any(|utility| *utility == target_utility)
+        && !replacement_utility_strings.contains(&target_utility)
     {
         reasons.push(
             "ready reverse CSS delta preview replacement utilities do not contain target utility"

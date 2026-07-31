@@ -84,15 +84,13 @@ where
     T: Eq + Hash,
 {
     let mut items = HashSet::default();
-    let mut seen_items = 0;
-    for item in source {
+    for (seen_items, item) in source.into_iter().enumerate() {
         if seen_items >= max_items {
             log::warn!(
                 "agent diff materialization for {label} exceeded safety cap of {max_items}; refusing partial materialization"
             );
             return None;
         }
-        seen_items += 1;
         items.insert(item);
     }
     Some(items)

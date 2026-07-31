@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::dx_catalog_provider_settings_mutation::{
     apply_provider_settings_spec, can_write_provider_settings, catalog_base_url_matches_settings,
 };
@@ -1336,7 +1338,6 @@ fn provider_settings_registration_approved() -> bool {
 mod tests {
     use super::*;
     use acp_thread::{AgentModelGroupName, AgentModelInfo};
-    use agent_client_protocol::schema as acp;
     use collections::IndexMap;
     use dx_catalog::{
         DX_CATALOG_SCHEMA_VERSION, ModelCapabilities, ProviderAuthKind, ProviderKind,
@@ -1379,7 +1380,7 @@ mod tests {
             model_groups
                 .get(&AgentModelGroupName("Groq".into()))
                 .and_then(|models| models.first())
-                .map(|model| model.id.0.as_ref()),
+                .map(|model| model.id.as_ref()),
             Some("groq/llama-3.3-70b-versatile")
         );
     }
@@ -1449,11 +1450,11 @@ mod tests {
             "agent bridge should preserve full provider groups for large copied catalogs"
         );
         assert_eq!(
-            models.first().map(|model| model.id.0.as_ref()),
+            models.first().map(|model| model.id.as_ref()),
             Some("nano-gpt/model-000")
         );
         assert_eq!(
-            models.last().map(|model| model.id.0.as_ref()),
+            models.last().map(|model| model.id.as_ref()),
             Some("nano-gpt/model-079")
         );
     }
@@ -1545,12 +1546,13 @@ mod tests {
 
     fn agent_model_info(id: &str, name: &str) -> AgentModelInfo {
         AgentModelInfo {
-            id: acp::ModelId::new(id),
+            id: acp_thread::AgentModelId::new(id),
             name: name.into(),
             description: None,
             icon: None,
             is_latest: false,
             cost: None,
+            disabled: None,
         }
     }
 
@@ -1688,6 +1690,7 @@ fn catalog_picker_model_to_agent_model_info(model: &AgentPickerModel) -> AgentMo
         icon: None,
         is_latest: false,
         cost: model.cost_label.clone().map(Into::into),
+        disabled: None,
     }
 }
 

@@ -461,7 +461,7 @@ fn validate_manifest(
     if manifest.target_path != backup.target_path {
         return Err("Forge backup manifest target path does not match execution.".to_string());
     }
-    if PathBuf::from(&manifest.archive_path) != PathBuf::from(&backup.archive_path) {
+    if manifest.archive_path != backup.archive_path {
         return Err("Forge backup manifest archive path does not match execution.".to_string());
     }
     let manifest_total_bytes = manifest

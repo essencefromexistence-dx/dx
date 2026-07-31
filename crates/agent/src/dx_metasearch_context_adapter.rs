@@ -642,7 +642,7 @@ fn truncate_for_char_budget(text: &str, max_chars: usize) -> String {
 }
 
 fn estimate_token_count(chars: usize) -> usize {
-    (chars + APPROX_CHARS_PER_TOKEN - 1) / APPROX_CHARS_PER_TOKEN
+    chars.div_ceil(APPROX_CHARS_PER_TOKEN)
 }
 
 fn current_unix_ms() -> u64 {

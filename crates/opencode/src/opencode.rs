@@ -451,6 +451,8 @@ impl Model {
                 ApiProtocol::Anthropic
             }
 
+            Self::MiniMaxM3Free => ApiProtocol::Anthropic,
+
             Self::Glm5
             | Self::Glm5_1
             | Self::Glm5_2
@@ -464,6 +466,9 @@ impl Model {
             | Self::DeepSeekV4Pro
             | Self::DeepSeekV4Flash
             | Self::BigPickle
+            | Self::DeepSeekV4FlashFree
+            | Self::MimoV2_5Free
+            | Self::Nemotron3SuperFree
             | Self::Nemotron3UltraFree => ApiProtocol::OpenAiChat,
 
             Self::Custom { protocol, .. } => *protocol,
@@ -485,7 +490,10 @@ impl Model {
             | Self::MiniMaxM2_5
             | Self::MiniMaxM2_7
             | Self::MiniMaxM3
+            | Self::Nemotron3SuperFree
             | Self::Nemotron3UltraFree
+            | Self::DeepSeekV4FlashFree
+            | Self::MimoV2_5Free
             | Self::BigPickle => true,
 
             Self::Custom {
@@ -529,6 +537,7 @@ impl Model {
 
             // OpenAI-compatible models
             Self::MiniMaxM2_7 => 204_800,
+            Self::MiniMaxM3Free => 200_000,
             Self::MiniMaxM3 => {
                 if subscription == OpenCodeSubscription::Go {
                     1_000_000
@@ -560,6 +569,9 @@ impl Model {
             }
             Self::Qwen3_7Max | Self::Qwen3_7Plus => 1_000_000,
             Self::BigPickle => 200_000,
+            Self::DeepSeekV4FlashFree => 1_000_000,
+            Self::MimoV2_5Free => 1_000_000,
+            Self::Nemotron3SuperFree => 204_800,
             Self::Nemotron3UltraFree => 1_000_000,
             Self::DeepSeekV4Pro | Self::DeepSeekV4Flash => 1_000_000,
 
@@ -607,6 +619,7 @@ impl Model {
 
             // OpenAI-compatible models
             Self::MiniMaxM2_7 => Some(131_072),
+            Self::MiniMaxM3Free => Some(32_000),
             Self::MiniMaxM3 => {
                 if subscription == OpenCodeSubscription::Go {
                     Some(131_072)
@@ -637,9 +650,11 @@ impl Model {
             Self::Qwen3_7Max | Self::Qwen3_7Plus | Self::Qwen3_6Plus | Self::Qwen3_5Plus => {
                 Some(65_536)
             }
-            Self::DeepSeekV4Pro | Self::DeepSeekV4Flash => Some(384_000),
-            Self::Nemotron3UltraFree => Some(128_000),
-            Self::MimoV2_5Pro | Self::MimoV2_5 => Some(128_000),
+            Self::DeepSeekV4Pro | Self::DeepSeekV4Flash | Self::DeepSeekV4FlashFree => {
+                Some(384_000)
+            }
+            Self::Nemotron3SuperFree | Self::Nemotron3UltraFree => Some(128_000),
+            Self::MimoV2_5Pro | Self::MimoV2_5 | Self::MimoV2_5Free => Some(128_000),
 
             Self::Custom {
                 max_output_tokens, ..
@@ -703,7 +718,8 @@ impl Model {
             | Self::Qwen3_5Plus
             | Self::Qwen3_6Plus
             | Self::Qwen3_7Plus
-            | Self::MiniMaxM3 => true,
+            | Self::MiniMaxM3
+            | Self::MiniMaxM3Free => true,
 
             // OpenAI-compatible models without image support
             Self::MiniMaxM2_5
@@ -716,6 +732,9 @@ impl Model {
             | Self::DeepSeekV4Flash
             | Self::Qwen3_7Max
             | Self::BigPickle
+            | Self::DeepSeekV4FlashFree
+            | Self::MimoV2_5Free
+            | Self::Nemotron3SuperFree
             | Self::Nemotron3UltraFree => false,
 
             Self::Custom { protocol, .. } => matches!(
@@ -832,18 +851,25 @@ impl Model {
                 ReasoningEffort::Max,
             ]),
 
+            Self::DeepSeekV4FlashFree => Some(vec![
+                ReasoningEffort::Low,
+                ReasoningEffort::Medium,
+                ReasoningEffort::High,
+                ReasoningEffort::XHigh,
+            ]),
+
             // MiniMax models
             Self::MiniMaxM3 => Some(vec![ReasoningEffort::None]),
 
             // NVIDIA models
-            Self::Nemotron3UltraFree => Some(vec![
+            Self::Nemotron3SuperFree | Self::Nemotron3UltraFree => Some(vec![
                 ReasoningEffort::Low,
                 ReasoningEffort::Medium,
                 ReasoningEffort::High,
             ]),
 
             // Xiaomi MiMo models
-            Self::MimoV2_5Pro | Self::MimoV2_5 => Some(vec![
+            Self::MimoV2_5Pro | Self::MimoV2_5 | Self::MimoV2_5Free => Some(vec![
                 ReasoningEffort::Low,
                 ReasoningEffort::Medium,
                 ReasoningEffort::High,

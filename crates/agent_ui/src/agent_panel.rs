@@ -1192,6 +1192,14 @@ pub struct AgentPanel {
 }
 
 impl AgentPanel {
+    pub(crate) fn new_automation_workspace(
+        workspace: &Workspace,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        Self::new(workspace, window, cx)
+    }
+
     fn serialize(&mut self, cx: &mut App) {
         let Some(workspace_id) = self.workspace_id else {
             return;
@@ -6015,13 +6023,13 @@ impl AgentPanel {
                                                 .map(|a| a.name().clone())
                                         })
                                         .unwrap_or_else(|| agent_id.0.clone());
-                                    AgentMenuItem {
+                                    agent_items.push(AgentMenuItem {
                                         id: agent_id.clone(),
                                         display_name,
-                                    }
-                                })
-                                .sorted_unstable_by_key(|e| e.display_name.to_lowercase())
-                                .collect::<Vec<_>>();
+                                    });
+                                }
+                            }
+                            agent_items.sort_unstable_by_key(|e| e.display_name.to_lowercase());
 
                             if !agent_items.is_empty() {
                                 menu = menu.separator().header("External Agents");
@@ -6047,10 +6055,11 @@ impl AgentPanel {
                                                 .and_then(|a| a.icon_path().cloned())
                                         });
 
-                                if let Some(icon_path) = icon_path {
-                                    entry = entry.custom_icon_svg(icon_path);
-                                } else {
-                                    entry = entry.icon(IconName::Sparkle);
+                                    if let Some(icon_path) = icon_path {
+                                        entry = entry.custom_icon_svg(icon_path);
+                                    } else {
+                                        entry = entry.icon(IconName::Sparkle);
+                                    }
                                 }
 
                                 entry = entry

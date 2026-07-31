@@ -35,24 +35,6 @@ use ui::{Color, Icon, IntoElement, Label, LabelCommon};
 use util::ResultExt;
 
 pub const LEADER_UPDATE_THROTTLE: Duration = Duration::from_millis(200);
-const MAX_PROJECT_ITEMS_PER_ITEM: usize = 512;
-
-fn should_collect_project_item(visited: &mut usize, truncated: &mut bool) -> bool {
-    if *visited >= MAX_PROJECT_ITEMS_PER_ITEM {
-        *truncated = true;
-        return false;
-    }
-
-    *visited += 1;
-    true
-}
-
-fn log_project_item_collection_truncated(collection_name: &str) {
-    Err::<(), _>(anyhow::anyhow!(
-        "{collection_name} project item collection exceeded cap (max {MAX_PROJECT_ITEMS_PER_ITEM})"
-    ))
-    .log_err();
-}
 
 #[derive(Clone, Copy, Debug)]
 pub struct SaveOptions {
@@ -184,6 +166,11 @@ impl PaneTabBarControls {
     }
 }
 
+pub enum TabTooltipContent {
+    Text(SharedString),
+    Custom(Box<dyn Fn(&mut Window, &mut App) -> AnyView>),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum WorkspaceScreenKind {
     Agent,
@@ -195,11 +182,6 @@ pub enum WorkspaceScreenKind {
     Terminal,
     Onboarding,
     Other,
-}
-
-pub enum TabTooltipContent {
-    Text(SharedString),
-    Custom(Box<dyn Fn(&mut Window, &mut App) -> AnyView>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -282,13 +264,6 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         _cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
         None
-    }
-
-    fn requires_transparent_workspace_background() -> bool
-    where
-        Self: Sized,
-    {
-        false
     }
 
     /// (model id, Item)
@@ -438,8 +413,6 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         None
     }
 
-    /// Called when the item's tab is clicked.
-    /// Return `true` to consume the click and suppress the pane's default tab activation logic.
     fn on_tab_click(
         &mut self,
         _params: TabContentParams,
@@ -450,9 +423,11 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         false
     }
 
-    /// Called when the pane receives `menu::Confirm` while the item's tab content owns focus.
-    /// Return `true` to consume the action.
     fn on_tab_confirm(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> bool {
+        false
+    }
+
+    fn requires_transparent_workspace_background() -> bool {
         false
     }
 
@@ -668,6 +643,7 @@ pub trait ItemHandle: 'static + Send {
         cx: &mut App,
     ) -> bool;
     fn on_tab_confirm(&self, window: &mut Window, cx: &mut App) -> bool;
+    fn requires_transparent_workspace_background(&self) -> bool;
     fn pixel_position_of_cursor(&self, cx: &App) -> Option<Point<Pixels>>;
     fn downgrade_item(&self) -> Box<dyn WeakItemHandle>;
     fn workspace_settings<'a>(&self, cx: &'a App) -> &'a WorkspaceSettings;
@@ -686,7 +662,6 @@ pub trait ItemHandle: 'static + Send {
         window: &mut Window,
         cx: &mut App,
     ) -> Vec<(SharedString, Box<dyn Action>)>;
-    fn requires_transparent_workspace_background(&self) -> bool;
     fn can_autosave(&self, cx: &App) -> bool {
         let is_deleted = self.project_entry_ids(cx).is_empty();
         self.is_dirty(cx) && !self.has_conflict(cx) && self.can_save(cx) && !is_deleted
@@ -797,53 +772,29 @@ impl<T: Item> ItemHandle for Entity<T> {
 
     fn project_entry_ids(&self, cx: &App) -> SmallVec<[ProjectEntryId; 3]> {
         let mut result = SmallVec::new();
-        let mut visited = 0;
-        let mut truncated = false;
         self.read(cx).for_each_project_item(cx, &mut |_, item| {
-            if !should_collect_project_item(&mut visited, &mut truncated) {
-                return;
-            }
             if let Some(id) = item.entry_id(cx) {
                 result.push(id);
             }
         });
-        if truncated {
-            log_project_item_collection_truncated("project_entry_ids");
-        }
         result
     }
 
     fn project_paths(&self, cx: &App) -> SmallVec<[ProjectPath; 3]> {
         let mut result = SmallVec::new();
-        let mut visited = 0;
-        let mut truncated = false;
         self.read(cx).for_each_project_item(cx, &mut |_, item| {
-            if !should_collect_project_item(&mut visited, &mut truncated) {
-                return;
-            }
             if let Some(id) = item.project_path(cx) {
                 result.push(id);
             }
         });
-        if truncated {
-            log_project_item_collection_truncated("project_paths");
-        }
         result
     }
 
     fn project_item_model_ids(&self, cx: &App) -> SmallVec<[EntityId; 3]> {
         let mut result = SmallVec::new();
-        let mut visited = 0;
-        let mut truncated = false;
         self.read(cx).for_each_project_item(cx, &mut |id, _| {
-            if !should_collect_project_item(&mut visited, &mut truncated) {
-                return;
-            }
             result.push(id);
         });
-        if truncated {
-            log_project_item_collection_truncated("project_item_model_ids");
-        }
         result
     }
 
@@ -1271,7 +1222,7 @@ impl<T: Item> ItemHandle for Entity<T> {
         window: &mut Window,
         cx: &mut App,
     ) -> Option<PaneTabBarControls> {
-        self.update(cx, |this, cx| this.pane_tab_bar_controls(window, cx))
+        self.update(cx, |item, cx| item.pane_tab_bar_controls(window, cx))
     }
 
     fn on_tab_click(
@@ -1281,11 +1232,15 @@ impl<T: Item> ItemHandle for Entity<T> {
         window: &mut Window,
         cx: &mut App,
     ) -> bool {
-        self.update(cx, |this, cx| this.on_tab_click(params, event, window, cx))
+        self.update(cx, |item, cx| item.on_tab_click(params, event, window, cx))
     }
 
     fn on_tab_confirm(&self, window: &mut Window, cx: &mut App) -> bool {
-        self.update(cx, |this, cx| this.on_tab_confirm(window, cx))
+        self.update(cx, |item, cx| item.on_tab_confirm(window, cx))
+    }
+
+    fn requires_transparent_workspace_background(&self) -> bool {
+        T::requires_transparent_workspace_background()
     }
 
     fn pixel_position_of_cursor(&self, cx: &App) -> Option<Point<Pixels>> {
@@ -1337,10 +1292,6 @@ impl<T: Item> ItemHandle for Entity<T> {
         self.update(cx, |this, cx| {
             this.tab_extra_context_menu_actions(window, cx)
         })
-    }
-
-    fn requires_transparent_workspace_background(&self) -> bool {
-        T::requires_transparent_workspace_background()
     }
 }
 

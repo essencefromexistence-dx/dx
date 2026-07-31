@@ -1073,6 +1073,12 @@ pub struct SandboxPermissionsContent {
     /// Whether to warn about confusable Unicode in permission prompts.
     pub warn_confusable_unicode: Option<bool>,
 
+    /// Whether to warn (Windows/WSL only) when a sandbox grant targets a file on
+    /// a Windows-hosted (DrvFs) filesystem. Such grants have weaker sandbox
+    /// integrity guarantees than grants on a distro-native filesystem.
+    /// Default: true
+    pub warn_ntfs_grants: Option<bool>,
+
     /// Directory subtrees that sandboxed terminal commands may always write
     /// to without prompting. Each entry is either a bare path string or an
     /// object `{requested, resolved}`; Zed writes objects (the canonical,
@@ -1080,7 +1086,7 @@ pub struct SandboxPermissionsContent {
     /// hand-authored entries may be bare path strings. Paths written by Zed
     /// are absolute.
     /// Default: []
-    pub write_paths: Option<ExtendingVec<PathBuf>>,
+    pub write_paths: Option<ExtendingVec<GrantedWritePathContent>>,
 }
 
 #[with_fallible_options]

@@ -138,7 +138,7 @@ fn scan_www_launch_evidence(workspace_roots: &[String]) -> DxWwwLaunchEvidenceSn
         .filter(|row| row.present)
         .filter_map(|row| row.modified_ms.map(|modified| (modified, row.clone())))
         .collect::<Vec<_>>();
-    latest.sort_by(|left, right| right.0.cmp(&left.0));
+    latest.sort_by_key(|entry| std::cmp::Reverse(entry.0));
     let latest_rows = latest
         .into_iter()
         .take(4)

@@ -63,7 +63,7 @@ impl DxSkillPanel {
     ) -> Entity<Self> {
         let workspace = cx.entity().downgrade();
         let fs = _workspace.project().read(cx).fs().clone();
-        let http_client = _workspace.project().read(cx).client().http_client().clone();
+        let http_client = _workspace.project().read(cx).client().http_client();
 
         cx.new(|cx| {
             let search_editor = cx.new(|cx| {
@@ -102,7 +102,7 @@ impl DxSkillPanel {
         let http_client = self.http_client.clone();
         self.fetch_task = Some(cx.spawn(async move |this: WeakEntity<Self>, cx| {
             let mut fetched = vec![];
-            
+
             if let Ok(mut response) = http_client.get("https://api.github.com/search/repositories?q=topic:mcp-server+OR+topic:agent-skill&sort=stars&order=desc", http_client::AsyncBody::default(), true).await {
                     use futures::AsyncReadExt;
                     let mut body = Vec::new();
@@ -115,12 +115,12 @@ impl DxSkillPanel {
                                 let full_name = item.get("full_name").and_then(|n| n.as_str()).unwrap_or("Unknown").to_string();
                                 let description = item.get("description").and_then(|d| d.as_str()).unwrap_or("No description").to_string();
                                 let html_url = item.get("html_url").and_then(|u| u.as_str()).unwrap_or("").to_string();
-                                
+
                                 fetched.push(SkillEntry {
-                                    id: full_name.clone().into(),
-                                    name: full_name.into(),
-                                    description: description.clone().into(),
-                                    source: html_url.clone().into(),
+                                    id: full_name.clone(),
+                                    name: full_name,
+                                    description: description.clone(),
+                                    source: html_url.clone(),
                                     content: format!("# {}\n\n{}\n\nSource: {}", name, description, html_url),
                                 });
                             }
@@ -202,10 +202,9 @@ impl DxSkillPanel {
                 );
 
                 let fs = fs.clone();
-                let target2 = target.clone();
                 let content = content_with_front;
                 cx.background_spawn(async move {
-                    let _ = fs.write(&target2, content.as_bytes()).await;
+                    let _ = fs.write(&target, content.as_bytes()).await;
                 })
                 .detach();
 

@@ -22,6 +22,20 @@ pub type PathVertex_ScaledPixels = PathVertex<ScaledPixels>;
 #[expect(missing_docs)]
 pub type DrawOrder = u32;
 
+/// A boolean stored as a `u32` so that GPU-facing structs contain no
+/// compiler-inserted padding bytes, which would be undefined behavior to
+/// reinterpret as `&[u8]` when writing instance buffers. Guaranteed to be
+/// `0` or `1` by construction; shaders read it as a `u32`/`uint`.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct PaddedBool32(u32);
+
+impl From<bool> for PaddedBool32 {
+    fn from(value: bool) -> Self {
+        PaddedBool32(value as u32)
+    }
+}
+
 #[derive(Default)]
 #[expect(missing_docs)]
 pub struct Scene {
@@ -35,7 +49,6 @@ pub struct Scene {
     pub monochrome_sprites: Vec<MonochromeSprite>,
     pub subpixel_sprites: Vec<SubpixelSprite>,
     pub polychrome_sprites: Vec<PolychromeSprite>,
-    pub liquid_glass: Vec<LiquidGlass>,
     pub surfaces: Vec<PaintSurface>,
 }
 
@@ -52,7 +65,6 @@ impl Scene {
         self.monochrome_sprites.clear();
         self.subpixel_sprites.clear();
         self.polychrome_sprites.clear();
-        self.liquid_glass.clear();
         self.surfaces.clear();
     }
 
@@ -117,10 +129,6 @@ impl Scene {
                 sprite.order = order;
                 self.polychrome_sprites.push(*sprite);
             }
-            Primitive::LiquidGlass(liquid_glass) => {
-                liquid_glass.order = order;
-                self.liquid_glass.push(liquid_glass.clone());
-            }
             Primitive::Surface(surface) => {
                 surface.order = order;
                 self.surfaces.push(surface.clone());
@@ -151,8 +159,6 @@ impl Scene {
             .sort_by_key(|sprite| (sprite.order, sprite.tile.tile_id));
         self.polychrome_sprites
             .sort_by_key(|sprite| (sprite.order, sprite.tile.tile_id));
-        self.liquid_glass
-            .sort_by_key(|primitive| (primitive.order, primitive.tile.tile_id));
         self.surfaces.sort_by_key(|surface| surface.order);
     }
 
@@ -179,8 +185,6 @@ impl Scene {
             subpixel_sprites_iter: self.subpixel_sprites.iter().peekable(),
             polychrome_sprites_start: 0,
             polychrome_sprites_iter: self.polychrome_sprites.iter().peekable(),
-            liquid_glass_start: 0,
-            liquid_glass_iter: self.liquid_glass.iter().peekable(),
             surfaces_start: 0,
             surfaces_iter: self.surfaces.iter().peekable(),
         }
@@ -204,7 +208,6 @@ pub(crate) enum PrimitiveKind {
     MonochromeSprite,
     SubpixelSprite,
     PolychromeSprite,
-    LiquidGlass,
     Surface,
 }
 
@@ -224,7 +227,6 @@ pub enum Primitive {
     MonochromeSprite(MonochromeSprite),
     SubpixelSprite(SubpixelSprite),
     PolychromeSprite(PolychromeSprite),
-    LiquidGlass(LiquidGlass),
     Surface(PaintSurface),
 }
 
@@ -239,7 +241,6 @@ impl Primitive {
             Primitive::MonochromeSprite(sprite) => &sprite.bounds,
             Primitive::SubpixelSprite(sprite) => &sprite.bounds,
             Primitive::PolychromeSprite(sprite) => &sprite.bounds,
-            Primitive::LiquidGlass(liquid_glass) => &liquid_glass.bounds,
             Primitive::Surface(surface) => &surface.bounds,
         }
     }
@@ -253,7 +254,6 @@ impl Primitive {
             Primitive::MonochromeSprite(sprite) => &sprite.content_mask,
             Primitive::SubpixelSprite(sprite) => &sprite.content_mask,
             Primitive::PolychromeSprite(sprite) => &sprite.content_mask,
-            Primitive::LiquidGlass(liquid_glass) => &liquid_glass.content_mask,
             Primitive::Surface(surface) => &surface.content_mask,
         }
     }
@@ -281,8 +281,6 @@ struct BatchIterator<'a> {
     subpixel_sprites_iter: Peekable<slice::Iter<'a, SubpixelSprite>>,
     polychrome_sprites_start: usize,
     polychrome_sprites_iter: Peekable<slice::Iter<'a, PolychromeSprite>>,
-    liquid_glass_start: usize,
-    liquid_glass_iter: Peekable<slice::Iter<'a, LiquidGlass>>,
     surfaces_start: usize,
     surfaces_iter: Peekable<slice::Iter<'a, PaintSurface>>,
 }
@@ -313,10 +311,6 @@ impl<'a> Iterator for BatchIterator<'a> {
             (
                 self.polychrome_sprites_iter.peek().map(|s| s.order),
                 PrimitiveKind::PolychromeSprite,
-            ),
-            (
-                self.liquid_glass_iter.peek().map(|s| s.order),
-                PrimitiveKind::LiquidGlass,
             ),
             (
                 self.surfaces_iter.peek().map(|s| s.order),
@@ -453,27 +447,6 @@ impl<'a> Iterator for BatchIterator<'a> {
                     range: sprites_start..sprites_end,
                 })
             }
-            PrimitiveKind::LiquidGlass => {
-                let texture_id = self.liquid_glass_iter.peek().unwrap().tile.texture_id;
-                let primitives_start = self.liquid_glass_start;
-                let mut primitives_end = primitives_start + 1;
-                self.liquid_glass_iter.next();
-                while self
-                    .liquid_glass_iter
-                    .next_if(|primitive| {
-                        (primitive.order, batch_kind) < max_order_and_kind
-                            && primitive.tile.texture_id == texture_id
-                    })
-                    .is_some()
-                {
-                    primitives_end += 1;
-                }
-                self.liquid_glass_start = primitives_end;
-                Some(PrimitiveBatch::LiquidGlass {
-                    texture_id,
-                    range: primitives_start..primitives_end,
-                })
-            }
             PrimitiveKind::Surface => {
                 let surfaces_start = self.surfaces_start;
                 let mut surfaces_end = surfaces_start + 1;
@@ -519,11 +492,41 @@ pub enum PrimitiveBatch {
         texture_id: AtlasTextureId,
         range: Range<usize>,
     },
-    LiquidGlass {
-        texture_id: AtlasTextureId,
-        range: Range<usize>,
-    },
     Surfaces(Range<usize>),
+}
+
+impl PrimitiveBatch {
+    #[expect(missing_docs)]
+    pub fn label(&self) -> String {
+        match self {
+            Self::Shadows(range) => format!("shadows ({})", range.len()),
+            Self::Quads(range) => format!("quads ({})", range.len()),
+            Self::Paths(range) => format!("paths ({})", range.len()),
+            Self::Underlines(range) => format!("underlines ({})", range.len()),
+            Self::MonochromeSprites { texture_id, range } => {
+                format!(
+                    "monochrome sprites ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
+            Self::SubpixelSprites { texture_id, range } => {
+                format!(
+                    "subpixel sprites ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
+            Self::PolychromeSprites { texture_id, range } => {
+                format!(
+                    "polychrome sprites ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
+            Self::Surfaces(range) => format!("surfaces ({})", range.len()),
+        }
+    }
 }
 
 #[derive(Default, Debug, Copy, Clone)]
@@ -556,7 +559,7 @@ pub struct Underline {
     pub content_mask: ContentMask<ScaledPixels>,
     pub color: Hsla,
     pub thickness: ScaledPixels,
-    pub wavy: u32,
+    pub wavy: PaddedBool32,
 }
 
 impl From<Underline> for Primitive {
@@ -746,7 +749,7 @@ impl From<SubpixelSprite> for Primitive {
 pub struct PolychromeSprite {
     pub order: DrawOrder,
     pub pad: u32,
-    pub grayscale: bool,
+    pub grayscale: PaddedBool32,
     pub opacity: f32,
     pub bounds: Bounds<ScaledPixels>,
     pub content_mask: ContentMask<ScaledPixels>,
@@ -761,7 +764,7 @@ impl From<PolychromeSprite> for Primitive {
 }
 
 #[derive(Clone, Debug)]
-#[expect(missing_docs)]
+#[allow(missing_docs)]
 pub struct LiquidGlassParams {
     pub glass_bounds: Bounds<Pixels>,
     pub use_backdrop: bool,
@@ -781,41 +784,6 @@ pub struct LiquidGlassParams {
     pub blur_radius: f32,
     pub blur_iterations: u32,
     pub blur_downscale: f32,
-}
-
-#[derive(Clone, Debug)]
-#[repr(C)]
-#[expect(missing_docs)]
-pub struct LiquidGlass {
-    pub order: DrawOrder,
-    pub aberration_samples: u32,
-    pub blur_iterations: u32,
-    pub use_backdrop: u32,
-    pub bounds: Bounds<ScaledPixels>,
-    pub content_mask: ContentMask<ScaledPixels>,
-    pub tile: AtlasTile,
-    pub glass_bounds: Bounds<ScaledPixels>,
-    pub power_factor: f32,
-    pub opacity: f32,
-    pub a: f32,
-    pub b: f32,
-    pub c: f32,
-    pub d: f32,
-    pub f_power: f32,
-    pub noise: f32,
-    pub glow_weight: f32,
-    pub glow_edge0: f32,
-    pub glow_edge1: f32,
-    pub glow_bias: f32,
-    pub chromatic_aberration: f32,
-    pub blur_radius: f32,
-    pub blur_downscale: f32,
-}
-
-impl From<LiquidGlass> for Primitive {
-    fn from(liquid_glass: LiquidGlass) -> Self {
-        Primitive::LiquidGlass(liquid_glass)
-    }
 }
 
 #[derive(Clone, Debug)]

@@ -32,6 +32,7 @@ cloud_llm_client.workspace = true
 collections.workspace = true
 context_server.workspace = true
 db.workspace = true
+dx_catalog.workspace = true
 feature_flags.workspace = true
 fs.workspace = true
 futures.workspace = true
@@ -60,6 +61,7 @@ schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
+sha2.workspace = true
 shell_command_parser.workspace = true
 smallvec.workspace = true
 sqlez.workspace = true
@@ -83,6 +85,7 @@ zstd.workspace = true
 # sandbox helper can fetch a matching Linux `zed`.
 [target.'cfg(target_os = "windows")'.dependencies]
 release_channel.workspace = true
+windows.workspace = true
 
 [dev-dependencies]
 assets.workspace = true

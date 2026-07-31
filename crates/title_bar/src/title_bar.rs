@@ -338,13 +338,8 @@ impl Render for TitleBar {
                 client::Status::SignedOut | client::Status::AuthenticationError
             );
 
-        let center_dock = self.render_screen_dock(
-            project_name.clone(),
-            repository.clone(),
-            linked_worktree_name.clone(),
-            window,
-            cx,
-        );
+        let center_dock =
+            self.render_screen_dock(project_name, repository, linked_worktree_name, window, cx);
 
         let right_content = h_flex()
             .min_w_0()
@@ -916,7 +911,7 @@ impl TitleBar {
         let (zoomed_is_agent_panel, screen_host_pane) = {
             let workspace = workspace.read(cx);
             (
-                workspace.zoomed_is_agent_panel(),
+                workspace.zoomed_is_agent_panel(cx),
                 workspace.screen_host_pane(),
             )
         };
@@ -1138,10 +1133,7 @@ impl TitleBar {
                             zed_actions::OpenDefaultKeymap.boxed_clone(),
                         )
                         .action("Activity Log", OpenLog.boxed_clone())
-                        .action(
-                            "Skills",
-                            zed_actions::assistant::ManageSkills::default().boxed_clone(),
-                        )
+                        .action("Skills", zed_actions::assistant::ManageSkills.boxed_clone())
                         .action("ACP Registry", zed_actions::AcpRegistry.boxed_clone())
                         .action(
                             "Agent Panel",

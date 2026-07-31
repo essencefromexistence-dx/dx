@@ -200,7 +200,7 @@ fn trusted_receipts_in(root: &Path) -> Vec<TrustedDryRunReceipt> {
         .map(|entry| entry.path())
         .filter(|path| path.is_file() && has_receipt_extension(path))
         .collect::<Vec<_>>();
-    paths.sort_by(|left, right| receipt_modified(right).cmp(&receipt_modified(left)));
+    paths.sort_by_key(|path| std::cmp::Reverse(receipt_modified(path)));
 
     paths
         .into_iter()

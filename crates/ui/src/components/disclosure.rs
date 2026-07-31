@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use gpui::{AnyView, ClickEvent, CursorStyle, SharedString};
 
-use crate::prelude::*;
+use crate::{IconButtonShape, prelude::*};
 
 #[derive(IntoElement, RegisterComponent)]
 pub struct Disclosure {
@@ -14,6 +14,7 @@ pub struct Disclosure {
     cursor_style: CursorStyle,
     opened_icon: IconName,
     closed_icon: IconName,
+    shape: Option<IconButtonShape>,
     visible_on_hover: Option<SharedString>,
     tooltip: Option<Box<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
 }
@@ -29,6 +30,7 @@ impl Disclosure {
             cursor_style: CursorStyle::PointingHand,
             opened_icon: IconName::ChevronDown,
             closed_icon: IconName::ChevronRight,
+            shape: None,
             visible_on_hover: None,
             tooltip: None,
         }
@@ -59,6 +61,12 @@ impl Disclosure {
 
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
+        self
+    }
+
+    /// Sets the shape of the underlying [`IconButton`].
+    pub fn shape(mut self, shape: IconButtonShape) -> Self {
+        self.shape = Some(shape);
         self
     }
 }
@@ -101,6 +109,7 @@ impl RenderOnce for Disclosure {
         .icon_color(Color::Muted)
         .icon_size(IconSize::Small)
         .disabled(self.disabled)
+        .when_some(self.shape, |this, shape| this.shape(shape))
         .toggle_state(self.selected)
         .when_some(self.visible_on_hover.clone(), |this, group_name| {
             this.visible_on_hover(group_name)

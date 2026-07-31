@@ -115,7 +115,7 @@ fn count_plan_status(plans: Option<&Vec<Value>>, statuses: &[&str]) -> Option<us
         plans
             .iter()
             .filter_map(|plan| plan.get("status").and_then(Value::as_str))
-            .filter(|status| statuses.iter().any(|expected| *expected == *status))
+            .filter(|status| statuses.contains(status))
             .count(),
     )
 }

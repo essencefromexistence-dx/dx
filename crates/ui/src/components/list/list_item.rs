@@ -62,7 +62,7 @@ pub struct ListItem {
     focused: Option<bool>,
     tab_index: Option<isize>,
     focus_handle: Option<FocusHandle>,
-    docked_right: bool,
+    dock: Option<DockSide>,
     height: Option<DefiniteLength>,
     scroll_anchor: Option<ScrollAnchor>,
 }
@@ -96,7 +96,7 @@ impl ListItem {
             focused: None,
             tab_index: None,
             focus_handle: None,
-            docked_right: false,
+            dock: None,
             height: None,
             scroll_anchor: None,
         }
@@ -228,7 +228,12 @@ impl ListItem {
     }
 
     pub fn docked_right(mut self, docked_right: bool) -> Self {
-        self.docked_right = docked_right;
+        self.dock = docked_right.then_some(DockSide::Right);
+        self
+    }
+
+    pub fn dock(mut self, dock: impl Into<Option<DockSide>>) -> Self {
+        self.dock = dock.into();
         self
     }
 

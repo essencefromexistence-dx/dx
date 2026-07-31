@@ -23,7 +23,7 @@ use crate::dx_check_panel_view::view_rows::{
     notice_title, outcome_label, overflow_row, quick_fix_row, section, section_row, status_color,
     web_audit_row,
 };
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 
 mod tabs;
 mod view_rows;

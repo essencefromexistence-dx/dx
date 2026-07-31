@@ -26,7 +26,7 @@ pub(super) fn select_manifest_surface(
         return None;
     }
 
-    scored.sort_by(|left, right| right.0.cmp(&left.0));
+    scored.sort_by_key(|entry| std::cmp::Reverse(entry.0));
     let best_score = scored.first().map(|(score, _)| *score).unwrap_or(0);
     let best = scored
         .into_iter()

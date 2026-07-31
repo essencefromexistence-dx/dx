@@ -716,13 +716,15 @@ fn matching_history_items<'a>(
     let mut candidates_paths = HashMap::default();
 
     let mut history_items_by_worktrees = HashMap::default();
-    let mut processed_history_items = 0;
-    for found_path in history_items.into_iter().chain(currently_opened) {
+    for (processed_history_items, found_path) in history_items
+        .into_iter()
+        .chain(currently_opened)
+        .enumerate()
+    {
         if processed_history_items >= MAX_FILE_FINDER_HISTORY_ITEMS {
             log::warn!("file finder history item cap reached at {MAX_FILE_FINDER_HISTORY_ITEMS}");
             break;
         }
-        processed_history_items += 1;
 
         // Only match history items names, otherwise their paths may match too many queries,
         // producing false positives. E.g. `foo` would match both `something/foo/bar.rs` and

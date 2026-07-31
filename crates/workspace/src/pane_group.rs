@@ -35,6 +35,8 @@ pub struct PaneGroup {
 pub struct PaneRenderResult {
     pub element: gpui::AnyElement,
     pub contains_active_pane: bool,
+    #[cfg(any(test, feature = "test-support"))]
+    pub decorated_pane_ix: Option<usize>,
 }
 
 impl PaneGroup {
@@ -96,10 +98,6 @@ impl PaneGroup {
             Member::Pane(_) => None,
             Member::Axis(axis) => axis.bounding_box_for_pane(pane),
         }
-    }
-
-    pub fn width_fraction_for_pane(&self, pane: &Entity<Pane>) -> Option<f32> {
-        self.root.width_fraction_for_pane(pane)
     }
 
     pub fn full_height_column_count(&self) -> usize {
@@ -232,11 +230,14 @@ impl PaneGroup {
     pub fn render(
         &self,
         zoomed: Option<&AnyWeakView>,
+        maximized: Option<&WeakEntity<Pane>>,
         render_cx: &dyn PaneLeaderDecorator,
         window: &mut Window,
         cx: &mut App,
     ) -> impl IntoElement {
-        self.root.render(0, zoomed, render_cx, window, cx).element
+        self.root
+            .render(0, zoomed, maximized, render_cx, window, cx)
+            .element
     }
 
     pub fn panes(&self) -> Vec<&Entity<Pane>> {
@@ -315,13 +316,6 @@ impl Member {
         match self {
             Member::Pane(_) => 1,
             Member::Axis(axis) => axis.full_height_column_count(),
-        }
-    }
-
-    fn width_fraction_for_pane(&self, pane: &Entity<Pane>) -> Option<f32> {
-        match self {
-            Member::Pane(found) => (found == pane).then_some(1.0),
-            Member::Axis(axis) => axis.width_fraction_for_pane(pane),
         }
     }
 }
@@ -427,11 +421,11 @@ impl PaneLeaderDecorator for PaneRenderContext<'_> {
                         }
                     }
                     ParticipantLocation::UnsharedProject => Some(Label::new(format!(
-                        "{} is viewing an unshared Dx project",
+                        "{} is viewing an unshared Zed project",
                         leader.user.username
                     ))),
                     ParticipantLocation::External => Some(Label::new(format!(
-                        "{} is viewing a window outside of Dx",
+                        "{} is viewing a window outside of Zed",
                         leader.user.username
                     ))),
                 };
@@ -539,6 +533,7 @@ impl Member {
         &self,
         basis: usize,
         zoomed: Option<&AnyWeakView>,
+        maximized: Option<&WeakEntity<Pane>>,
         render_cx: &dyn PaneLeaderDecorator,
         window: &mut Window,
         cx: &mut App,
@@ -549,38 +544,79 @@ impl Member {
                     return PaneRenderResult {
                         element: div().into_any(),
                         contains_active_pane: false,
+                        #[cfg(any(test, feature = "test-support"))]
+                        decorated_pane_ix: None,
                     };
                 }
 
+                let is_maximized = if let Some(maximized) = maximized {
+                    if maximized.upgrade().as_ref() != Some(pane) {
+                        return PaneRenderResult {
+                            element: div().into_any(),
+                            contains_active_pane: false,
+                            #[cfg(any(test, feature = "test-support"))]
+                            decorated_pane_ix: None,
+                        };
+                    }
+                    true
+                } else {
+                    false
+                };
+
                 let decoration = render_cx.decorate(pane, cx);
                 let is_active = pane == render_cx.active_pane();
+
+                let pane = div()
+                    .relative()
+                    .size_full()
+                    .when(is_maximized, |this| {
+                        this.bg(cx.theme().colors().background)
+                            .border_1()
+                            .border_color(cx.theme().colors().border)
+                            .shadow_lg()
+                            .overflow_hidden()
+                    })
+                    .child(
+                        AnyView::from(pane.clone())
+                            .cached(StyleRefinement::default().v_flex().size_full()),
+                    )
+                    .when_some(decoration.border, |this, color| {
+                        this.child(
+                            div()
+                                .absolute()
+                                .size_full()
+                                .left_0()
+                                .top_0()
+                                .border_2()
+                                .border_color(color),
+                        )
+                    })
+                    .children(decoration.status_box);
 
                 PaneRenderResult {
                     element: div()
                         .relative()
                         .flex_1()
                         .size_full()
-                        .child(
-                            AnyView::from(pane.clone())
-                                .cached(StyleRefinement::default().v_flex().size_full()),
-                        )
-                        .when_some(decoration.border, |this, color| {
-                            this.child(
-                                div()
-                                    .absolute()
-                                    .size_full()
-                                    .left_0()
-                                    .top_0()
-                                    .border_2()
-                                    .border_color(color),
-                            )
-                        })
-                        .children(decoration.status_box)
+                        .when(is_maximized, |this| this.p_2())
+                        .child(pane)
                         .into_any(),
                     contains_active_pane: is_active,
+                    #[cfg(any(test, feature = "test-support"))]
+                    decorated_pane_ix: None,
                 }
             }
-            Member::Axis(axis) => axis.render(basis + 1, zoomed, render_cx, window, cx),
+            Member::Axis(axis) => axis.render(basis + 1, zoomed, maximized, render_cx, window, cx),
+        }
+    }
+
+    pub fn contains_pane(&self, needle: &Entity<Pane>) -> bool {
+        match self {
+            Member::Pane(pane) => pane == needle,
+            Member::Axis(axis) => axis
+                .members
+                .iter()
+                .any(|member| member.contains_pane(needle)),
         }
     }
 
@@ -929,48 +965,32 @@ impl PaneAxis {
         }
     }
 
-    fn width_fraction_for_pane(&self, pane: &Entity<Pane>) -> Option<f32> {
-        let flexes = self.flexes.lock();
-        let total_flex = flexes.iter().copied().sum::<f32>();
-
-        for (index, member) in self.members.iter().enumerate() {
-            let child_fraction = if total_flex > 0.0 {
-                flexes[index] / total_flex
-            } else {
-                1.0 / self.members.len() as f32
-            };
-
-            match member {
-                Member::Pane(found) => {
-                    if found == pane {
-                        return Some(match self.axis {
-                            Axis::Horizontal => child_fraction,
-                            Axis::Vertical => 1.0,
-                        });
-                    }
-                }
-                Member::Axis(axis) => {
-                    if let Some(descendant_fraction) = axis.width_fraction_for_pane(pane) {
-                        return Some(match self.axis {
-                            Axis::Horizontal => child_fraction * descendant_fraction,
-                            Axis::Vertical => descendant_fraction,
-                        });
+    fn render(
+        &self,
+        basis: usize,
+        zoomed: Option<&AnyWeakView>,
+        maximized: Option<&WeakEntity<Pane>>,
+        render_cx: &dyn PaneLeaderDecorator,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> PaneRenderResult {
+        if let Some(maximized) = maximized {
+            if let Some(maximized_pane) = maximized.upgrade() {
+                for member in &self.members {
+                    if member.contains_pane(&maximized_pane) {
+                        return member.render(
+                            basis,
+                            zoomed,
+                            Some(maximized),
+                            render_cx,
+                            window,
+                            cx,
+                        );
                     }
                 }
             }
         }
 
-        None
-    }
-
-    fn render(
-        &self,
-        basis: usize,
-        zoomed: Option<&AnyWeakView>,
-        render_cx: &dyn PaneLeaderDecorator,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> PaneRenderResult {
         debug_assert!(self.members.len() == self.flexes.lock().len());
         let mut active_pane_ix = None;
         let mut contains_active_pane = false;
@@ -985,7 +1005,7 @@ impl PaneAxis {
                     Member::Pane(pane) => {
                         is_leaf_pane[ix] = true;
                         if pane == render_cx.active_pane() {
-                            active_pane_ix = Some(ix);
+                            active_pane_ix = pane.read(cx).has_focus(window, cx).then_some(ix);
                             contains_active_pane = true;
                         }
                     }
@@ -994,7 +1014,7 @@ impl PaneAxis {
                     }
                 }
 
-                let result = member.render((basis + ix) * 10, zoomed, render_cx, window, cx);
+                let result = member.render((basis + ix) * 10, zoomed, None, render_cx, window, cx);
                 if result.contains_active_pane {
                     contains_active_pane = true;
                 }
@@ -1017,6 +1037,8 @@ impl PaneAxis {
         PaneRenderResult {
             element,
             contains_active_pane,
+            #[cfg(any(test, feature = "test-support"))]
+            decorated_pane_ix: active_pane_ix,
         }
     }
 }

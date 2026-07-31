@@ -1,8 +1,7 @@
 use std::{cell::Cell, rc::Rc, sync::atomic::Ordering};
 
-use ::util::ResultExt;
 use anyhow::Context as _;
-use webview2_com::Microsoft::Web::WebView2::Win32::*;
+use gpui_util::ResultExt;
 use windows::{
     Win32::{
         Foundation::*,
@@ -15,7 +14,7 @@ use windows::{
             WindowsAndMessaging::*,
         },
     },
-    core::{Interface, PCWSTR},
+    core::PCWSTR,
 };
 
 use crate::*;
@@ -32,6 +31,52 @@ pub(crate) const WM_GPUI_KEYDOWN: u32 = WM_USER + 8;
 
 const SIZE_MOVE_LOOP_TIMER_ID: usize = 1;
 
+/// Coordinates window draws on the UI thread. Owned by the platform and
+/// shared with every window (like `WindowsPlatformState::cursor_visible`),
+/// because the coordination is inherently cross-window: while window A is
+/// drawing, a re-entrant paint request for window B must be deferred.
+pub(crate) struct DrawCoordinator {
+    /// Whether some window is currently inside `draw_window`. Win32 can
+    /// re-enter the window procedure while a draw is in progress (e.g.
+    /// cross-thread `SendMessage` dispatch during message pumping, or modal
+    /// message loops entered by COM calls), and drawing re-entrantly would
+    /// nest GPUI draws. Nested draws are wasted work whose output is
+    /// immediately redrawn, so we defer them instead.
+    drawing: Cell<bool>,
+}
+
+impl DrawCoordinator {
+    pub(crate) fn new() -> Self {
+        Self {
+            drawing: Cell::new(false),
+        }
+    }
+
+    fn try_begin_draw(&self) -> Option<DrawWindowGuard<'_>> {
+        // This only covers the `draw_window` span (which extends past the GPUI
+        // draw, through presentation and IME updates). Requests that arrive
+        // re-entrantly during GPUI-initiated draws (e.g. key dispatch or
+        // opening a window draws synchronously) are deferred by GPUI's
+        // `on_request_frame` callback itself, which no-ops in that case.
+        if self.drawing.get() {
+            None
+        } else {
+            self.drawing.set(true);
+            Some(DrawWindowGuard { coordinator: self })
+        }
+    }
+}
+
+struct DrawWindowGuard<'a> {
+    coordinator: &'a DrawCoordinator,
+}
+
+impl Drop for DrawWindowGuard<'_> {
+    fn drop(&mut self) {
+        self.coordinator.drawing.set(false);
+    }
+}
+
 impl WindowsWindowInner {
     pub(crate) fn handle_msg(
         self: &Rc<Self>,
@@ -41,13 +86,14 @@ impl WindowsWindowInner {
         lparam: LPARAM,
     ) -> LRESULT {
         let handled = match msg {
-            // eagerly activate the window, so calls to `active_window` will work correctly
-            WM_MOUSEACTIVATE => {
-                unsafe { SetActiveWindow(handle).ok() };
-                None
-            }
-            WM_ACTIVATE => self.handle_activate_msg(handle, wparam),
-            WM_CAPTURECHANGED => self.handle_capture_changed_msg(handle),
+            // `DefWindowProc` answers `MA_NOACTIVATE` for a left click on `HTCAPTION`.
+            // The activation is only triggered when `DefWindowProc` handles the following `WM_NCLBUTTONDOWN`.
+            // The GPUI event is dispatched in between, so a click handler runs while `active_window` is still
+            // whichever window was active before the click. If that handler consumes the
+            // press, `DefWindowProc` never sees it, so the window is never activated at all.
+            // So, let's eagerly activate the window.
+            WM_MOUSEACTIVATE => Some(MA_ACTIVATE as isize),
+            WM_ACTIVATE => self.handle_activate_msg(wparam),
             WM_CREATE => self.handle_create_msg(handle),
             WM_MOVE => self.handle_move_msg(handle, lparam),
             WM_SIZE => self.handle_size_msg(wparam, lparam),
@@ -63,7 +109,7 @@ impl WindowsWindowInner {
             WM_CLOSE => self.handle_close_msg(),
             WM_DESTROY => self.handle_destroy_msg(handle),
             WM_MOUSEMOVE => self.handle_mouse_move_msg(handle, lparam, wparam),
-            WM_MOUSELEAVE | WM_NCMOUSELEAVE => self.handle_mouse_leave_msg(handle),
+            WM_MOUSELEAVE | WM_NCMOUSELEAVE => self.handle_mouse_leave_msg(),
             WM_NCMOUSEMOVE => self.handle_nc_mouse_move_msg(handle, lparam),
             // Treat double click as a second single click, since we track the double clicks ourselves.
             // If you don't interact with any elements, this will fall through to the windows default
@@ -86,16 +132,10 @@ impl WindowsWindowInner {
             WM_NCMBUTTONUP => {
                 self.handle_nc_mouse_up_msg(handle, MouseButton::Middle, wparam, lparam)
             }
-            WM_LBUTTONDOWN | WM_LBUTTONDBLCLK => {
-                self.handle_mouse_down_msg(handle, MouseButton::Left, lparam)
-            }
-            WM_RBUTTONDOWN | WM_RBUTTONDBLCLK => {
-                self.handle_mouse_down_msg(handle, MouseButton::Right, lparam)
-            }
-            WM_MBUTTONDOWN | WM_MBUTTONDBLCLK => {
-                self.handle_mouse_down_msg(handle, MouseButton::Middle, lparam)
-            }
-            WM_XBUTTONDOWN | WM_XBUTTONDBLCLK => {
+            WM_LBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Left, lparam),
+            WM_RBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Right, lparam),
+            WM_MBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Middle, lparam),
+            WM_XBUTTONDOWN => {
                 self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_down_msg)
             }
             WM_LBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Left, lparam),
@@ -104,12 +144,11 @@ impl WindowsWindowInner {
             WM_XBUTTONUP => {
                 self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_up_msg)
             }
-            WM_CONTEXTMENU => self.handle_context_menu_msg(handle, lparam),
             WM_MOUSEWHEEL => self.handle_mouse_wheel_msg(handle, wparam, lparam),
             WM_MOUSEHWHEEL => self.handle_mouse_horizontal_wheel_msg(handle, wparam, lparam),
             WM_SYSKEYUP => self.handle_syskeyup_msg(wparam, lparam),
             WM_KEYUP => self.handle_keyup_msg(wparam, lparam),
-            WM_GPUI_KEYDOWN => self.handle_accelerated_keydown_msg(wparam, lparam),
+            WM_GPUI_KEYDOWN => self.handle_keydown_msg(wparam, lparam),
             WM_CHAR => self.handle_char_msg(wparam),
             WM_IME_STARTCOMPOSITION => self.handle_ime_position(handle),
             WM_IME_COMPOSITION => self.handle_ime_composition(handle, lparam),
@@ -158,7 +197,6 @@ impl WindowsWindowInner {
                 )?);
             }
         }
-        notify_webview_parent_window_position_changed(handle);
         if let Some(mut callback) = self.state.callbacks.moved.take() {
             callback();
             self.state.callbacks.moved.set(Some(callback));
@@ -310,23 +348,6 @@ impl WindowsWindowInner {
         self.start_tracking_mouse(handle, TME_LEAVE);
         self.restore_cursor_after_hide();
 
-        let client_point = POINT {
-            x: lparam.signed_loword().into(),
-            y: lparam.signed_hiword().into(),
-        };
-        if let Some((target, relative_point)) =
-            webview_passthrough_target_for_point(&self.state, handle, client_point)
-        {
-            send_webview_mouse_move(
-                &self.state.webview_hover_active,
-                &target,
-                relative_point,
-                webview_mouse_virtual_keys_from_wparam(wparam),
-            );
-            return Some(0);
-        }
-        send_webview_mouse_leave(&self.state.webview_hover_active, handle);
-
         let Some(mut func) = self.state.callbacks.input.take() else {
             return Some(1);
         };
@@ -357,8 +378,7 @@ impl WindowsWindowInner {
         if handled { Some(0) } else { Some(1) }
     }
 
-    fn handle_mouse_leave_msg(&self, handle: HWND) -> Option<isize> {
-        send_webview_mouse_leave(&self.state.webview_hover_active, handle);
+    fn handle_mouse_leave_msg(&self) -> Option<isize> {
         self.state.hovered.set(false);
         // The next window's `WM_SETCURSOR` picks its own cursor, so we just clear
         // the flag for tight `is_cursor_visible()` semantics.
@@ -374,121 +394,72 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn clear_webview_passthrough_capture_state(&self, handle: HWND, clear_hover: bool) {
-        if clear_hover {
-            send_webview_mouse_leave(&self.state.webview_hover_active, handle);
-        }
-        self.state.webview_input_captured.set(false);
-        unsafe {
-            if GetCapture() == handle {
-                ReleaseCapture().log_err();
-            }
-        }
-    }
-
-    fn handle_capture_changed_msg(&self, handle: HWND) -> Option<isize> {
-        self.clear_webview_passthrough_capture_state(handle, false);
-        None
-    }
-
     fn handle_syskeyup_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return None;
-        }
+        let input = handle_key_event(wparam, lparam, &self.state, |keystroke, _| {
+            PlatformInput::KeyUp(KeyUpEvent { keystroke })
+        })?;
+        let mut func = self.state.callbacks.input.take()?;
 
-        {
-            let input = handle_key_event(wparam, lparam, &self.state, |keystroke, _| {
-                PlatformInput::KeyUp(KeyUpEvent { keystroke })
-            })?;
-            let mut func = self.state.callbacks.input.take()?;
+        func(input);
+        self.state.callbacks.input.set(Some(func));
 
-            func(input);
-            self.state.callbacks.input.set(Some(func));
-
-            // Always return 0 to indicate that the message was handled, so we could properly handle `ModifiersChanged` event.
-            return Some(0);
-        }
+        // Always return 0 to indicate that the message was handled, so we could properly handle `ModifiersChanged` event.
+        Some(0)
     }
 
     // It's a known bug that you can't trigger `ctrl-shift-0`. See:
     // https://superuser.com/questions/1455762/ctrl-shift-number-key-combination-has-stopped-working-for-a-few-numbers
-    fn handle_accelerated_keydown_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return Some(1);
-        }
-
-        self.handle_keydown_msg(wparam, lparam)
-    }
-
     fn handle_keydown_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return None;
-        }
+        let Some(input) = handle_key_event(
+            wparam,
+            lparam,
+            &self.state,
+            |keystroke, prefer_character_input| {
+                PlatformInput::KeyDown(KeyDownEvent {
+                    keystroke,
+                    is_held: lparam.0 & (0x1 << 30) > 0,
+                    prefer_character_input,
+                })
+            },
+        ) else {
+            return Some(1);
+        };
 
-        {
-            let Some(input) = handle_key_event(
-                wparam,
-                lparam,
-                &self.state,
-                |keystroke, prefer_character_input| {
-                    PlatformInput::KeyDown(KeyDownEvent {
-                        keystroke,
-                        is_held: lparam.0 & (0x1 << 30) > 0,
-                        prefer_character_input,
-                    })
-                },
-            ) else {
-                return Some(1);
-            };
+        let Some(mut func) = self.state.callbacks.input.take() else {
+            return Some(1);
+        };
 
-            let Some(mut func) = self.state.callbacks.input.take() else {
-                return Some(1);
-            };
+        let handled = !func(input).propagate;
 
-            let handled = !func(input).propagate;
+        self.state.callbacks.input.set(Some(func));
 
-            self.state.callbacks.input.set(Some(func));
-
-            return if handled { Some(0) } else { Some(1) };
-        }
+        if handled { Some(0) } else { Some(1) }
     }
 
     fn handle_keyup_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return None;
-        }
+        let Some(input) = handle_key_event(wparam, lparam, &self.state, |keystroke, _| {
+            PlatformInput::KeyUp(KeyUpEvent { keystroke })
+        }) else {
+            return Some(1);
+        };
 
-        {
-            let Some(input) = handle_key_event(wparam, lparam, &self.state, |keystroke, _| {
-                PlatformInput::KeyUp(KeyUpEvent { keystroke })
-            }) else {
-                return Some(1);
-            };
+        let Some(mut func) = self.state.callbacks.input.take() else {
+            return Some(1);
+        };
 
-            let Some(mut func) = self.state.callbacks.input.take() else {
-                return Some(1);
-            };
+        let handled = !func(input).propagate;
+        self.state.callbacks.input.set(Some(func));
 
-            let handled = !func(input).propagate;
-            self.state.callbacks.input.set(Some(func));
-
-            return if handled { Some(0) } else { Some(1) };
-        }
+        if handled { Some(0) } else { Some(1) }
     }
 
     fn handle_char_msg(&self, wparam: WPARAM) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return None;
-        }
+        let input = self.parse_char_message(wparam)?;
+        self.with_input_handler(|input_handler| {
+            input_handler.replace_text_in_range(None, &input);
+        });
 
-        {
-            let input = self.parse_char_message(wparam)?;
-            self.with_input_handler(|input_handler| {
-                input_handler.replace_text_in_range(None, &input);
-            });
-
-            return Some(0);
-        }
+        Some(0)
     }
 
     fn handle_mouse_down_msg(
@@ -497,57 +468,15 @@ impl WindowsWindowInner {
         button: MouseButton,
         lparam: LPARAM,
     ) -> Option<isize> {
+        unsafe { SetCapture(handle) };
+
+        let Some(mut func) = self.state.callbacks.input.take() else {
+            return Some(1);
+        };
         let x = lparam.signed_loword();
         let y = lparam.signed_hiword();
         let physical_point = point(DevicePixels(x as i32), DevicePixels(y as i32));
         let click_count = self.state.click_state.update(button, physical_point);
-        let client_point = POINT {
-            x: x.into(),
-            y: y.into(),
-        };
-
-        if let Some((target, relative_point)) =
-            webview_passthrough_target_for_point(&self.state, handle, client_point)
-            && let Some(event_kind) = webview_mouse_button_down_kind(button)
-        {
-            self.state.webview_input_captured.set(true);
-            focus_webview_controller(handle, &target);
-            unsafe {
-                let _ = SetCapture(handle);
-            }
-            send_webview_mouse_move(
-                &self.state.webview_hover_active,
-                &target,
-                relative_point,
-                webview_mouse_virtual_keys(current_modifiers(), None),
-            );
-            send_webview_mouse_input(
-                &target,
-                event_kind,
-                webview_mouse_virtual_keys(current_modifiers(), Some(button)),
-                webview_button_mouse_data(button),
-                relative_point,
-            );
-            return Some(0);
-        }
-
-        update_webview_passthrough_focus(handle, false);
-
-        unsafe { SetCapture(handle) };
-
-        self.dispatch_gpui_mouse_down(button, x.into(), y.into(), click_count)
-    }
-
-    fn dispatch_gpui_mouse_down(
-        &self,
-        button: MouseButton,
-        x: i32,
-        y: i32,
-        click_count: usize,
-    ) -> Option<isize> {
-        let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
-        };
         let scale_factor = self.state.scale_factor.get();
 
         let input = PlatformInput::MouseDown(MouseDownEvent {
@@ -565,60 +494,23 @@ impl WindowsWindowInner {
 
     fn handle_mouse_up_msg(
         &self,
-        handle: HWND,
+        _handle: HWND,
         button: MouseButton,
         lparam: LPARAM,
     ) -> Option<isize> {
-        let client_point = POINT {
-            x: lparam.signed_loword().into(),
-            y: lparam.signed_hiword().into(),
-        };
-        if self.state.webview_input_captured.get()
-            && let Some(target) = webview_passthrough_target(handle)
-            && let Some(event_kind) = webview_mouse_button_up_kind(button)
-        {
-            self.state.webview_input_captured.set(false);
-            unsafe {
-                ReleaseCapture().log_err();
-            }
-            let relative_point = POINT {
-                x: client_point.x - target.bounds.left,
-                y: client_point.y - target.bounds.top,
-            };
-            send_webview_mouse_input(
-                &target,
-                event_kind,
-                webview_mouse_virtual_keys(current_modifiers(), None),
-                webview_button_mouse_data(button),
-                relative_point,
-            );
-            send_webview_mouse_move(
-                &self.state.webview_hover_active,
-                &target,
-                relative_point,
-                webview_mouse_virtual_keys(current_modifiers(), None),
-            );
-            if button == MouseButton::Left {
-                focus_webview_controller(handle, &target);
-            }
-            return Some(0);
-        }
-
         unsafe { ReleaseCapture().log_err() };
 
-        self.dispatch_gpui_mouse_up(button, client_point.x, client_point.y)
-    }
-
-    fn dispatch_gpui_mouse_up(&self, button: MouseButton, x: i32, y: i32) -> Option<isize> {
         let Some(mut func) = self.state.callbacks.input.take() else {
             return Some(1);
         };
+        let x = lparam.signed_loword() as f32;
+        let y = lparam.signed_hiword() as f32;
         let click_count = self.state.click_state.current_count.get();
         let scale_factor = self.state.scale_factor.get();
 
         let input = PlatformInput::MouseUp(MouseUpEvent {
             button,
-            position: logical_point(x as f32, y as f32, scale_factor),
+            position: logical_point(x, y, scale_factor),
             modifiers: current_modifiers(),
             click_count,
         });
@@ -643,56 +535,12 @@ impl WindowsWindowInner {
         handler(self, handle, MouseButton::Navigate(nav_dir), lparam)
     }
 
-    fn handle_context_menu_msg(&self, handle: HWND, lparam: LPARAM) -> Option<isize> {
-        let client_point = if lparam.0 == -1 {
-            let mut cursor_point = POINT::default();
-            unsafe {
-                GetCursorPos(&mut cursor_point).log_err();
-                ScreenToClient(handle, &mut cursor_point).ok().log_err();
-            }
-            cursor_point
-        } else {
-            let mut point = POINT {
-                x: lparam.signed_loword().into(),
-                y: lparam.signed_hiword().into(),
-            };
-            unsafe {
-                ScreenToClient(handle, &mut point).ok().log_err();
-            }
-            point
-        };
-
-        if webview_passthrough_target_for_point(&self.state, handle, client_point).is_some() {
-            Some(0)
-        } else {
-            None
-        }
-    }
-
     fn handle_mouse_wheel_msg(
         &self,
         handle: HWND,
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> Option<isize> {
-        let mut client_point = POINT {
-            x: lparam.signed_loword().into(),
-            y: lparam.signed_hiword().into(),
-        };
-        unsafe { ScreenToClient(handle, &mut client_point).ok().log_err() };
-        if let Some((target, relative_point)) =
-            webview_passthrough_target_for_point(&self.state, handle, client_point)
-        {
-            send_webview_mouse_input(
-                &target,
-                COREWEBVIEW2_MOUSE_EVENT_KIND_WHEEL,
-                webview_mouse_virtual_keys_from_wparam(wparam),
-                wheel_mouse_data_from_wparam(wparam),
-                relative_point,
-            );
-            return Some(0);
-        }
-
         let modifiers = current_modifiers();
 
         let Some(mut func) = self.state.callbacks.input.take() else {
@@ -746,24 +594,6 @@ impl WindowsWindowInner {
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> Option<isize> {
-        let mut client_point = POINT {
-            x: lparam.signed_loword().into(),
-            y: lparam.signed_hiword().into(),
-        };
-        unsafe { ScreenToClient(handle, &mut client_point).ok().log_err() };
-        if let Some((target, relative_point)) =
-            webview_passthrough_target_for_point(&self.state, handle, client_point)
-        {
-            send_webview_mouse_input(
-                &target,
-                COREWEBVIEW2_MOUSE_EVENT_KIND_HORIZONTAL_WHEEL,
-                webview_mouse_virtual_keys_from_wparam(wparam),
-                wheel_mouse_data_from_wparam(wparam),
-                relative_point,
-            );
-            return Some(0);
-        }
-
         let Some(mut func) = self.state.callbacks.input.take() else {
             return Some(1);
         };
@@ -810,9 +640,6 @@ impl WindowsWindowInner {
     }
 
     fn handle_ime_position(&self, handle: HWND) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return None;
-        }
         if let Some(caret_position) = self.retrieve_caret_position() {
             self.update_ime_position(handle, caret_position);
         }
@@ -849,10 +676,9 @@ impl WindowsWindowInner {
     }
 
     fn update_ime_enabled(&self, handle: HWND) {
-        let ime_enabled = self.webview_keyboard_focused()
-            || self
-                .with_input_handler(|input_handler| input_handler.query_accepts_text_input())
-                .unwrap_or(false);
+        let ime_enabled = self
+            .with_input_handler(|input_handler| input_handler.query_accepts_text_input())
+            .unwrap_or(false);
         if ime_enabled == self.state.ime_enabled.get() {
             return;
         }
@@ -863,15 +689,14 @@ impl WindowsWindowInner {
                     .ok()
                     .log_err();
             } else {
-                if let Some(ctx) = ImeContext::get(handle) {
-                    let result = ImmNotifyIME(*ctx, NI_COMPOSITIONSTR, CPS_COMPLETE, 0).ok();
-                    match result {
-                        Err(error) if error.code().0 != 0 => {
-                            Err::<(), _>(error).log_err();
-                        }
-                        // Some IME implementations report false without setting a Windows error.
-                        _ => {}
-                    }
+                // The IME context is per-thread, so without this check a change in this
+                // window's text input state could commit an IME composition happening in another window.
+                if GetFocus() == handle
+                    && let Some(ctx) = ImeContext::get(handle)
+                {
+                    ImmNotifyIME(*ctx, NI_COMPOSITIONSTR, CPS_COMPLETE, 0)
+                        .ok()
+                        .log_err();
                 }
                 ImmAssociateContextEx(handle, HIMC::default(), 0)
                     .ok()
@@ -881,9 +706,6 @@ impl WindowsWindowInner {
     }
 
     fn handle_ime_composition(&self, handle: HWND, lparam: LPARAM) -> Option<isize> {
-        if self.webview_keyboard_focused() {
-            return None;
-        }
         let ctx = ImeContext::get(handle)?;
         self.handle_ime_composition_inner(*ctx, lparam)
     }
@@ -957,12 +779,8 @@ impl WindowsWindowInner {
         }
     }
 
-    fn handle_activate_msg(self: &Rc<Self>, handle: HWND, wparam: WPARAM) -> Option<isize> {
+    fn handle_activate_msg(self: &Rc<Self>, wparam: WPARAM) -> Option<isize> {
         let activated = wparam.loword() > 0;
-        if !activated {
-            self.clear_webview_passthrough_capture_state(handle, true);
-            update_webview_passthrough_focus(handle, false);
-        }
 
         let events = self
             .state
@@ -1122,6 +940,10 @@ impl WindowsWindowInner {
     }
 
     fn handle_hit_test_msg(&self, handle: HWND, lparam: LPARAM) -> Option<isize> {
+        if self.state.is_fullscreen() {
+            return None;
+        }
+
         let callback = self.state.callbacks.hit_test_window_control.take();
         let drag_area = if let Some(mut callback) = callback {
             let area = callback();
@@ -1129,23 +951,20 @@ impl WindowsWindowInner {
                 .callbacks
                 .hit_test_window_control
                 .set(Some(callback));
-            if let Some(area) = area {
-                match area {
-                    WindowControlArea::Drag => Some(HTCAPTION as _),
-                    WindowControlArea::Close => return Some(HTCLOSE as _),
-                    WindowControlArea::Max => return Some(HTMAXBUTTON as _),
-                    WindowControlArea::Min => return Some(HTMINBUTTON as _),
-                }
-            } else {
-                None
-            }
+            area.and_then(|area| match area {
+                WindowControlArea::Drag if self.is_movable => Some(HTCAPTION as _),
+                WindowControlArea::Drag => None,
+                WindowControlArea::Close => Some(HTCLOSE as _),
+                WindowControlArea::Max if self.is_resizable => Some(HTMAXBUTTON as _),
+                WindowControlArea::Max if self.is_movable => Some(HTCAPTION as _),
+                WindowControlArea::Max => Some(HTNOWHERE as _),
+                WindowControlArea::Min if self.is_minimizable => Some(HTMINBUTTON as _),
+                WindowControlArea::Min if self.is_movable => Some(HTCAPTION as _),
+                WindowControlArea::Min => Some(HTNOWHERE as _),
+            })
         } else {
             None
         };
-
-        if !self.is_movable || self.state.is_fullscreen() {
-            return drag_area;
-        }
 
         if !self.hide_title_bar {
             // If the OS draws the title bar, we don't need to handle hit test messages.
@@ -1161,8 +980,13 @@ impl WindowsWindowInner {
             x: lparam.signed_loword().into(),
             y: lparam.signed_hiword().into(),
         };
+
         unsafe { ScreenToClient(handle, &mut cursor_point).ok().log_err() };
-        if !self.state.is_maximized() && 0 <= cursor_point.y && cursor_point.y <= frame_y {
+        if self.is_resizable
+            && !self.state.is_maximized()
+            && 0 <= cursor_point.y
+            && cursor_point.y <= frame_y
+        {
             // x-axis actually goes from -frame_x to 0
             return Some(if cursor_point.x <= 0 {
                 HTTOPLEFT
@@ -1288,11 +1112,12 @@ impl WindowsWindowInner {
             && let Some(last_pressed) = last_pressed
         {
             let handled = match (wparam.0 as u32, last_pressed) {
-                (HTMINBUTTON, HTMINBUTTON) => {
+                (HTMINBUTTON, HTMINBUTTON) if self.is_minimizable => {
                     unsafe { ShowWindowAsync(handle, SW_MINIMIZE).ok().log_err() };
                     true
                 }
-                (HTMAXBUTTON, HTMAXBUTTON) => {
+                (HTMINBUTTON, HTMINBUTTON) => true,
+                (HTMAXBUTTON, HTMAXBUTTON) if self.is_resizable => {
                     if self.state.is_maximized() {
                         unsafe { ShowWindowAsync(handle, SW_NORMAL).ok().log_err() };
                     } else {
@@ -1300,6 +1125,7 @@ impl WindowsWindowInner {
                     }
                     true
                 }
+                (HTMAXBUTTON, HTMAXBUTTON) => true,
                 (HTCLOSE, HTCLOSE) => {
                     unsafe {
                         PostMessageW(Some(handle), WM_CLOSE, WPARAM::default(), LPARAM::default())
@@ -1349,13 +1175,6 @@ impl WindowsWindowInner {
         {
             return None;
         }
-        if let Some(cursor) = self.webview_cursor(handle) {
-            unsafe {
-                SetCursor(Some(cursor));
-            }
-            return Some(1);
-        }
-
         let cursor = if self.state.cursor_visible.load(Ordering::Relaxed) {
             self.state.current_cursor.get()
         } else {
@@ -1365,19 +1184,6 @@ impl WindowsWindowInner {
             SetCursor(cursor);
         };
         Some(0)
-    }
-
-    fn webview_cursor(&self, handle: HWND) -> Option<HCURSOR> {
-        let mut cursor_point = POINT::default();
-        unsafe {
-            if GetCursorPos(&mut cursor_point).is_err() {
-                return None;
-            }
-            ScreenToClient(handle, &mut cursor_point).ok().log_err();
-        }
-
-        webview_passthrough_target_for_point(&self.state, handle, cursor_point)
-            .and_then(|(target, _)| target.cursor)
     }
 
     fn handle_system_settings_changed(
@@ -1441,8 +1247,6 @@ impl WindowsWindowInner {
     fn handle_window_visibility_changed(&self, handle: HWND, wparam: WPARAM) -> Option<isize> {
         if wparam.0 == 1 {
             self.draw_window(handle, false);
-        } else {
-            self.clear_webview_passthrough_capture_state(handle, true);
         }
         None
     }
@@ -1462,7 +1266,7 @@ impl WindowsWindowInner {
         // from the forced WM_GPUI_FORCE_UPDATE_WINDOW or a stray WM_PAINT in
         // between) is treated as a forced render so it both clears
         // `skip_draws` and bypasses the view cache.
-        self.state.force_render_after_recovery.set(true);
+        self.state.force_render_pending.set(true);
         Some(0)
     }
 
@@ -1473,6 +1277,20 @@ impl WindowsWindowInner {
 
     #[inline]
     fn draw_window(&self, handle: HWND, force_render: bool) -> Option<isize> {
+        let Some(_guard) = self.state.draw_coordinator.try_begin_draw() else {
+            log::debug!("deferring re-entrant draw of window {handle:?}");
+            if force_render {
+                self.state.force_render_pending.set(true);
+            }
+            // Validate the region so a nested message pump doesn't keep
+            // re-dispatching WM_PAINT for the still-invalid region in a busy
+            // loop until the in-progress draw unwinds. The vsync thread
+            // re-invalidates every window on each vsync (see
+            // `begin_vsync_thread`), so the deferred frame still gets drawn,
+            // at most one vsync late.
+            unsafe { ValidateRect(Some(handle), None).ok().log_err() };
+            return Some(0);
+        };
         let mut request_frame = self.state.callbacks.request_frame.take()?;
 
         self.state.direct_manipulation.update();
@@ -1487,7 +1305,7 @@ impl WindowsWindowInner {
             }
         }
 
-        let force_render = force_render || self.state.force_render_after_recovery.take();
+        let force_render = force_render || self.state.force_render_pending.take();
         if force_render {
             // Re-enable drawing after a device loss recovery. The forced render
             // will rebuild the scene with fresh atlas textures.
@@ -1589,212 +1407,6 @@ impl WindowsWindowInner {
         self.state.input_handler.set(Some(input_handler));
         result
     }
-
-    fn webview_keyboard_focused(&self) -> bool {
-        webview_passthrough_target(self.hwnd()).is_some_and(|target| target.keyboard_focused)
-    }
-}
-
-fn webview_passthrough_target_for_point(
-    state: &WindowsWindowState,
-    handle: HWND,
-    client_point: POINT,
-) -> Option<(WebviewPassthroughTarget, POINT)> {
-    // WebView2 CompositionController input must follow the native preview bounds.
-    // GPUI's generic passthrough snapshot can be blocked by ordinary pane
-    // containers, which leaves the visible page unable to receive hover/clicks.
-    let target = if state.webview_input_captured.get() {
-        webview_passthrough_target(handle)?
-    } else {
-        lookup_webview_passthrough_target(handle, client_point)?
-    };
-
-    // Check whether GPUI has an interactive hitbox at this point that should
-    // take priority over the webview. The mouse_passthrough_snapshot records
-    // which regions are passthrough (webview canvas) and which hitboxes are
-    // interactive overlays (buttons, menus, toolbars). If an interactive GPUI
-    // element is rendered on top of the webview area, we must NOT forward the
-    // event to the webview, so GPUI can handle it.
-    if !state.webview_input_captured.get() {
-        let scale_factor = state.scale_factor.get();
-        let logical_pos = logical_point(client_point.x as f32, client_point.y as f32, scale_factor);
-        let snapshot = state.mouse_passthrough_snapshot.borrow();
-        if !snapshot.regions.is_empty() && !snapshot.should_mouse_passthrough(logical_pos) {
-            return None;
-        }
-    }
-
-    Some((
-        target.clone(),
-        POINT {
-            x: client_point.x - target.bounds.left,
-            y: client_point.y - target.bounds.top,
-        },
-    ))
-}
-
-fn send_webview_mouse_move(
-    hover_active: &Cell<bool>,
-    target: &WebviewPassthroughTarget,
-    relative_point: POINT,
-    virtual_keys: COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS,
-) {
-    hover_active.set(true);
-    send_webview_mouse_input(
-        target,
-        COREWEBVIEW2_MOUSE_EVENT_KIND_MOVE,
-        virtual_keys,
-        0,
-        relative_point,
-    );
-}
-
-fn send_webview_mouse_leave(hover_active: &Cell<bool>, handle: HWND) {
-    if !hover_active.replace(false) {
-        return;
-    }
-    if let Some(target) = webview_passthrough_target(handle) {
-        send_webview_mouse_input(
-            &target,
-            COREWEBVIEW2_MOUSE_EVENT_KIND_LEAVE,
-            COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_NONE,
-            0,
-            POINT::default(),
-        );
-    }
-}
-
-fn send_webview_mouse_input(
-    target: &WebviewPassthroughTarget,
-    event_kind: COREWEBVIEW2_MOUSE_EVENT_KIND,
-    virtual_keys: COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS,
-    mouse_data: u32,
-    point: POINT,
-) {
-    unsafe {
-        target
-            .controller
-            .SendMouseInput(event_kind, virtual_keys, mouse_data, point)
-            .log_err();
-    }
-}
-
-fn notify_webview_parent_window_position_changed(handle: HWND) {
-    unsafe {
-        if let Some(target) = webview_passthrough_target(handle)
-            && let Ok(controller) = target.controller.cast::<ICoreWebView2Controller>()
-        {
-            controller.NotifyParentWindowPositionChanged().log_err();
-        }
-    }
-}
-
-fn focus_webview_controller(handle: HWND, target: &WebviewPassthroughTarget) {
-    unsafe {
-        let _ = SetFocus(Some(handle));
-        if let Ok(controller) = target.controller.cast::<ICoreWebView2Controller>()
-            && controller
-                .MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)
-                .is_ok()
-        {
-            update_webview_passthrough_focus_for_controller(handle, &target.controller, true);
-        }
-    }
-}
-
-fn webview_mouse_virtual_keys_from_wparam(wparam: WPARAM) -> COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS {
-    let flags = MODIFIERKEYS_FLAGS(wparam.loword() as u32);
-    let mut virtual_keys = COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_NONE;
-
-    if flags.contains(MK_CONTROL) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_CONTROL;
-    }
-    if flags.contains(MK_SHIFT) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_SHIFT;
-    }
-    if flags.contains(MK_LBUTTON) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_LEFT_BUTTON;
-    }
-    if flags.contains(MK_RBUTTON) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_RIGHT_BUTTON;
-    }
-    if flags.contains(MK_MBUTTON) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_MIDDLE_BUTTON;
-    }
-    if flags.contains(MK_XBUTTON1) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_X_BUTTON1;
-    }
-    if flags.contains(MK_XBUTTON2) {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_X_BUTTON2;
-    }
-
-    virtual_keys
-}
-
-fn webview_mouse_virtual_keys(
-    modifiers: Modifiers,
-    button: Option<MouseButton>,
-) -> COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS {
-    let mut virtual_keys = COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_NONE;
-
-    if modifiers.control {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_CONTROL;
-    }
-    if modifiers.shift {
-        virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_SHIFT;
-    }
-
-    if let Some(button) = button {
-        match button {
-            MouseButton::Left => {
-                virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_LEFT_BUTTON;
-            }
-            MouseButton::Right => {
-                virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_RIGHT_BUTTON;
-            }
-            MouseButton::Middle => {
-                virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_MIDDLE_BUTTON;
-            }
-            MouseButton::Navigate(NavigationDirection::Back) => {
-                virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_X_BUTTON1;
-            }
-            MouseButton::Navigate(NavigationDirection::Forward) => {
-                virtual_keys |= COREWEBVIEW2_MOUSE_EVENT_VIRTUAL_KEYS_X_BUTTON2;
-            }
-        }
-    }
-
-    virtual_keys
-}
-
-fn webview_mouse_button_down_kind(button: MouseButton) -> Option<COREWEBVIEW2_MOUSE_EVENT_KIND> {
-    Some(match button {
-        MouseButton::Left => COREWEBVIEW2_MOUSE_EVENT_KIND_LEFT_BUTTON_DOWN,
-        MouseButton::Right => COREWEBVIEW2_MOUSE_EVENT_KIND_RIGHT_BUTTON_DOWN,
-        MouseButton::Middle => COREWEBVIEW2_MOUSE_EVENT_KIND_MIDDLE_BUTTON_DOWN,
-        MouseButton::Navigate(_) => COREWEBVIEW2_MOUSE_EVENT_KIND_X_BUTTON_DOWN,
-    })
-}
-
-fn webview_mouse_button_up_kind(button: MouseButton) -> Option<COREWEBVIEW2_MOUSE_EVENT_KIND> {
-    Some(match button {
-        MouseButton::Left => COREWEBVIEW2_MOUSE_EVENT_KIND_LEFT_BUTTON_UP,
-        MouseButton::Right => COREWEBVIEW2_MOUSE_EVENT_KIND_RIGHT_BUTTON_UP,
-        MouseButton::Middle => COREWEBVIEW2_MOUSE_EVENT_KIND_MIDDLE_BUTTON_UP,
-        MouseButton::Navigate(_) => COREWEBVIEW2_MOUSE_EVENT_KIND_X_BUTTON_UP,
-    })
-}
-
-fn webview_button_mouse_data(button: MouseButton) -> u32 {
-    match button {
-        MouseButton::Navigate(NavigationDirection::Back) => XBUTTON1 as u32,
-        MouseButton::Navigate(NavigationDirection::Forward) => XBUTTON2 as u32,
-        _ => 0,
-    }
-}
-
-fn wheel_mouse_data_from_wparam(wparam: WPARAM) -> u32 {
-    (wparam.signed_hiword() as i16 as i32) as u32
 }
 
 struct ImeContext {

@@ -150,6 +150,7 @@ fn openai_compatible_model_from_catalog(
             prompt_cache_key: false,
             chat_completions: true,
             interleaved_reasoning: false,
+            max_tokens_parameter: false,
         },
     }
 }
@@ -217,6 +218,7 @@ mod tests {
             OpenAiCompatibleSettingsContent {
                 api_url: "https://wrong.example/v1".to_string(),
                 available_models: vec![openai_compatible_available_model("existing-model")],
+                custom_headers: None,
             },
         );
 
@@ -248,6 +250,7 @@ mod tests {
             Some(OpenRouterSettingsContent {
                 api_url: Some("https://wrong.example/api/v1".to_string()),
                 available_models: Some(vec![open_router_available_model("existing-model")]),
+                custom_headers: None,
             });
 
         apply_open_router_provider_settings(
@@ -379,6 +382,7 @@ mod tests {
                 prompt_cache_key: false,
                 chat_completions: true,
                 interleaved_reasoning: false,
+                max_tokens_parameter: false,
             },
         }
     }

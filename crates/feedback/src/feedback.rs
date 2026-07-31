@@ -167,7 +167,7 @@ fn format_installed_extensions_for_clipboard(cx: &mut App) -> String {
 
 fn format_installed_extension_line(extension_id: &str, entry: &ExtensionIndexEntry) -> String {
     let name = installed_extension_report_field(entry.manifest.name.as_str());
-    let extension_id = installed_extension_report_field(extension_id.as_ref());
+    let extension_id = installed_extension_report_field(extension_id);
     let version = installed_extension_report_field(entry.manifest.version.as_ref());
 
     format!(

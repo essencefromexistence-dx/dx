@@ -24,22 +24,23 @@ accesskit.workspace = true
 accesskit_windows.workspace = true
 anyhow.workspace = true
 collections.workspace = true
-etagere = "0.2"
+dunce.workspace = true
+etagere.workspace = true
 futures.workspace = true
+gpui_util.workspace = true
 image.workspace = true
 itertools.workspace = true
 log.workspace = true
 parking_lot.workspace = true
 rand.workspace = true
-raw-window-handle = "0.6"
+raw-window-handle.workspace = true
 smallvec.workspace = true
-serde_json.workspace = true
-util.workspace = true
 uuid.workspace = true
 windows.workspace = true
 windows-core.workspace = true
 windows-numerics = "0.2"
 windows-registry = "0.5"
+webview2-com = "0.38"
 
 [target.'cfg(target_os = "windows")'.dependencies.scap]
 workspace = true
@@ -47,6 +48,3 @@ optional = true
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 windows-registry = "0.5"
-
-[target."cfg(windows)".dependencies]
-webview2-com = "0.38"

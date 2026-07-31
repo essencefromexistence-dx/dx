@@ -1,23 +1,21 @@
 use crate::focus_follows_mouse::FocusFollowsMouse as _;
-use crate::item::WorkspaceScreenKind;
 use crate::persistence::model::DockData;
 use crate::status_bar::HideStatusItem;
 use crate::{DraggedDock, Event, FocusFollowsMouse, ModalLayer, Pane, WorkspaceSettings};
 use crate::{Workspace, status_bar::StatusItemView};
 use anyhow::Context as _;
-use audio::{Audio, DxSoundEvent};
 use client::proto;
 use db::kvp::KeyValueStore;
 
 use gpui::{
-    Action, Anchor, AnyView, App, Axis, Context, DragMoveEvent, Entity, EntityId, EventEmitter,
-    FocusHandle, Focusable, IntoElement, KeyContext, MouseButton, MouseDownEvent, MouseUpEvent,
-    ParentElement, Render, SharedString, StyleRefinement, Styled, Subscription, Task, WeakEntity,
-    Window, deferred, div, px, relative,
+    Action, Anchor, AnyView, App, Axis, Context, Entity, EntityId, EventEmitter, FocusHandle,
+    Focusable, IntoElement, KeyContext, MouseButton, MouseDownEvent, MouseUpEvent, ParentElement,
+    Render, SharedString, StyleRefinement, Styled, Subscription, WeakEntity, Window, deferred, div,
+    px,
 };
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsStore, TerminalDockPosition};
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::sync::Arc;
 use ui::{
     ContextMenu, CountBadge, Divider, DividerColor, IconButton, IconButtonShape, IconName,
     IconSize, Tooltip, prelude::*, right_click_menu,
@@ -31,17 +29,6 @@ pub enum PanelEvent {
     ZoomOut,
     Activate,
     Close,
-}
-
-#[derive(Clone)]
-struct DraggedStackResize {
-    before_panel_id: EntityId,
-}
-
-impl Render for DraggedStackResize {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        gpui::Empty
-    }
 }
 
 pub use proto::PanelId;
@@ -84,9 +71,6 @@ pub fn side_panel_header_controls(
 
 pub trait Panel: Focusable + EventEmitter<PanelEvent> + Render + Sized {
     fn persistent_name() -> &'static str;
-    fn legacy_persistent_names() -> &'static [&'static str] {
-        &[]
-    }
     fn panel_key() -> &'static str;
     /// The `Focusable::focus_handle` root identifies the panel's subtree for containment checks
     /// and must be tracked by the panel's root element. This method returns the handle that should
@@ -101,9 +85,6 @@ pub trait Panel: Focusable + EventEmitter<PanelEvent> + Render + Sized {
     fn set_position(&mut self, position: DockPosition, window: &mut Window, cx: &mut Context<Self>);
     fn default_size(&self, window: &Window, cx: &App) -> Pixels;
     fn min_size(&self, _window: &Window, _cx: &App) -> Option<Pixels> {
-        None
-    }
-    fn max_size(&self, _window: &Window, _cx: &App) -> Option<Pixels> {
         None
     }
     fn initial_size_state(&self, _window: &Window, _cx: &App) -> PanelSizeState {
@@ -161,7 +142,6 @@ pub trait Panel: Focusable + EventEmitter<PanelEvent> + Render + Sized {
 pub trait PanelHandle: Send + Sync {
     fn panel_id(&self) -> EntityId;
     fn persistent_name(&self) -> &'static str;
-    fn legacy_persistent_names(&self) -> &'static [&'static str];
     fn panel_key(&self) -> &'static str;
     fn position(&self, window: &Window, cx: &App) -> DockPosition;
     fn position_is_valid(&self, position: DockPosition, cx: &App) -> bool;
@@ -173,7 +153,6 @@ pub trait PanelHandle: Send + Sync {
     fn pane(&self, cx: &App) -> Option<Entity<Pane>>;
     fn default_size(&self, window: &Window, cx: &App) -> Pixels;
     fn min_size(&self, window: &Window, cx: &App) -> Option<Pixels>;
-    fn max_size(&self, window: &Window, cx: &App) -> Option<Pixels>;
     fn initial_size_state(&self, window: &Window, cx: &App) -> PanelSizeState;
     fn size_state_changed(&self, window: &mut Window, cx: &mut App);
     fn supports_flexible_size(&self, cx: &App) -> bool;
@@ -220,10 +199,6 @@ where
         T::persistent_name()
     }
 
-    fn legacy_persistent_names(&self) -> &'static [&'static str] {
-        T::legacy_persistent_names()
-    }
-
     fn panel_key(&self) -> &'static str {
         T::panel_key()
     }
@@ -266,10 +241,6 @@ where
 
     fn min_size(&self, window: &Window, cx: &App) -> Option<Pixels> {
         self.read(cx).min_size(window, cx)
-    }
-
-    fn max_size(&self, window: &Window, cx: &App) -> Option<Pixels> {
-        self.read(cx).max_size(window, cx)
     }
 
     fn initial_size_state(&self, window: &Window, cx: &App) -> PanelSizeState {
@@ -351,14 +322,10 @@ pub struct Dock {
     workspace: WeakEntity<Workspace>,
     is_open: bool,
     active_panel_index: Option<usize>,
-    stacked_panel_ids: Vec<EntityId>,
-    stack_panel_flex: HashMap<EntityId, f32>,
     focus_handle: FocusHandle,
     focus_follows_mouse: FocusFollowsMouse,
     pub(crate) serialized_dock: Option<DockData>,
     zoom_layer_open: bool,
-    highlighted_panel_id: Option<EntityId>,
-    _highlight_panel_task: Option<Task<()>>,
     modal_layer: Entity<ModalLayer>,
     _subscriptions: [Subscription; 2],
 }
@@ -407,7 +374,7 @@ impl From<TerminalDockPosition> for DockPosition {
 }
 
 impl DockPosition {
-    pub(crate) fn label(&self) -> &'static str {
+    fn label(&self) -> &'static str {
         match self {
             Self::Left => "Left",
             Self::Bottom => "Bottom",
@@ -442,39 +409,6 @@ pub struct PanelButtons {
 }
 
 pub(crate) const PANEL_SIZE_STATE_KEY: &str = "dock_panel_size";
-pub(crate) const PANEL_STACK_STATE_KEY: &str = "dock_panel_stack";
-pub(crate) const MAX_PANEL_SIZE_STATE_JSON_BYTES: usize = 4 * 1024;
-pub(crate) const MAX_PANEL_STACK_STATE_JSON_BYTES: usize = 4 * 1024;
-const MAX_PANEL_SIZE_STATE_PERSIST_BATCH: usize = 128;
-const MAX_STACKED_PANELS: usize = 3;
-
-pub(crate) fn ensure_panel_size_state_json_within_limit(json: &str, key: &str) -> Option<()> {
-    if json.len() > MAX_PANEL_SIZE_STATE_JSON_BYTES {
-        Err::<(), _>(anyhow::anyhow!(
-            "{key} panel size state KVP payload is too large ({} bytes; max {} bytes)",
-            json.len(),
-            MAX_PANEL_SIZE_STATE_JSON_BYTES
-        ))
-        .log_err();
-        return None;
-    }
-
-    Some(())
-}
-
-pub(crate) fn ensure_panel_stack_state_json_within_limit(json: &str, key: &str) -> Option<()> {
-    if json.len() > MAX_PANEL_STACK_STATE_JSON_BYTES {
-        Err::<(), _>(anyhow::anyhow!(
-            "{key} panel stack state KVP payload is too large ({} bytes; max {} bytes)",
-            json.len(),
-            MAX_PANEL_STACK_STATE_JSON_BYTES
-        ))
-        .log_err();
-        return None;
-    }
-
-    Some(())
-}
 
 fn panel_uses_flexible_width(
     position: DockPosition,
@@ -525,9 +459,8 @@ impl Dock {
                 });
             let zoom_subscription = cx.subscribe(&workspace, |dock, workspace, e: &Event, cx| {
                 if matches!(e, Event::ZoomChanged) {
-                    let workspace = workspace.read(cx);
-                    dock.zoom_layer_open =
-                        workspace.zoomed.is_some() && !workspace.zoomed_is_agent_panel();
+                    let is_zoomed = workspace.read(cx).zoomed.is_some();
+                    dock.zoom_layer_open = is_zoomed;
                 }
             });
             Self {
@@ -535,16 +468,12 @@ impl Dock {
                 workspace: workspace.downgrade(),
                 panel_entries: Default::default(),
                 active_panel_index: None,
-                stacked_panel_ids: Vec::new(),
-                stack_panel_flex: HashMap::new(),
                 is_open: false,
                 focus_handle: focus_handle.clone(),
                 focus_follows_mouse: WorkspaceSettings::get_global(cx).focus_follows_mouse,
                 _subscriptions: [focus_subscription, zoom_subscription],
                 serialized_dock: None,
                 zoom_layer_open: false,
-                highlighted_panel_id: None,
-                _highlight_panel_task: None,
                 modal_layer,
             }
         });
@@ -560,17 +489,9 @@ impl Dock {
                 };
                 if panel.is_zoomed(window, cx) {
                     workspace.zoomed = Some(panel.to_any().downgrade());
-                    workspace.zoomed_is_agent_panel = panel.is_agent_panel(cx);
                     workspace.zoomed_position = Some(position);
-                } else if !(workspace.zoomed_is_agent_panel()
-                    && workspace
-                        .zoomed_item()
-                        .and_then(|view| view.upgrade())
-                        .is_some()
-                    && !panel.is_agent_panel(cx))
-                {
+                } else {
                     workspace.zoomed = None;
-                    workspace.zoomed_is_agent_panel = false;
                     workspace.zoomed_position = None;
                 }
                 cx.emit(Event::ZoomChanged);
@@ -586,22 +507,12 @@ impl Dock {
                 && panel.is_zoomed(window, cx)
             {
                 workspace.zoomed = Some(panel.to_any().downgrade());
-                workspace.zoomed_is_agent_panel = panel.is_agent_panel(cx);
                 workspace.zoomed_position = Some(position);
                 cx.emit(Event::ZoomChanged);
                 return;
             }
             if workspace.zoomed_position == Some(position) {
-                let preserve_agent_fullscreen = workspace.zoomed_is_agent_panel()
-                    && workspace
-                        .zoomed_item()
-                        .and_then(|view| view.upgrade())
-                        .is_some();
-                if preserve_agent_fullscreen {
-                    return;
-                }
                 workspace.zoomed = None;
-                workspace.zoomed_is_agent_panel = false;
                 workspace.zoomed_position = None;
                 cx.emit(Event::ZoomChanged);
             }
@@ -636,10 +547,9 @@ impl Dock {
     }
 
     pub fn panel_index_for_persistent_name(&self, ui_name: &str, _cx: &App) -> Option<usize> {
-        self.panel_entries.iter().position(|entry| {
-            entry.panel.persistent_name() == ui_name
-                || entry.panel.legacy_persistent_names().contains(&ui_name)
-        })
+        self.panel_entries
+            .iter()
+            .position(|entry| entry.panel.persistent_name() == ui_name)
     }
 
     pub fn panel_index_for_proto_id(&self, panel_id: PanelId) -> Option<usize> {
@@ -672,478 +582,6 @@ impl Dock {
             .and_then(|index| self.panel_entries.get(index))
     }
 
-    fn panel_index_for_id(&self, panel_id: EntityId) -> Option<usize> {
-        self.panel_entries
-            .iter()
-            .position(|entry| entry.panel.panel_id() == panel_id)
-    }
-
-    fn stacked_entries(&self) -> Vec<(usize, &PanelEntry)> {
-        let Some(active_panel_id) = self
-            .active_panel_entry()
-            .map(|entry| entry.panel.panel_id())
-        else {
-            return Vec::new();
-        };
-
-        if self.stacked_panel_ids.len() < 2 || !self.stacked_panel_ids.contains(&active_panel_id) {
-            return Vec::new();
-        }
-
-        self.stacked_panel_ids
-            .iter()
-            .filter_map(|panel_id| {
-                self.panel_entries
-                    .iter()
-                    .enumerate()
-                    .find(|(_, entry)| entry.panel.panel_id() == *panel_id)
-            })
-            .take(MAX_STACKED_PANELS)
-            .collect()
-    }
-
-    fn zoomed_agent_panel_id(&self, cx: &App) -> Option<EntityId> {
-        let workspace = self.workspace.upgrade()?;
-        let workspace = workspace.read(cx);
-        if !workspace.zoomed_is_agent_panel() || workspace.zoomed_position != Some(self.position) {
-            return None;
-        }
-
-        workspace
-            .zoomed_item()
-            .and_then(|view| view.upgrade())
-            .map(|view| view.entity_id())
-    }
-
-    fn visible_entries(&self, cx: &App) -> Vec<(usize, &PanelEntry)> {
-        self.visible_entries_for_zoomed_agent(self.zoomed_agent_panel_id(cx), cx)
-    }
-
-    fn visible_entries_for_zoomed_agent(
-        &self,
-        zoomed_agent_panel_id: Option<EntityId>,
-        _cx: &App,
-    ) -> Vec<(usize, &PanelEntry)> {
-        if !self.is_open {
-            return Vec::new();
-        }
-
-        let stacked_entries = self.stacked_entries();
-        let mut entries = if stacked_entries.len() > 1 {
-            stacked_entries
-        } else {
-            self.active_panel_index
-                .and_then(|index| self.panel_entries.get(index).map(|entry| (index, entry)))
-                .into_iter()
-                .collect()
-        };
-
-        entries.retain(|(_, entry)| Some(entry.panel.panel_id()) != zoomed_agent_panel_id);
-
-        entries
-    }
-
-    fn is_panel_stacked(&self, panel_id: EntityId) -> bool {
-        self.stacked_entries()
-            .iter()
-            .any(|(_, entry)| entry.panel.panel_id() == panel_id)
-    }
-
-    fn supports_panel_stack(&self) -> bool {
-        matches!(self.position, DockPosition::Left | DockPosition::Right)
-    }
-
-    fn can_stack_panel(&self, panel_id: EntityId) -> bool {
-        if !self.supports_panel_stack() || self.panel_entries.len() < 2 {
-            return false;
-        }
-
-        let Some(active_panel_id) = self
-            .active_panel_entry()
-            .map(|entry| entry.panel.panel_id())
-        else {
-            return false;
-        };
-
-        active_panel_id != panel_id
-            && !self.is_panel_stacked(panel_id)
-            && self.stacked_entries().len() < MAX_STACKED_PANELS
-    }
-
-    fn has_panel_stack(&self) -> bool {
-        self.stacked_entries().len() > 1
-    }
-
-    fn stack_flex_for_panel(&self, panel_id: EntityId) -> f32 {
-        self.stack_panel_flex
-            .get(&panel_id)
-            .copied()
-            .filter(|flex| flex.is_finite() && *flex > 0.0)
-            .unwrap_or(1.0)
-    }
-
-    fn first_stack_candidate_for(&self, panel_id: EntityId, cx: &App) -> Option<EntityId> {
-        let zoomed_agent_panel_id = self.zoomed_agent_panel_id(cx);
-        self.panel_entries
-            .iter()
-            .filter(|entry| entry.panel.panel_id() != panel_id)
-            .filter(|entry| Some(entry.panel.panel_id()) != zoomed_agent_panel_id)
-            .filter(|entry| entry.panel.enabled(cx))
-            .map(|entry| entry.panel.panel_id())
-            .find(|candidate_id| !self.stacked_panel_ids.contains(candidate_id))
-    }
-
-    fn can_split_panel(&self, panel_id: EntityId, cx: &App) -> bool {
-        self.supports_panel_stack()
-            && self.panel_index_for_id(panel_id).is_some()
-            && self.first_stack_candidate_for(panel_id, cx).is_some()
-    }
-
-    pub fn can_split_panel_by_id(&self, panel_id: EntityId, cx: &App) -> bool {
-        self.can_split_panel(panel_id, cx)
-    }
-
-    pub fn contains_panel_id(&self, panel_id: EntityId) -> bool {
-        self.panel_index_for_id(panel_id).is_some()
-    }
-
-    fn panel_is_agent(&self, panel_id: EntityId, cx: &App) -> bool {
-        self.panel_entries
-            .iter()
-            .find(|entry| entry.panel.panel_id() == panel_id)
-            .is_some_and(|entry| entry.panel.is_agent_panel(cx))
-    }
-
-    fn trim_stack_for_new_panel(
-        &mut self,
-        new_panel_id: EntityId,
-        active_panel_id: Option<EntityId>,
-        cx: &App,
-    ) {
-        if self.stacked_panel_ids.contains(&new_panel_id)
-            || self.stacked_panel_ids.len() < MAX_STACKED_PANELS
-        {
-            return;
-        }
-
-        let removable_ix = self
-            .stacked_panel_ids
-            .iter()
-            .position(|panel_id| {
-                Some(*panel_id) != active_panel_id && !self.panel_is_agent(*panel_id, cx)
-            })
-            .or_else(|| {
-                self.stacked_panel_ids
-                    .iter()
-                    .position(|panel_id| !self.panel_is_agent(*panel_id, cx))
-            })
-            .unwrap_or(0);
-        let removed_panel_id = self.stacked_panel_ids.remove(removable_ix);
-        self.stack_panel_flex.remove(&removed_panel_id);
-    }
-
-    fn pin_agent_panel_to_left_stack_bottom(&mut self, cx: &App) {
-        if self.position != DockPosition::Left {
-            return;
-        }
-
-        if let Some(agent_ix) = self
-            .stacked_panel_ids
-            .iter()
-            .position(|panel_id| self.panel_is_agent(*panel_id, cx))
-        {
-            let agent_panel_id = self.stacked_panel_ids.remove(agent_ix);
-            self.stacked_panel_ids.push(agent_panel_id);
-        }
-    }
-
-    pub fn flash_panel_highlight(
-        &mut self,
-        panel_id: EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.highlighted_panel_id = Some(panel_id);
-        self._highlight_panel_task = Some(cx.spawn_in(window, async move |dock, cx| {
-            cx.background_executor().timer(Duration::from_secs(3)).await;
-            dock.update_in(cx, move |dock, _window, cx| {
-                if dock.highlighted_panel_id == Some(panel_id) {
-                    dock.highlighted_panel_id = None;
-                    cx.notify();
-                }
-            })
-            .ok();
-        }));
-        cx.notify();
-    }
-
-    fn prune_stacked_panel_ids(&mut self) {
-        let panel_ids = self
-            .panel_entries
-            .iter()
-            .map(|entry| entry.panel.panel_id())
-            .collect::<Vec<_>>();
-        let mut retained = Vec::new();
-
-        for panel_id in std::mem::take(&mut self.stacked_panel_ids) {
-            if panel_ids.contains(&panel_id) && !retained.contains(&panel_id) {
-                retained.push(panel_id);
-            }
-
-            if retained.len() == MAX_STACKED_PANELS {
-                break;
-            }
-        }
-
-        self.stack_panel_flex
-            .retain(|panel_id, _| retained.contains(panel_id));
-        if retained.len() >= 2 {
-            self.stacked_panel_ids = retained;
-        }
-    }
-
-    fn restore_stacked_panels(&mut self, panel_names: &[String], cx: &mut Context<Self>) {
-        if !self.supports_panel_stack() || panel_names.len() < 2 {
-            self.stacked_panel_ids.clear();
-            return;
-        }
-
-        let mut stacked_panel_ids = Vec::new();
-        for panel_name in panel_names.iter().take(MAX_STACKED_PANELS) {
-            let Some(panel_ix) = self.panel_index_for_persistent_name(panel_name, cx) else {
-                continue;
-            };
-            let panel_id = self.panel_entries[panel_ix].panel.panel_id();
-            if !stacked_panel_ids.contains(&panel_id) {
-                stacked_panel_ids.push(panel_id);
-            }
-        }
-
-        self.stacked_panel_ids = stacked_panel_ids;
-
-        if let Some(active_panel_id) = self
-            .active_panel_entry()
-            .map(|entry| entry.panel.panel_id())
-            && !self.stacked_panel_ids.contains(&active_panel_id)
-        {
-            self.trim_stack_for_new_panel(active_panel_id, Some(active_panel_id), cx);
-            self.stacked_panel_ids.insert(0, active_panel_id);
-        }
-
-        self.prune_stacked_panel_ids();
-        self.pin_agent_panel_to_left_stack_bottom(cx);
-    }
-
-    pub fn stacked_panel_names(&self) -> Vec<String> {
-        self.stacked_entries()
-            .into_iter()
-            .map(|(_, entry)| entry.panel.persistent_name().to_string())
-            .collect()
-    }
-
-    fn persist_stack_state(&self, cx: &mut Context<Self>) {
-        let workspace = self.workspace.clone();
-        let position = self.position;
-        let panel_names = self.stacked_panel_names();
-
-        cx.defer(move |cx| {
-            if let Some(workspace) = workspace.upgrade() {
-                workspace.update(cx, |workspace, cx| {
-                    workspace.persist_dock_stack_state(position, panel_names, cx);
-                });
-            }
-        });
-    }
-
-    pub fn stack_panel(
-        &mut self,
-        panel_id: EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        if !self.supports_panel_stack() {
-            return false;
-        }
-
-        let Some(panel_ix) = self.panel_index_for_id(panel_id) else {
-            return false;
-        };
-
-        let active_panel_id = self
-            .active_panel_entry()
-            .map(|entry| entry.panel.panel_id());
-
-        if let Some(active_panel_id) = active_panel_id {
-            if active_panel_id != panel_id && !self.stacked_panel_ids.contains(&active_panel_id) {
-                self.trim_stack_for_new_panel(panel_id, Some(active_panel_id), cx);
-                self.stacked_panel_ids.push(active_panel_id);
-            }
-        }
-
-        if !self.stacked_panel_ids.contains(&panel_id) {
-            self.trim_stack_for_new_panel(panel_id, active_panel_id, cx);
-            self.stacked_panel_ids.push(panel_id);
-        }
-
-        self.prune_stacked_panel_ids();
-        self.pin_agent_panel_to_left_stack_bottom(cx);
-        self.activate_panel(panel_ix, window, cx);
-        self.set_open(true, window, cx);
-        if let Some(active_panel) = self.active_panel() {
-            active_panel.panel_focus_handle(cx).focus(window, cx);
-        }
-        Audio::play_dx_sound(DxSoundEvent::ActionConfirm, cx);
-        self.persist_stack_state(cx);
-        cx.notify();
-        true
-    }
-
-    pub fn split_panel(
-        &mut self,
-        panel_id: EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        if !self.can_split_panel(panel_id, cx) {
-            return false;
-        }
-
-        let Some(panel_ix) = self.panel_index_for_id(panel_id) else {
-            return false;
-        };
-        let Some(candidate_id) = self.first_stack_candidate_for(panel_id, cx) else {
-            return false;
-        };
-
-        self.activate_panel(panel_ix, window, cx);
-        let did_stack = self.stack_panel(candidate_id, window, cx);
-        if let Some(panel_ix) = self.panel_index_for_id(panel_id) {
-            self.activate_panel(panel_ix, window, cx);
-        }
-        did_stack
-    }
-
-    pub fn unstack_panel(
-        &mut self,
-        panel_id: EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        if !self.stacked_panel_ids.contains(&panel_id) {
-            return false;
-        }
-
-        self.stacked_panel_ids.retain(|id| *id != panel_id);
-        self.stack_panel_flex.remove(&panel_id);
-        let next_panel_id = self.stacked_panel_ids.first().copied();
-        self.prune_stacked_panel_ids();
-
-        if self
-            .active_panel()
-            .is_some_and(|panel| panel.panel_id() == panel_id)
-        {
-            if let Some(next_panel_ix) = next_panel_id.and_then(|id| self.panel_index_for_id(id)) {
-                self.activate_panel(next_panel_ix, window, cx);
-            } else {
-                self.set_open(false, window, cx);
-            }
-        }
-
-        self.persist_stack_state(cx);
-        Audio::play_dx_sound(DxSoundEvent::PanelClose, cx);
-        cx.notify();
-        true
-    }
-
-    pub fn close_or_unstack_panel(
-        &mut self,
-        panel_id: EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        if self.is_panel_stacked(panel_id) && self.stacked_entries().len() > 1 {
-            return self.unstack_panel(panel_id, window, cx);
-        }
-
-        let Some(panel_ix) = self.panel_index_for_id(panel_id) else {
-            return false;
-        };
-        self.activate_panel(panel_ix, window, cx);
-        self.set_open(false, window, cx);
-        cx.notify();
-        true
-    }
-
-    fn resize_stacked_panels(
-        &mut self,
-        before_panel_id: EntityId,
-        pointer_fraction: f32,
-        cx: &mut Context<Self>,
-    ) {
-        let panel_ids = self
-            .stacked_entries()
-            .into_iter()
-            .map(|(_, entry)| entry.panel.panel_id())
-            .collect::<Vec<_>>();
-        let Some(before_ix) = panel_ids
-            .iter()
-            .position(|panel_id| *panel_id == before_panel_id)
-        else {
-            return;
-        };
-        let before_count = before_ix + 1;
-        let after_count = panel_ids.len().saturating_sub(before_count);
-        if after_count == 0 {
-            return;
-        }
-
-        let total_flex = panel_ids
-            .iter()
-            .map(|panel_id| self.stack_flex_for_panel(*panel_id))
-            .sum::<f32>()
-            .max(panel_ids.len() as f32);
-        let min_flex = 0.35;
-        let min_before = min_flex * before_count as f32;
-        let min_after = min_flex * after_count as f32;
-        let before_total = (pointer_fraction.clamp(0.05, 0.95) * total_flex)
-            .clamp(min_before, total_flex - min_after);
-        let after_total = (total_flex - before_total).max(min_after);
-        let before_each = before_total / before_count as f32;
-        let after_each = after_total / after_count as f32;
-
-        for (ix, panel_id) in panel_ids.into_iter().enumerate() {
-            let flex = if ix <= before_ix {
-                before_each
-            } else {
-                after_each
-            };
-            self.stack_panel_flex.insert(panel_id, flex);
-        }
-        cx.notify();
-    }
-
-    pub fn show_single_panel(
-        &mut self,
-        panel_id: EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        let Some(panel_ix) = self.panel_index_for_id(panel_id) else {
-            return false;
-        };
-
-        self.stacked_panel_ids.clear();
-        self.stack_panel_flex.clear();
-        self.activate_panel(panel_ix, window, cx);
-        self.set_open(true, window, cx);
-        if let Some(active_panel) = self.active_panel() {
-            active_panel.panel_focus_handle(cx).focus(window, cx);
-        }
-        self.persist_stack_state(cx);
-        cx.notify();
-        true
-    }
-
     pub fn active_panel_index(&self) -> Option<usize> {
         self.active_panel_index
     }
@@ -1155,12 +593,6 @@ impl Dock {
                 active_panel.panel.set_active(open, window, cx);
             }
 
-            let sound = if open {
-                DxSoundEvent::PanelOpen
-            } else {
-                DxSoundEvent::PanelClose
-            };
-            Audio::play_dx_sound(sound, cx);
             cx.notify();
         }
     }
@@ -1288,7 +720,6 @@ impl Dock {
                         workspace
                             .update(cx, |workspace, cx| {
                                 workspace.zoomed = Some(panel.downgrade().into());
-                                workspace.zoomed_is_agent_panel = panel.read(cx).is_agent_panel();
                                 workspace.zoomed_position =
                                     Some(panel.read(cx).position(window, cx));
                                 cx.emit(Event::ZoomChanged);
@@ -1301,7 +732,6 @@ impl Dock {
                             .update(cx, |workspace, cx| {
                                 if workspace.zoomed_position == Some(this.position) {
                                     workspace.zoomed = None;
-                                    workspace.zoomed_is_agent_panel = false;
                                     workspace.zoomed_position = None;
                                     cx.emit(Event::ZoomChanged);
                                 }
@@ -1315,21 +745,15 @@ impl Dock {
                             .iter()
                             .position(|entry| entry.panel.panel_id() == Entity::entity_id(panel))
                         {
-                            this.activate_panel(ix, window, cx);
                             this.set_open(true, window, cx);
-                            window.focus(&panel.read(cx).focus_handle(cx), cx);
+                            this.activate_panel(ix, window, cx);
+                            window.focus(&panel.read(cx).activation_focus_handle(cx), cx);
                         }
                     }
                     PanelEvent::Close => {
-                        let panel_id = Entity::entity_id(panel);
-                        if this.is_panel_stacked(panel_id)
-                            && this.unstack_panel(panel_id, window, cx)
-                        {
-                            return;
-                        }
                         if this
                             .visible_panel()
-                            .is_some_and(|p| p.panel_id() == panel_id)
+                            .is_some_and(|p| p.panel_id() == Entity::entity_id(panel))
                         {
                             this.set_open(false, window, cx);
                         }
@@ -1371,7 +795,7 @@ impl Dock {
             },
         );
 
-        self.restore_state_with_persisted_stack_state(Some(Vec::new()), window, cx);
+        self.restore_state(window, cx);
 
         if panel.read(cx).starts_open(window, cx) {
             self.activate_panel(index, window, cx);
@@ -1383,37 +807,12 @@ impl Dock {
     }
 
     pub fn restore_state(&mut self, window: &mut Window, cx: &mut Context<Self>) -> bool {
-        self.restore_state_with_persisted_stack_state(None, window, cx)
-    }
-
-    pub fn restore_state_with_persisted_stack_state(
-        &mut self,
-        persisted_stack_state: Option<Vec<String>>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
         if let Some(serialized) = self.serialized_dock.clone() {
             if let Some(active_panel) = serialized.active_panel.filter(|_| serialized.visible)
                 && let Some(idx) = self.panel_index_for_persistent_name(active_panel.as_str(), cx)
             {
                 self.activate_panel(idx, window, cx);
             }
-
-            let stacked_panels = if serialized.stacked_panels.is_empty() {
-                persisted_stack_state
-                    .or_else(|| {
-                        self.workspace
-                            .update(cx, |workspace, cx| {
-                                Self::load_persisted_stack_state(workspace, self.position, cx)
-                            })
-                            .ok()
-                            .flatten()
-                    })
-                    .unwrap_or_default()
-            } else {
-                serialized.stacked_panels.clone()
-            };
-            self.restore_stacked_panels(&stacked_panels, cx);
 
             if serialized.zoom
                 && let Some(panel) = self.active_panel()
@@ -1444,7 +843,6 @@ impl Dock {
                     }
                     std::cmp::Ordering::Equal => {
                         self.active_panel_index = None;
-                        self.stacked_panel_ids.clear();
                         self.set_open(false, window, cx);
                     }
                     std::cmp::Ordering::Greater => {}
@@ -1452,8 +850,6 @@ impl Dock {
             }
 
             self.panel_entries.remove(panel_ix);
-            self.prune_stacked_panel_ids();
-            self.persist_stack_state(cx);
             cx.notify();
 
             true
@@ -1473,22 +869,7 @@ impl Dock {
     }
 
     pub fn activate_panel(&mut self, panel_ix: usize, window: &mut Window, cx: &mut Context<Self>) {
-        let Some(panel_id) = self
-            .panel_entries
-            .get(panel_ix)
-            .map(|entry| entry.panel.panel_id())
-        else {
-            return;
-        };
-
-        let cleared_stack =
-            !self.stacked_panel_ids.contains(&panel_id) && !self.stacked_panel_ids.is_empty();
-        if cleared_stack {
-            self.stacked_panel_ids.clear();
-        }
-
-        let did_change_active_panel = Some(panel_ix) != self.active_panel_index;
-        if did_change_active_panel {
+        if Some(panel_ix) != self.active_panel_index {
             if let Some(active_panel) = self.active_panel_entry() {
                 active_panel.panel.set_active(false, window, cx);
             }
@@ -1500,27 +881,11 @@ impl Dock {
 
             cx.notify();
         }
-        if did_change_active_panel && self.is_open {
-            Audio::play_dx_sound(DxSoundEvent::MenuSnap, cx);
-        }
-        if cleared_stack {
-            self.persist_stack_state(cx);
-        }
     }
 
     pub fn visible_panel(&self) -> Option<&Arc<dyn PanelHandle>> {
         let entry = self.visible_entry()?;
         Some(&entry.panel)
-    }
-
-    pub(crate) fn visible_panel_for_layout(
-        &self,
-        zoomed_agent_panel_id: Option<EntityId>,
-        cx: &App,
-    ) -> Option<Arc<dyn PanelHandle>> {
-        self.visible_entries_for_zoomed_agent(zoomed_agent_panel_id, cx)
-            .first()
-            .map(|(_, entry)| entry.panel.clone())
     }
 
     pub fn active_panel(&self) -> Option<&Arc<dyn PanelHandle>> {
@@ -1689,33 +1054,20 @@ impl Dock {
             };
             panel_uses_flexible_width(self.position, active_entry.panel.as_ref(), window, cx)
         };
-        let mut size_states_to_persist = Vec::with_capacity(
-            self.panel_entries
-                .len()
-                .min(MAX_PANEL_SIZE_STATE_PERSIST_BATCH),
-        );
-        let mut skipped_panel_size_state_persist_count = 0;
+        let mut size_states_to_persist = Vec::new();
         for entry in &mut self.panel_entries {
             if panel_uses_flexible_width(self.position, entry.panel.as_ref(), window, cx)
                 == active_panel_uses_flexible_width
             {
-                let size_state_to_persist =
-                    resize_panel_entry(self.position, entry, size, flex, window, cx);
-                if size_states_to_persist.len() < MAX_PANEL_SIZE_STATE_PERSIST_BATCH {
-                    size_states_to_persist.push(size_state_to_persist);
-                } else {
-                    skipped_panel_size_state_persist_count += 1;
-                }
+                size_states_to_persist.push(resize_panel_entry(
+                    self.position,
+                    entry,
+                    size,
+                    flex,
+                    window,
+                    cx,
+                ));
             }
-        }
-
-        if skipped_panel_size_state_persist_count > 0 {
-            Err::<(), _>(anyhow::anyhow!(
-                "skipped persisting {} dock panel size states because the batch exceeded {} entries",
-                skipped_panel_size_state_persist_count,
-                MAX_PANEL_SIZE_STATE_PERSIST_BATCH
-            ))
-            .log_err();
         }
 
         let workspace = self.workspace.clone();
@@ -1751,8 +1103,9 @@ impl Dock {
         let max_size = (max_size - RESIZE_HANDLE_SIZE).abs();
         let mut clamped = false;
         for entry in &mut self.panel_entries {
-            let use_flexible = entry.panel.has_flexible_size(window, cx);
-            if use_flexible {
+            let uses_flexible_width =
+                panel_uses_flexible_width(self.position, entry.panel.as_ref(), window, cx);
+            if uses_flexible_width {
                 continue;
             }
 
@@ -1785,45 +1138,15 @@ impl Dock {
             .read(&format!("{workspace_id}:{panel_key}"))
             .log_err()
             .flatten()
-            .and_then(|json| {
-                ensure_panel_size_state_json_within_limit(&json, panel_key)?;
-                serde_json::from_str::<PanelSizeState>(&json).log_err()
-            })
-    }
-
-    pub(crate) fn load_persisted_stack_state(
-        workspace: &Workspace,
-        position: DockPosition,
-        cx: &App,
-    ) -> Option<Vec<String>> {
-        let workspace_id = workspace
-            .database_id()
-            .map(|id| i64::from(id).to_string())
-            .or(workspace.session_id())?;
-        let kvp = KeyValueStore::global(cx);
-        let scope = kvp.scoped(PANEL_STACK_STATE_KEY);
-        let key = format!("{}:{}", workspace_id, position.label());
-        scope.read(&key).log_err().flatten().and_then(|json| {
-            ensure_panel_stack_state_json_within_limit(&json, &key)?;
-            serde_json::from_str::<Vec<String>>(&json).log_err()
-        })
+            .and_then(|json| serde_json::from_str::<PanelSizeState>(&json).log_err())
     }
 }
 
 impl Render for Dock {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let dispatch_context = Self::dispatch_context();
-        let visible_panels = self
-            .visible_entries(cx)
-            .into_iter()
-            .map(|(index, entry)| (index, entry.panel.panel_id(), entry.panel.to_any()))
-            .collect::<Vec<_>>();
-
-        if !visible_panels.is_empty() {
+        if let Some(entry) = self.visible_entry() {
             let position = self.position;
-            let is_stacked = visible_panels.len() > 1;
-            let visible_panel_count = visible_panels.len();
-            let can_resize_stack = is_stacked && self.supports_panel_stack() && self.resizable(cx);
             let create_resize_handle = || {
                 let handle = div()
                     .id("resize-handle")
@@ -1891,7 +1214,7 @@ impl Render for Dock {
                 .flex()
                 .bg(cx.theme().colors().panel_background)
                 .border_color(cx.theme().colors().border)
-                .when(!is_stacked, |this| this.overflow_hidden())
+                .overflow_hidden()
                 .map(|this| match self.position().axis() {
                     // Width and height are always set on the workspace wrapper in
                     // render_dock, so fill whatever space the wrapper provides.
@@ -1903,109 +1226,18 @@ impl Render for Dock {
                     DockPosition::Right => this.border_l_1(),
                     DockPosition::Bottom => this.border_t_1(),
                 })
-                .when(can_resize_stack, |this| {
-                    this.on_drag_move(cx.listener(
-                        |dock, e: &DragMoveEvent<DraggedStackResize>, _window, cx| {
-                            let height = e.bounds.size.height.as_f32().max(1.0);
-                            let pointer_y = (e.event.position.y - e.bounds.top()).as_f32();
-                            dock.resize_stacked_panels(
-                                e.drag(cx).before_panel_id,
-                                pointer_y / height,
-                                cx,
-                            );
-                        },
-                    ))
-                })
                 .child(
                     div()
                         .map(|this| match self.position().axis() {
                             Axis::Horizontal => this.w_full().h_full(),
                             Axis::Vertical => this.h_full().w_full(),
                         })
-                        .when(is_stacked, |this| this.flex().flex_col())
-                        .children(visible_panels.into_iter().enumerate().map(
-                            |(stack_ix, (panel_ix, panel_id, panel))| {
-                                let is_highlighted = self.highlighted_panel_id == Some(panel_id);
-                                let stack_flex = self.stack_flex_for_panel(panel_id);
-                                div()
-                                    .relative()
-                                    .min_h_0()
-                                    .w_full()
-                                    .group("dock-panel-cell")
-                                    .when(is_stacked, |this| {
-                                        this.flex_grow(stack_flex)
-                                            .flex_shrink_1()
-                                            .flex_basis(relative(0.))
-                                    })
-                                    .when(!is_stacked, |this| this.flex_1().size_full())
-                                    .when(is_stacked && stack_ix > 0, |this| {
-                                        this.border_t_1().border_color(cx.theme().colors().border)
-                                    })
-                                    .when(is_highlighted, |this| {
-                                        this.border_1()
-                                            .border_color(cx.theme().colors().border_focused)
-                                    })
-                                    .flex()
-                                    .flex_col()
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        cx.listener(move |dock, _: &MouseDownEvent, window, cx| {
-                                            dock.activate_panel(panel_ix, window, cx);
-                                            dock.workspace
-                                                .update(cx, |workspace, cx| {
-                                                    workspace.serialize_workspace(window, cx);
-                                                })
-                                                .ok();
-                                        }),
-                                    )
-                                    .child(div().flex_1().min_h_0().w_full().child(
-                                        panel.cached(
-                                            StyleRefinement::default().v_flex().size_full(),
-                                        ),
-                                    ))
-                                    .when(
-                                        can_resize_stack && stack_ix + 1 < visible_panel_count,
-                                        |this| {
-                                            this.child(deferred(
-                                                div()
-                                                    .id(("dock-panel-stack-resize", panel_id))
-                                                    .absolute()
-                                                    .bottom(-RESIZE_HANDLE_SIZE / 2.)
-                                                    .left(px(0.))
-                                                    .w_full()
-                                                    .h(RESIZE_HANDLE_SIZE)
-                                                    .cursor_row_resize()
-                                                    .bg(cx.theme().colors().border.opacity(0.01))
-                                                    .hover(|style| {
-                                                        style.bg(cx
-                                                            .theme()
-                                                            .colors()
-                                                            .border_focused
-                                                            .opacity(0.55))
-                                                    })
-                                                    .on_drag(
-                                                        DraggedStackResize {
-                                                            before_panel_id: panel_id,
-                                                        },
-                                                        |dragged, _, _, cx| {
-                                                            cx.stop_propagation();
-                                                            cx.new(|_| dragged.clone())
-                                                        },
-                                                    )
-                                                    .on_mouse_down(
-                                                        MouseButton::Left,
-                                                        cx.listener(
-                                                            |_, _: &MouseDownEvent, _, cx| {
-                                                                cx.stop_propagation();
-                                                            },
-                                                        ),
-                                                    )
-                                                    .occlude(),
-                                            ))
-                                        },
-                                    )
-                            },
-                        )),
+                        .child(
+                            entry
+                                .panel
+                                .to_any()
+                                .cached(StyleRefinement::default().v_flex().size_full()),
+                        ),
                 )
                 .when(self.resizable(cx), |this| {
                     this.child(create_resize_handle())
@@ -2044,13 +1276,6 @@ impl Render for PanelButtons {
 
         let dock_entity = self.dock.clone();
         let workspace = dock.workspace.clone();
-        let agent_screen_is_active = workspace.upgrade().is_some_and(|workspace| {
-            let workspace = workspace.read(cx);
-            workspace.zoomed_is_agent_panel()
-                || workspace
-                    .active_item(cx)
-                    .is_some_and(|item| item.screen_kind(cx) == WorkspaceScreenKind::Agent)
-        });
         let mut buttons: Vec<_> = dock
             .panel_entries
             .iter()
@@ -2068,27 +1293,15 @@ impl Render for PanelButtons {
                 let panel = entry.panel.clone();
                 let supports_flexible = panel.supports_flexible_size(cx);
                 let currently_flexible = panel.has_flexible_size(window, cx);
-                let panel_id = panel.panel_id();
-                let can_stack_panel = dock.can_stack_panel(panel_id);
-                let is_panel_stacked = dock.is_panel_stacked(panel_id);
-                let has_panel_stack = dock.has_panel_stack();
-                let is_agent_sidechat_button = entry.panel.is_agent_panel(cx);
                 let dock_for_menu = dock_entity.clone();
                 let workspace_for_menu = workspace.clone();
-                let dock_for_trigger = dock_entity.clone();
-                let workspace_for_trigger = workspace.clone();
 
-                let is_active_button = Some(i) == active_index
-                    && is_open
-                    && !(is_agent_sidechat_button && agent_screen_is_active);
+                let is_active_button = Some(i) == active_index && is_open;
                 let (action, tooltip) = if is_active_button {
                     let action = dock.toggle_action();
 
-                    let tooltip: SharedString = if dock_position == DockPosition::Bottom {
-                        format!("Close {} Dock", dock.position.label()).into()
-                    } else {
-                        format!("Close {}", icon_tooltip).into()
-                    };
+                    let tooltip: SharedString =
+                        format!("Close {} Dock", dock.position.label()).into();
 
                     (action, tooltip)
                 } else {
@@ -2130,82 +1343,8 @@ impl Render for PanelButtons {
                                         has_position_entries = true;
                                     }
                                 }
-                                let has_stack_entries =
-                                    can_stack_panel || is_panel_stacked || has_panel_stack;
-                                if has_stack_entries {
-                                    if has_position_entries {
-                                        menu = menu.separator();
-                                    }
-                                    if can_stack_panel {
-                                        let dock_for_stack = dock_for_menu.clone();
-                                        let workspace_for_stack = workspace_for_menu.clone();
-                                        menu = menu.entry(
-                                            format!("Add to {} Dock Stack", dock_position.label()),
-                                            None,
-                                            move |window, cx| {
-                                                let did_change =
-                                                    dock_for_stack.update(cx, |dock, cx| {
-                                                        dock.stack_panel(panel_id, window, cx)
-                                                    });
-                                                if did_change
-                                                    && let Some(ws) = workspace_for_stack.upgrade()
-                                                {
-                                                    ws.update(cx, |workspace, cx| {
-                                                        workspace.serialize_workspace(window, cx);
-                                                    });
-                                                }
-                                            },
-                                        );
-                                    }
-                                    if is_panel_stacked {
-                                        let dock_for_unstack = dock_for_menu.clone();
-                                        let workspace_for_unstack = workspace_for_menu.clone();
-                                        menu = menu.entry(
-                                            format!(
-                                                "Remove from {} Dock Stack",
-                                                dock_position.label()
-                                            ),
-                                            None,
-                                            move |window, cx| {
-                                                let did_change =
-                                                    dock_for_unstack.update(cx, |dock, cx| {
-                                                        dock.unstack_panel(panel_id, window, cx)
-                                                    });
-                                                if did_change
-                                                    && let Some(ws) =
-                                                        workspace_for_unstack.upgrade()
-                                                {
-                                                    ws.update(cx, |workspace, cx| {
-                                                        workspace.serialize_workspace(window, cx);
-                                                    });
-                                                }
-                                            },
-                                        );
-                                    }
-                                    if has_panel_stack {
-                                        let dock_for_single = dock_for_menu.clone();
-                                        let workspace_for_single = workspace_for_menu.clone();
-                                        menu = menu.entry(
-                                            "Show Only This Panel",
-                                            None,
-                                            move |window, cx| {
-                                                let did_change =
-                                                    dock_for_single.update(cx, |dock, cx| {
-                                                        dock.show_single_panel(panel_id, window, cx)
-                                                    });
-                                                if did_change
-                                                    && let Some(ws) = workspace_for_single.upgrade()
-                                                {
-                                                    ws.update(cx, |workspace, cx| {
-                                                        workspace.serialize_workspace(window, cx);
-                                                    });
-                                                }
-                                            },
-                                        );
-                                    }
-                                }
                                 if supports_flexible {
-                                    if has_position_entries || has_stack_entries {
+                                    if has_position_entries {
                                         menu = menu.separator();
                                     }
                                     let panel_for_flex = panel.clone();
@@ -2267,43 +1406,18 @@ impl Render for PanelButtons {
                         .anchor(menu_anchor)
                         .attach(menu_attach)
                         .trigger(move |is_active, _window, _cx| {
-                            let use_side_stack_click =
-                                dock_position != DockPosition::Bottom && is_open;
                             // Include active state in element ID to invalidate the cached
                             // tooltip when panel state changes (e.g., via keyboard shortcut)
                             let button = IconButton::new((name, is_active_button as u64), icon)
                                 .icon_size(IconSize::Small)
                                 .toggle_state(is_active_button)
+                                .tab_index(0isize)
+                                .aria_label(icon_tooltip)
                                 .on_click({
                                     let action = action.boxed_clone();
-                                    let dock_for_button = dock_for_trigger.clone();
-                                    let workspace_for_button = workspace_for_trigger.clone();
                                     move |_, window, cx| {
                                         window.focus(&focus_handle, cx);
-                                        if is_agent_sidechat_button && agent_screen_is_active {
-                                            window.dispatch_action(action.boxed_clone(), cx);
-                                        } else if use_side_stack_click {
-                                            let did_change =
-                                                dock_for_button.update(cx, |dock, cx| {
-                                                    if is_active_button {
-                                                        dock.close_or_unstack_panel(
-                                                            panel_id, window, cx,
-                                                        )
-                                                    } else {
-                                                        dock.stack_panel(panel_id, window, cx)
-                                                    }
-                                                });
-                                            if did_change
-                                                && let Some(workspace) =
-                                                    workspace_for_button.upgrade()
-                                            {
-                                                workspace.update(cx, |workspace, cx| {
-                                                    workspace.serialize_workspace(window, cx);
-                                                });
-                                            }
-                                        } else {
-                                            window.dispatch_action(action.boxed_clone(), cx)
-                                        }
+                                        window.dispatch_action(action.boxed_clone(), cx)
                                     }
                                 })
                                 .when(!is_active, |this| {
@@ -2312,14 +1426,12 @@ impl Render for PanelButtons {
                                     })
                                 });
 
-                            h_flex().gap_0().child(
-                                div().relative().child(button).when_some(
-                                    icon_label
-                                        .clone()
-                                        .filter(|_| !is_active_button)
-                                        .and_then(|label| label.parse::<usize>().ok()),
-                                    |this, count| this.child(CountBadge::new(count)),
-                                ),
+                            div().relative().child(button).when_some(
+                                icon_label
+                                    .clone()
+                                    .filter(|_| !is_active_button)
+                                    .and_then(|label| label.parse::<usize>().ok()),
+                                |this, count| this.child(CountBadge::new(count)),
                             )
                         }),
                 )

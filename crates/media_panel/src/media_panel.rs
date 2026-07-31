@@ -1514,7 +1514,7 @@ impl MediaPanel {
                             .gap_1()
                             .child(Label::new(label).size(LabelSize::Small).truncate())
                             .child(
-                                Label::new(relative_display.clone())
+                                Label::new(relative_display)
                                     .size(LabelSize::XSmall)
                                     .color(Color::Muted)
                                     .truncate(),
@@ -1631,7 +1631,6 @@ impl MediaPanel {
             .start_slot(thumbnail)
             .tooltip(Tooltip::text(url.clone()))
             .on_click(cx.listener({
-                let url = url.clone();
                 let label = label.clone();
                 move |panel, _, window, cx| {
                     panel.preview_media_url(url.clone(), kind, label.clone(), window, cx);
@@ -1641,7 +1640,7 @@ impl MediaPanel {
                 v_flex()
                     .flex_1()
                     .gap_1()
-                    .child(Label::new(label.clone()).size(LabelSize::Small).truncate())
+                    .child(Label::new(label).size(LabelSize::Small).truncate())
                     .child(
                         Label::new(attribution)
                             .size(LabelSize::XSmall)
@@ -2732,15 +2731,13 @@ fn append_remote_browser_provider_names(
         .filter(|source| source.search_template(filter).is_some())
         .map(|source| source.name);
 
-    let mut shown_count = 0usize;
-    for name in names.by_ref().take(max_names) {
+    for (shown_count, name) in names.by_ref().take(max_names).enumerate() {
         if shown_count == 0 {
             text.push_str("; includes ");
         } else {
             text.push_str(", ");
         }
         text.push_str(name);
-        shown_count += 1;
     }
 
     let remaining_count = names.count();
@@ -3817,10 +3814,8 @@ async fn fetch_nasa_media(
 
     let results = futures::future::join_all(detail_requests).await;
     let mut assets = Vec::with_capacity(results.len());
-    for result in results {
-        if let Ok(asset) = result {
-            assets.push(asset);
-        }
+    for asset in results.into_iter().flatten() {
+        assets.push(asset);
     }
     Ok(assets)
 }
@@ -4155,10 +4150,8 @@ async fn fetch_internet_archive_media(
 
     let results = futures::future::join_all(detail_requests).await;
     let mut assets = Vec::with_capacity(results.len());
-    for result in results {
-        if let Ok(asset) = result {
-            assets.push(asset);
-        }
+    for asset in results.into_iter().flatten() {
+        assets.push(asset);
     }
     Ok(assets)
 }

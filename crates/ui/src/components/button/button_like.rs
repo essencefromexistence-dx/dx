@@ -1,8 +1,8 @@
 use documented::Documented;
 use gpui::{
     AnyElement, AnyView, ClickEvent, CursorStyle, DefiniteLength, FocusHandle, Hsla, MouseButton,
-    MouseClickEvent, MouseDownEvent, MouseUpEvent, Rems, StyleRefinement, relative,
-    transparent_black,
+    MouseClickEvent, MouseDownEvent, MouseUpEvent, Rems, StatefulInteractiveElement,
+    StyleRefinement, relative, transparent_black,
 };
 use smallvec::SmallVec;
 
@@ -492,6 +492,7 @@ pub struct ButtonLike {
     tab_index: Option<isize>,
     size: ButtonSize,
     rounding: Option<ButtonLikeRounding>,
+    aria_label: Option<SharedString>,
     tooltip: Option<Box<dyn Fn(&mut Window, &mut App) -> AnyView>>,
     hoverable_tooltip: Option<Box<dyn Fn(&mut Window, &mut App) -> AnyView>>,
     cursor_style: CursorStyle,
@@ -515,6 +516,7 @@ impl ButtonLike {
             height: None,
             size: ButtonSize::Default,
             rounding: Some(ButtonLikeRounding::ALL),
+            aria_label: None,
             tooltip: None,
             hoverable_tooltip: None,
             children: SmallVec::new(),
@@ -526,6 +528,12 @@ impl ButtonLike {
             tab_index: None,
             focus_handle: None,
         }
+    }
+
+    /// Sets the label announced by assistive technology.
+    pub fn aria_label(mut self, label: impl Into<SharedString>) -> Self {
+        self.aria_label = Some(label.into());
+        self
     }
 
     pub fn new_rounded_left(id: impl Into<ElementId>) -> Self {
@@ -686,6 +694,7 @@ impl RenderOnce for ButtonLike {
         self.base
             .h_flex()
             .id(self.id.clone())
+            .when_some(self.aria_label, |this, label| this.aria_label(label))
             .when_some(self.tab_index, |this, tab_index| this.tab_index(tab_index))
             .when_some(self.focus_handle, |this, focus_handle| {
                 this.track_focus(&focus_handle)
