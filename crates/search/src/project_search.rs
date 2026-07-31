@@ -20,7 +20,7 @@ use editor::{
 };
 use futures::{StreamExt, stream::FuturesOrdered};
 use gpui::{
-    Action, AnyElement, App, Axis, Context, Entity, EntityId, EventEmitter, FocusHandle, Focusable,
+    Action, AnyElement, App, Context, Entity, EntityId, EventEmitter, FocusHandle, Focusable,
     Global, Hsla, InteractiveElement, IntoElement, KeyContext, ParentElement, Point, Render,
     SharedString, Styled, Subscription, Task, TaskExt, UpdateGlobal, WeakEntity, Window, actions,
     div,
@@ -1698,7 +1698,7 @@ impl ProjectSearchView {
                     editor.change_selections(Default::default(), window, cx, |s| {
                         s.select_ranges(range_to_select)
                     });
-                    editor.scroll(Point::default(), Some(Axis::Vertical), window, cx);
+                    editor.scroll(Point::default(), window, cx);
                 }
             });
             if is_new_search && self.query_editor.focus_handle(cx).is_focused(window) {
