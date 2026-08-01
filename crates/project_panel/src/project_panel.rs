@@ -852,6 +852,7 @@ impl ProjectPanel {
                 |this, _, event, window, cx| match event {
                     GitStoreEvent::RepositoryUpdated(_, RepositoryEvent::StatusesChanged, _)
                     | GitStoreEvent::RepositoryAdded
+                    | GitStoreEvent::DiffBaseChanged(_)
                     | GitStoreEvent::RepositoryRemoved(_) => {
                         this.update_visible_entries(None, false, false, window, cx);
                         cx.notify();
@@ -2905,7 +2906,7 @@ impl ProjectPanel {
         let parent_entry = worktree.entry_for_path(parent_path)?;
 
         // Remove all siblings that are being deleted except the last marked entry
-        let repo_snapshots = git_store.repo_snapshots(cx);
+        let repo_snapshots = git_store.display_repo_snapshots(cx);
         let worktree_snapshot = worktree.snapshot();
         let hide_gitignore = ProjectPanelSettings::get_global(cx).hide_gitignore;
         let mut siblings = Vec::new();
@@ -5778,7 +5779,7 @@ impl ProjectPanel {
         let generated_media_metadata = self.generated_media_metadata.borrow().clone();
         let media_preview_cache_generation = self.media_preview_cache_generation.get();
         let project = self.project.read(cx);
-        let repo_snapshots = project.git_store().read(cx).repo_snapshots(cx);
+        let repo_snapshots = project.git_store().read(cx).display_repo_snapshots(cx);
 
         let old_ancestors = self.state.ancestors.clone();
         let temporary_unfolded_pending_state = self.state.temporarily_unfolded_pending_state.take();
@@ -7118,7 +7119,7 @@ impl ProjectPanel {
             .read(cx)
             .git_store()
             .read(cx)
-            .repo_snapshots(cx);
+            .display_repo_snapshots(cx);
         let worktree = self.project.read(cx).worktree_for_id(worktree_id, cx)?;
         worktree.read_with(cx, |tree, _| {
             utils::ReversibleIterable::new(
@@ -7148,7 +7149,7 @@ impl ProjectPanel {
             .read(cx)
             .git_store()
             .read(cx)
-            .repo_snapshots(cx);
+            .display_repo_snapshots(cx);
 
         let mut last_found: Option<SelectedEntry> = None;
 

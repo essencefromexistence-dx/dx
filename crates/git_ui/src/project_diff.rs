@@ -33,7 +33,9 @@ use project::{
         branch_diff::{self, BranchDiffEvent, DiffBase},
     },
 };
-use settings::{Settings, SettingsStore};
+use schemars::JsonSchema;
+use serde::Deserialize;
+use settings::{GitDiffBaseSetting, Settings, SettingsStore};
 use std::any::{Any, TypeId};
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -56,8 +58,12 @@ use ztracing::instrument;
 actions!(
     git,
     [
-        /// Shows the diff between the working directory and the index.
+        /// Shows the diff against the configured diff base: working changes
+        /// relative to HEAD, or all branch changes relative to the default
+        /// branch, following the `git.diff_base` setting.
         Diff,
+        /// Shows working changes relative to HEAD.
+        DiffHead,
         /// Adds files to the git staging area.
         Add,
         /// Shows the diff between the working directory and your default
@@ -77,6 +83,12 @@ struct BufferSubscriptions {
     _conflict_set: Entity<ConflictSet>,
     _conflict_set_subscription: Subscription,
 }
+
+/// Shows the diff between the working directory and your default
+/// branch (typically main or master).
+#[derive(PartialEq, Clone, Deserialize, Default, JsonSchema, Action)]
+#[action(namespace = git, name = "DiffBranch", deprecated_aliases = ["git::BranchDiff"])]
+pub(crate) struct DeployBranchDiff;
 
 pub struct ProjectDiff {
     project: Entity<Project>,
@@ -101,8 +113,14 @@ impl ProjectDiff {
         workspace.register_action(Self::deploy);
         workspace.register_action(Self::deploy_branch_diff);
         workspace.register_action(Self::compare_with_branch);
+        workspace.register_action(|workspace, _: &DiffHead, window, cx| {
+            Self::deploy_at(workspace, None, window, cx);
+        });
+        workspace.register_action(|workspace, _: &DeployBranchDiff, window, cx| {
+            Self::deploy_branch_diff(workspace, &BranchDiff, window, cx);
+        });
         workspace.register_action(|workspace, _: &Add, window, cx| {
-            Self::deploy(workspace, &Diff, window, cx);
+            Self::deploy_at(workspace, None, window, cx);
         });
         workspace::register_serializable_item::<ProjectDiff>(cx);
     }
@@ -113,6 +131,11 @@ impl ProjectDiff {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
+        let project = workspace.project().clone();
+        if project.read(cx).git_store().read(cx).diff_base() == GitDiffBaseSetting::DefaultBranch {
+            BranchDiff::deploy_branch_diff(workspace, window, cx);
+            return;
+        }
         Self::deploy_at(workspace, None, window, cx)
     }
 

@@ -2,7 +2,7 @@ pub(super) mod blame;
 
 use super::*;
 use ::git::{Restore, blame::BlameEntry, commit::ParsedCommitMessage, status::FileStatus};
-use buffer_diff::DiffHunkStatus;
+use buffer_diff::{BufferDiff, DiffHunkStatus, DiffHunkStatusKind};
 
 pub type RenderDiffHunkControlsFn = Arc<
     dyn Fn(
@@ -16,6 +16,251 @@ pub type RenderDiffHunkControlsFn = Arc<
         &mut App,
     ) -> AnyElement,
 >;
+
+#[derive(Clone)]
+pub struct ResolvedDiffHunk {
+    pub buffer_range: Range<text::Anchor>,
+    pub diff_base_byte_range: Range<usize>,
+    pub status: DiffHunkStatus,
+}
+
+#[derive(Clone)]
+pub struct ResolvedDiffHunks {
+    pub diff: Entity<BufferDiff>,
+    pub buffer_id: BufferId,
+    pub buffer: Option<Entity<Buffer>>,
+    pub hunks: Vec<ResolvedDiffHunk>,
+}
+
+pub trait DiffHunkDelegate {
+    fn toggle(
+        &self,
+        hunks: Vec<ResolvedDiffHunks>,
+        editor: &mut Editor,
+        window: &mut Window,
+        cx: &mut Context<Editor>,
+    );
+
+    fn stage_or_unstage(
+        &self,
+        stage: bool,
+        hunks: Vec<ResolvedDiffHunks>,
+        editor: &mut Editor,
+        window: &mut Window,
+        cx: &mut Context<Editor>,
+    );
+
+    fn restore(
+        &self,
+        hunks: Vec<ResolvedDiffHunks>,
+        editor: &mut Editor,
+        window: &mut Window,
+        cx: &mut Context<Editor>,
+    ) {
+        if hunks.is_empty() || editor.read_only(cx) {
+            return;
+        }
+        self.stage_or_unstage(false, hunks.clone(), editor, window, cx);
+        editor.transact(window, cx, |editor, window, cx| {
+            editor.restore_diff_hunks(hunks, cx);
+            let selections = editor
+                .selections
+                .all::<MultiBufferOffset>(&editor.display_snapshot(cx));
+            editor.change_selections(
+                SelectionEffects::no_scroll(),
+                window,
+                cx,
+                |selections_state| {
+                    selections_state.select(selections);
+                },
+            );
+        });
+    }
+
+    fn render_hunk_controls(
+        &self,
+        row: u32,
+        status: &DiffHunkStatus,
+        hunk_range: Range<Anchor>,
+        is_created_file: bool,
+        line_height: Pixels,
+        editor: &Entity<Editor>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> AnyElement;
+
+    fn render_hunk_as_staged(&self, status: &DiffHunkStatus, _cx: &App) -> bool {
+        !status.has_secondary_hunk()
+    }
+}
+
+pub struct UncommittedDiffHunkDelegate;
+
+impl DiffHunkDelegate for UncommittedDiffHunkDelegate {
+    fn toggle(
+        &self,
+        hunks: Vec<ResolvedDiffHunks>,
+        editor: &mut Editor,
+        window: &mut Window,
+        cx: &mut Context<Editor>,
+    ) {
+        let stage = hunks
+            .iter()
+            .flat_map(|hunks| hunks.hunks.iter())
+            .any(|hunk| hunk.status.has_secondary_hunk());
+        self.stage_or_unstage(stage, hunks, editor, window, cx);
+    }
+
+    fn stage_or_unstage(
+        &self,
+        stage: bool,
+        hunks: Vec<ResolvedDiffHunks>,
+        editor: &mut Editor,
+        _window: &mut Window,
+        cx: &mut Context<Editor>,
+    ) {
+        let Some(project) = editor.project() else {
+            return;
+        };
+        for hunks in hunks {
+            let Some(buffer) = hunks.buffer else {
+                continue;
+            };
+
+            let ranges = hunks
+                .hunks
+                .into_iter()
+                .map(|hunk| hunk.buffer_range)
+                .collect::<Vec<_>>();
+            if ranges.is_empty() {
+                continue;
+            }
+            let secondary_diff = hunks.diff.read(cx).secondary_diff();
+            project
+                .update(cx, |project, cx| {
+                    if stage {
+                        let Some(secondary_diff) = secondary_diff else {
+                            return Err(anyhow::anyhow!("diff has no unstaged secondary"));
+                        };
+                        project.stage_hunks(buffer, secondary_diff, ranges, cx)
+                    } else {
+                        project.unstage_uncommitted_hunks(buffer, hunks.diff, ranges, cx)
+                    }
+                })
+                .log_err();
+        }
+    }
+
+    fn render_hunk_controls(
+        &self,
+        row: u32,
+        status: &DiffHunkStatus,
+        hunk_range: Range<Anchor>,
+        is_created_file: bool,
+        line_height: Pixels,
+        editor: &Entity<Editor>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> AnyElement {
+        render_diff_hunk_controls(
+            row,
+            status,
+            hunk_range,
+            is_created_file,
+            line_height,
+            editor,
+            window,
+            cx,
+        )
+    }
+}
+
+pub struct RestoreOnlyDiffHunkDelegate;
+
+impl DiffHunkDelegate for RestoreOnlyDiffHunkDelegate {
+    fn toggle(
+        &self,
+        _hunks: Vec<ResolvedDiffHunks>,
+        _editor: &mut Editor,
+        _window: &mut Window,
+        _cx: &mut Context<Editor>,
+    ) {
+    }
+
+    fn stage_or_unstage(
+        &self,
+        _stage: bool,
+        _hunks: Vec<ResolvedDiffHunks>,
+        _editor: &mut Editor,
+        _window: &mut Window,
+        _cx: &mut Context<Editor>,
+    ) {
+    }
+
+    fn restore(
+        &self,
+        _hunks: Vec<ResolvedDiffHunks>,
+        _editor: &mut Editor,
+        _window: &mut Window,
+        _cx: &mut Context<Editor>,
+    ) {
+    }
+
+    fn render_hunk_controls(
+        &self,
+        _row: u32,
+        _status: &DiffHunkStatus,
+        _hunk_range: Range<Anchor>,
+        _is_created_file: bool,
+        _line_height: Pixels,
+        _editor: &Entity<Editor>,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> AnyElement {
+        gpui::Empty.into_any_element()
+    }
+}
+
+pub struct RestoreOnlyUnstagedDiffHunkDelegate;
+
+impl DiffHunkDelegate for RestoreOnlyUnstagedDiffHunkDelegate {
+    fn toggle(
+        &self,
+        _hunks: Vec<ResolvedDiffHunks>,
+        _editor: &mut Editor,
+        _window: &mut Window,
+        _cx: &mut Context<Editor>,
+    ) {
+    }
+
+    fn stage_or_unstage(
+        &self,
+        _stage: bool,
+        _hunks: Vec<ResolvedDiffHunks>,
+        _editor: &mut Editor,
+        _window: &mut Window,
+        _cx: &mut Context<Editor>,
+    ) {
+    }
+
+    fn render_hunk_controls(
+        &self,
+        _row: u32,
+        _status: &DiffHunkStatus,
+        _hunk_range: Range<Anchor>,
+        _is_created_file: bool,
+        _line_height: Pixels,
+        _editor: &Entity<Editor>,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> AnyElement {
+        gpui::Empty.into_any_element()
+    }
+
+    fn render_hunk_as_staged(&self, _status: &DiffHunkStatus, _cx: &App) -> bool {
+        false
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum DisplayDiffHunk {
@@ -172,6 +417,36 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         self.render_diff_hunk_controls = render_diff_hunk_controls;
+        cx.notify();
+    }
+
+    pub fn set_diff_hunk_delegate(
+        &mut self,
+        delegate: Option<Arc<dyn DiffHunkDelegate>>,
+        cx: &mut Context<Self>,
+    ) {
+        let had_delegate = self.diff_hunk_delegate.is_some();
+        let has_delegate = delegate.is_some();
+        self.diff_hunk_delegate = delegate;
+
+        if !had_delegate && has_delegate {
+            self.load_diff_task.take();
+        } else if had_delegate && !has_delegate {
+            self.buffer.update(cx, |buffer, cx| {
+                buffer.set_all_diff_hunks_collapsed(cx);
+            });
+
+            if let Some(project) = self.project.clone() {
+                self.load_diff_task = Some(
+                    self.update_uncommitted_diff_for_buffer(
+                        &project,
+                        self.buffer.read(cx).all_buffers(),
+                        cx,
+                    )
+                    .shared(),
+                );
+            }
+        }
         cx.notify();
     }
 
@@ -1433,6 +1708,58 @@ impl Editor {
         None
     }
 
+    pub fn apply_toggle(
+        &mut self,
+        hunks: Vec<MultiBufferDiffHunk>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let mut hunks = self.resolve_diff_hunks(hunks, cx);
+        if self.diff_hunk_delegate.is_none() {
+            hunks.retain(|hunks| hunks.diff.read(cx).is_stageable());
+        }
+        if hunks.is_empty() {
+            return;
+        }
+        let delegate = self.diff_hunk_delegate();
+        delegate.toggle(hunks, self, window, cx);
+    }
+
+    pub fn apply_stage_or_unstage(
+        &mut self,
+        stage: bool,
+        hunks: Vec<MultiBufferDiffHunk>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let mut hunks = self.resolve_diff_hunks(hunks, cx);
+        if self.diff_hunk_delegate.is_none() {
+            hunks.retain(|hunks| hunks.diff.read(cx).is_stageable());
+        }
+        if hunks.is_empty() {
+            return;
+        }
+        let delegate = self.diff_hunk_delegate();
+        delegate.stage_or_unstage(stage, hunks, self, window, cx);
+    }
+
+    pub fn apply_restore(
+        &mut self,
+        hunks: Vec<MultiBufferDiffHunk>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let mut hunks = self.resolve_diff_hunks(hunks, cx);
+        if self.diff_hunk_delegate.is_none() {
+            hunks.retain(|hunks| hunks.diff.read(cx).is_stageable());
+        }
+        if hunks.is_empty() {
+            return;
+        }
+        let delegate = self.diff_hunk_delegate();
+        delegate.restore(hunks, self, window, cx);
+    }
+
     pub(super) fn clear_expanded_diff_hunks(&mut self, cx: &mut Context<Self>) -> bool {
         self.buffer.update(cx, |buffer, cx| {
             let ranges = vec![Anchor::Min..Anchor::Max];
@@ -2628,9 +2955,15 @@ pub(super) fn render_diff_hunk_controls(
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
-    let show_stage_restore = ProjectSettings::get_global(cx)
-        .git
-        .show_stage_restore_buttons;
+    let stageable = hunk_range
+        .start
+        .buffer_id()
+        .and_then(|buffer_id| editor.read(cx).buffer().read(cx).diff_for(buffer_id))
+        .is_some_and(|diff| diff.read(cx).is_stageable());
+    let show_stage_restore = stageable
+        && ProjectSettings::get_global(cx)
+            .git
+            .show_stage_restore_buttons;
 
     h_flex()
         .h(line_height)
@@ -2830,4 +3163,38 @@ pub(super) fn update_uncommitted_diff_for_buffer(
             }
         });
     })
+}
+
+impl Editor {
+    pub(super) fn update_uncommitted_diff_for_buffer(
+        &mut self,
+        project: &Entity<Project>,
+        buffers: impl IntoIterator<Item = Entity<Buffer>>,
+        cx: &mut Context<Self>,
+    ) -> Task<()> {
+        let mut tasks = Vec::new();
+        project.update(cx, |project, cx| {
+            let git_store = project.git_store().clone();
+            git_store.update(cx, |git_store, cx| {
+                for buffer in buffers {
+                    if project::File::from_dyn(buffer.read(cx).file()).is_some() {
+                        tasks.push(git_store.open_display_diff(buffer, cx));
+                    }
+                }
+            });
+        });
+        let editor = cx.entity();
+        let buffer = self.buffer.clone();
+        cx.spawn(async move |_, cx| {
+            let diffs = future::join_all(tasks).await;
+            if editor.read_with(cx, |editor, _cx| editor.diff_hunk_delegate.is_some()) {
+                return;
+            }
+            buffer.update(cx, |buffer, cx| {
+                for diff in diffs.into_iter().flatten() {
+                    buffer.add_diff(diff, cx);
+                }
+            });
+        })
+    }
 }
