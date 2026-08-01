@@ -528,6 +528,10 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
                         cx.new(|cx| Sidebar::new(multi_workspace_handle.clone(), window, cx));
                     multi_workspace_handle.update(cx, |multi_workspace, cx| {
                         multi_workspace.register_sidebar(sidebar, cx);
+                        // Keep the workspace sidebar mounted by default. The Sidebar itself
+                        // starts in its compact activity-bar state and owns the expand/collapse
+                        // toggle, so this does not consume editor space until expanded.
+                        multi_workspace.open_sidebar(cx);
                     });
                 })
                 .ok();
@@ -765,6 +769,8 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
         let project_panel = ProjectPanel::load(workspace_handle.clone(), cx.clone());
         let outline_panel = OutlinePanel::load(workspace_handle.clone(), cx.clone());
         let terminal_panel = TerminalPanel::load(workspace_handle.clone(), cx.clone());
+        let dx_check_panel = agent_ui::DxCheckPanel::load(workspace_handle.clone(), cx.clone());
+        let dx_skill_panel = agent_ui::DxSkillPanel::load(workspace_handle.clone(), cx.clone());
         let git_panel = GitPanel::load(workspace_handle.clone(), cx.clone());
         let channels_panel =
             collab_ui::collab_panel::CollabPanel::load(workspace_handle.clone(), cx.clone());
@@ -789,6 +795,8 @@ fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) -> Task<a
             add_panel_when_ready(project_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(outline_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(terminal_panel, workspace_handle.clone(), cx.clone()),
+            add_panel_when_ready(dx_check_panel, workspace_handle.clone(), cx.clone()),
+            add_panel_when_ready(dx_skill_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(git_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(channels_panel, workspace_handle.clone(), cx.clone()),
             add_panel_when_ready(debug_panel, workspace_handle.clone(), cx.clone()),

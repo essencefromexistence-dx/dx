@@ -5955,9 +5955,24 @@ impl Workspace {
                 item::WorkspaceScreenKind::Editor => {
                     window.dispatch_action(NewFile.boxed_clone(), cx);
                 }
-                item::WorkspaceScreenKind::Terminal
-                | item::WorkspaceScreenKind::Onboarding
-                | item::WorkspaceScreenKind::Other => {}
+                item::WorkspaceScreenKind::Terminal => {
+                    let working_directory = self
+                        .root_paths(cx)
+                        .into_iter()
+                        .next()
+                        .map(|path| path.to_path_buf())
+                        .or_else(|| env::current_dir().ok())
+                        .unwrap_or_default();
+                    window.dispatch_action(
+                        OpenTerminal {
+                            working_directory,
+                            local: false,
+                        }
+                        .boxed_clone(),
+                        cx,
+                    );
+                }
+                item::WorkspaceScreenKind::Onboarding | item::WorkspaceScreenKind::Other => {}
             }
         }
 

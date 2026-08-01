@@ -25073,6 +25073,7 @@ dependencies = [
  "vim",
  "vim_mode_setting",
  "watch",
+ "web_preview",
  "web_search",
  "web_search_providers",
  "which_key",

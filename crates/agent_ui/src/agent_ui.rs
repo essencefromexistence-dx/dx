@@ -716,6 +716,9 @@ pub fn init(
         init_language_model_settings(cx);
     }
     agent_panel::init(cx);
+    dx_check_panel_view::init(cx);
+    dx_skill_panel::init(cx);
+    dx_style_panel::panel::init(cx);
     cx.observe_new(|workspace: &mut Workspace, _window, _cx| {
         workspace.register_action(
             |workspace: &mut Workspace,
