@@ -4877,9 +4877,7 @@ impl ThreadView {
                 colors.panel_background,
             )
         };
-        let glass_surface = self.render_liquid_glass_chat_input_surface(cx);
-        let uses_liquid_glass = glass_surface.is_some();
-        // Always use a visible border for the chatinputbox frame in AI screen (including fullscreen/liquid glass states).
+        // Always use a visible border for the chatinputbox frame in AI screen.
         // Previously focus-gated selection could result in border not appearing reliably in some renders/states.
         // Use the standard border color unconditionally for the outer container frame (inner editor focus uses its own treatment).
         let chat_input_border = border;
@@ -5022,7 +5020,6 @@ impl ThreadView {
                     .when(expands_editor_area, |this| this.h_full())
                     .justify_between()
                     .gap_1()
-                    .when_some(glass_surface, |this, surface| this.child(surface))
                     .child(
                         v_flex()
                             .relative()
@@ -5182,18 +5179,6 @@ impl ThreadView {
                     ),
             )
             .into_any()
-    }
-
-    fn render_liquid_glass_chat_input_surface(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
-        let _settings = AgentSettings::get_global(cx).liquid_glass.clone();
-        /*
-        if !settings.enabled {
-            return None;
-        }
-
-        Some(render_agent_liquid_glass_chat_input_surface(&settings))
-        */
-        None
     }
 
     pub(crate) fn set_transparent_header_height(

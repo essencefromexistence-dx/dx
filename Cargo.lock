@@ -511,7 +511,6 @@ dependencies = [
  "language_model",
  "language_models",
  "languages",
- "liquid_glass",
  "log",
  "lru",
  "lsp",
@@ -10914,20 +10913,6 @@ name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
-
-[[package]]
-name = "liquid_glass"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "gpui",
- "image",
- "log",
- "project",
- "smallvec 1.15.2",
- "ui",
- "workspace",
-]
 
 [[package]]
 name = "litemap"
@@ -24471,7 +24456,6 @@ dependencies = [
  "language_tools",
  "languages",
  "line_ending_selector",
- "liquid_glass",
  "log",
  "markdown",
  "markdown_preview",

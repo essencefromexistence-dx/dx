@@ -1,12 +1,9 @@
 use std::sync::Arc;
 
-use agent_settings::{AgentLiquidGlassSettings, AgentSettings};
+use agent_settings::AgentSettings;
 use gpui::{
     AnyElement, App, ClickEvent, Context, DismissEvent, EventEmitter, FocusHandle, Focusable,
     Render, SharedString, Window, prelude::*,
-};
-use liquid_glass::{
-    LiquidGlassStyle, bounded_liquid_glass_layer, load_liquid_glass_backdrop_carrier,
 };
 use settings::Settings as _;
 use ui::{
@@ -61,12 +58,6 @@ mod tools_screen;
 mod www_evidence;
 
 use self::list_labels::{bounded_items, yes_no};
-
-const DX_RAIL_LIQUID_GLASS_BLUR_RADIUS: f32 = 1.25;
-const DX_RAIL_LIQUID_GLASS_BLUR_ITERATIONS: u32 = 3;
-const DX_RAIL_LIQUID_GLASS_BLUR_DOWNSCALE: f32 = 0.50;
-const DX_RAIL_LIQUID_GLASS_CHROMATIC_ABERRATION: f32 = 0.0015;
-const DX_RAIL_LIQUID_GLASS_ABERRATION_SAMPLES: u32 = 3;
 
 pub(crate) use automation_screen::{
     AutomationCatalogFilter, DxAutomationCatalogState, render_automation_catalog_rows,
@@ -377,10 +368,6 @@ fn render_sources_rail(
         .overflow_hidden()
         .overflow_y_scroll()
         .occlude()
-        .when_some(
-            rail_liquid_glass_surface("dx-sources-rail-liquid-glass", cx),
-            |this, glass| this.child(glass),
-        )
         .child(rail_pin_header(
             "dx-sources-rail-pin",
             "Sources",
@@ -461,10 +448,6 @@ fn render_right_rail(
         .overflow_hidden()
         .overflow_y_scroll()
         .occlude()
-        .when_some(
-            rail_liquid_glass_surface("dx-progress-rail-liquid-glass", cx),
-            |this, glass| this.child(glass),
-        )
         .child(rail_pin_header(
             "dx-progress-rail-pin",
             "Agents",
@@ -603,47 +586,6 @@ fn rail_rainbow_glow(id: &'static str, phase_offset: f32) -> AnyElement {
                 .phase_offset(phase_offset),
         )
         .into_any_element()
-}
-
-fn rail_liquid_glass_surface(id: &'static str, cx: &App) -> Option<AnyElement> {
-    let settings = AgentSettings::get_global(cx).liquid_glass.clone();
-    if !settings.enabled {
-        return None;
-    }
-
-    Some(
-        div()
-            .id(id)
-            .absolute()
-            .inset_0()
-            .overflow_hidden()
-            .child(bounded_liquid_glass_layer(
-                load_liquid_glass_backdrop_carrier(),
-                rail_liquid_glass_style(&settings),
-            ))
-            .into_any_element(),
-    )
-}
-
-fn rail_liquid_glass_style(settings: &AgentLiquidGlassSettings) -> LiquidGlassStyle {
-    LiquidGlassStyle {
-        power_factor: settings.power_factor,
-        a: settings.a,
-        b: settings.b,
-        c: settings.c,
-        d: settings.d,
-        f_power: settings.f_power,
-        noise: settings.noise,
-        glow_weight: settings.glow_weight,
-        glow_edge0: settings.glow_edge0,
-        glow_edge1: settings.glow_edge1,
-        glow_bias: settings.glow_bias,
-        chromatic_aberration: DX_RAIL_LIQUID_GLASS_CHROMATIC_ABERRATION,
-        aberration_samples: DX_RAIL_LIQUID_GLASS_ABERRATION_SAMPLES,
-        blur_radius: DX_RAIL_LIQUID_GLASS_BLUR_RADIUS,
-        blur_iterations: DX_RAIL_LIQUID_GLASS_BLUR_ITERATIONS,
-        blur_downscale: DX_RAIL_LIQUID_GLASS_BLUR_DOWNSCALE,
-    }
 }
 
 fn rail_pin_header(

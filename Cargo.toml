@@ -126,7 +126,6 @@ members = [
     "crates/language_selector",
     "crates/language_tools",
     "crates/languages",
-    "crates/liquid_glass",
     "crates/line_ending_selector",
     "crates/livekit_api",
     "crates/livekit_client",
@@ -401,7 +400,6 @@ lmstudio = { path = "crates/lmstudio" }
 lsp = { path = "crates/lsp" }
 markdown = { path = "crates/markdown" }
 markdown_preview = { path = "crates/markdown_preview" }
-liquid_glass = { path = "crates/liquid_glass" }
 web_preview = { path = "crates/web_preview" }
 web_preview_linux = { path = "crates/web_preview_linux" }
 web_preview_macos = { path = "crates/web_preview_macos" }
@@ -1020,8 +1018,13 @@ ui_input = { codegen-units = 1 }
 zed_actions = { codegen-units = 1 }
 
 [profile.release]
-debug = "limited"
+# Size-first release tuning (download-size goal): opt-z shrinks code ~10-15%,
+# panic=abort drops ~20MB of unwind tables, no debug info in the shipped exe.
+# NOTE: panics now abort the process instead of unwinding.
+debug = false
 lto = "thin"
+opt-level = "z"
+panic = "abort"
 codegen-units = 1
 
 [profile.release.package.git_ui]
@@ -1029,6 +1032,14 @@ codegen-units = 16
 
 [profile.release.package]
 zed = { codegen-units = 16 }
+# Low-RAM linker relief (23GB box, ~1GB pagefile): these giant crates OOM
+# rustc-LLVM with the workspace default of codegen-units = 1 + thin LTO.
+# Splitting them into 16 codegen units slashes peak LLVM memory at a small
+# inlining cost. Also helps CI runners with <=16GB RAM.
+project = { codegen-units = 16 }
+project_panel = { codegen-units = 16 }
+agent_ui = { codegen-units = 16 }
+workspace = { codegen-units = 16 }
 
 [profile.release-fast]
 inherits = "release"

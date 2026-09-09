@@ -175,68 +175,12 @@ test("fullscreen AI rails stay visible with empty data and use Liquid Glass chro
   assert.doesNotMatch(workspaceChrome, /show_progress_rail && has_progress_rail_content/);
   assert.match(workspaceChrome, /show_sources_rail[\s\S]*render_sources_rail/);
   assert.match(workspaceChrome, /show_progress_rail[\s\S]*render_right_rail/);
-  assert.match(dxWorkspace, /use liquid_glass::\{[\s\S]*bounded_liquid_glass_layer[\s\S]*load_liquid_glass_backdrop_carrier/);
-  assert.match(dxWorkspace, /fn rail_liquid_glass_surface/);
-  assert.match(sourceRail, /rail_liquid_glass_surface\("dx-sources-rail-liquid-glass"/);
-  assert.match(progressRail, /rail_liquid_glass_surface\("dx-progress-rail-liquid-glass"/);
+  assert.doesNotMatch(dxWorkspace, /use liquid_glass::\{/);
+  assert.doesNotMatch(dxWorkspace, /fn rail_liquid_glass_surface/);
+  assert.doesNotMatch(sourceRail, /rail_liquid_glass_surface\(/);
+  assert.doesNotMatch(progressRail, /rail_liquid_glass_surface\(/);
   assert.match(sourceRail, /fullscreen_empty_rail_state\([\s\S]*"No source data yet"/);
   assert.match(progressRail, /fullscreen_empty_rail_state\([\s\S]*"No agent activity yet"/);
-});
-
-test("fullscreen AI rail Liquid Glass uses subtle rail-only blur and chromatic tuning", () => {
-  const dxWorkspace = read("crates/agent_ui/src/dx_launch_workspace.rs");
-  const composerLiquidGlass = read(
-    "crates/agent_ui/src/conversation_view/liquid_glass_composer.rs",
-  );
-  const railStyle = sliceBetween(
-    dxWorkspace,
-    "fn rail_liquid_glass_style(",
-    "\nfn rail_pin_header(",
-  );
-
-  assert.match(
-    dxWorkspace,
-    /const DX_RAIL_LIQUID_GLASS_BLUR_RADIUS: f32 = 1\.[0-9]+;/,
-  );
-  assert.match(
-    dxWorkspace,
-    /const DX_RAIL_LIQUID_GLASS_BLUR_ITERATIONS: u32 = 3;/,
-  );
-  assert.match(
-    dxWorkspace,
-    /const DX_RAIL_LIQUID_GLASS_BLUR_DOWNSCALE: f32 = 0\.[0-9]+;/,
-  );
-  assert.match(
-    dxWorkspace,
-    /const DX_RAIL_LIQUID_GLASS_CHROMATIC_ABERRATION: f32 = 0\.00[0-9]+;/,
-  );
-  assert.match(
-    dxWorkspace,
-    /const DX_RAIL_LIQUID_GLASS_ABERRATION_SAMPLES: u32 = 3;/,
-  );
-  assert.match(railStyle, /blur_radius:\s*DX_RAIL_LIQUID_GLASS_BLUR_RADIUS/);
-  assert.match(
-    railStyle,
-    /blur_iterations:\s*DX_RAIL_LIQUID_GLASS_BLUR_ITERATIONS/,
-  );
-  assert.match(
-    railStyle,
-    /blur_downscale:\s*DX_RAIL_LIQUID_GLASS_BLUR_DOWNSCALE/,
-  );
-  assert.match(
-    railStyle,
-    /chromatic_aberration:\s*DX_RAIL_LIQUID_GLASS_CHROMATIC_ABERRATION/,
-  );
-  assert.match(
-    railStyle,
-    /aberration_samples:\s*DX_RAIL_LIQUID_GLASS_ABERRATION_SAMPLES/,
-  );
-  assert.doesNotMatch(composerLiquidGlass, /DX_RAIL_LIQUID_GLASS_/);
-  assert.match(composerLiquidGlass, /blur_radius: settings\.blur_radius/);
-  assert.match(
-    composerLiquidGlass,
-    /chromatic_aberration: settings\.chromatic_aberration/,
-  );
 });
 
 test("Connections workspace is wired to provider, channel, social, gateway, and credential state", () => {
