@@ -334,6 +334,23 @@ upload_debug_symbols
 
 cp target/${target_triple}/${target_dir}/zed "${app_path}/Contents/MacOS/zed"
 cp target/${target_triple}/${target_dir}/cli "${app_path}/Contents/MacOS/cli"
+
+# Ship the professional web export tree so macOS downloads carry it:
+# Contents/Resources/assets/web (resolved at runtime via the bundle-layout
+# probe in web_preview's find_assets_web_root). Prefers the canonical
+# workspace-root tree, falls back to the desktop-local tree.
+dx_assets_web=""
+if [[ -d "../assets/web" ]]; then
+    dx_assets_web="../assets/web"
+elif [[ -d "assets/web" ]]; then
+    dx_assets_web="assets/web"
+fi
+if [[ -n "${dx_assets_web}" ]]; then
+    mkdir -p "${app_path}/Contents/Resources/assets"
+    cp -R "${dx_assets_web}" "${app_path}/Contents/Resources/assets/web"
+else
+    echo "warning: assets/web tree not found; macOS bundle ships without web previews."
+fi
 sign_app_binaries
 
 sign_binary "target/$target_triple/release/remote_server"

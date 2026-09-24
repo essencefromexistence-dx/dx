@@ -1,5 +1,4 @@
 import type { RegistryEntry } from "../../shared.ts";
-import { CONOL_FALLBACK_MODELS } from "../../../../services/conolModels.ts";
 
 export const conol_webProvider: RegistryEntry = {
   id: "conol-web",
@@ -10,5 +9,9 @@ export const conol_webProvider: RegistryEntry = {
   authType: "apikey",
   authHeader: "cookie",
   passthroughModels: true,
-  models: CONOL_FALLBACK_MODELS,
+  // No static catalog: conol.ai exposes no public /models endpoint, so the
+  // live chat catalog is fetched via passthrough (same pattern as helixmind).
+  // (The OmniRoute merge referenced a services/conolModels.ts module that was
+  // never copied over; dropped the dangling import instead of inventing data.)
+  models: [],
 };

@@ -1,7 +1,7 @@
-# TUI_OPENCODE_AGENT_HELPER — dx-desktop builds on THIS machine (Windows host)
+# TUI_OPENCODE_AGENT_HELPER — dx-code builds on THIS machine (Windows host)
 
 Audience: an AI agent running in WSL/Linux on this same box whose job is to
-build dx-desktop for **Linux** here. Read all of this before touching anything.
+build dx-code for **Linux** here. Read all of this before touching anything.
 
 ## 0. Hard rules (do not break these)
 
@@ -35,8 +35,8 @@ build dx-desktop for **Linux** here. Read all of this before touching anything.
 
 ## 2. How the Windows release was built (exact recipe)
 
-Binary built: `G:\Dx\bin\dx-desktop.exe` = 224,874,257 bytes (~214 MiB).
-Installer: `G:\Dx\bin\DxDesktop-Setup-x86_64.exe` = 95,493,913 bytes (~91 MiB).
+Binary built: `G:\Dx\bin\dx-code.exe` = 224,874,257 bytes (~214 MiB).
+Installer: `G:\Dx\bin\DxCode-Setup-x86_64.exe` = 95,493,913 bytes (~91 MiB).
 
 Release profile (`Cargo.toml` `[profile.release]`, already in tree):
 
@@ -65,7 +65,7 @@ working combo on this box. Do NOT exceed 4 jobs — jobs=12 OOMs (see §4):
 ```powershell
 $env:CARGO_BUILD_JOBS = "4"
 $env:CARGO_INCREMENTAL = "1"
-cargo build --release --locked -p zed --bin dx-desktop
+cargo build --release --locked -p zed --bin dx-code
 ```
 
 For builds longer than a few minutes, launch detached via WMI so a dropped
@@ -75,7 +75,7 @@ rejects it; use PowerShell `$env:` assignments instead):
 
 ```powershell
 $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
-  CommandLine = 'powershell -NoProfile -Command "$env:CARGO_BUILD_JOBS = ''4''; $env:CARGO_INCREMENTAL = ''1''; cargo build --release --locked -p zed --bin dx-desktop > G:\Temp\UserTemp\opencode\dxb.log 2>&1"'
+  CommandLine = 'powershell -NoProfile -Command "$env:CARGO_BUILD_JOBS = ''4''; $env:CARGO_INCREMENTAL = ''1''; cargo build --release --locked -p zed --bin dx-code > G:\Temp\UserTemp\opencode\dxb.log 2>&1"'
   CurrentDirectory = 'G:\Dx\desktop'
 }
 # poll with: Get-Process cargo, rustc ; Get-Content <log> -Tail 3
@@ -91,9 +91,9 @@ $src = Get-ChildItem "$dto/build/webview2-com-sys-*/out/x64/WebView2Loader.dll" 
 Copy-Item $src "$dto/WebView2Loader.dll" -Force
 ```
 
-Installer (`crates/zed/resources/windows/dx-desktop.iss`, AppId already inside):
+Installer (`crates/zed/resources/windows/dx-code.iss`, AppId already inside):
 ships exe + DLL + `assets/web/**`, `lzma2/max`, solid. Compile with ISCC;
-output lands in `target/DxDesktop-Setup-x86_64.exe`. Copy both artifacts to
+output lands in `target/DxCode-Setup-x86_64.exe`. Copy both artifacts to
 `G:\Dx\bin`.
 
 ## 3. Size history (measured with objdump, all real numbers)
@@ -130,7 +130,7 @@ output lands in `target/DxDesktop-Setup-x86_64.exe`. Copy both artifacts to
 Uncommitted working-tree changes you must NOT lose: `liquid_glass` crate +
 assets deletion, `assets.rs` embed removals (`liquid_glass`, `web`),
 settings schema/UI removals, `[profile.release]` tuning + per-package CGU
-overrides, `dx-desktop.iss`, `.circleci/config.yml` (linux-only, currently
+overrides, `dx-code.iss`, `.circleci/config.yml` (linux-only, currently
 failing on apt mirrors — ignore it, Linux is built HERE, not on CI).
 
 ## 6. Web assets: disk-serving for the axum/embedded server; PLATFORM embeds still exist
@@ -179,15 +179,15 @@ without its `assets/` folder, previews 404 — that is the accepted tradeoff
 - Getting the tree in: the Windows tree has the uncommitted changes from §5.
   Do NOT `git clone` fresh (you'd lose them) and do NOT build on `/mnt/g`
   (9P is slow and breaks exec bits). Copy once, excluding `target/`:
-  `cp -a --exclude=target /mnt/g/Dx/desktop ~/dx-desktop` (or tar pipe),
+  `cp -a --exclude=target /mnt/g/Dx/desktop ~/dx-code` (or tar pipe),
   INCLUDING `.git` (build stamps `ZED_COMMIT_SHA` from it). Then build native
-  inside `~/dx-desktop`.
+  inside `~/dx-code`.
 - In-WSL recipe: `./script/linux` (sudo apt; EC2 mirrors flaked on CI but a
   local WSL apt run is normally fine) → `./script/download-wasi-sdk` →
   rustup installs pinned 1.95.0 automatically →
-  `CARGO_BUILD_JOBS=2 cargo build --release --locked -p zed --bin dx-desktop`
-  → binary at `target/release/dx-desktop` → copy to
-  `/mnt/g/Dx/bin/dx-desktop-linux-x86_64` plus an `assets/web` copy next to it.
+  `CARGO_BUILD_JOBS=2 cargo build --release --locked -p zed --bin dx-code`
+  → binary at `target/release/dx-code` → copy to
+  `/mnt/g/Dx/bin/dx-code-linux-x86_64` plus an `assets/web` copy next to it.
 - Smoke test on the binary if a GUI is unavailable: it should at least print
   the clap error on a bad flag (proves DLLs/symbols resolve); real proof is
   launching it in a Linux GUI session.

@@ -2,7 +2,7 @@
   "tool": "dx imports check",
   "version": 2,
   "generated_at": "2026-08-30T14:30:07.871118+00:00",
-  "project": "G:/Dx/desktop/web/Whiteboard",
+  "project": "G:/Dx/code/web/Whiteboard",
   "passed": true,
   "wrote_files": false,
   "source_hash": "blake3:0bca694f181ee0b377eeaa0691c51359f5373903d491ab9c608081001eaab6f4",

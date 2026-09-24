@@ -569,7 +569,16 @@ fn project_output_dir(tool_id: &str) -> Option<PathBuf> {
 }
 
 /// Find assets/web professional static outputs root (for copied nextjs exports).
-/// Walks similar to web root, prefers <cwd>/assets/web , exe parent/assets/web , G:\Dx\code\assets\web
+/// Walks similar to web root, prefers DX_ASSETS_WEB_ROOT, <cwd>/assets/web,
+/// exe parent/assets/web, per-OS install data dirs, the canonical
+/// G:\Dx\assets\web tree, then G:\Dx\desktop\assets\web and legacy
+/// G:\Dx\code\assets\web.
+/// Per-OS install paths (where the download/installer must place the tree):
+/// Windows %LOCALAPPDATA%\DxCode\assets\web (user) or
+/// %PROGRAMDATA%\DxCode\assets\web (machine),
+/// macOS ~/Library/Application Support/DxCode/assets/web,
+/// Linux $XDG_DATA_HOME/dx-code/assets/web or
+/// ~/.local/share/dx-code/assets/web.
 fn find_assets_web_root() -> Option<PathBuf> {
     if let Ok(env) = std::env::var("DX_ASSETS_WEB_ROOT") {
         let p = PathBuf::from(env);
@@ -587,6 +596,12 @@ fn find_assets_web_root() -> Option<PathBuf> {
         if let Some(parent) = exe.parent() {
             candidates.push(parent.join("assets").join("web"));
             candidates.push(parent.to_path_buf());
+            // Packaged layouts: macOS DxCode.app/Contents/Resources and
+            // Linux <prefix>/share/dx-code (see script/bundle-mac and
+            // script/bundle-linux, which stage the tree there).
+            if let Some(bundled) = bundle_layout_web_root(parent) {
+                return Some(bundled);
+            }
         }
     }
 
@@ -609,7 +624,21 @@ fn find_assets_web_root() -> Option<PathBuf> {
         }
     }
 
-    // fallback — support both G:\Dx\desktop\assets\web and legacy G:\Dx\code\assets\web
+    // Per-OS install data dirs: where the packaged/downloaded tree lives
+    // when dx-code is installed outside the lab checkout (no new deps:
+    // plain env reads, same style as the exe/cwd walk above).
+    if let Some(data) = install_data_web_root() {
+        if data.is_dir() && has_output_subdirs(&data) {
+            return Some(data);
+        }
+    }
+
+    // fallback — canonical workspace-root tree, then the desktop-local tree,
+    // then legacy G:\Dx\code\assets\web
+    let canon = PathBuf::from(r"G:\Dx\assets\web");
+    if canon.is_dir() {
+        return Some(canon);
+    }
     let fb = PathBuf::from(r"G:\Dx\desktop\assets\web");
     if fb.is_dir() {
         return Some(fb);
@@ -618,11 +647,93 @@ fn find_assets_web_root() -> Option<PathBuf> {
     if fb2.is_dir() { Some(fb2) } else { None }
 }
 
+/// Per-OS install data dir holding the downloaded `assets/web` tree.
+/// Windows: %LOCALAPPDATA%\DxCode (user) — %PROGRAMDATA%\DxCode is
+/// checked by the caller only when the user dir has no valid tree.
+fn install_data_web_root() -> Option<PathBuf> {
+    #[cfg(target_os = "windows")]
+    {
+        let local = std::env::var_os("LOCALAPPDATA").map(PathBuf::from)?;
+        let user = local.join("DxCode").join("assets").join("web");
+        if user.is_dir() {
+            return Some(user);
+        }
+        std::env::var_os("PROGRAMDATA")
+            .map(PathBuf::from)
+            .map(|p| p.join("DxCode").join("assets").join("web"))
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var_os("HOME").map(PathBuf::from)?;
+        Some(
+            home.join("Library")
+                .join("Application Support")
+                .join("DxCode")
+                .join("assets")
+                .join("web"),
+        )
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        if let Some(xdg) = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from) {
+            let p = xdg.join("dx-code").join("assets").join("web");
+            if p.is_dir() {
+                return Some(p);
+            }
+        }
+        let home = std::env::var_os("HOME").map(PathBuf::from)?;
+        Some(
+            home.join(".local")
+                .join("share")
+                .join("dx-code")
+                .join("assets")
+                .join("web"),
+        )
+    }
+}
+
 fn has_output_subdirs(p: &Path) -> bool {
     std::fs::read_dir(p).map_or(false, |rd| {
         rd.flatten()
             .any(|e| e.path().is_dir() && e.path().join("index.html").is_file())
     })
+}
+
+/// Packaged bundle layouts, probed from the exe directory:
+/// macOS `Contents/Resources/assets/web` inside the .app bundle and Linux
+/// `<prefix>/share/dx-code/assets/web` (exe in `bin/` or `libexec/`).
+/// Neither is visible to the plain ancestor walk, so they are checked here.
+fn bundle_layout_web_root(exe_parent: &Path) -> Option<PathBuf> {
+    let mut probes: Vec<PathBuf> = Vec::new();
+    // macOS .app: exe in Contents/MacOS
+    probes.push(
+        exe_parent
+            .join("..")
+            .join("Resources")
+            .join("assets")
+            .join("web"),
+    );
+    // Linux prefix: exe in bin/ or libexec/
+    probes.push(
+        exe_parent
+            .join("..")
+            .join("share")
+            .join("dx-code")
+            .join("assets")
+            .join("web"),
+    );
+    probes.push(
+        exe_parent
+            .join("..")
+            .join("..")
+            .join("share")
+            .join("dx-code")
+            .join("assets")
+            .join("web"),
+    );
+    probes
+        .into_iter()
+        .find(|p| p.is_dir() && has_output_subdirs(p))
 }
 
 #[derive(Default)]

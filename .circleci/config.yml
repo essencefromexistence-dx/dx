@@ -1,6 +1,6 @@
 version: 2.1
 
-# macOS-only build for dx-desktop (Zed fork).
+# macOS-only build for dx-code (Zed fork).
 # Windows + Linux build on the dev machine, so CircleCI does macOS only:
 # Apple hardware is the only place macOS binaries can be produced.
 #
@@ -46,13 +46,13 @@ jobs:
             - cargo-macos-{{ checksum "Cargo.lock" }}
             - cargo-macos-
       - run:
-          name: Build dx-desktop (macOS arm64 release)
+          name: Build dx-code (macOS arm64 release)
           no_output_timeout: 60m
           command: |
             set -euo pipefail
             source "$BASH_ENV"
             rustc --version && cargo --version
-            cargo build --release -p zed --bin dx-desktop
+            cargo build --release -p zed --bin dx-code
       - save_cache:
           # Keep compiled deps even on failure so the next run resumes.
           key: cargo-macos-{{ checksum "Cargo.lock" }}-{{ .Branch }}
@@ -64,11 +64,11 @@ jobs:
       - run:
           name: Report binary size
           command: |
-            ls -lh target/release/dx-desktop
-            file target/release/dx-desktop || true
+            ls -lh target/release/dx-code
+            file target/release/dx-code || true
       - store_artifacts:
-          path: target/release/dx-desktop
-          destination: dx-desktop-macos-arm64
+          path: target/release/dx-code
+          destination: dx-code-macos-arm64
       - save_cache:
           key: cargo-macos-{{ checksum "Cargo.lock" }}-{{ .Branch }}
           paths:

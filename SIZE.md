@@ -1,4 +1,4 @@
-# SIZE.md — dx-desktop binary-size record + Linux rebuild playbook
+# SIZE.md — dx-code binary-size record + Linux rebuild playbook
 
 Read this AND `TUI_OPENCODE_AGENT_HELPER.md` before building. This file is the
 size story: what was measured, where every megabyte lives, and the exact
@@ -19,7 +19,7 @@ bytes (~271.6MB)** after §4 rewiring (was 415,473,720 ≈ 395.9MB with the
 135MB web embed — delta −130,757,376 bytes; hashed asset names grep 0× in
 the new binary, embed confirmed gone). Same app: ~108MB code + ~31MB unwind
 + ~24MB reloc/GOT + static libwebrtc / tree-sitter / wasmtime floor.
-Shipped as `G:\Dx\bin\dx-desktop-linux-x86_64`, smoke-tested (clap error on
+Shipped as `G:\Dx\bin\dx-code-linux-x86_64`, smoke-tested (clap error on
 bad flag proves loader + symbols resolve).
 
 Rule: `.rdata` holds ALL rust-embedded assets. A 135MB embed cannot hide
@@ -83,12 +83,12 @@ uncommitted changes are the whole game).
 ```bash
 ./script/linux && ./script/download-wasi-sdk   # needs sudo/network
 # WSL RAM ≤14GB → jobs=2. The CGU=16 overrides are what make giants fit.
-CARGO_BUILD_JOBS=2 cargo build --release --locked -p zed --bin dx-desktop
+CARGO_BUILD_JOBS=2 cargo build --release --locked -p zed --bin dx-code
 ```
 
 Then measure, in this order, and report ALL THREE numbers:
 
-1. `ls -l target/release/dx-desktop` (expect ~280MB after §4, ~230MB with §5)
+1. `ls -l target/release/dx-code` (expect ~280MB after §4, ~230MB with §5)
 2. `objdump -h` sections (`.text` / `.rdata` sanity vs §1 table)
 3. Confirm no 135MB object: the `web_preview_linux` rlib must NOT contain a
    ~135,013,500-byte object; `grep -c <hashed-name>` on the binary must be 0.
@@ -96,7 +96,7 @@ Then measure, in this order, and report ALL THREE numbers:
 Pack: `UPX --lzma` the binary (Linux UPX is safe; ~30% ratio proven here) →
 expect sub-100MB. Ship `assets/web` next to it (135MB on disk, exe-relative
 resolution already exists). Copy the packed binary to
-`/mnt/g/Dx/bin/dx-desktop-linux-x86_64`.
+`/mnt/g/Dx/bin/dx-code-linux-x86_64`.
 
 ## 7. Standing constraints
 

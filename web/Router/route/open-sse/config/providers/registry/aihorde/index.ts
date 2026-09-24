@@ -33,16 +33,14 @@ export const aihordeProvider: RegistryEntry = buildOpenAiCompatibleRegistryEntry
   passthroughModels: true,
   anonymousApiKey: "0000000000",
   timeoutMs: 120_000,
-  // Provider-wide fallback (getUnsupportedParams() falls back to this when a
-  // model has no per-model entry) — every model AI Horde serves shares this
-  // limitation, not just the 3 statically catalogued below. Without it, any
-  // live-discovered model (the roster changes as workers come/go) sends
-  // `tools` straight through and gets a 500 from the raw text-completion
-  // backend, which doesn't understand the field at all.
-  unsupportedParams: ["tools", "tool_choice", "parallel_tool_calls"],
-  // Aphrodite's OpenAI-compatible facade 500s on a single-text-part content array —
-  // it only implements the plain-string form (see openai-responses.ts collapse logic).
-  requiresPlainStringContent: true,
+  // NOTE: every model AI Horde serves shares the tools limitation below, not
+  // just the 3 statically catalogued models (each carries its own
+  // unsupportedParams). There is currently no provider-wide fallback in
+  // getUnsupportedParams(), so live-discovered models (the roster changes as
+  // workers come and go) still send `tools` straight through and get a 500
+  // from the raw text-completion backend. Likewise the Aphrodite facade only
+  // implements the plain-string content form. Both need explicit handling if
+  // a provider-level mechanism is ever added to RegistryEntry.
   models: [
     {
       id: "aphrodite/TheDrummer/Cydonia-24B-v4.3",

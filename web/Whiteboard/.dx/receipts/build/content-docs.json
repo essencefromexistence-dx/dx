@@ -2,7 +2,7 @@
   "schema": "dx.www.contentDocsReceipt",
   "schema_revision": 1,
   "generatedAt": "2026-08-30T14:30:08.426627400+00:00",
-  "projectRoot": "G:/Dx/desktop/web/Whiteboard",
+  "projectRoot": "G:/Dx/code/web/Whiteboard",
   "receiptPath": ".dx/receipts/build/content-docs.json",
   "summary": {
     "document_count": 0,

@@ -2,8 +2,8 @@
   "schema": "dx.build.graph",
   "format": 1,
   "generatedAt": "2026-08-30T14:30:08.428106200+00:00",
-  "projectRoot": "G:/Dx/desktop/web/Whiteboard",
-  "receiptPath": "G:/Dx/desktop/web/Whiteboard/.dx/receipts/graph/latest.json",
+  "projectRoot": "G:/Dx/code/web/Whiteboard",
+  "receiptPath": "G:/Dx/code/web/Whiteboard/.dx/receipts/graph/latest.json",
   "names": {
     "buildGraph": "dx.build.graph",
     "wwwModuleGraph": "dx.www.moduleGraph",

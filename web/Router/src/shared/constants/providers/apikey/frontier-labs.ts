@@ -250,20 +250,6 @@ export const APIKEY_PROVIDERS_FRONTIER = {
     passthroughModels: true,
     authHint: "Get API key at liquid.ai",
   },
-  sarvam: {
-    id: "sarvam",
-    alias: "svm",
-    name: "Sarvam AI",
-    icon: "language",
-    color: "#0891B2",
-    textIcon: "SV",
-    website: "https://sarvam.ai",
-    hasFree: true,
-    freeNote:
-      "Free tier: Sarvam 30B, 105B models — Indian multilingual AI, no credit card required",
-    passthroughModels: true,
-    authHint: "Get API key at dashboard.sarvam.ai",
-  },
   "cohere-chat": {
     id: "cohere-chat",
     alias: "coc",
@@ -315,21 +301,6 @@ export const APIKEY_PROVIDERS_FRONTIER = {
       "Inception Labs is OpenAI-compatible at https://api.inceptionlabs.ai/v1. mercury-2 is the first diffusion LLM (dLLM) in the catalog — 5-10x faster generation than comparable autoregressive models, with tool calling, json_mode, and structured outputs.",
     hasFree: true,
     freeNote: "10M free tokens on signup, no credit card required.",
-  },
-    "muse-code": {
-    id: "muse-code",
-    alias: "mc",
-    name: "Muse Code (Meta)",
-    icon: "auto_awesome",
-    color: "#0866FF",
-    textIcon: "MC",
-    website: "https://github.com/meta-llama/llama-stack",
-    authHint:
-      "Use your META_API_KEY env var as a Bearer token. Muse Code CLI uses the OpenAI Responses API wire format (POST /responses).",
-    apiHint:
-      "Muse Code is OpenAI-compatible. OmniRoute routes chat traffic through the Responses API and exposes the proprietary model catalog at /v1/muse-code/models.",
-    passthroughModels: true,
-    hasFree: false,
   },
   writer: {
     id: "writer",

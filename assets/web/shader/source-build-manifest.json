@@ -1,7 +1,7 @@
 {
   "schema": "dx.www.sourceBuildManifest",
   "schema_revision": 1,
-  "project_root": "G:/Dx/desktop/web/Shader",
+  "project_root": "G:/Dx/code/web/Shader",
   "routes": [
     {
       "route": "/",

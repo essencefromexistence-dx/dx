@@ -113,15 +113,15 @@ Whiteboard Preview Active
 Jules are you there??
 updated: 2026-08-25 18:47:02
 
-## Dx Desktop release builds (2026-09-05)
+## Dx Code release builds (2026-09-05)
 Windows x64 DONE, under 100MB download:
-- `dx-desktop.exe` = 224,874,257 bytes (~214 MiB), release profile
+- `dx-code.exe` = 224,874,257 bytes (~214 MiB), release profile
   (`opt-level="z"`, thin LTO, `panic="abort"`, no debug info)
-- `DxDesktop-Setup-x86_64.exe` = 95,493,913 bytes (~91 MiB), Inno Setup
-  lzma2/max (`crates/zed/resources/windows/dx-desktop.iss`)
+- `DxCode-Setup-x86_64.exe` = 95,493,913 bytes (~91 MiB), Inno Setup
+  lzma2/max (`crates/zed/resources/windows/dx-code.iss`)
 - Both copied to `G:\Dx\bin`. Cuts that got us here: removed the unused
   `liquid_glass` crate + 36MB `assets/liquid_glass`; un-embedded 135MB
   `assets/web` (served from disk next to the exe, all 9 sites intact);
   `codegen-units = 16` for the giant crates (project, project_panel,
   agent_ui, workspace, zed) so it links on a 23GB RAM box.
-Status: almost done. Next we build dx-desktop for Linux, then macOS via CircleCI.
+Status: almost done. Next we build dx-code for Linux, then macOS via CircleCI.

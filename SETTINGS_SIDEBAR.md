@@ -29,7 +29,7 @@ The Settings item in the topbar More (`…`) menu must open the graphical Settin
 
 ```text
 Application Hang, Event ID 1002
-dx-desktop.exe stopped interacting with Windows and was closed
+dx-code.exe stopped interacting with Windows and was closed
 Event Name: AppHangB1
 ```
 
@@ -60,7 +60,7 @@ It must not dispatch `OpenSettingsFile` or open an editor tab.
 File:
 
 ```text
-G:/Dx/desktop/crates/title_bar/src/title_bar.rs
+G:/Dx/code/crates/title_bar/src/title_bar.rs
 ```
 
 Relevant function:
@@ -82,7 +82,7 @@ Do not replace this with `OpenSettingsFile`. The requested UI is the graphical S
 File:
 
 ```text
-G:/Dx/desktop/crates/settings_ui/src/settings_ui.rs
+G:/Dx/code/crates/settings_ui/src/settings_ui.rs
 ```
 
 Relevant registrations:
@@ -97,7 +97,7 @@ The workspace handler passes a `WindowHandle<MultiWorkspace>` to the Settings wi
 File:
 
 ```text
-G:/Dx/desktop/crates/settings_ui/src/settings_ui.rs
+G:/Dx/code/crates/settings_ui/src/settings_ui.rs
 ```
 
 Relevant function:
@@ -121,7 +121,7 @@ The Windows invalid-handle errors strongly suggest that the new window handle or
 The `SettingsWindow` implementation is in:
 
 ```text
-G:/Dx/desktop/crates/settings_ui/src/settings_ui.rs
+G:/Dx/code/crates/settings_ui/src/settings_ui.rs
 ```
 
 The Settings window contains the left navigation in `render_nav` and the content area in `render_page`.

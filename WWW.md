@@ -88,11 +88,11 @@ All `[DX-DBG]` strings removed from the whole `crates/` tree (verified with `rg 
 
 ```powershell
 # 1. Build (last attempt was aborted — run to completion)
-cargo build --locked -p zed --bin dx-desktop -j 2
+cargo build --locked -p zed --bin dx-code -j 2
 
 # 2. Launch
-Get-Process dx-desktop -ErrorAction SilentlyContinue | Stop-Process -Force
-Start-Process -FilePath "G:\Dx\desktop\target\debug\dx-desktop.exe" -ArgumentList "G:\Dx\desktop" -WorkingDirectory "G:\Dx\desktop"
+Get-Process dx-code -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Process -FilePath "G:\Dx\desktop\target\debug\dx-code.exe" -ArgumentList "G:\Dx\desktop" -WorkingDirectory "G:\Dx\desktop"
 
 # 3. Test
 #  a) Code screen: click a web-tool icon → browser screen with that tool.

@@ -2,7 +2,7 @@
   "schema": "dx.www.imageMetadataReceipt",
   "schema_revision": 1,
   "generatedAt": "2026-08-30T14:52:56.778454200+00:00",
-  "projectRoot": "G:/Dx/desktop/web/Metasearch",
+  "projectRoot": "G:/Dx/code/web/Metasearch",
   "receiptPath": ".dx/receipts/build/image-metadata.json",
   "summary": {
     "image_assets": 6,

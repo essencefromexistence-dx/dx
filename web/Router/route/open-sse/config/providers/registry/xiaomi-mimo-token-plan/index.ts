@@ -1,5 +1,5 @@
 import type { RegistryEntry } from "../../shared.ts";
-import { CHAT_OPENAI_COMPAT_MODELS, getAnthropicCompatHeaders } from "../../shared.ts";
+import { CHAT_OPENAI_COMPAT_MODELS } from "../../shared.ts";
 
 /**
  * Xiaomi MiMo Token Plan (platform.xiaomimimo.com/token-plan).
@@ -17,13 +17,9 @@ export const xiaomi_mimo_token_planProvider: RegistryEntry = {
   authType: "apikey",
   authHeader: "bearer",
   models: CHAT_OPENAI_COMPAT_MODELS["xiaomi-mimo-token-plan"],
-  alternateFormats: [
-    {
-      format: "claude",
-      baseUrl: "https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages",
-      authHeader: "x-api-key",
-      headers: getAnthropicCompatHeaders(),
-      label: "Anthropic-compatible",
-    },
-  ],
+  // Anthropic alternate (documented, not wired):
+  // https://token-plan-sgp.xiaomimimo.com/anthropic/v1/messages with x-api-key
+  // + Anthropic-Version. There is currently no RegistryEntry field for
+  // alternate surfaces, so it lives here as a comment rather than a dead
+  // `alternateFormats` key (no runtime path reads it).
 };

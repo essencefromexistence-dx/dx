@@ -355,7 +355,7 @@ async fn fetch_registry_item(
             "Accept",
             "application/vnd.shadcn.v1+json, application/json;q=0.9",
         )
-        .header("User-Agent", "dx-desktop-shadcn")
+        .header("User-Agent", "dx-code-shadcn")
         .follow_redirects(RedirectPolicy::FollowLimit(8));
     for (name, value) in &resolved.headers {
         builder = builder.header(name, value);

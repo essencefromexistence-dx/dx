@@ -218,21 +218,6 @@ export const APIKEY_PROVIDERS_SPECIALTY = {
     passthroughModels: true,
     authHint: "Get API key at atlas.nomic.ai",
   },
-  firecrawl: {
-    id: "firecrawl",
-    alias: "fc",
-    name: "Firecrawl",
-    icon: "language",
-    color: "#FB923C",
-    textIcon: "FC",
-    website: "https://firecrawl.dev",
-    hasFree: true,
-    notice: {
-      text: "Free tier: 500 fetches/month, no credit card needed.",
-      apiKeyUrl: "https://firecrawl.dev/app/api-keys",
-    },
-    serviceKinds: ["webFetch"],
-  },
   "jina-reader": {
     id: "jina-reader",
     alias: "jr",
@@ -302,33 +287,6 @@ export const APIKEY_PROVIDERS_SPECIALTY = {
     authHint: "Get API key at freepik.com/developers (Mystic image endpoint)",
     hasFree: true,
     freeNote: "One-time ~€5 API credit for new accounts; pay-per-use afterward.",
-  },
-    mixedbread: {
-    id: "mixedbread",
-    alias: "mxbai",
-    name: "Mixedbread AI",
-    icon: "hub",
-    color: "#F59E0B",
-    textIcon: "MB",
-    website: "https://www.mixedbread.com",
-    hasFree: true,
-    freeNote: "Free-tier API key via signup, no credit card required.",
-    authHint: "Bearer API key for the Mixedbread embeddings API.",
-  },
-    segmind: {
-    id: "segmind",
-    alias: "segmind",
-    name: "Segmind",
-    icon: "image",
-    color: "#7C3AED",
-    textIcon: "SG",
-    website: "https://segmind.com",
-    authHint:
-      "Use your Segmind API key in the x-api-key header. OmniRoute targets https://api.segmind.com/v1/<model> and returns the generated image/video bytes directly.",
-    apiHint:
-      "Segmind exposes 200+ hosted image and video models (Flux, SDXL, SD3, Kandinsky, Wan, Hunyuan, LTX, Kling, ...) under a single POST /v1/<model> REST call per model. OmniRoute ships a curated starter subset for each modality; more models can be routed by using their Segmind slug as the model id.",
-    hasFree: true,
-    freeNote: "Free trial credits on signup, no credit card required (per Segmind's public docs).",
   },
   
 

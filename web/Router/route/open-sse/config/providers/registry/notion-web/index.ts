@@ -1,14 +1,11 @@
 import type { RegistryEntry } from "../../shared.ts";
-import {
-  NOTION_WEB_FALLBACK_MODELS,
-  withFriendlyNotionAliases,
-} from "../../../../services/notionWebModels.ts";
 
-// Notion AI Web (Unofficial/Experimental) — see open-sse/executors/notion-web.ts.
+// Notion AI Web (Unofficial/Experimental).
 // Live catalog comes from cookie-auth POST /api/v3/getAvailableModels (models route).
 // The registry seed below is the offline fallback when discovery fails.
-// Catalog ids are real web-picker labels (fable-5, gpt-5.6-sol); food codenames
-// stay internal for runInferenceTranscript via resolveNotionCodename.
+// Catalog ids are real web-picker labels (fable-5, gpt-5.6-sol).
+// (The OmniRoute merge referenced a services/notionWebModels.ts module that was
+// never copied over; the seed is inlined here instead of inventing new data.)
 export const notion_webProvider: RegistryEntry = {
   id: "notion-web",
   alias: "nw",
@@ -18,8 +15,8 @@ export const notion_webProvider: RegistryEntry = {
   authType: "apikey",
   authHeader: "cookie",
   passthroughModels: true,
-  models: withFriendlyNotionAliases(NOTION_WEB_FALLBACK_MODELS).map((m) => ({
-    id: m.id,
-    name: m.name,
-  })),
+  models: [
+    { id: "fable-5", name: "Fable 5 (Notion)" },
+    { id: "gpt-5.6-sol", name: "GPT-5.6 Sol (Notion)" },
+  ],
 };

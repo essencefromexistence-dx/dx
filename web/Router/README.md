@@ -19,9 +19,9 @@ fork **and** the upstream `G:\Dx\OmniRoute` catalog.
 | Metric | Count | Source |
 | ------ | -----: | ------ |
 | Provider definitions (all categories) | **433** | `src/shared/constants/providers/*.ts` (15 category files) |
-| Registry-backed providers (with model catalogs) | 253 | `route/open-sse/config/providers/registry/` |
-| Generated UI catalog (`GENERATED_PROVIDERS`) | 433 | `src/lib/ai/providers.generated.ts` (regenerated 2026-08-22) |
-| Total listed models across generated catalog | ~1,740 | `providers.generated.ts` |
+| Registry-backed providers (wired `REGISTRY` entries) | 269 | `route/open-sse/config/providers/registry/` |
+| Generated UI catalog (`GENERATED_PROVIDERS`) | 433 | `src/lib/ai/providers.generated.ts` (regenerated 2026-09-22) |
+| Total listed models across generated catalog | 1,716 | `providers.generated.ts` |
 | Provider icons shipped | 464 | `public/providers/*.{png,svg}` |
 
 ### Category breakdown (433 total)
@@ -32,12 +32,12 @@ fork **and** the upstream `G:\Dx\OmniRoute` catalog.
 | `apikey/regional.ts` (CN/KR/JP/EU regional clouds) | 60 |
 | `apikey/inference-hosts.ts` (GPU hosts) | 40 |
 | `web-cookie.ts` (free web-session bridges) | 35 |
-| `apikey/frontier-labs.ts` (OpenAI/Anthropic/Google direct) | 29 |
-| `apikey/specialty-media.ts` (image/video/audio gen) | 28 |
+| `apikey/frontier-labs.ts` (OpenAI/Anthropic/Google direct) | 28 |
+| `apikey/specialty-media.ts` (image/video/audio gen) | 27 |
 | `oauth.ts` (CLI/IDE OAuth bridges) | 27 |
 | `apikey/enterprise-cloud.ts` (Azure/Bedrock/Vertex/Watsonx) | 20 |
 | `local.ts` (Ollama/LM Studio/vLLM/MLX/etc.) | 14 |
-| `search.ts` (search-augmented providers) | 13 |
+| `search.ts` (search-augmented providers) | 14 |
 | `noauth.ts` (anonymous free endpoints) | 12 |
 | `audio.ts` (TTS/STT) | 12 |
 | `cloud-agent.ts`, `upstream-proxy.ts`, `system.ts` | 6 |
@@ -147,7 +147,7 @@ Every provider in the catalog, grouped by auth category. IDs are the keys used i
 </details>
 
 <details>
-<summary><strong>APIKey</strong> — 314 providers</summary>
+<summary><strong>APIKey</strong> — 313 providers</summary>
 
 | Provider | ID |
 | -------- | -- |
@@ -244,7 +244,6 @@ Every provider in the catalog, grouped by auth category. IDs are the keys used i
 | fastrouter | `fastrouter` |
 | featherless-ai | `featherless-ai` |
 | fenayai | `fenayai` |
-| firecrawl | `firecrawl` |
 | fireworks | `fireworks` |
 | free-ai | `free-ai` |
 | freeaiapikey | `freeaiapikey` |
@@ -491,13 +490,14 @@ Every provider in the catalog, grouped by auth category. IDs are the keys used i
 </details>
 
 <details>
-<summary><strong>Search</strong> — 13 providers</summary>
+<summary><strong>Search</strong> — 14 providers</summary>
 
 | Provider | ID |
 | -------- | -- |
 | brave-search | `brave-search` |
 | dataforseo-search | `dataforseo-search` |
 | exa-search | `exa-search` |
+| firecrawl | `firecrawl` |
 | google-pse-search | `google-pse-search` |
 | linkup-search | `linkup-search` |
 | ollama-search | `ollama-search` |
@@ -571,7 +571,7 @@ bun run scripts/generate-providers.ts
 This rewrites `src/lib/ai/providers.generated.ts`. Do not edit that file by hand.
 The script reads definitions from `src/shared/constants/providers/` and model
 registries from `route/open-sse/config/providers/registry/`. Definitions and the
-generated catalog are in sync at **433 providers** as of 2026-08-22.
+generated catalog are in sync at **433 providers** as of 2026-09-22.
 
 ### OpenCode Zen free tier (verified 2026-08-22)
 

@@ -3,7 +3,7 @@
   "command": "build",
   "version": 1,
   "generated_at": "2026-08-29T14:18:26.294624600+00:00",
-  "project": "G:/Dx/desktop/web/Shader",
+  "project": "G:/Dx/code/web/Shader",
   "public_launch_path": "tsx-app-router",
   "binary_style_output": "deprecated",
   "config_source": "dx",

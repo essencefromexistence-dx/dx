@@ -2,7 +2,7 @@
   "schema": "dx.www.contentDocsReceipt",
   "schema_revision": 1,
   "generatedAt": "2026-08-30T14:52:56.779078500+00:00",
-  "projectRoot": "G:/Dx/desktop/web/Metasearch",
+  "projectRoot": "G:/Dx/code/web/Metasearch",
   "receiptPath": ".dx/receipts/build/content-docs.json",
   "summary": {
     "document_count": 0,

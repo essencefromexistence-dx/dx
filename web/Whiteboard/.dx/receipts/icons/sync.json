@@ -3,7 +3,7 @@
   "command": "sync",
   "version": 1,
   "generated_at": "2026-08-10T23:58:04.567983300+00:00",
-  "project": "G:/Dx/desktop/web/Whiteboard",
+  "project": "G:/Dx/code/web/Whiteboard",
   "passed": true,
   "extension_list_file": "dx",
   "config_source": "tooling.icons.generated_dir",

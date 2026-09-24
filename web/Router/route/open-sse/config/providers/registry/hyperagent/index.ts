@@ -1,5 +1,4 @@
 import type { RegistryEntry } from "../../shared.ts";
-import { HYPERAGENT_FALLBACK_MODELS } from "../../../../services/hyperagentModels.ts";
 
 // HyperAgent (hyperagent.com) — unofficial reverse-engineered web session.
 // Auth: browser Cookie header. Chat: POST /api/threads/{id}/chat (SSE).
@@ -18,9 +17,8 @@ export const hyperagentProvider: RegistryEntry = {
   passthroughModels: true,
   /** Used by getTokenLimit when model-specific context is missing. */
   defaultContextLength: HYPERAGENT_CONTEXT_LENGTH,
-  models: HYPERAGENT_FALLBACK_MODELS.map((m) => ({
-    id: m.id,
-    name: m.name,
-    contextLength: HYPERAGENT_CONTEXT_LENGTH,
-  })),
+  // No static catalog: live models are discovered via passthrough.
+  // (The OmniRoute merge referenced a services/hyperagentModels.ts module that
+  // was never copied over; dropped the dangling import instead of inventing data.)
+  models: [],
 };

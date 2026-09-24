@@ -195,6 +195,23 @@ chmod +x "${zed_dir}/share/applications/$APP_ID.desktop"
 # Copy generated licenses so they'll end up in archive too
 cp "assets/licenses.md" "${zed_dir}/licenses.md"
 
+# Ship the professional web export tree so Linux downloads carry it:
+# <prefix>/share/dx-code/assets/web (resolved at runtime via the
+# bundle-layout probe in web_preview). Prefers the canonical workspace-root
+# tree, falls back to the desktop-local tree.
+dx_assets_web=""
+if [[ -d "../assets/web" ]]; then
+    dx_assets_web="../assets/web"
+elif [[ -d "assets/web" ]]; then
+    dx_assets_web="assets/web"
+fi
+if [[ -n "${dx_assets_web}" ]]; then
+    mkdir -p "${zed_dir}/share/dx-code/assets"
+    cp -R "${dx_assets_web}" "${zed_dir}/share/dx-code/assets/web"
+else
+    echo "warning: assets/web tree not found; Linux bundle ships without web previews."
+fi
+
 # Create archive out of everything that's in the temp directory
 arch=$(uname -m)
 archive="zed-linux-${arch}.tar.gz"

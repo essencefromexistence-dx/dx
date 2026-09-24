@@ -86,7 +86,9 @@ use std::borrow::Cow;
 
 /// Read a preview asset from the live `assets/web` tree on disk (shipped
 /// next to the binary). Resolution order: `$DX_ASSETS_WEB_ROOT`, then
-/// `<exe-dir>/assets/web` and `<cwd>/assets/web`, walking upward.
+/// `<exe-dir>/assets/web` and `<cwd>/assets/web`, walking upward, then the
+/// per-OS install data dir (`$XDG_DATA_HOME/dx-code/assets/web` or
+/// `~/.local/share/dx-code/assets/web`) where the download lands.
 #[cfg(target_os = "linux")]
 fn load_disk_preview_file(path: &str) -> Option<Cow<'static, [u8]>> {
     fn assets_web_root() -> Option<std::path::PathBuf> {
@@ -104,6 +106,29 @@ fn load_disk_preview_file(path: &str) -> Option<Cow<'static, [u8]>> {
                 }
                 dir = dir.parent()?.to_path_buf();
             }
+            // Packaged Linux layout: <prefix>/share/dx-code/assets/web
+            // (exe in bin/ or libexec/; see script/bundle-linux).
+            if let Some(parent) = exe.parent() {
+                for probe in [
+                    parent
+                        .join("..")
+                        .join("share")
+                        .join("dx-code")
+                        .join("assets")
+                        .join("web"),
+                    parent
+                        .join("..")
+                        .join("..")
+                        .join("share")
+                        .join("dx-code")
+                        .join("assets")
+                        .join("web"),
+                ] {
+                    if probe.is_dir() {
+                        return Some(probe);
+                    }
+                }
+            }
         }
         let mut dir = std::env::current_dir().ok()?;
         for _ in 0..6 {
@@ -116,7 +141,22 @@ fn load_disk_preview_file(path: &str) -> Option<Cow<'static, [u8]>> {
                 None => break,
             }
         }
-        None
+        // Installed location: the packaged/downloaded tree.
+        if let Some(xdg) = std::env::var_os("XDG_DATA_HOME").map(std::path::PathBuf::from) {
+            let p = xdg.join("dx-code").join("assets").join("web");
+            if p.is_dir() {
+                return Some(p);
+            }
+        }
+        std::env::var_os("HOME")
+            .map(std::path::PathBuf::from)
+            .map(|home| {
+                home.join(".local")
+                    .join("share")
+                    .join("dx-code")
+                    .join("assets")
+                    .join("web")
+            })
     }
     let root = assets_web_root()?;
     let relative = path.trim_start_matches('/');

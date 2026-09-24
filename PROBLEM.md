@@ -1,8 +1,8 @@
-# Dx Desktop — Window / Dialog Hang Problems
+# Dx Code — Window / Dialog Hang Problems
 
 **Date:** 2026-08-05  
 **Platform:** Windows  
-**Binary:** `dx-desktop.exe` (debug)  
+**Binary:** `dx-code.exe` (debug)  
 **Symptom class:** App freezes → Windows **AppHangB1** → process killed
 
 This document lists the **real problems** seen in this codebase (not guesses), where they live in code, and **how to fix them** in the editor.

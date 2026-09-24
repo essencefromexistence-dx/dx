@@ -186,6 +186,89 @@ import { kenariProvider } from "./registry/kenari/index.ts";
 import { requestyProvider } from "./registry/requesty/index.ts";
 import { digitaloceanProvider } from "./registry/digitalocean/index.ts";
 import { hcnsecProvider } from "./registry/hcnsec/index.ts";
+import { agnesProvider } from "./registry/agnes/index.ts";
+import { aihordeProvider } from "./registry/aihorde/index.ts";
+import { ainativeProvider } from "./registry/ainative/index.ts";
+import { aionProvider } from "./registry/aion/index.ts";
+import { ant_lingProvider } from "./registry/ant-ling/index.ts";
+import { anyapiProvider } from "./registry/anyapi/index.ts";
+import { aurikoProvider } from "./registry/auriko/index.ts";
+import { chatOripeProvider } from "./registry/chat-oripe/index.ts";
+import { chatanywhereProvider } from "./registry/chatanywhere/index.ts";
+import { chatgpt_web_codexProvider } from "./registry/chatgpt-web-codex/index.ts";
+import { cheaperinferenceProvider } from "./registry/cheaperinference/index.ts";
+import { chenzkProvider } from "./registry/chenzk/index.ts";
+import { cloudcodeOneProvider } from "./registry/cloudcode-one/index.ts";
+import { cloudflarePlaygroundProvider } from "./registry/cloudflare-playground/index.ts";
+import { clova_studioProvider } from "./registry/clova-studio/index.ts";
+import { conol_webProvider } from "./registry/conol-web/index.ts";
+import { dahlProvider } from "./registry/dahl/index.ts";
+import { deepaiProvider } from "./registry/deepai/index.ts";
+import { devin_cli_agenticProvider } from "./registry/devin-cli-agentic/index.ts";
+import { devin_desktopProvider } from "./registry/devin-desktop/index.ts";
+import { dxntProvider } from "./registry/dxnt/index.ts";
+import { electronhubProvider } from "./registry/electronhub/index.ts";
+import { fastrouterProvider } from "./registry/fastrouter/index.ts";
+import { felo_webProvider } from "./registry/felo-web/index.ts";
+import { freeAiProvider } from "./registry/free-ai/index.ts";
+import { freebuffProvider } from "./registry/freebuff/index.ts";
+import { freeinferenceProvider } from "./registry/freeinference/index.ts";
+import { freetheaiProvider } from "./registry/freetheai/index.ts";
+import { g4f_geminiProvider } from "./registry/g4f-gemini/index.ts";
+import { g4f_groqProvider } from "./registry/g4f-groq/index.ts";
+import { g4f_nvidiaProvider } from "./registry/g4f-nvidia/index.ts";
+import { g4f_ollamaProvider } from "./registry/g4f-ollama/index.ts";
+import { g4f_pollinationsProvider } from "./registry/g4f-pollinations/index.ts";
+import { gheCopilotProvider } from "./registry/ghe-copilot/index.ts";
+import { helixmindProvider } from "./registry/helixmind/index.ts";
+import { helyxaiProvider } from "./registry/helyxai/index.ts";
+import { hyperagentProvider } from "./registry/hyperagent/index.ts";
+import { inceptionProvider } from "./registry/inception/index.ts";
+import { internlmProvider } from "./registry/internlm/index.ts";
+import { literouterProvider } from "./registry/literouter/index.ts";
+import { llmKiwiProvider } from "./registry/llm-kiwi/index.ts";
+import { llmgatewayProvider } from "./registry/llmgateway/index.ts";
+import { meganovaAiProvider } from "./registry/meganova-ai/index.ts";
+import { mixlayerProvider } from "./registry/mixlayer/index.ts";
+import { mlxGemmaProvider } from "./registry/mlx/index.ts";
+import { mlxQwenProvider } from "./registry/mlx/index.ts";
+import { mnnAiProvider } from "./registry/mnn-ai/index.ts";
+import { muse_codeProvider } from "./registry/muse-code/index.ts";
+import { naga_acProvider } from "./registry/naga-ac/index.ts";
+import { nagaAiProvider } from "./registry/naga-ai/index.ts";
+import { naraProvider } from "./registry/nara/index.ts";
+import { navyProvider } from "./registry/navy/index.ts";
+import { notion_webProvider } from "./registry/notion-web/index.ts";
+import { ofoxaiProvider } from "./registry/ofoxai/index.ts";
+import { openferenceProvider } from "./registry/openference/index.ts";
+import { openference_apiProvider } from "./registry/openference-api/index.ts";
+import { plamoProvider } from "./registry/plamo/index.ts";
+import { poeProvider } from "./registry/poe/index.ts";
+import { poixeAiProvider } from "./registry/poixe-ai/index.ts";
+import { poolsideProvider } from "./registry/poolside/index.ts";
+import { promptqlProvider } from "./registry/promptql/index.ts";
+import { qwen_cloudProvider } from "./registry/qwen-cloud/index.ts";
+import { qwen_cloud_token_planProvider } from "./registry/qwen-cloud-token-plan/index.ts";
+import { raycastProvider } from "./registry/raycast/index.ts";
+import { regoloProvider } from "./registry/regolo/index.ts";
+import { routewayProvider } from "./registry/routeway/index.ts";
+import { sarvamProvider } from "./registry/sarvam/index.ts";
+import { sealionProvider } from "./registry/sealion/index.ts";
+import { spekaProvider } from "./registry/speka/index.ts";
+import { tabitokenProvider } from "./registry/tabitoken/index.ts";
+import { tencent_aistudio_webProvider } from "./registry/tencent-aistudio-web/index.ts";
+import { tinycmsProvider } from "./registry/tinycms/index.ts";
+import { token_kioskProvider } from "./registry/token-kiosk/index.ts";
+import { tokenreplyProvider } from "./registry/tokenreply/index.ts";
+import { typhoonProvider } from "./registry/typhoon/index.ts";
+import { unorouterProvider } from "./registry/unorouter/index.ts";
+import { voidAiProvider } from "./registry/void-ai/index.ts";
+import { writerProvider } from "./registry/writer/index.ts";
+import { xiaomi_mimo_token_planProvider } from "./registry/xiaomi-mimo-token-plan/index.ts";
+import { yoloAutoProvider } from "./registry/yolo-auto/index.ts";
+import { zcodeProvider } from "./registry/zcode/index.ts";
+import { zerolimitaiProvider } from "./registry/zerolimitai/index.ts";
+import { zyloApiProvider } from "./registry/zylo-api/index.ts";
 
 export const REGISTRY: Record<string, RegistryEntry> = {
   aimlapi: aimlapiProvider,
@@ -374,4 +457,87 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   requesty: requestyProvider,
   digitalocean: digitaloceanProvider,
   hcnsec: hcnsecProvider,
+  agnes: agnesProvider,
+  aihorde: aihordeProvider,
+  ainative: ainativeProvider,
+  aion: aionProvider,
+  "ant-ling": ant_lingProvider,
+  anyapi: anyapiProvider,
+  auriko: aurikoProvider,
+  "chat-oripe": chatOripeProvider,
+  chatanywhere: chatanywhereProvider,
+  "chatgpt-web-codex": chatgpt_web_codexProvider,
+  cheaperinference: cheaperinferenceProvider,
+  chenzk: chenzkProvider,
+  "cloudcode-one": cloudcodeOneProvider,
+  "cloudflare-playground": cloudflarePlaygroundProvider,
+  "clova-studio": clova_studioProvider,
+  "conol-web": conol_webProvider,
+  dahl: dahlProvider,
+  deepai: deepaiProvider,
+  "devin-cli-agentic": devin_cli_agenticProvider,
+  "devin-desktop": devin_desktopProvider,
+  dxnt: dxntProvider,
+  electronhub: electronhubProvider,
+  fastrouter: fastrouterProvider,
+  "felo-web": felo_webProvider,
+  "free-ai": freeAiProvider,
+  freebuff: freebuffProvider,
+  freeinference: freeinferenceProvider,
+  freetheai: freetheaiProvider,
+  "g4f-gemini": g4f_geminiProvider,
+  "g4f-groq": g4f_groqProvider,
+  "g4f-nvidia": g4f_nvidiaProvider,
+  "g4f-ollama": g4f_ollamaProvider,
+  "g4f-pollinations": g4f_pollinationsProvider,
+  "ghe-copilot": gheCopilotProvider,
+  helixmind: helixmindProvider,
+  helyxai: helyxaiProvider,
+  hyperagent: hyperagentProvider,
+  inception: inceptionProvider,
+  internlm: internlmProvider,
+  literouter: literouterProvider,
+  "llm-kiwi": llmKiwiProvider,
+  llmgateway: llmgatewayProvider,
+  "meganova-ai": meganovaAiProvider,
+  mixlayer: mixlayerProvider,
+  "mlx-gemma": mlxGemmaProvider,
+  "mlx-qwen": mlxQwenProvider,
+  "mnn-ai": mnnAiProvider,
+  "muse-code": muse_codeProvider,
+  "naga-ac": naga_acProvider,
+  "naga-ai": nagaAiProvider,
+  nara: naraProvider,
+  navy: navyProvider,
+  "notion-web": notion_webProvider,
+  ofoxai: ofoxaiProvider,
+  openference: openferenceProvider,
+  "openference-api": openference_apiProvider,
+  plamo: plamoProvider,
+  poe: poeProvider,
+  "poixe-ai": poixeAiProvider,
+  poolside: poolsideProvider,
+  promptql: promptqlProvider,
+  "qwen-cloud": qwen_cloudProvider,
+  "qwen-cloud-token-plan": qwen_cloud_token_planProvider,
+  raycast: raycastProvider,
+  regolo: regoloProvider,
+  routeway: routewayProvider,
+  sarvam: sarvamProvider,
+  sealion: sealionProvider,
+  speka: spekaProvider,
+  tabitoken: tabitokenProvider,
+  "tencent-aistudio-web": tencent_aistudio_webProvider,
+  "tinycms-web": tinycmsProvider,
+  "token-kiosk": token_kioskProvider,
+  tokenreply: tokenreplyProvider,
+  typhoon: typhoonProvider,
+  unorouter: unorouterProvider,
+  "void-ai": voidAiProvider,
+  writer: writerProvider,
+  "xiaomi-mimo-token-plan": xiaomi_mimo_token_planProvider,
+  "yolo-auto": yoloAutoProvider,
+  zcode: zcodeProvider,
+  zerolimitai: zerolimitaiProvider,
+  "zylo-api": zyloApiProvider,
 };

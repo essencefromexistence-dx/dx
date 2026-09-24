@@ -2,7 +2,7 @@
   "schema": "dx.www.contentDocsReceipt",
   "schema_revision": 1,
   "generatedAt": "2026-09-01T15:13:30.834977200+00:00",
-  "projectRoot": "G:/Dx/desktop/web/Shader",
+  "projectRoot": "G:/Dx/code/web/Shader",
   "receiptPath": ".dx/receipts/build/content-docs.json",
   "summary": {
     "document_count": 0,

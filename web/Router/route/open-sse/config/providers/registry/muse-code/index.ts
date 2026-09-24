@@ -4,17 +4,21 @@ import { buildOpenAiCompatibleRegistryEntry } from "../../shared.ts";
 /**
  * Muse Code CLI — Meta's agentic coding tool.
  *
- * Wire format: OpenAI Responses API (POST /responses).
+ * Wire format: OpenAI Responses API (POST /responses) served by the Meta
+ * Model API at https://api.meta.ai (OpenAI-compatible base URL
+ * https://api.meta.ai/v1). baseUrl carries the full Responses endpoint
+ * because the default executor uses the registry baseUrl verbatim.
  * Auth: Bearer token from META_API_KEY env var.
  * Reasoning efforts: xhigh/ultra -> high (handled generically).
  *
- * @see https://github.com/joymadhu49/muse-openrouter-shim
+ * @see https://dev.meta.ai/docs/muse-code
  */
 export const muse_codeProvider: RegistryEntry = buildOpenAiCompatibleRegistryEntry({
   id: "muse-code",
   alias: "mc",
+  baseUrl: "https://api.meta.ai/v1/responses",
+  modelsUrl: "https://api.meta.ai/v1/models",
   passthroughModels: true,
-  reasoningTransport: "opaque",
   defaultContextLength: 200000,
   models: [
     {

@@ -7,6 +7,12 @@ export const bedrockProvider: RegistryEntry = {
   executor: "bedrock",
   authType: "apikey",
   authHeader: "bearer",
+  // Request URLs are built per-region by the bedrock executor
+  // (buildBedrockNativeConverseUrl) and never read from this field.
+  // The default below (BEDROCK_DEFAULT_REGION) keeps legacy PROVIDERS output,
+  // key validation, and health-check targets consistent with providers like
+  // vertex that also pair a custom executor with a static baseUrl.
+  baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
   defaultContextLength: 200000,
   models: [
     {

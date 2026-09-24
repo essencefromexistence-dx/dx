@@ -3,7 +3,7 @@
   "command": "build",
   "version": 1,
   "generated_at": "2026-08-10T23:58:04.496208300+00:00",
-  "project": "G:/Dx/desktop/web/Whiteboard",
+  "project": "G:/Dx/code/web/Whiteboard",
   "public_launch_path": "tsx-app-router",
   "binary_style_output": "deprecated",
   "config_source": "dx",

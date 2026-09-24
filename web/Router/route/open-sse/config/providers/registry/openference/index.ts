@@ -1,4 +1,4 @@
-import { resolvePublicCred, type RegistryEntry } from "../../shared.ts";
+import type { RegistryEntry } from "../../shared.ts";
 
 /**
  * Openference — OpenAI-compatible AI inference gateway (https://openference.com/).
@@ -18,7 +18,10 @@ export const openferenceProvider: RegistryEntry = {
   authHeader: "bearer",
   passthroughModels: true,
   oauth: {
-    clientIdDefault: resolvePublicCred("openference_id"),
+    // No embedded public client id exists for Openference (see
+    // EMBEDDED_DEFAULTS in open-sse/utils/publicCreds.ts), so auth relies on
+    // the operator-provided OPENFERENCE_CLIENT_ID env var.
+    clientIdEnv: "OPENFERENCE_CLIENT_ID",
     tokenUrl: "https://openference.com/oauth/token",
   },
   models: [{ id: "GLM-5.2", name: "GLM 5.2", contextLength: 850000 }],

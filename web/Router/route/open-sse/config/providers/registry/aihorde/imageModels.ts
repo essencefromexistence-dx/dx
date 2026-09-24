@@ -6,13 +6,23 @@
  * imageRegistry stays under the file-size cap and zero-worker names are
  * never advertised.
  *
- * The live models arrive through `dynamicImageModelSources` rather than a direct
- * import of the catalog service: this entry is reachable from `"use client"` pages
- * via IMAGE_PROVIDERS, and importing the service here pulled the SQLite driver into
- * the browser bundle (#10692). `aihordeImageCatalog` registers itself on import, so
- * every server path that already loads it behaves exactly as before.
+ * NOTE: the original design received live models through a
+ * `services/dynamicImageModelSources.ts` module that was never copied over
+ * in the OmniRoute merge (nothing in the repo provides
+ * `getDynamicImageModels`). The import is replaced with a local stub
+ * returning no models until that catalog service is ported — an explicit
+ * empty list is safer than a dangling import that breaks the whole
+ * provider registry at load time.
  */
-import { getDynamicImageModels } from "../../../dynamicImageModelSources.ts";
+
+interface ImageModelStub {
+  id: string;
+  name: string;
+}
+
+function getDynamicImageModels(_provider: string): ImageModelStub[] {
+  return [];
+}
 
 export const AI_HORDE_IMAGE_PROVIDER = {
   id: "aihorde",

@@ -41,14 +41,10 @@ export const tabitokenProvider: RegistryEntry = {
   authType: "apikey",
   authHeader: "x-api-key",
   headers: getAnthropicCompatHeaders(),
-  alternateFormats: [
-    {
-      format: "openai",
-      baseUrl: "https://tabitoken.com/v1/chat/completions",
-      authHeader: "bearer",
-      label: "OpenAI-compatible",
-    },
-  ],
+  // OpenAI alternate (documented, not wired): https://tabitoken.com/v1/chat/completions
+  // with bearer auth. There is currently no RegistryEntry field for alternate
+  // surfaces, so it lives here as a comment rather than a dead
+  // `alternateFormats` key (no runtime path reads it).
   models: [
     { id: "claude-opus-5", name: "Claude Opus 5" },
     { id: "claude-opus-5-thinking", name: "Claude Opus 5 (Thinking)" },

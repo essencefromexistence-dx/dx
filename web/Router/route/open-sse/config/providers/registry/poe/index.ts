@@ -77,8 +77,9 @@ export const poeProvider: RegistryEntry = {
   // Anthropic-compatible Messages API — official Claude models only
   // (https://creator.poe.com/docs/external-applications/anthropic-compatible-api).
   // Routed via each claude-* model's targetFormat: "claude" below; GPT/Gemini
-  // stay on Chat Completions / Responses.
-  messagesUrl: POE_MESSAGES_URL,
+  // stay on Chat Completions / Responses. (POE_MESSAGES_URL above holds the
+  // messages endpoint; kept out of the entry because RegistryEntry has no
+  // messagesUrl field and no runtime path reads it.)
   authType: "apikey",
   authHeader: "bearer",
   models: [

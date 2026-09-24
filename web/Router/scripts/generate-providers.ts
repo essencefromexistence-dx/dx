@@ -44,36 +44,63 @@ function extractProviderKeys(content: string): string[] {
   return [...new Set(keys)];
 }
 
+/**
+ * Slice the source text of a single top-level provider block:
+ * from its `  <id>: {` key line to the matching closing `  },`.
+ * Field extraction below is scoped to this slice so a provider missing a
+ * field can never inherit a later provider's value (cross-provider bleed).
+ */
+function extractProviderBlock(content: string, providerId: string): string | null {
+  const keyRegex = new RegExp(`^  ['"]?${escapeRegex(providerId)}['"]?\\s*:\\s*\\{`, "m");
+  const m = keyRegex.exec(content);
+  if (!m) return null;
+  const start = m.index;
+  let depth = 0;
+  const lines = content.slice(start).split("\n");
+  let consumed = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] as string;
+    for (const ch of line) {
+      if (ch === "{") depth++;
+      else if (ch === "}") depth--;
+    }
+    consumed += line.length + 1;
+    if (i > 0 && depth === 0) break;
+  }
+  return content.slice(start, start + consumed);
+}
+
+/** First `field: "value"` (or `'value'`) inside a provider block, or null. */
+function blockStringField(block: string, field: string): string | null {
+  const regex = new RegExp(`${field}\\s*:\\s*(['"])([\\s\\S]*?)\\1`);
+  const m = regex.exec(block);
+  return m ? (m[2] as string) : null;
+}
+
 function extractProviderName(content: string, providerId: string): string {
-  // Try to find name field inside the provider object
-  const regex = new RegExp(
-    `['"]?${escapeRegex(providerId)}['"]?\\s*:\\s*\\{[\\s\\S]*?name\\s*:\\s*['"]([^'"]+)['"]`,
-  );
-  const m = regex.exec(content);
-  return m ? m[1] : providerId;
+  const block = extractProviderBlock(content, providerId);
+  if (!block) return providerId;
+  return blockStringField(block, "name") || providerId;
 }
 
 function extractProviderHint(content: string, providerId: string): string {
-  const regex = new RegExp(
-    `['"]?${escapeRegex(providerId)}['"]?\\s*:\\s*\\{[\\s\\S]*?authHint\\s*:\\s*['"]([^'"]+)['"]`,
-  );
-  const m = regex.exec(content);
-  return m ? m[1] : "";
+  const block = extractProviderBlock(content, providerId);
+  if (!block) return "";
+  // Prefer the short authHint; fall back to apiHint so providers that only
+  // document the endpoint still get their own text instead of a neighbor's.
+  return blockStringField(block, "authHint") || blockStringField(block, "apiHint") || "";
 }
 
 function extractProviderUrl(content: string, providerId: string): string {
-  const regex = new RegExp(
-    `['"]?${escapeRegex(providerId)}['"]?\\s*:\\s*\\{[\\s\\S]*?website\\s*:\\s*['"]([^'"]+)['"]`,
-  );
-  const m = regex.exec(content);
-  return m ? m[1] : "";
+  const block = extractProviderBlock(content, providerId);
+  if (!block) return "";
+  return blockStringField(block, "website") || "";
 }
 
 function hasFreeField(content: string, providerId: string): boolean {
-  const regex = new RegExp(
-    `['"]?${escapeRegex(providerId)}['"]?\\s*:\\s*\\{[\\s\\S]*?hasFree\\s*:\\s*true`,
-  );
-  return regex.test(content);
+  const block = extractProviderBlock(content, providerId);
+  if (!block) return false;
+  return /hasFree\s*:\s*true/.test(block);
 }
 
 function escapeRegex(s: string): string {
@@ -102,11 +129,39 @@ function readRegistryModels(): Map<string, ModelEntry[]> {
     while ((m = modelRegex.exec(content)) !== null) {
       const modelId = m[1];
       const rest = m[2];
-      const nameMatch = rest.match(/name\s*:\s*['"]([^'"]+)['"]/);
+      // Skip the provider object itself: its opening `{` also matches
+      // `\{\s*id` and would otherwise inject a phantom `{id: <providerId>}`
+      // model carrying the first real model's name (e.g. sarvam).
+      if (/alias\s*:|format\s*:|executor\s*:|authType\s*/.test(rest)) {
+        // The skipped span swallowed the first inline model object at its
+        // tail (the match ends at that model's closing `}`). Recover it so
+        // the first catalog model is not silently dropped.
+        if (/models\s*:\s*\[/.test(m[0])) {
+          const openIdx = m[0].lastIndexOf("{");
+          const tail = openIdx >= 0 ? m[0].slice(openIdx) : "";
+          // The tail is a real model object only when it carries no
+          // provider-level keys (otherwise it is the provider itself, e.g.
+          // `models: [...SPREAD]`, or an alternateFormats entry).
+          if (!/alias\s*:|format\s*:|executor\s*:|authType\s*|baseUrl\s*/.test(tail)) {
+            const tailId = tail.match(/id\s*:\s*['"]([^'"]+)['"]/)?.[1];
+            if (tailId) {
+              const tailName = tail.match(/name\s*:\s*(['"])([\s\S]*?)\1/)?.[2];
+              const tailCtx = tail.match(/contextLength\s*:\s*(\d+)/);
+              providerModels.push({
+                id: tailId,
+                name: tailName || tailId,
+                contextLength: tailCtx ? Number.parseInt(tailCtx[1]) : defaultCtx,
+              });
+            }
+          }
+        }
+        continue;
+      }
+      const nameMatch = rest.match(/name\s*:\s*(['"])([\s\S]*?)\1/);
       const ctxMatch = rest.match(/contextLength\s*:\s*(\d+)/);
       providerModels.push({
         id: modelId,
-        name: nameMatch?.[1] || modelId,
+        name: nameMatch?.[2] || modelId,
         contextLength: ctxMatch ? Number.parseInt(ctxMatch[1]) : defaultCtx,
       });
     }

@@ -2,8 +2,8 @@
   "schema": "dx.build.graph",
   "format": 1,
   "generatedAt": "2026-09-01T15:13:30.836659400+00:00",
-  "projectRoot": "G:/Dx/desktop/web/Shader",
-  "receiptPath": "G:/Dx/desktop/web/Shader/.dx/receipts/graph/latest.json",
+  "projectRoot": "G:/Dx/code/web/Shader",
+  "receiptPath": "G:/Dx/code/web/Shader/.dx/receipts/graph/latest.json",
   "names": {
     "buildGraph": "dx.build.graph",
     "wwwModuleGraph": "dx.www.moduleGraph",
