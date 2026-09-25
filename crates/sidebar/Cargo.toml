@@ -10,6 +10,7 @@ workspace = true
 
 [lib]
 path = "src/sidebar.rs"
+doctest = false
 
 [features]
 default = []
@@ -53,6 +54,7 @@ unicode-segmentation.workspace = true
 util.workspace = true
 vim_mode_setting.workspace = true
 workspace.workspace = true
+git_ui_core.workspace = true
 zed_actions.workspace = true
 
 [target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]

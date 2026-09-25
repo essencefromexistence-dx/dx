@@ -1,3 +1,8 @@
+//! OpenCode API types and streaming clients.
+//!
+//! This crate describes dynamically discovered OpenCode models and sends requests using
+//! each model's advertised protocol and capabilities.
+
 use anyhow::{Result, anyhow};
 use futures::{AsyncBufReadExt, AsyncReadExt, StreamExt, io::BufReader, stream::BoxStream};
 use http_client::{
@@ -54,9 +59,83 @@ impl OpenCodeSubscription {
     }
 }
 
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+pub struct Model {
+    name: String,
+    display_name: Option<String>,
+    max_tokens: u64,
+    max_output_tokens: Option<u64>,
+    protocol: ApiProtocol,
+    reasoning_effort_levels: Option<Vec<ReasoningEffort>>,
+    custom_model_api_url: Option<String>,
+    interleaved_reasoning: bool,
+}
+
+impl Model {
+    pub fn new(
+        name: String,
+        display_name: Option<String>,
+        max_tokens: u64,
+        max_output_tokens: Option<u64>,
+        protocol: ApiProtocol,
+        reasoning_effort_levels: Option<Vec<ReasoningEffort>>,
+        custom_model_api_url: Option<String>,
+        interleaved_reasoning: bool,
+    ) -> Self {
+        Self {
+            name,
+            display_name,
+            max_tokens,
+            max_output_tokens,
+            protocol,
+            reasoning_effort_levels,
+            custom_model_api_url,
+            interleaved_reasoning,
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.name
+    }
+
+    pub fn display_name(&self) -> &str {
+        self.display_name.as_deref().unwrap_or(&self.name)
+    }
+
+    pub fn protocol(&self) -> ApiProtocol {
+        self.protocol
+    }
+
+    pub fn interleaved_reasoning(&self) -> bool {
+        self.interleaved_reasoning
+    }
+
+    pub fn max_token_count(&self) -> u64 {
+        self.max_tokens
+    }
+
+    pub fn max_output_tokens(&self) -> Option<u64> {
+        self.max_output_tokens
+    }
+
+    pub fn supports_tools(&self) -> bool {
+        true
+    }
+
+    pub fn supported_reasoning_effort_levels(&self) -> Option<&[ReasoningEffort]> {
+        self.reasoning_effort_levels.as_deref()
+    }
+
+    pub fn custom_model_api_url(&self) -> Option<&str> {
+        self.custom_model_api_url.as_deref()
+    }
+}
+
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, EnumIter)]
-pub enum Model {
+pub enum OpenCodeTier {
     // -- Anthropic protocol models --
     #[serde(rename = "claude-opus-4-8")]
     ClaudeOpus4_8,
@@ -194,7 +273,7 @@ pub enum Model {
     },
 }
 
-impl Model {
+impl OpenCodeTier {
     pub fn default_fast() -> Self {
         Self::ClaudeHaiku4_5
     }
@@ -754,13 +833,24 @@ impl Model {
             _ => None,
         }
     }
+
+    /// Materialise this static tier into upstream's dynamic [`Model`], which is what the
+    /// provider and the request path speak now that the catalog is discovered at runtime.
+    pub fn to_model(&self, subscription: OpenCodeSubscription) -> Model {
+        Model::new(
+            self.id().to_string(),
+            Some(self.display_name().to_string()),
+            self.max_token_count(subscription),
+            self.max_output_tokens(subscription),
+            self.protocol(subscription),
+            self.supported_reasoning_effort_levels(),
+            None,
+            self.interleaved_reasoning(),
+        )
+    }
 }
 
-/// Stream generate content for Google models via OpenCode.
-///
-/// Unlike `google_ai::stream_generate_content()`, this uses:
-/// - `/v1/models/{model}` path (not `/v1beta/models/{model}`)
-/// - `Authorization: Bearer` header (not `key=` query param)
+/// Streams Google generate-content responses through OpenCode.
 pub async fn stream_generate_content(
     client: &dyn HttpClient,
     api_url: &str,
@@ -769,11 +859,8 @@ pub async fn stream_generate_content(
     extra_headers: &CustomHeaders,
 ) -> Result<BoxStream<'static, Result<google_ai::GenerateContentResponse>>> {
     let api_key = api_key.trim();
-
     let model_id = &request.model.model_id;
-
     let uri = format!("{api_url}/v1/models/{model_id}:streamGenerateContent?alt=sse");
-
     let request = HttpRequest::builder()
         .method(Method::POST)
         .uri(uri)

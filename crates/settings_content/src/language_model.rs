@@ -15,6 +15,7 @@ pub struct AllLanguageModelSettingsContent {
     pub bedrock: Option<AmazonBedrockSettingsContent>,
     pub deepseek: Option<DeepseekSettingsContent>,
     pub google: Option<GoogleSettingsContent>,
+    #[serde(rename = "llama.cpp")]
     pub llama_cpp: Option<LlamaCppSettingsContent>,
     pub lmstudio: Option<LmStudioSettingsContent>,
     pub mistral: Option<MistralSettingsContent>,
@@ -106,6 +107,8 @@ pub struct AnthropicAvailableModel {
     pub default_temperature: Option<f32>,
     #[serde(default)]
     pub extra_beta_headers: Vec<String>,
+    /// Whether Anthropic's fast mode is available for this model.
+    pub supports_fast_mode: Option<bool>,
     /// The model's mode (e.g. thinking)
     pub mode: Option<ModelMode>,
 }
@@ -114,6 +117,10 @@ pub struct AnthropicAvailableModel {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
 pub struct AmazonBedrockSettingsContent {
     pub available_models: Option<Vec<BedrockAvailableModel>>,
+    /// Custom models served through the `bedrock-mantle` endpoint's
+    /// OpenAI-compatible APIs, in addition to the built-in Mantle models
+    /// (GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5.4, Grok 4.3).
+    pub mantle_available_models: Option<Vec<BedrockMantleAvailableModel>>,
     pub custom_headers: Option<HashMap<String, String>>,
     pub endpoint_url: Option<String>,
     pub region: Option<String>,
@@ -137,6 +144,32 @@ pub struct BedrockAvailableModel {
     #[serde(serialize_with = "crate::serialize_optional_f32_with_two_decimal_places")]
     pub default_temperature: Option<f32>,
     pub mode: Option<ModelMode>,
+}
+
+#[with_fallible_options]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
+pub struct BedrockMantleAvailableModel {
+    /// The model id as expected in Bedrock Mantle request bodies, e.g. `openai.gpt-5.5`.
+    pub name: String,
+    pub display_name: Option<String>,
+    pub max_tokens: u64,
+    pub max_output_tokens: Option<u64>,
+    /// The OpenAI-compatible API this model must be called through.
+    pub protocol: BedrockMantleProtocolContent,
+    pub supports_tools: Option<bool>,
+    pub supports_images: Option<bool>,
+    /// Whether this custom Mantle model supports OpenAI reasoning effort parameters.
+    pub supports_thinking: Option<bool>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
+pub enum BedrockMantleProtocolContent {
+    /// The OpenAI Chat Completions API (`/chat/completions`).
+    #[serde(rename = "chat_completions")]
+    ChatCompletions,
+    /// The OpenAI Responses API (`/responses`).
+    #[serde(rename = "responses")]
+    Responses,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
@@ -213,8 +246,20 @@ pub struct OpenCodeSettingsContent {
     pub show_zen_models: Option<bool>,
     /// Whether to show OpenCode Go models. Defaults to true.
     pub show_go_models: Option<bool>,
-    /// Whether to show OpenCode Free models. Defaults to true.
+    /// Whether to show the keyless public Free tier. Defaults to true.
     pub show_free_models: Option<bool>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, MergeFrom)]
+pub enum OpenCodeApiProtocol {
+    #[serde(rename = "anthropic")]
+    Anthropic,
+    #[serde(rename = "openai_responses", alias = "open_ai_responses")]
+    OpenAiResponses,
+    #[serde(rename = "openai_chat", alias = "open_ai_chat")]
+    OpenAiChat,
+    #[serde(rename = "google")]
+    Google,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema, MergeFrom)]
@@ -232,9 +277,9 @@ pub struct OpenCodeAvailableModel {
     pub display_name: Option<String>,
     pub max_tokens: u64,
     pub max_output_tokens: Option<u64>,
-    /// The API protocol to use for this model: "anthropic", "openai_responses", "openai_chat", or "google".
-    pub protocol: String,
-    /// The subscription for this model: "zen", "go", or "free". Defaults to Zen.
+    /// The API protocol to use for this model: "anthropic", "openai_responses", "openai_chat", or "google". Defaults to "openai_chat".
+    pub protocol: Option<OpenCodeApiProtocol>,
+    /// The subscription for this model: "zen" or "go". Defaults to Zen.
     pub subscription: Option<OpenCodeModelSubscription>,
     /// Custom Model API URL to use for this model.
     pub custom_model_api_url: Option<String>,
@@ -284,21 +329,39 @@ pub struct LlamaCppSettingsContent {
     pub normal_model: Option<LlamaCppAvailableModel>,
     pub low_spec_model: Option<LlamaCppAvailableModel>,
     pub available_models: Option<Vec<LlamaCppAvailableModel>>,
+    /// Whether to automatically discover models served by the llama.cpp server.
+    /// Defaults to true.
+    pub auto_discover: Option<bool>,
+    /// Overrides the context length reported for every llama.cpp model.
+    pub custom_headers: Option<HashMap<String, String>>,
 }
 
 #[with_fallible_options]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
 pub struct LlamaCppAvailableModel {
+    /// The model id reported by the llama.cpp server (its `--alias` or the model file path).
     pub name: String,
+    /// The model's name in Zed's UI, such as in the model selector dropdown menu in the agent panel.
     pub display_name: Option<String>,
+    /// The Context Length parameter to the model (aka n_ctx).
     pub max_tokens: u64,
     pub max_output_tokens: Option<u64>,
     pub hf_repo: Option<String>,
     pub hf_quant: Option<String>,
     pub hf_file: Option<String>,
     pub local_path: Option<String>,
+    /// Whether the model supports tools.
     pub supports_tools: bool,
+    /// Whether the model supports vision.
     pub supports_images: bool,
+    /// Upstream's tri-state tool support: `None` means unknown, so the value is
+    /// inherited from the live `/props` probe. Ours' concrete `supports_tools`
+    /// is kept beside it so neither side's semantics is lost.
+    pub remote_supports_tools: Option<bool>,
+    /// Upstream's tri-state vision support — see `remote_supports_tools`.
+    pub remote_supports_images: Option<bool>,
+    /// Whether the model emits reasoning/thinking content.
+    pub supports_thinking: Option<bool>,
 }
 
 #[with_fallible_options]
@@ -418,6 +481,8 @@ pub struct OpenAiCompatibleModelCapabilities {
     pub chat_completions: bool,
     #[serde(default)]
     pub interleaved_reasoning: bool,
+    #[serde(default)]
+    pub max_tokens_parameter: bool,
 }
 
 impl Default for OpenAiCompatibleModelCapabilities {
@@ -429,6 +494,7 @@ impl Default for OpenAiCompatibleModelCapabilities {
             prompt_cache_key: false,
             chat_completions: default_true(),
             interleaved_reasoning: false,
+            max_tokens_parameter: false,
         }
     }
 }
@@ -574,6 +640,7 @@ pub struct OpenRouterAvailableModel {
     pub supports_tools: Option<bool>,
     pub supports_images: Option<bool>,
     pub mode: Option<ModelMode>,
+    pub reasoning_effort: Option<ReasoningEffort>,
     pub provider: Option<OpenRouterProvider>,
 }
 

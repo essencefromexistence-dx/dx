@@ -68,3 +68,6 @@ crates/docs_preprocessor/actions.json
 .nixos-test-history
 /extensions/dx-icon
 /docs
+
+.local*
+.cache

@@ -8,7 +8,6 @@ use picker::{Picker, PickerDelegate};
 use project::Project;
 use std::sync::Arc;
 use ui::{ListItem, ListItemSpacing, prelude::*};
-use util::ResultExt;
 use workspace::ModalView;
 
 actions!(
@@ -72,7 +71,7 @@ impl LineEndingSelector {
 
 impl Render for LineEndingSelector {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        v_flex().w(rems(34.)).child(self.picker.clone())
+        v_flex().child(self.picker.clone())
     }
 }
 
@@ -123,6 +122,10 @@ impl LineEndingSelectorDelegate {
 impl PickerDelegate for LineEndingSelectorDelegate {
     type ListItem = ListItem;
 
+    fn name() -> &'static str {
+        "line ending selector"
+    }
+
     fn placeholder_text(&self, _window: &mut Window, _cx: &mut App) -> Arc<str> {
         "Select a line ending…".into()
     }
@@ -152,7 +155,7 @@ impl PickerDelegate for LineEndingSelectorDelegate {
     fn dismissed(&mut self, _: &mut Window, cx: &mut Context<Picker<Self>>) {
         self.line_ending_selector
             .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+            .ok();
     }
 
     fn selected_index(&self) -> usize {

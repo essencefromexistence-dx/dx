@@ -487,6 +487,7 @@ impl Onboarding {
                 Some(Plan::ZedPro) => "pro",
                 Some(Plan::ZedProTrial) => "trial",
                 Some(Plan::ZedBusiness) => "business",
+                Some(Plan::ZedVip) => "vip",
                 Some(Plan::ZedStudent) => "student",
                 Some(Plan::ZedFree) | None => "free",
             }
@@ -1177,7 +1178,6 @@ impl workspace::SerializableItem for Onboarding {
         workspace: &mut Workspace,
         item_id: workspace::ItemId,
         _closing: bool,
-        _window: &mut Window,
         cx: &mut ui::Context<Self>,
     ) -> Option<gpui::Task<gpui::Result<()>>> {
         if DX_WEB_PREVIEW_ONBOARDING_DISABLED {

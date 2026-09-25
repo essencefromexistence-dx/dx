@@ -294,6 +294,7 @@ fn render_tool_list_item(
                         tool_name,
                         "Tool Permissions",
                         None,
+                        true,
                         render_fn,
                         window,
                         cx,
@@ -317,6 +318,7 @@ fn get_tool_render_fn(
         "prepare_agent_plugin_runtime" => render_agent_plugin_runtime_tool_config,
         "fetch" => render_fetch_tool_config,
         "search_web" => render_web_search_tool_config,
+        "skill" => render_skill_tool_config,
         _ => render_terminal_tool_config, // fallback
     }
 }
@@ -983,8 +985,7 @@ fn render_user_pattern_row(
     let delete_id = format!("{}-{:?}-delete-{}", tool_id, rule_type, index);
     let settings_window = cx.entity().downgrade();
 
-    SettingsInputField::new()
-        .with_id(input_id)
+    SettingsInputField::new(input_id)
         .with_initial_text(pattern)
         .tab_index(0_isize)
         .with_buffer_font()
@@ -1044,8 +1045,7 @@ fn render_add_pattern_input(
     let input_id = format!("{}-{:?}-new-pattern", tool_id, rule_type);
     let settings_window = cx.entity().downgrade();
 
-    SettingsInputField::new()
-        .with_id(input_id)
+    SettingsInputField::new(input_id)
         .with_placeholder("Add regex pattern…")
         .tab_index(0_isize)
         .with_buffer_font()
@@ -1400,6 +1400,7 @@ tool_config_page_fn!(
 );
 tool_config_page_fn!(render_fetch_tool_config, "fetch");
 tool_config_page_fn!(render_web_search_tool_config, "search_web");
+tool_config_page_fn!(render_skill_tool_config, "skill");
 
 #[cfg(test)]
 mod tests {
@@ -1414,6 +1415,9 @@ mod tests {
         const EXCLUDED_TOOLS: &[&str] = &[
             // Read-only / low-risk tools that don't call decide_permission_from_settings
             "apply_code_action",
+            // Interactive prompt: always asks the user via prompt_for_decision,
+            // so it has no settings-driven permission rules.
+            "ask_user",
             "diagnostics",
             "find_path",
             "find_references",

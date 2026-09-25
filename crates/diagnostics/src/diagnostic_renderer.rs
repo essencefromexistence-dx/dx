@@ -74,7 +74,7 @@ impl DiagnosticRenderer {
                 {
                     markdown.push_str("\n- hint: [");
                     markdown.push_str(&Self::escaped_bounded_diagnostic_text(
-                        &entry.entry.diagnostic.message,
+                        entry.entry.diagnostic.message.as_str(),
                         MAX_DIAGNOSTIC_INLINE_METADATA_CHARS,
                     ));
                     let ix = entry.ix;
@@ -88,7 +88,7 @@ impl DiagnosticRenderer {
                     severity: primary.diagnostic.severity,
                     diagnostics_editor: diagnostics_editor.clone(),
                     copy_message: Self::bounded_diagnostic_copy_message(
-                        &primary.diagnostic.message,
+                        primary.diagnostic.message.as_str(),
                     ),
                     markdown: cx.new(|cx| {
                         Markdown::new(markdown.into(), language_registry.clone(), None, cx)
@@ -96,24 +96,16 @@ impl DiagnosticRenderer {
                 });
             } else {
                 append_source_and_code(&mut markdown, entry.entry.diagnostic);
-                if entry
-                    .entry
-                    .range
-                    .start
-                    .row
-                    .abs_diff(primary.range.start.row)
-                    >= 5
-                {
-                    markdown.push_str(&format!(
-                        " ([back](file://#diagnostic-{buffer_id}-{group_id}-{primary_ix}))"
-                    ));
-                }
+
+                markdown.push_str(&format!(
+                    " ([back](file://#diagnostic-{buffer_id}-{group_id}-{primary_ix}))"
+                ));
                 results.push(DiagnosticBlock {
                     initial_range: entry.entry.range.clone(),
                     severity: entry.entry.diagnostic.severity,
                     diagnostics_editor: diagnostics_editor.clone(),
                     copy_message: Self::bounded_diagnostic_copy_message(
-                        &entry.entry.diagnostic.message,
+                        entry.entry.diagnostic.message.as_str(),
                     ),
                     markdown: cx.new(|cx| {
                         Markdown::new(markdown.into(), language_registry.clone(), None, cx)
@@ -158,11 +150,12 @@ impl DiagnosticRenderer {
     }
 
     fn bounded_diagnostic_markdown(diagnostic: &Diagnostic) -> String {
-        if let Some(md) = &diagnostic.markdown {
-            Self::bounded_diagnostic_text(md, MAX_DIAGNOSTIC_MARKDOWN_CHARS).into_owned()
+        if let Some(message_markdown) = diagnostic.message.markdown() {
+            Self::bounded_diagnostic_text(message_markdown, MAX_DIAGNOSTIC_MARKDOWN_CHARS)
+                .into_owned()
         } else {
             Self::escaped_bounded_diagnostic_text(
-                &diagnostic.message,
+                diagnostic.message.as_str(),
                 MAX_DIAGNOSTIC_MARKDOWN_CHARS,
             )
         }
@@ -194,7 +187,15 @@ fn append_source_and_code(markdown: &mut String, diagnostic: &Diagnostic) {
     if diagnostic.source.is_none() && diagnostic.code.is_none() {
         return;
     }
-    markdown.push_str(" (");
+    let is_lsp_markdown = diagnostic
+        .message
+        .lsp_markup()
+        .is_some_and(|(kind, _)| kind == &lsp::MarkupKind::Markdown);
+    if is_lsp_markdown {
+        markdown.push_str("\n\n(");
+    } else {
+        markdown.push_str(" (");
+    }
     if let Some(source) = diagnostic.source.as_ref() {
         markdown.push_str(&DiagnosticRenderer::escaped_bounded_diagnostic_text(
             source,
@@ -435,5 +436,33 @@ impl DiagnosticBlock {
             s.select_ranges([range.start..range.start]);
         });
         window.focus(&editor.focus_handle(cx), cx);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use language::DiagnosticMessage;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_adapter_markdown_keeps_source_and_code_inline() {
+        let diagnostic = Diagnostic {
+            message: DiagnosticMessage::plain_with_adapter_markdown(
+                "mismatched types\nexpected `usize`, found `char`",
+                Some("mismatched types\n\nexpected `usize`, found `char`".into()),
+            ),
+            source: Some("rust-analyzer".to_string()),
+            code: Some(lsp::NumberOrString::String("E0308".to_string())),
+            ..Diagnostic::default()
+        };
+
+        let mut markdown = DiagnosticRenderer::bounded_diagnostic_markdown(&diagnostic);
+        append_source_and_code(&mut markdown, &diagnostic);
+
+        assert_eq!(
+            markdown,
+            "mismatched types\n\nexpected `usize`, found `char` (rust\\-analyzer E0308)"
+        );
     }
 }

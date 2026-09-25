@@ -5,6 +5,7 @@ import test from "node:test";
 const read = (path: string) => readFileSync(path, "utf8");
 
 const zedSource = read("crates/zed/src/zed.rs");
+const workspaceSource = read("crates/workspace/src/workspace.rs");
 const mainSource = read("crates/zed/src/main.rs");
 const multiWorkspaceSource = read("crates/workspace/src/multi_workspace.rs");
 
@@ -56,15 +57,25 @@ const assertBefore = ({
   assert.ok(beforeIndex < afterIndex, message);
 };
 
-test("zed app-level fanout caps are named constants", () => {
+test("quit fanout caps are named constants", () => {
+  // The window cap is a caller-side concern: `zed::quit` still collects and
+  // bounds its own window list before handing it to `workspace`.
   assert.match(zedSource, /const MAX_QUIT_WORKSPACE_WINDOWS: usize = 512;/);
-  assert.match(zedSource, /const MAX_QUIT_WORKSPACES_PER_WINDOW: usize = 512;/);
-  assert.match(zedSource, /const MAX_QUIT_SERIALIZATION_FLUSH_TASKS: usize = 8_192;/);
+  // The workspace and flush-task caps moved with the bounded collector into
+  // `workspace::collect_flush_tasks`.
+  assert.match(
+    workspaceSource,
+    /const MAX_QUIT_WORKSPACES_PER_WINDOW: usize = 512;/,
+  );
+  assert.match(
+    workspaceSource,
+    /const MAX_QUIT_SERIALIZATION_FLUSH_TASKS: usize = 8_192;/,
+  );
   assert.match(mainSource, /const MAX_CHANNEL_NOTE_OPEN_PROMISES: usize = 256;/);
   assert.match(mainSource, /const MAX_DUMP_GPUI_ACTION_DEFINITIONS: usize = 16_384;/);
 });
 
-test("quit bounds window and workspace materialization before push loops", () => {
+test("quit bounds window materialization before push loops", () => {
   const collectWindows = functionBody(zedSource, "collect_quit_workspace_windows");
   assertBefore({
     body: collectWindows,
@@ -81,24 +92,6 @@ test("quit bounds window and workspace materialization before push loops", () =>
     collectWindows,
     /return None;/,
     "window truncation must cancel quit instead of skipping unchecked windows",
-  );
-
-  const collectWorkspaces = functionBody(zedSource, "collect_quit_workspaces_for_window");
-  assertBefore({
-    body: collectWorkspaces,
-    before: "workspaces.len() >= MAX_QUIT_WORKSPACES_PER_WINDOW",
-    after: "workspaces.push(workspace.clone());",
-    message: "quit workspace fanout must check the cap before collecting workspaces",
-  });
-  assert.match(
-    collectWorkspaces,
-    /log::warn!\([\s\S]*MAX_QUIT_WORKSPACES_PER_WINDOW/,
-    "workspace truncation must be visible",
-  );
-  assert.match(
-    collectWorkspaces,
-    /return None;/,
-    "workspace truncation must cancel quit instead of skipping unchecked workspaces",
   );
 
   const quit = functionBody(zedSource, "quit");
@@ -118,55 +111,89 @@ test("quit bounds window and workspace materialization before push loops", () =>
     /collect::<Vec<_>>\(\)/,
     "quit should not collect unbounded window or workspace vectors directly",
   );
+  assert.match(
+    quit,
+    /workspace::prepare_windows_to_quit\(&workspace_windows, cx\)\.await/,
+    "quit must delegate window preparation and serialization flush to `workspace`",
+  );
 });
 
-test("quit bounds serialization flush task fanout before join_all", () => {
-  const pushFlushTask = functionBody(zedSource, "push_quit_flush_task");
+test("collect_flush_tasks bounds workspace and flush-task fanout before extending", () => {
+  const collectFlushTasks = functionBody(workspaceSource, "collect_flush_tasks");
+  assert.match(
+    collectFlushTasks,
+    /-> \(Vec<Task<\(\)>>, bool\)/,
+    "the collector must report truncation instead of silently dropping flush tasks",
+  );
   assertBefore({
-    body: pushFlushTask,
-    before: "flush_tasks.len() >= MAX_QUIT_SERIALIZATION_FLUSH_TASKS",
-    after: "flush_tasks.push(make_task());",
-    message: "flush task fanout must check the cap before creating and pushing tasks",
+    body: collectFlushTasks,
+    before: "workspace_count > MAX_QUIT_WORKSPACES_PER_WINDOW",
+    after: "flush_tasks.extend(",
+    message: "per-window workspace fanout must be capped before tasks are created",
+  });
+  assertBefore({
+    body: collectFlushTasks,
+    before: "flush_tasks.len().saturating_add(required_flush_tasks)",
+    after: "flush_tasks.extend(",
+    message: "flush task fanout must be capped before tasks are created",
+  });
+  assertBefore({
+    body: collectFlushTasks,
+    before: "pending_removal_task_count()",
+    after: "flush_pending_serialization(window, cx)",
+    message: "quit must check flush capacity before draining pending removal tasks",
   });
   assert.match(
-    pushFlushTask,
+    collectFlushTasks,
+    /log::warn!\([\s\S]*MAX_QUIT_WORKSPACES_PER_WINDOW/,
+    "workspace truncation must be visible",
+  );
+  assert.match(
+    collectFlushTasks,
     /log::warn!\([\s\S]*MAX_QUIT_SERIALIZATION_FLUSH_TASKS/,
     "flush task truncation must be visible",
   );
   assert.match(
-    pushFlushTask,
+    collectFlushTasks,
     /return false;/,
-    "flush task overflow must cancel quit instead of skipping serialization tasks",
+    "overflow must cancel quit instead of skipping serialization tasks",
   );
-
-  const quit = functionBody(zedSource, "quit");
   assertBefore({
-    body: quit,
-    before: /push_quit_flush_task\(\s*&mut flush_tasks/,
+    body: collectFlushTasks,
+    before: "let mut truncated = false;",
+    after: "break;",
+    message: "the collector must stop at the first over-cap window",
+  });
+
+  const flushWindows = functionBody(workspaceSource, "flush_windows_serialization");
+  assert.match(
+    flushWindows,
+    /\) -> bool \{/,
+    "flush_windows_serialization must surface the truncation signal",
+  );
+  assert.match(
+    flushWindows,
+    /let \(flush_tasks, truncated\) = collect_flush_tasks/,
+    "flush_windows_serialization must use the bounded collector",
+  );
+  assertBefore({
+    body: flushWindows,
+    before: "collect_flush_tasks(workspace_windows, cx)",
     after: "futures::future::join_all(flush_tasks).await",
     message: "flush tasks must be capped before join_all",
   });
   assertBefore({
-    body: quit,
-    before: "collect_quit_workspaces_for_window(multi_workspace)",
-    after: "workspace.flush_serialization(window, cx)",
-    message: "workspace flushes must be capped before serialization tasks are created",
+    body: flushWindows,
+    before: "futures::future::join_all(flush_tasks).await",
+    after: "!truncated",
+    message: "already-collected flush tasks must be awaited before cancelling",
   });
-  assertBefore({
-    body: quit,
-    before: "pending_removal_task_count()",
-    after: "multi_workspace.take_pending_removal_tasks()",
-    message: "quit must check flush capacity before draining pending removal tasks",
-  });
+
+  const prepareToQuit = functionBody(workspaceSource, "prepare_windows_to_quit");
   assert.match(
-    quit,
-    /quit_flush_ready != Some\(true\)[\s\S]*futures::future::join_all\(flush_tasks\)\.await;[\s\S]*return Ok\(\(\)\);/,
-    "quit must await already-collected flush tasks before cancelling",
-  );
-  assert.doesNotMatch(
-    quit,
-    /flush_tasks\.append|flush_tasks\.push/,
-    "quit should route flush task fanout through the bounded helper",
+    prepareToQuit,
+    /if !flush_windows_serialization\(workspace_windows, cx\)\.await \{[\s\S]*?return false;/,
+    "an over-cap serialization flush must cancel the quit",
   );
 
   const pendingRemovalTaskCount = functionBody(

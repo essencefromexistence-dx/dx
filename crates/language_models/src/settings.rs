@@ -97,6 +97,7 @@ impl settings::Settings for AllLanguageModelSettings {
                 .collect(),
             bedrock: AmazonBedrockSettings {
                 available_models: bedrock.available_models.unwrap_or_default(),
+                mantle_available_models: bedrock.mantle_available_models.unwrap_or_default(),
                 custom_headers: custom_headers_from(
                     "Amazon Bedrock",
                     bedrock.custom_headers,
@@ -144,6 +145,9 @@ impl settings::Settings for AllLanguageModelSettings {
                 normal_model: llama_cpp.normal_model.unwrap(),
                 low_spec_model: llama_cpp.low_spec_model.unwrap(),
                 available_models: llama_cpp.available_models.unwrap_or_default(),
+                auto_discover: llama_cpp.auto_discover.unwrap_or(true),
+                remote_context_window: llama_cpp.context_window,
+                custom_headers: custom_headers_from("llama.cpp", llama_cpp.custom_headers, &[]),
             },
             lmstudio: LmStudioSettings {
                 api_url: lmstudio.api_url.unwrap(),
