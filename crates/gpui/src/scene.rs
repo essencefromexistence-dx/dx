@@ -569,6 +569,13 @@ impl PrimitiveBatch {
                     texture_id.index
                 )
             }
+            Self::LiquidGlass { texture_id, range } => {
+                format!(
+                    "liquid glass ({}) on atlas {}",
+                    range.len(),
+                    texture_id.index
+                )
+            }
             Self::Surfaces(range) => format!("surfaces ({})", range.len()),
         }
     }

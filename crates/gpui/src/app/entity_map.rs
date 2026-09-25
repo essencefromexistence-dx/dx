@@ -155,9 +155,6 @@ impl EntityMap {
         let Some(entity) = self
             .read_inner(entity.entity_id)
             .and_then(|entity| entity.downcast_ref())
-        let Some(entity) = self
-            .read_inner(entity.entity_id)
-            .and_then(|entity| entity.downcast_ref())
         else {
             double_lease_panic("read", type_name::<T>());
         };

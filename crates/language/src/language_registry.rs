@@ -544,12 +544,7 @@ impl LanguageRegistry {
 
     pub fn language_names(&self) -> Vec<LanguageName> {
         let state = self.state.read();
-        let language_count = state
-            .available_languages
-            .iter()
-            .filter(|language| language.loaded.not())
-            .count()
-            + state.languages.len();
+        let language_count = state.available_languages.unloaded_len() + state.languages.len();
         warn_truncated_registry_materialization(
             "language names",
             language_count,

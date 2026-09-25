@@ -113,6 +113,10 @@ impl AvailableLanguages {
             .collect()
     }
 
+    pub(super) fn unloaded_len(&self) -> usize {
+        self.0.iter().filter(|language| !language.loaded).count()
+    }
+
     #[cfg(any(test, feature = "test-support"))]
     pub(super) fn name_for_id(&self, id: LanguageId) -> Option<LanguageName> {
         self.0

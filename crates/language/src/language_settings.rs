@@ -54,7 +54,10 @@ fn cap_language_settings_set<T: Eq + std::hash::Hash>(
     entries.into_iter().take(max).collect()
 }
 
-fn capped_language_file_type_patterns(language: &Arc<str>, patterns: &[String]) -> Vec<String> {
+fn capped_language_file_type_patterns<'a>(
+    language: &Arc<str>,
+    patterns: impl ExactSizeIterator<Item = &'a String>,
+) -> Vec<String> {
     warn_truncated_language_settings_collection(
         &format!("file type patterns for language {language}"),
         patterns.len(),
@@ -62,7 +65,6 @@ fn capped_language_file_type_patterns(language: &Arc<str>, patterns: &[String]) 
     );
 
     patterns
-        .iter()
         .take(MAX_LANGUAGE_FILE_TYPE_PATTERNS_PER_LANGUAGE)
         .cloned()
         .collect::<Vec<_>>()
@@ -1039,7 +1041,7 @@ impl settings::Settings for AllLanguageSettings {
         let configured_disabled_globs = edit_predictions.disabled_globs.as_ref().unwrap();
         warn_truncated_language_settings_collection(
             "edit prediction disabled globs",
-            configured_disabled_globs.len(),
+            configured_disabled_globs.0.len(),
             MAX_EDIT_PREDICTION_DISABLED_GLOBS,
         );
         let disabled_globs: HashSet<&String> = configured_disabled_globs
@@ -1100,7 +1102,7 @@ impl settings::Settings for AllLanguageSettings {
         if let Some(file_type_settings) = all_languages.file_types.as_ref() {
             warn_truncated_language_settings_collection(
                 "language file type entries",
-                file_type_settings.len(),
+                file_type_settings.0.len(),
                 MAX_LANGUAGE_FILE_TYPE_ENTRIES,
             );
         }
@@ -1110,7 +1112,7 @@ impl settings::Settings for AllLanguageSettings {
             .flatten()
             .take(MAX_LANGUAGE_FILE_TYPE_ENTRIES)
         {
-            let patterns = capped_language_file_type_patterns(language, &patterns.0);
+            let patterns = capped_language_file_type_patterns(language, patterns.0.iter());
             let mut builder = GlobSetBuilder::new();
 
             for pattern in &patterns {
