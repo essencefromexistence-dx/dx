@@ -9,6 +9,28 @@
 
 ## [Unreleased] — merge of `upstream/main` (`baee1ca6de`) into `dx-code`
 
+> ### 📋 PLANNED — next sync measured but NOT started (2026-09-26)
+>
+> `upstream/main` has moved to **`e91b82c106`** (7 new commits). Replaying them onto `forge`
+> (`c8df4b6303`, merge-base `f8adffe9d1`) produces **13 conflicts**, not 121:
+>
+> * **10 content** — `Cargo.lock` · `crates/agent/src/agent.rs` ·
+>   `crates/agent_ui/src/buffer_codegen.rs` · `crates/agent_ui/src/language_model_selector.rs` ·
+>   `crates/gpui_wgpu/src/wgpu_renderer.rs` · `crates/language_model/src/language_model.rs` ·
+>   `crates/language_models/Cargo.toml` · `crates/language_models/src/provider/llama_cpp.rs` ·
+>   `crates/language_models/src/provider/openai_subscribed.rs` ·
+>   `crates/language_models/src/provider/opencode.rs`
+> * **3 modify/delete** — `CONTRIBUTING.md` · `docs/src/SUMMARY.md` · `docs/src/development.md`
+>   (all *ours-deleted / upstream-modified*)
+>
+> **Nine of the ten content conflicts come from a single upstream commit**, `975845875b`
+> ("Make LanguageModel plain data served by its provider") — the same layer as the open **Q5**
+> `opencode` blocker. **Decide Q5 before starting this sync.**
+>
+> Full plan, per-file Δ and strategy: **`PLAN.md` §5**. Actionable checklist: **`TODO.md` §0.12**.
+> Nothing has been merged; this is a plan only.
+
+
 **Goal:** 100 % of our changes survive **and** 100 % of upstream's survive. Our UI wins genuine
 conflicts; upstream code our UI has no surface for stays **compiled and wired, just unsurfaced**.
 Nothing upstream is silently dropped.

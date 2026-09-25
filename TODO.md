@@ -737,3 +737,48 @@ and `skill_creator_page: None,` by replacing them. The anchor assertions caught 
 the field audit did. **Assert boundaries, then gate the whole file; do not trust the splice.**
 
 
+---
+
+## 0.12 Next sync — PLANNED (2026-09-26). Upstream `e91b82c106`, 7 commits, **13 conflicts**
+
+> **Nothing has been merged.** `forge` is at `c8df4b6303`; `upstream/main` is `e91b82c106`; the
+> merge-base is `f8adffe9d1`. Measured in memory with `git merge-tree --write-tree --name-only`.
+> Full reasoning: `PLAN.md` §5.
+
+### Tasks, in the order they should be worked
+
+- [ ] **P0 — Decide Q5 (`opencode`) FIRST.** `975845875b` rewrites the provider layer, and Q5 *is* "our
+      Free tier is not expressible on upstream's types". Nine of the 13 conflicts live in that same
+      layer, so settling Q5 before the sync makes both cheaper. See §0.06 Q5.
+- [ ] **P1 — Bank a baseline.** A full `cargo check` is still blocked by `cap-primitives`/`cap-std` build
+      scripts (`Os error 231`, Windows pipe exhaustion — CHANGELOG §Session 35). Try a reboot; one
+      success caches forever (`rerun-if-changed=build.rs`).
+- [ ] **P2 — `Cargo.lock`** — regenerate, never hand-merge.
+- [ ] **P3 — the 3 `modify/delete`** (`CONTRIBUTING.md`, `docs/src/SUMMARY.md`, `docs/src/development.md`)
+      — all *ours-deleted / upstream-modified*. Honour the deletion and record upstream's text verbatim,
+      as in Session 32 (`merge-tools/evidence/upstream_docs.diff` is the precedent).
+- [ ] **P4 — the `language_model(s)` block (9 files).** One upstream commit, so resolve them together:
+      - `llama_cpp.rs` — **ours dominant (+2245 vs +218)**: ours skeleton, port theirs.
+      - `language_model_selector.rs` — **ours dominant (+271 vs +35)**: ours skeleton, port theirs.
+      - `language_model.rs` — **theirs dominant (+286 vs +7)**: theirs skeleton, keep our fix
+        (the duplicated `authentication_error_message` / `missing_credentials_error_message` pair).
+      - `opencode.rs` — blocked on P0.
+      - `openai_subscribed.rs` (+65 vs +12), `buffer_codegen.rs` (+31 vs +50), `agent.rs`
+        (both restructured), `language_models/Cargo.toml` (trivial).
+- [ ] **P5 — `wgpu_renderer.rs`** — both sides large (theirs +932, ours +343). Ours carries the
+      liquid-glass feature; theirs adds Linux headless rendering. Same shape as Session 23: take theirs'
+      new API and re-express our feature on it.
+- [ ] **P6 — gates, in order** — `rustfmt --edition 2024 --check` → markers 0 → **no-loss both
+      directions** (run `merge-tools/nested_audit.py` too) → `cargo metadata` → `cargo check -p <crate>`.
+- [ ] **P7 — re-measure** with `git merge-tree` before trusting any count, then commit and push.
+
+### Reminders that have bitten before
+
+- **`wc -l` on merge-tree output is NOT the conflict count** — raw is 55 here, real is 13. Use
+  `awk 'NR==1{next} /^$/{exit} {print}'` and cross-check `grep -c '^CONFLICT'`.
+- **Re-derive the parse gate's file list** from `git diff --name-only <ours>..HEAD`; a "0 of N" claim is
+  only as good as the N (Session 34).
+- **Marker-free is not resolved**, and **token-level no-loss cannot see a dropped nested item**
+  (Session 34's `IconName` loss — 9 variants gone, only 4 compiler-visible).
+- **A rename is not a loss.** `llama_cpp.rs`'s "missing" fields in Session 35 were `LocalLlamaCppState`
+  / `LocalLlamaCppLanguageModel` under new names.

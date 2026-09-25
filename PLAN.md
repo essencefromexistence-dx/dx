@@ -195,3 +195,93 @@ with a report at `/tmp/mf2_report.tsv` (cols: `rc`, `residual_hunks`, `ours_chan
 2. `llama_cpp.rs` — confirm the two-provider shape (rename ours) vs. upstream's live + ours
    compiled-but-unwired. See TODO.md.
 3. Whether to attempt a full `cargo check` at all, given the disk limit.
+
+---
+
+## 5. Next sync (PLANNED, not started) — upstream `e91b82c106`, 7 commits, **13 conflicts**
+
+**Measured in memory on 2026-09-26** with `git merge-tree --write-tree --name-only forge upstream/main`.
+Nothing was merged. This section is a plan, not a record.
+
+### Inputs (verified)
+
+| role | ref | commit | date |
+|---|---|---|---|
+| **ours** | `forge` | `c8df4b6303` | 2026-09-26 |
+| **theirs** | `upstream/main` | `e91b82c106` | 2026-09-25 |
+| **merge-base** | — | **`f8adffe9d1`** | 2026-09-25 |
+
+The merge-base **is** the second parent of our previous merge, so only the 7 new commits replay — which
+is why the count collapses from the original 257 conflicts to **13**.
+
+> **Output-format trap.** Raw `wc -l` on the merge-tree output is **55**; only the lines between the
+> header and the first blank line are conflicts. Extract with `awk 'NR==1{next} /^$/{exit} {print}'`
+> and cross-check `grep -c '^CONFLICT'` — both give **13**.
+
+### The 7 commits — and the 3 that actually conflict
+
+| commit | subject | conflicts |
+|---|---|---|
+| `397cbc84de` | Turn off PR labeling for Guild (#64772) | none |
+| `f8f0a28508` | Fix breadcrumb highlighting outside excerpts (#64738) | none |
+| `adc8d7918e` | git_ui: Add context menu to folders in tree view (#59853) | none |
+| `7ea077c78b` | fs: Improved responsiveness when watching paths (#63410) | none |
+| `e52ab15eac` | Improve contribution guidelines and experience (#64296) | **3, all modify/delete** |
+| `975845875b` | **language_model: Make LanguageModel plain data served by its provider (#64750)** | **9** |
+| `e91b82c106` | gpui_wgpu: Add Linux headless rendering (#64718) | **1** (+ Cargo.lock) |
+
+**Four of the seven merge cleanly.** All 13 conflicts come from three commits, and one of them
+(`975845875b`) accounts for nine.
+
+### The 13, and the shape of each
+
+`Δ` is lines changed by each side **relative to the merge-base**. It tells you which side restructured,
+and therefore whose skeleton to keep.
+
+| # | path | type | theirs Δ | ours Δ | shape → resolution |
+|---|---|---|---|---|---|
+| 1 | `Cargo.lock` | content | +3/−2 | +1747/−322 | **regenerate, never hand-merge** |
+| 2 | `crates/agent/src/agent.rs` | content | +154/−184 | +122/−48 | both restructured → semantic merge |
+| 3 | `crates/agent_ui/src/buffer_codegen.rs` | content | +31/−33 | +50/−0 | ours additive → ours + port theirs |
+| 4 | `crates/agent_ui/src/language_model_selector.rs` | content | +35/−103 | **+271/−61** | **ours dominant** → ours skeleton, port theirs |
+| 5 | `crates/gpui_wgpu/src/wgpu_renderer.rs` | content | **+932/−435** | +343/−40 | both large → theirs' new API + our liquid-glass re-expressed on it |
+| 6 | `crates/language_model/src/language_model.rs` | content | **+286/−161** | +7/−3 | **theirs dominant** → theirs skeleton, keep our small fix |
+| 7 | `crates/language_models/Cargo.toml` | content | +0/−2 | +3/−0 | trivial |
+| 8 | `crates/language_models/src/provider/llama_cpp.rs` | content | +218/−187 | **+2245/−40** | **ours hugely dominant** → ours skeleton, port theirs |
+| 9 | `crates/language_models/src/provider/openai_subscribed.rs` | content | +65/−14 | +12/−0 | theirs dominant |
+| 10 | `crates/language_models/src/provider/opencode.rs` | content | +340/−324 | +470/−70 | both large — **and the open Q5 blocker** |
+| 11 | `CONTRIBUTING.md` | **modify/delete** | +49/−152 | +0/−186 | ours deleted → honour the deletion, record their text |
+| 12 | `docs/src/SUMMARY.md` | **modify/delete** | +1/−0 | +0/−234 | ours deleted → same |
+| 13 | `docs/src/development.md` | **modify/delete** | +20/−0 | +0/−116 | ours deleted → same |
+
+### Strategy
+
+1. **The 3 `modify/delete` are the recurring decision, not new work.** All three are the
+   *ours-deleted / upstream-modified* direction (precedent: **109 of the original 114** were
+   force-removed). Honour our deletion and record upstream's text verbatim, exactly as before.
+2. **`llama_cpp.rs` is the largest single job.** Ours is +2245 lines — the local-runtime feature, now
+   living under `LocalLlamaCppState` / `LocalLlamaCppLanguageModel` — against theirs' +218. Port theirs'
+   small change onto our structure.
+3. **Do not start `opencode.rs` before Q5 is decided.** Upstream's `975845875b` rewrites the provider
+   layer, and Q5 is precisely "our Free tier is not expressible on upstream's types". Settling Q5 first
+   makes both the sync and the decision cheaper.
+4. **`Cargo.lock` is mechanical** — regenerate, never hand-merge.
+5. **Everything else follows the standing rule:** keep the dominant side's skeleton, port the other
+   side's semantics onto it. The Δ columns above say which is which.
+
+### Gates, in order
+
+`rustfmt --edition 2024 --check` per touched file → **markers 0** → **no-loss both directions**
+(including `merge-tools/nested_audit.py`, which covers the nested enum-variant and struct-field classes)
+→ `cargo metadata` → `cargo check -p <crate>` for each touched crate.
+
+> **Re-derive the parse gate's file list from `git diff --name-only <ours>..HEAD` and reconcile the
+> count.** In Session 34 a hard syntax error passed a gate reporting "0 of 1256 fail to parse" because
+> the file was not in that list at all.
+
+### Before starting: the workspace still does not compile end-to-end
+
+`cargo check` is blocked by `cap-primitives` / `cap-std` build scripts panicking on Windows pipe
+exhaustion (`Os error 231`) — see CHANGELOG §Session 35. A full workspace check is a **precondition for
+banking a baseline**, not for resolving; but resolving with no compile signal is exactly what produced
+the nine defects of Session 34.
