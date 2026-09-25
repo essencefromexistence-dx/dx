@@ -35,6 +35,66 @@
 conflicts; upstream code our UI has no surface for stays **compiled and wired, just unsurfaced**.
 Nothing upstream is silently dropped.
 
+### Session 39 (2026-09-26) — ❌ **Q5 was NOT open** (my own false positive), and **5 stale `opencode` references fixed**
+
+> *CHANGELOG entries 36–38 are absent on purpose: those sessions did the commit, the push + branch renames, and the
+> next-sync plan — recorded in memory (`2026-09-26-session36/37/38.md`) rather than duplicated here.*
+
+#### First, a correction: §Session 35's `opencode` finding was WRONG
+
+Session 35's nested-item audit reported **8 missing `Model::*Free` variants** in `crates/opencode/src/opencode.rs` and
+called it "the known Q5 blocker". **Nothing was lost.** The detector keys on the **type name**, and the merge had
+already **renamed** ours' `enum Model` → **`enum OpenCodeTier`** (session 28) to make room for upstream's dynamic
+`struct Model`. Measured:
+
+| | variants |
+|---|---|
+| ours' `enum Model` (`c701504082`) | **56** |
+| merged `enum OpenCodeTier` | **56** |
+| missing / added | **0 / 0** |
+
+Identical sets, including every `*Free` variant. ⚠️ **This is exactly the rename false-positive that Session 35
+documented as a "tool limitation" two paragraphs below the bad finding — I failed to apply my own caveat to my own
+hit.** §0.06 Q5 has read **✅ RESOLVED (session 28)** the whole time; the resolution is even spelled out there
+(`enum OpenCodeTier` + a `to_model(subscription) -> Model` bridge). `PLAN.md` §5 and `TODO.md` §0.12 both repeated
+the error and are corrected.
+
+#### But the audit's *hit* pointed at real damage — just a different kind
+
+`crates/language_models/src/provider/opencode.rs` still called ours' **enum** API on upstream's **dynamic struct** in
+five places. The merge had built the right bridge (`create_tier_model(tier, subscription)` → `tier.to_model(...)`) and
+migrated most call sites — but not these:
+
+| # | site | was | is now |
+|---|---|---|---|
+| 1 | **`icon()` — LIVE CODE** (not test-only) | `match self.model { opencode::Model::Glm5 \| opencode::Model::Glm5_1 => … }` — matching **enum variants** on a **struct** | `match self.model.id() { "glm-5" \| "glm-5.1" => … }` — the ids are `OpenCodeTier::Glm5.id()` / `Glm5_1.id()` |
+| 2 | test | `opencode::Model::default_free()` | `OpenCodeTier::default_free().to_model(OpenCodeSubscription::Free)` |
+| 3 | test | `opencode::Model::default_free_fast()` | `OpenCodeTier::default_free_fast().to_model(OpenCodeSubscription::Free)` |
+| 4 | test | `let model = opencode::Model::KimiK2_5; model.available_subscriptions()` | `let tier = OpenCodeTier::KimiK2_5;` + `tier.available_subscriptions()` + `tier.to_model(subscription)` for the registry key |
+| 5 | test | `provider.create_language_model(...)` — **the method no longer exists upstream** | `provider.create_tier_model(OpenCodeTier::default_free(), OpenCodeSubscription::Free)` |
+
+**Why no gate saw these:** #1 is a *type* error that only a compiler reports, and `cargo check` has never run here;
+#2–#5 are in `#[cfg(test)]`, the documented blind spot that a default `cargo check` cannot see at all. The parse gate
+and every no-loss probe pass on all five, because nothing is *missing* — the API was *renamed*.
+
+**Verified after:** tree-wide `grep` for `opencode::Model::` excluding `::new` → **empty** (fully migrated);
+`rustfmt --edition 2024 --check` → **exit 0**.
+
+⚠️ **One pre-existing formatting defect was fixed too.** The file was **already** non-conforming before this edit
+(`rustfmt` reported 1 hunk at line 559 in the untouched original) — I fixed that reflow alongside the one my own edit
+introduced, so the file now passes the format gate.
+
+#### The lesson, stated plainly
+
+**Two independent sessions have now lost time to the same blind spot from opposite directions:** Session 34's
+`IconName` loss was a *real* nested-item loss that token-level checks could not see; Session 35's `opencode` finding
+was a *false* loss because a rename made every member of the old type look gone. **A name-keyed nested-item detector
+cannot tell "deleted" from "renamed", so every hit must be confirmed by checking whether the members' siblings and
+types survive under a different type name** — and a hit that lands on a type the merge is *known* to have renamed is a
+false positive until proven otherwise.
+
+---
+
 ### Session 35 (2026-09-25) — **NESTED-ITEM SILENT-LOSS AUDIT**: a detector for the class that hid `IconName`. Result: **no new losses.**
 
 The `IconName` loss (Session 34) exposed a hole in the gates. **Token-level no-loss cannot see it** — the token

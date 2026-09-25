@@ -176,11 +176,13 @@ surface for stays **compiled and wired, just unsurfaced** — never silently dro
 >   **`LocalLlamaCppState`** (line 82, holds `runtime: Arc<LlamaCppRuntime>`) and **`LocalLlamaCppLanguageModel`** (285),
 >   renamed to make room for upstream's router-mode `State`. Counts match exactly (`LlamaCppRuntime` 5=5,
 >   `use_low_spec_model` 3=3, `low_spec_model` 6=6, `discovered_models` 5=5). **Session 27's resolution was correct.**
-> - `opencode/src/opencode.rs` (8) — ⛔ **the known §0.06 Q5 blocker, now precisely enumerated:**
->   `Model::DeepSeekV4FlashFree` · `LagunaS2_1Free` · `Ling3_0FlashFinFree` · `MimoV2_5Free` ·
->   `MuseSpark1_2ContributorFree` · `Nemotron3SuperFree` · `Nemotron3_5LightningFree` · `XPreviewFFree`.
->   Upstream replaced the hardcoded `enum Model` with a dynamic `struct Model`, so ours' Free tier is not expressible
->   without a decision. **A confirmation, not a new finding.**
+> - `opencode/src/opencode.rs` (8) — ❌ **FALSE POSITIVE — corrected in session 39. Nothing was lost.**
+>   This detector keyed on the type name `Model`, and the merge had already **renamed** ours' `enum Model` to
+>   **`enum OpenCodeTier`** (session 28, §0.06 Q5) to make room for upstream's dynamic `struct Model`. Verified:
+>   ours' `enum Model` had **56** variants and merged's `enum OpenCodeTier` has **56** — the sets are *identical*,
+>   with zero missing and zero added, including every `*Free` variant. **This is precisely the rename class the
+>   "tool limitation" note below warns about, and I failed to apply my own caveat to this very hit.** ⚠️
+>   **Q5 has been RESOLVED since session 28 — see §0.06 Q5. There is no open `opencode` blocker.**
 > - Remote: 1 — `sidebar.rs`'s `Sidebar.rename_editor`, also a rename (`thread_rename_editor`), documented in Session 18.
 >
 > ⚠️ **Tool limitation:** a *struct rename* makes every field of that struct look lost. Before acting on a hit, check
@@ -747,9 +749,10 @@ the field audit did. **Assert boundaries, then gate the whole file; do not trust
 
 ### Tasks, in the order they should be worked
 
-- [ ] **P0 — Decide Q5 (`opencode`) FIRST.** `975845875b` rewrites the provider layer, and Q5 *is* "our
-      Free tier is not expressible on upstream's types". Nine of the 13 conflicts live in that same
-      layer, so settling Q5 before the sync makes both cheaper. See §0.06 Q5.
+- [x] ~~**P0 — Decide Q5 (`opencode`) FIRST.**~~ ❌ **WRONG — corrected session 39: Q5 was already
+      RESOLVED in session 28** (§0.06 Q5: ours' catalog became `enum OpenCodeTier` + a `to_model` bridge,
+      upstream's dynamic `Model` kept its name). Nine of the 13 conflicts still live in that layer, so it is
+      still the **first work item** — but as ordinary port work, **not** a blocked decision.
 - [ ] **P1 — Bank a baseline.** A full `cargo check` is still blocked by `cap-primitives`/`cap-std` build
       scripts (`Os error 231`, Windows pipe exhaustion — CHANGELOG §Session 35). Try a reboot; one
       success caches forever (`rerun-if-changed=build.rs`).

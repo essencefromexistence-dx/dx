@@ -249,7 +249,7 @@ and therefore whose skeleton to keep.
 | 7 | `crates/language_models/Cargo.toml` | content | +0/−2 | +3/−0 | trivial |
 | 8 | `crates/language_models/src/provider/llama_cpp.rs` | content | +218/−187 | **+2245/−40** | **ours hugely dominant** → ours skeleton, port theirs |
 | 9 | `crates/language_models/src/provider/openai_subscribed.rs` | content | +65/−14 | +12/−0 | theirs dominant |
-| 10 | `crates/language_models/src/provider/opencode.rs` | content | +340/−324 | +470/−70 | both large — **and the open Q5 blocker** |
+| 10 | `crates/language_models/src/provider/opencode.rs` | content | +340/−324 | +470/−70 | both large; **Q5 is NOT open** — ours' `enum Model` is already `enum OpenCodeTier` with a `to_model` bridge (§0.06 Q5) |
 | 11 | `CONTRIBUTING.md` | **modify/delete** | +49/−152 | +0/−186 | ours deleted → honour the deletion, record their text |
 | 12 | `docs/src/SUMMARY.md` | **modify/delete** | +1/−0 | +0/−234 | ours deleted → same |
 | 13 | `docs/src/development.md` | **modify/delete** | +20/−0 | +0/−116 | ours deleted → same |
@@ -262,9 +262,10 @@ and therefore whose skeleton to keep.
 2. **`llama_cpp.rs` is the largest single job.** Ours is +2245 lines — the local-runtime feature, now
    living under `LocalLlamaCppState` / `LocalLlamaCppLanguageModel` — against theirs' +218. Port theirs'
    small change onto our structure.
-3. **Do not start `opencode.rs` before Q5 is decided.** Upstream's `975845875b` rewrites the provider
-   layer, and Q5 is precisely "our Free tier is not expressible on upstream's types". Settling Q5 first
-   makes both the sync and the decision cheaper.
+3. **`opencode.rs` is ordinary port work — Q5 is already resolved.** ⚠️ **Corrected in session 39:** an
+   earlier draft of this plan called Q5 an open blocker. It is not — it was resolved in session 28 (§0.06 Q5:
+   ours' catalog became `enum OpenCodeTier` plus a `to_model` bridge; upstream's dynamic `Model` kept its name).
+   Upstream's `975845875b` rewrites the same layer, so **start here**, but expect a port, not a decision.
 4. **`Cargo.lock` is mechanical** — regenerate, never hand-merge.
 5. **Everything else follows the standing rule:** keep the dominant side's skeleton, port the other
    side's semantics onto it. The Δ columns above say which is which.

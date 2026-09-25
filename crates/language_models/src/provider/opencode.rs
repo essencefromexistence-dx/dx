@@ -559,12 +559,10 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
         } else if Self::subscription_available(OpenCodeSubscription::Zen, has_real_key, cx) {
             Some(self.create_tier_model(OpenCodeTier::default_fast(), OpenCodeSubscription::Zen))
         } else if Self::subscription_available(OpenCodeSubscription::Free, has_real_key, cx) {
-            Some(
-                self.create_tier_model(
-                    OpenCodeTier::default_free_fast(),
-                    OpenCodeSubscription::Free,
-                ),
-            )
+            Some(self.create_tier_model(
+                OpenCodeTier::default_free_fast(),
+                OpenCodeSubscription::Free,
+            ))
         } else {
             None
         }
@@ -954,10 +952,11 @@ impl LanguageModel for OpenCodeLanguageModel {
     }
 
     fn icon(&self) -> Option<IconOrSvg> {
-        match self.model {
-            opencode::Model::Glm5 | opencode::Model::Glm5_1 => {
-                Some(IconOrSvg::Icon(IconName::AiZhipu))
-            }
+        // Ours matched the Glm5/Glm5_1 enum variants; upstream's `Model` is dynamic, so
+        // match the id it carries instead. The ids are OpenCodeTier::Glm5.id() == "glm-5"
+        // and OpenCodeTier::Glm5_1.id() == "glm-5.1".
+        match self.model.id() {
+            "glm-5" | "glm-5.1" => Some(IconOrSvg::Icon(IconName::AiZhipu)),
             _ => None,
         }
     }
@@ -2320,7 +2319,7 @@ mod dx_tests {
 
     #[test]
     fn opencode_free_model_ids_are_bare_for_registry_composition() {
-        let model = opencode::Model::default_free();
+        let model = OpenCodeTier::default_free().to_model(OpenCodeSubscription::Free);
 
         assert_eq!(
             opencode_language_model_id(&model),
@@ -2331,7 +2330,7 @@ mod dx_tests {
 
     #[test]
     fn opencode_external_model_id_omits_subscription_prefix() {
-        let model = opencode::Model::default_free_fast();
+        let model = OpenCodeTier::default_free_fast().to_model(OpenCodeSubscription::Free);
 
         assert_eq!(
             opencode_external_model_id(&model),
@@ -2341,16 +2340,19 @@ mod dx_tests {
 
     #[test]
     fn opencode_shared_model_registry_key_keeps_one_entry_preferring_later_subscription() {
-        let model = opencode::Model::KimiK2_5;
+        let tier = OpenCodeTier::KimiK2_5;
         let mut models = BTreeMap::default();
 
-        for &subscription in model.available_subscriptions() {
-            models.insert(opencode_model_registry_key(&model), subscription);
+        for &subscription in tier.available_subscriptions() {
+            models.insert(
+                opencode_model_registry_key(&tier.to_model(subscription)),
+                subscription,
+            );
         }
 
         assert_eq!(models.len(), 1);
         assert_eq!(
-            models.get(model.id()),
+            models.get(tier.id()),
             Some(&OpenCodeSubscription::Go),
             "Zen is inserted first and Go should replace it for shared model ids"
         );
@@ -2431,8 +2433,8 @@ mod dx_tests {
             )
         });
 
-        let model = provider
-            .create_language_model(opencode::Model::default_free(), OpenCodeSubscription::Free);
+        let model =
+            provider.create_tier_model(OpenCodeTier::default_free(), OpenCodeSubscription::Free);
         let request = request_with_user_message("Hello");
         let result = model.stream_completion(request, &cx.to_async()).await;
 
