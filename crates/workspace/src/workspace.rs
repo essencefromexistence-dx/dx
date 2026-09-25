@@ -12631,7 +12631,6 @@ pub fn client_side_decorations_with_content_flush(
     border_radius_tiling: Tiling,
     content_flush_tiling: Tiling,
 ) -> Stateful<Div> {
-    const BORDER_SIZE: Pixels = px(1.0);
     let decorations = window.window_decorations();
     let is_resizable = window.is_resizable();
     let tiling = match decorations {
@@ -12733,10 +12732,18 @@ pub fn client_side_decorations_with_content_flush(
                     Decorations::Client { .. } => div
                         .border_color(cx.theme().colors().border)
                         .rounded_client_corners(corner_tiling)
-                        .when(!content_tiling.top, |div| div.border_t(BORDER_SIZE))
-                        .when(!content_tiling.bottom, |div| div.border_b(BORDER_SIZE))
-                        .when(!content_tiling.left, |div| div.border_l(BORDER_SIZE))
-                        .when(!content_tiling.right, |div| div.border_r(BORDER_SIZE))
+                        .when(!content_tiling.top, |div| {
+                            div.border_t(theme::CLIENT_SIDE_DECORATION_BORDER)
+                        })
+                        .when(!content_tiling.bottom, |div| {
+                            div.border_b(theme::CLIENT_SIDE_DECORATION_BORDER)
+                        })
+                        .when(!content_tiling.left, |div| {
+                            div.border_l(theme::CLIENT_SIDE_DECORATION_BORDER)
+                        })
+                        .when(!content_tiling.right, |div| {
+                            div.border_r(theme::CLIENT_SIDE_DECORATION_BORDER)
+                        })
                         .when(!tiling.is_tiled(), |div| {
                             div.shadow(vec![
                                 gpui::BoxShadow::new(
