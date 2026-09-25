@@ -1,0 +1,29 @@
+{
+  "path": "G:/Dx/code/crates/language/src/available_languages.rs",
+  "replacements": [
+    {
+      "label": "add unloaded_len() next to unloaded_language_names() so ours' bounding count has an allocation-free accessor on upstream's newtype",
+      "expect": 1,
+      "old": [
+        "    pub(super) fn unloaded_language_names(&self) -> Vec<LanguageName> {",
+        "        self.0",
+        "            .iter()",
+        "            .filter_map(|language| (!language.loaded).then_some(language.name.clone()))",
+        "            .collect()",
+        "    }"
+      ],
+      "new": [
+        "    pub(super) fn unloaded_language_names(&self) -> Vec<LanguageName> {",
+        "        self.0",
+        "            .iter()",
+        "            .filter_map(|language| (!language.loaded).then_some(language.name.clone()))",
+        "            .collect()",
+        "    }",
+        "",
+        "    pub(super) fn unloaded_len(&self) -> usize {",
+        "        self.0.iter().filter(|language| !language.loaded).count()",
+        "    }"
+      ]
+    }
+  ]
+}

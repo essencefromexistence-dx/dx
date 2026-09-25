@@ -1,0 +1,46 @@
+diff --git a/docs/src/languages/json.md b/docs/src/languages/json.md
+index dcede99240..6aadc0c856 100644
+--- a/docs/src/languages/json.md
++++ b/docs/src/languages/json.md
+@@ -10,6 +10,14 @@ JSON support is available natively in Zed.
+ - Tree-sitter: [tree-sitter/tree-sitter-json](https://github.com/tree-sitter/tree-sitter-json)
+ - Language Server: [zed-industries/json-language-server](https://github.com/zed-industries/json-language-server)
+ 
++## JSON Lines Preview
++
++Open a `.jsonl` or `.ndjson` file and run {#action tabular_data::OpenPreview} to view it as a read-only table. Use {#action tabular_data::OpenPreviewToTheSide} to keep the source visible alongside the preview.
++
++Each nonblank line must contain a JSON object. Top-level keys become columns in the order they first appear in the file. Keys from the first record keep their source order, and new keys from later records are appended to the right. Missing fields appear as empty cells. Values retain their JSON representation, so `null`, `"null"`, and `""` remain distinct; nested objects and arrays appear as compact JSON.
++
++The preview updates as you edit the source. Invalid records show an error with the source line number. Sorting compares the displayed text, and changing the column names or order clears active sorting and filters.
++
+ ## JSONC
+ 
+ Zed also supports a super-set of JSON called JSONC, which allows single line comments (`//`) in JSON files.
+diff --git a/docs/src/outline-panel.md b/docs/src/outline-panel.md
+index f6c3dc59b2..973835c6a9 100644
+--- a/docs/src/outline-panel.md
++++ b/docs/src/outline-panel.md
+@@ -11,6 +11,22 @@ When viewing a "singleton" buffer (i.e., a single file on a tab), the outline pa
+ 
+ ![Using the outline panel in a singleton buffer](https://zed.dev/img/outline-panel/singleton.png)
+ 
++## Navigation {#navigation}
++
++Single-click a row to select it and scroll the editor without expanding or collapsing it, including folded files and symbols.
++Double-click a row to navigate and focus the editor, except for folder and excerpt rows, which keep focus in the outline panel.
++
++Click an entry's expand/collapse arrow to fold or unfold it without navigating to it.
++Clicking a file or folder icon navigates like clicking its label; it does not toggle expansion.
++
++For folder arrows, set `outline_panel.folder_indicator` to `"chevron"` or `"both"`.
++The `"icon"` setting hides folder arrows, but you can still use {#action outline_panel::ExpandSelectedEntry} and {#action outline_panel::CollapseSelectedEntry}.
++
++In a multibuffer, clicking a folder row scrolls to the first file beneath that occurrence of the folder and leaves the folder selected.
++This also works for collapsed folders and compacted folder paths.
++When symbols are hidden in a multibuffer, file rows have no expand/collapse arrows because they have no children in the panel.
++Folder arrows remain available, and clicking any row still navigates without changing its folded state.
++
+ ## Usage with multibuffers
+ 
+ File rows follow the order of the files in the multibuffer.

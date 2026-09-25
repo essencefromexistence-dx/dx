@@ -58,11 +58,16 @@ crates/docs_preprocessor/actions.json
 
 # Local Codex/runtime artifacts and reference caches
 /.codex-*
-/inspirations/21st-magic-mcp/
-/inspirations/magicui/
-/inspirations/shadcn-ui/
 /models/
 /tools/
+
+# Local inspiration/reference material.
+# NOTE: this replaces the earlier per-child entries (/inspirations/21st-magic-mcp/,
+# /inspirations/magicui/, /inspirations/shadcn-ui/), which ignored only those three
+# folders by name. The trailing slash + leading slash anchors to the repo root and
+# excludes the directory itself and EVERY descendant, so new subfolders are covered
+# automatically and no per-child entry has to be added again.
+/inspirations/
 
 # NixOS integration test state
 .nixos-test-history

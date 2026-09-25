@@ -1,0 +1,15 @@
+{
+  "path": "G:/Dx/code/crates/gpui/src/window.rs",
+  "replacements": [
+    {
+      "label": "paint_liquid_glass: pass the atlas key BY VALUE (get_or_insert_with takes AtlasKey, not &AtlasKey)",
+      "expect": 1,
+      "old": [
+        "            .get_or_insert_with(&atlas_params.into(), &mut || {"
+      ],
+      "new": [
+        "            .get_or_insert_with(atlas_params.into(), &mut || {"
+      ]
+    }
+  ]
+}

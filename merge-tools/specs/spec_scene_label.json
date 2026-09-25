@@ -1,0 +1,36 @@
+{
+  "path": "G:/Dx/code/crates/gpui/src/scene.rs",
+  "replacements": [
+    {
+      "label": "add the LiquidGlass arm to upstream's NEW PrimitiveBatch::label()",
+      "expect": 1,
+      "old": [
+        "            Self::PolychromeSprites { texture_id, range } => {",
+        "                format!(",
+        "                    \"polychrome sprites ({}) on atlas {}\",",
+        "                    range.len(),",
+        "                    texture_id.index",
+        "                )",
+        "            }",
+        "            Self::Surfaces(range) => format!(\"surfaces ({})\", range.len()),"
+      ],
+      "new": [
+        "            Self::PolychromeSprites { texture_id, range } => {",
+        "                format!(",
+        "                    \"polychrome sprites ({}) on atlas {}\",",
+        "                    range.len(),",
+        "                    texture_id.index",
+        "                )",
+        "            }",
+        "            Self::LiquidGlass { texture_id, range } => {",
+        "                format!(",
+        "                    \"liquid glass ({}) on atlas {}\",",
+        "                    range.len(),",
+        "                    texture_id.index",
+        "                )",
+        "            }",
+        "            Self::Surfaces(range) => format!(\"surfaces ({})\", range.len()),"
+      ]
+    }
+  ]
+}
