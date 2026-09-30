@@ -198,16 +198,24 @@ with a report at `/tmp/mf2_report.tsv` (cols: `rc`, `residual_hunks`, `ours_chan
 
 ---
 
-## 5. Next sync (PLANNED, not started) — upstream `e91b82c106`, 7 commits, **13 conflicts**
+## 5. Next sync — **IN PROGRESS (session 41)**: upstream `e91b82c106`, 7 commits, **13 conflicts — all resolved**
+
+> ⚠️ **This section is no longer a plan.** The sync was **started in session 40 and finished in session 41**:
+> `forge` is mid-merge against `e91b82c106`, **0 markers remain tree-wide**, and **nothing is committed or pushed**
+> (`origin/forge` is still `33bbb8fe13`). What remains is **P4** (two providers the `LanguageModel` trait→struct
+> refactor has not been applied to: `nara_router.rs`, `llama_cpp.rs`) and **P8** (gates → commit → push).
+> Full record: `CHANGELOG.md` §Session 41 · `TODO.md` §0.13.
+>
+> The measurements below were taken in memory **before** the sync started; the strategy section is what was
+> executed, kept as the record of the plan.
 
 **Measured in memory on 2026-09-26** with `git merge-tree --write-tree --name-only forge upstream/main`.
-Nothing was merged. This section is a plan, not a record.
 
-### Inputs (verified)
+### Inputs (verified, at measurement time)
 
 | role | ref | commit | date |
 |---|---|---|---|
-| **ours** | `forge` | `c8df4b6303` | 2026-09-26 |
+| **ours** | `forge` | `c8df4b6303` → now `33bbb8fe13` | 2026-09-26 |
 | **theirs** | `upstream/main` | `e91b82c106` | 2026-09-25 |
 | **merge-base** | — | **`f8adffe9d1`** | 2026-09-25 |
 

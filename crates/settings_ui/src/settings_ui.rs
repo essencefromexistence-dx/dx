@@ -11,13 +11,14 @@ use fuzzy::StringMatchCandidate;
 use gpui::{
     Action, App, AsyncApp, ClipboardItem, DEFAULT_ADDITIONAL_WINDOW_SIZE, Div, Entity,
     EventEmitter, FocusHandle, Focusable, Global, KeyContext, ListState, ReadGlobal as _, Role,
-    ScrollHandle, Stateful, Subscription, Task, Tiling, TitlebarOptions, UniformListScrollHandle,
+    ScrollHandle, Stateful, Subscription, Task, TitlebarOptions, UniformListScrollHandle,
     WeakEntity, Window, WindowBounds, WindowHandle, WindowOptions, actions, div, list, point,
     prelude::*, px, uniform_list,
 };
 
 use language::Buffer;
 use platform_title_bar::PlatformTitleBar;
+use project::{Project, ProjectPath};
 use release_channel::ReleaseChannel;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -48,6 +49,7 @@ use workspace::{
     client_side_decorations,
     item::{Item, ItemEvent},
 };
+use worktree::{Worktree, WorktreeId};
 use zed_actions::{
     AGENT_SKILLS_SETTINGS_PATH, OpenProjectSettings, OpenSettings, OpenSettingsAt,
     OpenSettingsAtTarget, OpenSettingsPage,

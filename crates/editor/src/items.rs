@@ -68,7 +68,7 @@ use workspace::{
 };
 use workspace::{
     DraggedIconAsset, DraggedMediaAsset, DraggedMediaKind, DraggedShadcnAsset, Pane,
-    TabBarSettings, TabBarSettings, WorkspaceSettings,
+    TabBarSettings, WorkspaceSettings,
     item::{FollowEvent, ProjectItemKind},
     searchable::SearchOptions,
 };

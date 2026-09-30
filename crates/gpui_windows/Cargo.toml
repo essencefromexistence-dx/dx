@@ -51,8 +51,13 @@ optional = true
 [target.'cfg(target_os = "windows")'.build-dependencies]
 windows-registry.workspace = true
 
+# Test-only `PlatformWindow` APIs (e.g. `render_to_image`) are gated behind
+# `cfg(test)`, so dev-dependencies enable those APIs only for test builds.
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }
+
 [package.metadata.cargo-shear]
 ignored = ["scap"]
 
 [target."cfg(windows)".dependencies]
-webview2-com = "0.38"
+webview2-com = "0.39"

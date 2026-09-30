@@ -7,11 +7,19 @@
 
 ---
 
-## [Unreleased] — merge of `upstream/main` (`baee1ca6de`) into `dx-code`
+## [Unreleased] — merge of `upstream/main` (`e91b82c106`) into `dx-code`
 
-> ### 📋 PLANNED — next sync measured but NOT started (2026-09-26)
+> ### ✅ IN PROGRESS — the next sync is UNDERWAY, and all 13 conflicts are RESOLVED (2026-09-26)
 >
-> `upstream/main` has moved to **`e91b82c106`** (7 new commits). Replaying them onto `forge`
+> ⚠️ **This is a live merge, not a plan.** `forge` is mid-merge against `e91b82c106`
+> (`MERGE_HEAD`; merge-base `f8adffe9d1`), and **no conflict markers remain anywhere in the
+> tree**. **Not committed, not pushed** — `origin/forge` is still `33bbb8fe13`. The final two
+> files (`wgpu_renderer.rs`, `opencode.rs`) are recorded in §Session 41.
+>
+> The banner that used to sit here said "PLANNED — not started" with ours at `c8df4b6303`; both
+> are stale. The sync was started in Session 40 and completed in Session 41.
+>
+> `upstream/main` moved to **`e91b82c106`** (7 new commits). Replaying them onto `forge`
 > (`c8df4b6303`, merge-base `f8adffe9d1`) produces **13 conflicts**, not 121:
 >
 > * **10 content** — `Cargo.lock` · `crates/agent/src/agent.rs` ·
@@ -24,16 +32,324 @@
 >   (all *ours-deleted / upstream-modified*)
 >
 > **Nine of the ten content conflicts come from a single upstream commit**, `975845875b`
-> ("Make LanguageModel plain data served by its provider") — the same layer as the open **Q5**
-> `opencode` blocker. **Decide Q5 before starting this sync.**
+> ("Make LanguageModel plain data served by its provider"). ⚠️ **Q5 is NOT an open blocker** —
+> it was resolved back in Session 28 (ours' catalog became `enum OpenCodeTier` plus a `to_model`
+> bridge); the "decide Q5 before starting" advice this banner used to carry was wrong and is
+> withdrawn.
 >
-> Full plan, per-file Δ and strategy: **`PLAN.md` §5**. Actionable checklist: **`TODO.md` §0.12**.
-> Nothing has been merged; this is a plan only.
+> Full plan, per-file Δ and strategy: **`PLAN.md` §5**. Actionable checklist: **`TODO.md` §0.13**.
+> **All 13 conflicts are now resolved** — see §Session 41.
 
 
 **Goal:** 100 % of our changes survive **and** 100 % of upstream's survive. Our UI wins genuine
 conflicts; upstream code our UI has no surface for stays **compiled and wired, just unsurfaced**.
 Nothing upstream is silently dropped.
+
+### Session 41 (2026-09-26) — **ALL 13 CONFLICTS RESOLVED**; the last two files now compile
+
+> `forge` is **mid-merge** against `e91b82c106` (`MERGE_HEAD`, merge-base `f8adffe9d1`).
+> **0 conflict markers tree-wide.** **Still not committed and not pushed** — `origin/forge`
+> remains `33bbb8fe13`.
+>
+> ⚠️ **Status-count correction.** Sessions 40's own notes disagreed with themselves ("9 of 13"
+> in the heading, "10 of 13" in the body). The verified live count when Session 41 started was
+> **11 of 13** (only `wgpu_renderer.rs` and `opencode.rs` were still `UU`); both are now resolved,
+> so it is **13 of 13**.
+
+#### `crates/gpui_wgpu/src/wgpu_renderer.rs` — 4 blocks, all resolved
+
+**All four take upstream's side — and that *is* the semantic merge, not a side-pick.** The file had
+*already* adopted upstream's `state: RendererState` / `WgpuRendererCore` split, and our liquid-glass
+feature was *already* ported into the theirs-side content: `WgpuResources`' two
+`liquid_glass_backdrop_*` fields, `WgpuRendererCore::new`'s literal initialising them,
+`ensure_intermediate_textures`' lazy backdrop allocation (with the comment explaining ours created it
+eagerly in `update_drawable_size`), and `invalidate_intermediate_textures` clearing them. The HEAD
+sides were pre-restructure text that cannot compile: they read `self.resources` as an `Option` field
+that is gone, and `self.surface_config` / `self.surface_configured`, which live on `WgpuRenderer` and
+not on `WgpuRendererCore`.
+
+* **`record_frame` could not serve our feature unmodified.** Upstream's
+  `record_frame(scene, frame_view, clear_color)` carries neither the frame **texture** nor the frame
+  size, but ours' `refresh_liquid_glass_backdrop` must copy **from the frame texture** and needs the
+  dimensions. Rather than move our feature off upstream's structure, both are threaded through the
+  two private methods: `draw()` → `render_frame(scene, &frame.texture, &frame_view, size, …)` →
+  `record_frame(scene, frame_texture, frame_view, size, clear_color)`. Our `record_frame` body was
+  already merged, so only `&frame.texture` → `frame_texture` and
+  `self.surface_config.{width,height}` → `size.{width,height}.0 as u32` were required.
+* **Marker-free defect: `instance_buffer()` sat on the wrong half of the split impl.** Its only
+  caller, `draw_instances_with_backdrop`, is in `impl WgpuRendererCore` (upstream's split), while the
+  method was defined on `impl WgpuRenderer`. It uses only `self.resources()`, which Core also
+  provides, so it was **moved to `impl WgpuRendererCore`** — behaviour-preserving.
+* **Marker-free defect: ours' liquid-glass code was written against two upstream APIs that changed.**
+  `create_pipeline` gained a 6th parameter `texture_layout: Option<&wgpu::BindGroupLayout>` (our
+  `liquid_glass` call omitted it → **E0057**), and `atlas.get_texture_info()` now returns
+  `Option<WgpuTextureInfo>` (our call site used it as a struct → **E0609**). The layout is `None`
+  because `draw_instances_with_backdrop` sets only two bind groups (globals +
+  `instances_with_backdrop`, which already bundles the atlas texture, the backdrop and the sampler);
+  the lookup is now guarded exactly like upstream's other call site.
+* Ours' `WgpuRenderer::resources` / `resources_mut` accessors are **retained but currently unused**
+  (the merged call sites reach `core().resources` directly) — `#[allow(dead_code)]` with an
+  explanatory comment, **not deleted**, per the merge policy.
+
+**Proven:** `cargo +1.96.0 check -p gpui_wgpu` → **EXIT=0, 0 errors, 0 warnings.**
+
+#### `crates/language_models/src/provider/opencode.rs` — 3 blocks, union + theirs
+
+* **Block 3 → upstream.** Ours' `impl OpenCodeLanguageModel` + `impl LanguageModel for
+  OpenCodeLanguageModel` are vestigial: upstream turned `LanguageModel` into plain data whose accessor
+  set is identical, and the merge had already dropped the struct definition, leaving both impls
+  uncompilable. ⚠️ **`OpenCodeLanguageModel` exists in the merge-BASE**, so upstream deleted it —
+  this is upstream's removal, not a local loss, and the nested-item audit confirms it (0 local, 0
+  remote losses).
+* **Block 1 → union.** Upstream moved the request path onto the provider (`base_api_url` /
+  `current_api_key` / `custom_headers` / `stream_{anthropic,openai_chat,openai_response,google}`) —
+  all kept. Ours' **keyless Free-tier `public` bearer** is re-attached by widening `current_api_key`
+  to take `config` + `subscription` (its four call sites updated). Ours' `create_tier_model` bridge is
+  rewritten to produce upstream's **`LanguageModel` data** through upstream's `language_model()`
+  producer (ours' `create_language_model_with_capabilities` is not resurrected).
+* **Block 2 → union.** Ours' Free-tier preference chain (`Go → Zen → Free`) and its union catalog
+  (upstream's discovered models + ours' static `OpenCodeTier` catalog + user-configured models, with
+  ours' free-first ordering) survive, now returning `Vec<LanguageModel>`. Dedup keys use upstream's
+  `model_id(model, subscription)`, which is what upstream's `config()` lookup requires.
+* **Ours' per-model icon ported.** `icon_for_model` overrides the defaulted hook we added to
+  `LanguageModelProvider`: GLM 5 / 5.1 → `IconName::AiZhipu`. Upstream's `LanguageModel::id` is
+  subscription-prefixed (`zen/glm-5`), so the check reads the model segment.
+* **Ours' Free-tier naming ported.** `language_model()` omits upstream's `"{subscription}: {model}"`
+  prefix for the Free tier, matching ours' `name()`.
+
+**Proven:** `rustfmt --edition 2024` parses; the impl-consistency checker reports **0 unresolved
+`self.X`** across all 8 impl blocks; the nested-item audit reports **0 local and 0 remote losses**.
+`cargo check -p language_models` is **blocked by the pre-existing `cap-primitives` build-script
+failure** (`Os error 231`, Windows pipe exhaustion — §Session 35), so this file's compile is
+**unverified**; the static evidence above is what stands in its place.
+
+#### Tooling added (`merge-tools/`)
+
+`fix_wgpu_blocks.py` · `fix_wgpu_render_plumbing.py` · `fix_wgpu_instance_buffer.py` ·
+`fix_wgpu_liquid_glass_api.py` · `fix_wgpu_keep_accessors.py` · `fix_opencode_blocks.py` ·
+`fix_opencode_icon_name.py` · `audit_current_sync.py` (nested-item audit re-pointed at the **current**
+sync's revs: ours `33bbb8fe13`, theirs `e91b82c106`, base `f8adffe9d1`) ·
+`check_impl_consistency.py` — a **new gate**: every `self.X` inside an `impl` must resolve to a field
+or a method of that type, across both `impl T {` and `impl Trait for T {`. It catches the split-impl
+class (`instance_buffer`) that no marker or token check can see.
+
+### Session 40 (2026-09-26) — the next sync is UNDERWAY: **9 of 13 resolved**, and upstream's `LanguageModel` trait→struct refactor is TREE-WIDE
+
+> ⚠️ **This merge is IN PROGRESS, not committed.** `forge` is mid-merge against `e91b82c106`; 4 conflicts remain.
+> Nothing has been pushed. The specs for every resolution are in `merge-tools/specs/`.
+
+#### Resolved (9 of 13)
+
+| # | path | resolution |
+|---|---|---|
+| 1 | `CONTRIBUTING.md` | **modify/delete** — ours deleted, upstream modified. Honoured our deletion; upstream's text recorded in `merge-tools/evidence/upstream_docs_sync2.diff` (460 lines). |
+| 2 | `docs/src/SUMMARY.md` | same |
+| 3 | `docs/src/development.md` | same |
+| 4 | `Cargo.lock` | upstream's lock taken as the base, then **regenerated** (never hand-merged). ✅ **Completed** — exit 0, **1 933 packages**, `dx-media` present, 0 markers, and it picked up upstream's new deps (`wry`, `webview2-com`, `x11-dl`, …). It timed out twice first (`curl [28] … 180000 ms, 0 bytes`) even though the proxy was up — a **transient stall**, so retry. |
+| 5 | `crates/language_models/Cargo.toml` | **kept OURS** on both hunks. `async-fs`/`async-io`/`sysinfo` are ours' additions (base 0, ours 1, theirs 0); `async-lock`/`tokio` are in the **base** and upstream dropped them, but **our code still uses them** (1 and 5 sites). |
+| 6 | `crates/agent_ui/src/buffer_codegen.rs` | **UNION.** Kept ours' source-size guard (`ensure_inline_codegen_source_within_limit`) **and** theirs' `provider_for_model` lookup + `&model` (upstream changed `use_streaming_tools` from `&dyn LanguageModel` to `&LanguageModel`). `provider` is consumed downstream at two sites, so dropping either side would not compile. |
+| 7 | `crates/language_models/src/provider/openai_subscribed.rs` | **duplicated trait-default pair with differing wording** — base had neither, both sides ADDED `authentication_error_message` + `missing_credentials_error_message`, ours saying "via the Agent Panel settings" and theirs "via Settings > AI > LLM Providers". Kept **ours**, removed theirs', and kept theirs' new `stream_completion`/`compact`. ⚠️ Ours' block had lost its closing `}` at the marker boundary — re-added. |
+| 8 | `crates/language_model/src/language_model.rs` | **upstream's trait→struct conversion adopted** — ours' `trait` (30 methods) replaced by upstream's `struct` + its 31 accessor methods. Ours' only addition, `icon()`, is preserved via the new `icon_for_model` hook. |
+| 9 | `crates/agent_ui/src/language_model_selector.rs` | test fixture: ours' `Arc::new(TestLanguageModel::new(..))` is impossible once the trait is gone → theirs' `test_language_model(..)`; **kept ours' icon value** (the test asserts only `telemetry_id`). |
+| 10 | `crates/language_models/src/provider/llama_cpp.rs` | **import union, rebuilt from scratch.** ⚠️ The auto-merge had left **113 leaf imports where ~40 are unique** — `LlamaCppAvailableModel as AvailableModel`, `std::sync::LazyLock`, `ui::{…}`, `std::sync::{Arc, …}` and several `language_model` items were each declared **twice**, which is **E0252** with **no marker**. Replaced the whole region with upstream's clean block **plus ours' local-runtime extras** (`std::process::{Child, Command, Stdio}`, `futures::io::BufReader`, `serde`, `AnyView`/`Subscription`/`Window`, `AsyncBody`/`Method`/`Request as HttpRequest`/`StatusCode`, …). **Verified: 0 duplicate leaf imports, 0 markers, 0 rustfmt hunks.** |
+
+#### ⚠️ CORRECTED (same session): the refactor is much less damaging than first reported
+
+❌ **An earlier version of this entry claimed "tree-wide marker-free damage": that `model.name()`, `model.is_latest()`,
+`model.is_disabled()`, `model.model_cost_info()` etc. had ceased to exist across ~60 call sites. That was WRONG.**
+
+Upstream's `struct LanguageModel` ships **31 accessor methods** — `name`, `id`, `is_latest`, `is_disabled`,
+`model_cost_info`, `provider_id`, `telemetry_id`, `max_token_count`, `supports_*`, … The method set is **identical**
+in ours and theirs. **The only method upstream's struct lacks is `icon()`** — ours' addition, and the only thing that
+needed porting.
+
+The mistake: I read the struct's **fields** and concluded the **methods** were gone, without checking whether upstream
+had also written an `impl LanguageModel` block. It had. **`grep -c 'fn <name>'` against the `impl` block is the check
+that settles this; counting fields does not.**
+
+* `agent.rs`'s `map_language_model_to_info` — I called it "marker-free and cannot compile". It was neither. It called
+  only methods upstream still provides; **the single change needed was the icon line**:
+  `model.icon().unwrap_or_else(|| provider.icon())` → `provider.icon_for_model(model)`.
+* The counts I quoted (`.is_disabled()` 13, `.icon()` 12, `.max_token_count()` 33, …) were **raw tree-wide greps of
+  method names**, not calls that had lost their method. Most were never at risk.
+* **Still true:** ours' **3** providers `impl LanguageModel for` (`llama_cpp.rs`, `nara_router.rs`, `opencode.rs`) —
+  you cannot implement a struct, so those must become **data producers**. That part is real work.
+
+**Net effect: the trait→struct refactor costs one ported hook (`icon_for_model`), not a tree-wide migration.**
+
+#### Ours' per-model icon SURVIVES — preserved additively
+
+Ours' only local addition to the trait was **`fn icon(&self) -> Option<IconOrSvg>`**, overridden exactly **once**
+(OpenCode: GLM 5 / 5.1 → the Zhipu icon), and consumed once as
+`model.icon().unwrap_or_else(|| provider.icon())`. Upstream models the icon **per provider** only.
+
+Rather than adding a field to upstream's struct (which would break **71** construction sites), the port adds a
+**defaulted hook** to `LanguageModelProvider`:
+
+```rust
+/// Ours: a per-model icon override. Defaults to `icon()`, so no upstream
+/// provider is affected until it opts in.
+fn icon_for_model(&self, _model: &LanguageModel) -> IconOrSvg { self.icon() }
+```
+
+OpenCode overrides it; the one consumer calls `provider.icon_for_model(&model)`. **Ours' feature is preserved,
+upstream's API is untouched, and the footprint is one trait method + one override + one call site.**
+
+| 11 | `crates/agent/src/agent.rs` | **UNION** — kept ours' 3 catalog methods (`catalog_model_selection_error`, `resolved_model_id`, `enrich_model_info_from_catalog`) **and** ours' resolution logic, with theirs' `Option<LanguageModel>` return type (the merged `models` field is theirs' `HashMap<AgentModelId, LanguageModel>`). Hunk 2 took theirs (ours' `.model` field access was an adaptation to the old registry API). Plus the one icon-line port. **0 markers, 0 rustfmt hunks, and no `model.icon()` remains anywhere in the tree.** |
+
+
+#### `wgpu_renderer.rs` — 5 of 12 hunks RESOLVED (session 40, continued)
+
+The file's core difference is a **state-model rename**: ours held `resources: Option<WgpuResources>` + `device_lost` +
+`surface_configured`; theirs holds `state: RendererState` with `core()`/`core_mut()` + `device_errors` +
+`observed_error_generation` + `last_surface_error`. **The merge had already adopted theirs' `state` model**, which is
+what made the hunks decidable — ours' accessors pointed at a field that no longer existed.
+
+| hunk | resolution | why |
+|---|---|---|
+| 1 | **take theirs** | ours' `device_lost`/`surface_configured` served ours' `resources` field, which the merge replaced with `state: RendererState`. Theirs' `device_errors.device_lost()` (upstream 2194) covers ours' `device_lost()` (HEAD 2421), and `RendererState::{Unconfigured,Ready,Released}` covers ours' `surface_configured` bool — **same behaviour, richer implementation**. Ours' doc comment on `needs_redraw` kept. |
+| 2 | **union** | kept OURS' `pub fn needs_redraw(&self)` — it is the API **both Linux shells call** (`gpui_linux/.../wayland/window.rs:2050`, `x11/window.rs:1878`) and the only definition the merged file has; took THEIRS' `core()`. Dropped ours' `resources()` (reads the gone field). |
+| 3 | **take theirs** | ours' 154-line inline construction is superseded by `WgpuRendererCore::new(context, atlas.clone(), surface_format, alpha_mode)`. Theirs' `WgpuRendererCore` already carries ours' fields (`dual_source_blending`, `rendering_params`, `uses_webgl_instance_data`, …). |
+| ⚠️ **+E0063 fix** | added ours' two fields to the core's literal | The merged `WgpuResources` **kept ours' `liquid_glass_backdrop_texture` / `liquid_glass_backdrop_view`** (16 fields), but theirs' `WgpuRendererCore::new` literal set only **14** — a **marker-free E0063** that taking hunk 3 as-is would have baked in. |
+| 4 | **take theirs** | same field block at the constructor, consistent with hunk 1. |
+| 5 | **union + ORPHAN REPAIR** | ours' `create_liquid_glass_backdrop` belongs to `impl WgpuRenderer` (HEAD 1214, called at HEAD 1325 via `Self::`), but the merge left it **outside any impl** — right after `impl WgpuRendererCore`'s closing brace. Took theirs' `impl WgpuRenderer {` and moved ours' function **inside** it, keeping theirs' doc comment attached to `update_drawable_size`. |
+
+
+#### ⚠️ `wgpu_renderer.rs` — hunk 6 resolved, and a self-inflicted error caught and fixed
+
+| hunk | resolution | why |
+|---|---|---|
+| 6 | **take theirs' guard** | Ours wrapped the whole resize in `if changed { … }`; theirs guards-and-continues (`if unchanged { return; }`). Theirs' body is **ours' logic restructured** — clamping, `core_mut()`, the `device.poll` in-flight wait, the destroy-before-realloc block, `invalidate_intermediate_textures()`, `surface.configure`. |
+| **+ ours' liquid-glass destroy** | restored | Theirs' restructured body destroys `path_intermediate` + `path_msaa` but **not** ours' `liquid_glass_backdrop_texture`. Ours did. Re-added, so the backdrop is freed on resize rather than only invalidated. (The merged `invalidate_intermediate_textures()` **already** clears ours' two liquid-glass fields — lines 224–225 — so only the `destroy()` was missing.) |
+
+**🚨 And a mistake of mine, caught by grepping call sites: dropping ours' `resources()` in hunk 2 broke 27 call sites.**
+
+`self.resources()` is used **27 times** in `impl WgpuRenderer` (lines 309, 1614, 1634, 1680, 1707 … 2297) plus `self.resources_mut()` at 2447 — and the **only** surviving definitions were on **`impl WgpuRendererCore`** (line 1351). The merge had kept ours' call sites, so `WgpuRenderer::resources()` was required, not dead.
+
+✅ **Fixed the right way — ours' vocabulary, theirs' machinery:**
+
+```rust
+    /// Ours: the renderer's GPU resources, reached through upstream's `state`
+    /// machine. Ours' call sites speak `self.resources()`, so this keeps that
+    /// vocabulary while `core()`/`core_mut()` remain the underlying accessors.
+    fn resources(&self) -> &WgpuResources {
+        &self.core().expect("GPU resources not available").resources
+    }
+
+    fn resources_mut(&mut self) -> &mut WgpuResources {
+        &mut self.core_mut().expect("GPU resources not available").resources
+    }
+```
+
+**Lesson: before dropping an accessor as dead, grep its call sites — `grep -c 'self\.<name>()'`.** I had judged ours' `resources()` dead because *its field* was gone; the *method* was still load-bearing. **A gone field does not imply a dead accessor.**
+
+**Remaining: hunks 7–12** — including hunk 9, upstream's **250-line Linux headless rendering**.
+
+#### Remaining work (2 conflicts)
+
+
+#### ⛔⛔ `opencode.rs`: the conflicts are STRUCTURALLY MISALIGNED, and there is a PRE-EXISTING marker-free defect
+
+This is **not** a conflict to walk marker-by-marker. Resolving it that way would produce a wrong file. Evidence:
+
+**1. The two sides' functions were aligned by name, so the merged file has THEIR name on OUR body.**
+
+| line | merged file says | but the body is |
+|---|---|---|
+| 498 | `fn base_api_url(&self, config: &DiscoveredModel, subscription: OpenCodeSubscription,` | **ours' model constructor** (`supports_images: bool, supports_thinking: bool) -> Arc<dyn LanguageModel> { Arc::new(OpenCodeLanguageModel { … })`) |
+
+Ours' `base_api_url` is a **model** method (`fn base_api_url(&self, cx: &AsyncApp) -> SharedString`, line 457 of ours, reading `self.model`); theirs' is a **provider** method (same name, same line 457, taking `config` + `subscription`). The merge aligned them and kept theirs' name with ours' body. **Same for the whole file: ours' `impl OpenCodeLanguageModel` (model behaviour) was aligned against theirs' provider methods.**
+
+**2. Function-existence check — ⚠️ against the RIGHT ours (this is the trap I fell into)**
+
+The merge's ours is **HEAD** — the previous merge's result, which already contains session 28's Q5 resolution — **not**
+the fork's older tip `c701504082`. Compared correctly:
+
+| function | HEAD | theirs | merged |
+|---|---|---|---|
+| `create_tier_model` | 1 | 0 | **1** ✅ |
+| `create_language_model_with_capabilities` | **1** | 0 | **0** |
+| `create_language_model` | 1 | 0 | 0 |
+
+So HEAD is **fine** — it defines all three. The missing definition in the merged file is **an artifact of THIS merge's
+head-misalignment**: the merge paired HEAD's `create_language_model_with_capabilities` (HEAD line 417, params
+`model, subscription, supports_images, supports_thinking`) with theirs' `base_api_url` (theirs line 457, params
+`config, subscription, cx`) — the signatures share `&self, <x>, subscription,` — and kept **theirs' name** on it. That is
+why the merged file calls `create_language_model_with_capabilities` twice and defines it zero times.
+
+❌ **An earlier version of this entry claimed this was a pre-existing defect carried since session 28. That was WRONG
+— I had compared against `c701504082` instead of HEAD.** Lesson: **for an in-progress merge, ours is HEAD, never the
+fork's older tip.**
+
+**3. What the resolution actually is — a reconstruction, not a merge.**
+
+Upstream re-hosted ours' model behaviour onto the provider. Theirs' hunk-1 block supplies **exactly** the methods ours
+had on the model — `custom_headers`, `stream_anthropic`, `stream_openai_chat`, `stream_openai_response`,
+`stream_google` (ours' `api_key` ↔ theirs' `current_api_key`; ours' `base_api_url` logic is theirs' provider
+`base_api_url`). So:
+
+* **take THEIRS for hunk 3** (ours' `impl OpenCodeLanguageModel` + `impl LanguageModel for OpenCodeLanguageModel` are
+  superseded by theirs' provider methods + the `language_model(&DiscoveredModel, subscription) -> LanguageModel`
+  producer);
+* **union hunk 1** — theirs' provider methods **and** ours' `create_tier_model` bridge, which must be **rewritten to
+  produce `LanguageModel` data** via a producer instead of `Arc::new(OpenCodeLanguageModel { … })` — i.e. define the
+  missing producer rather than resurrect `create_language_model_with_capabilities`;
+* **union hunk 2** — ours' Free-tier chain, returning theirs' `LanguageModel`;
+* ours' unique additions to carry over: the **Free tier**, the **`to_model` bridge**, `base_api_url`'s subscription
+  suffix logic, and `icon()` (now via `icon_for_model`).
+
+**⚠️ Do this as ONE focused reconstruction with a compiler available.** The conflict boundaries cannot be trusted,
+so a marker-by-marker pass is not merely slow — it is wrong.
+
+#### The last two files need an ARCHITECTURAL port each — full per-hunk map
+
+Both are ours' shape vs upstream's **new** shape, not mechanical unions. The map below is the worklist.
+
+**`crates/language_models/src/provider/opencode.rs` — 3 hunks, 871 lines**
+
+| hunk | ours | theirs | what it is |
+|---|---|---|---|
+| 1 (line 502) | 34 | **189** | ours' `create_language_model_with_capabilities` tail + the **`create_tier_model` bridge** vs upstream's provider behaviour: `current_api_key`, `custom_headers`, `stream_anthropic`, `stream_openai_chat`, `stream_openai_response`, `stream_google`. → **union**: ours' bridge **and** theirs' streaming methods. |
+| 2 (line 807) | **155** | 12 | ours' Free-tier chain — `default_model(&self, cx) -> Option<Arc<dyn LanguageModel>>` — vs theirs' `default_model(&self, _cx) -> Option<LanguageModel>` built from `language_model(model, subscription)`. → **union**: keep ours' Free-tier logic, return theirs' **data** type via theirs' producer. |
+| 3 (line 1206) | **432** | 43 | ours' `impl OpenCodeLanguageModel` (all the behaviour) vs theirs' free functions `model_id(..)` and **`language_model(&DiscoveredModel, subscription) -> LanguageModel`**. → **the port**: ours' 432 lines of behaviour move onto the provider (hunk 1 supplies the slots) and the model becomes data. |
+
+**`crates/gpui_wgpu/src/wgpu_renderer.rs` — 12 hunks, 673 lines (ours 326 / theirs 323)**
+
+The core difference is a **state-model rename**: ours holds `resources: Option<WgpuResources>` (+ `device_lost`, `surface_configured`), theirs holds `state: RendererState` with `core()` / `core_mut()` (+ `device_errors`, `observed_error_generation`, `last_surface_error`).
+
+| hunk | ours / theirs | what it is |
+|---|---|---|
+| 1 (277) | 4 / 3 | **struct fields** — ours' `device_lost`, `surface_configured` vs theirs' `device_errors`, `observed_error_generation`, `last_surface_error` |
+| 2 (291) | 10 / 5 | ours' `needs_redraw()` + `resources()` vs theirs' `core()` |
+| 3 (509) | **154** / 1 | ours' construction sequence vs theirs' `WgpuRendererCore::new(context, atlas, surface_format, …)` |
+| 4 (679) | 3 / 4 | the same field block, at the constructor |
+| 5 (1255) | 24 / 3 | **ours' `create_liquid_glass_backdrop` (our feature)** vs theirs' `impl WgpuRenderer` |
+| 6 (1289) | 57 / 1 | ours' surface-resize path vs theirs' inverted condition |
+| 7 (1370) | 16 / 24 | ours' MSAA + backdrop creation vs theirs' "wait for in-flight GPU work before destroying textures" |
+| 8 (1501) | 2 / 1 | ours' `needs_redraw`/`surface_configured` vs theirs' `RendererState::Ready` destructure |
+| 9 (1554) | 2 / **250** | **upstream's Linux headless rendering** — the big new block (`ensure_intermediate_textures(size)`) |
+| 10 (1842) | 33 / 13 | `record_frame` signature + view creation |
+| 11 (2715) | 5 / 2 | ours' `resources.as_mut()` vs theirs' `core_mut()` + `invalidate_intermediate_textures()` |
+| 12 (2765) | 16 / 16 | ours' `surface_configured = true` vs theirs' `std::mem::replace(&mut self.state, …)` state machine |
+
+**⚠️ Both need the same treatment session 23 gave `wgpu_renderer.rs`:** adopt upstream's new structure and
+**re-express ours' feature on it** (liquid-glass + our GPU error-recovery). Neither is a "pick a side" and neither is
+mechanical — and **neither can be verified without a compiler**, so they should be done in one focused pass rather
+than split across a long session.
+
+| path | conflicted lines / hunks | nature |
+|---|---|---|
+| `crates/language_models/src/provider/opencode.rs` | **871 / 3** | ours' whole provider (Free tier, `has_real_key`, `subscription_available`, the `to_model` bridge) vs upstream's rewritten provider |
+| `crates/gpui_wgpu/src/wgpu_renderer.rs` | **673 / 12** | separate refactor — theirs' Linux headless rendering vs ours' liquid-glass |
+| `crates/language_models/src/provider/opencode.rs` | **871 / 3** | ours' whole provider vs upstream's rewritten provider |
+
+**Then, before it can compile:** convert ours' 3 trait impls to data producers, and fix the trait-method call sites
+listed above. **Then** the gates.
+
+✅ **`llama_cpp.rs` resolved** — see row 10. The **duplicate-`use` trap** it exposed is worth carrying forward: a `use`-block
+auto-merge can duplicate imports **with no marker**, and duplicate `use` is a hard error (E0252) that **no gate sees**.
+
+---
 
 ### Session 39 (2026-09-26) — ❌ **Q5 was NOT open** (my own false positive), and **5 stale `opencode` references fixed**
 

@@ -1424,7 +1424,8 @@ impl Thread {
     ) -> Self {
         let settings = AgentSettings::get_global(cx);
         let (profile_id, profile_downgraded_for_restricted_workspace) =
- AgentProfile::normalize_id(           Self::profile_for_restricted_workspace(settings.default_profile.clone(), cx), &project, cx);
+            Self::profile_for_restricted_workspace(settings.default_profile.clone(), &project, cx);
+        let profile_id = AgentProfile::normalize_id(profile_id, cx);
         let enable_thinking = settings
             .default_model
             .as_ref()
@@ -2376,7 +2377,7 @@ impl Thread {
     ) -> (AgentProfileId, bool) {
         let is_write_or_ask = profile_id.as_str() == builtin_profiles::WRITE
             || profile_id.as_str() == builtin_profiles::ASK;
-        let minimal = AgentProfileId(builtin_profiles::MINIMAL.into());
+        let minimal = AgentProfileId(builtin_profiles::LEGACY_MINIMAL.into());
         if is_write_or_ask
             && TrustedWorktrees::has_restricted_worktrees(&project.read(cx).worktree_store(), cx)
             && AgentProfileSettings::is_unmodified_default(&profile_id, cx)

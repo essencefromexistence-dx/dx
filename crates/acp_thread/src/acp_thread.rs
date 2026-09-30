@@ -166,7 +166,6 @@ impl SandboxPermission {
 pub struct SandboxAuthorizationDetails {
     #[serde(default)]
     pub command: Option<String>,
-    #[serde(default)]
     /// Specific hosts the command requested network access to, in canonical
     /// form (`github.com`, `*.npmjs.org`). Empty when no specific hosts were
     /// requested (see `network_all_hosts`).

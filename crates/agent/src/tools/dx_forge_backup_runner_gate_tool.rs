@@ -1,5 +1,5 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_forge_backup_runner_gate};
-use agent_client_protocol::schema as acp;
+use agent_client_protocol::schema::v1 as acp;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;

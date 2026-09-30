@@ -150,6 +150,7 @@ fn openai_compatible_model_from_catalog(
             prompt_cache_key: false,
             chat_completions: true,
             interleaved_reasoning: false,
+            max_tokens_parameter: false,
         },
     }
 }
@@ -169,6 +170,7 @@ fn open_router_model_from_catalog(
         supports_tools: Some(model.supports_tools),
         supports_images: Some(model.supports_images),
         mode: None,
+        reasoning_effort: None,
         provider: None,
     }
 }
@@ -381,6 +383,7 @@ mod tests {
                 prompt_cache_key: false,
                 chat_completions: true,
                 interleaved_reasoning: false,
+                max_tokens_parameter: false,
             },
         }
     }
@@ -395,6 +398,7 @@ mod tests {
             supports_tools: Some(true),
             supports_images: Some(false),
             mode: None,
+            reasoning_effort: None,
             provider: None,
         }
     }

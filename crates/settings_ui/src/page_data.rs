@@ -9435,7 +9435,6 @@ fn ai_page(cx: &App) -> SettingsPage {
             general_section(),
             agent_configuration_section(cx),
             dx_agents_bridge_section(),
-            context_servers_section(),
             edit_prediction_language_settings_section(),
             edit_prediction_display_sub_section(),
         )

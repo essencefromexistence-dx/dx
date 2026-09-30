@@ -1057,6 +1057,17 @@ webrtc-sys = { git = "https://github.com/zed-industries/livekit-rust-sdks", rev 
 # https://github.com/dtolnay/cxx/issues/1752
 scratch = { path = "tooling/corgi/patches/scratch" }
 
+# The pinned python-environment-tools rev requests `msvc_spectre_libs` with
+# `features = ["error"]` in every pet-*/Cargo.toml, and Cargo features are
+# additive, so the workspace cannot opt out. Upstream's build script then
+# panics on Windows machines whose VS installation lacks the optional
+# Spectre-mitigated CRT libs, hard-failing the whole build. Nothing here
+# compiles with `/Qspectre`, so this local patch keeps the link-search
+# behavior when the libs exist but demotes the missing-libs panic to a
+# warning. Re-check on each pet rev bump; drop if upstream stops forcing
+# the `error` feature.
+msvc_spectre_libs = { path = "tooling/corgi/patches/msvc_spectre_libs" }
+
 [profile.dev]
 split-debuginfo = "unpacked"
 incremental = true

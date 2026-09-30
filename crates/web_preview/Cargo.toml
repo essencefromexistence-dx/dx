@@ -47,7 +47,7 @@ url.workspace = true
 uuid.workspace = true
 windows.workspace = true
 wry = "0.53"
-webview2-com = "0.38"
+webview2-com = "0.39"
 zed_actions.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]

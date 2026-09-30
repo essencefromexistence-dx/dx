@@ -1336,7 +1336,6 @@ fn provider_settings_registration_approved() -> bool {
 mod tests {
     use super::*;
     use acp_thread::{AgentModelGroupName, AgentModelInfo};
-    use agent_client_protocol::schema as acp;
     use collections::IndexMap;
     use dx_catalog::{
         DX_CATALOG_SCHEMA_VERSION, ModelCapabilities, ProviderAuthKind, ProviderKind,
@@ -1551,6 +1550,7 @@ mod tests {
             icon: None,
             is_latest: false,
             cost: None,
+            disabled: None,
         }
     }
 
@@ -1688,6 +1688,7 @@ fn catalog_picker_model_to_agent_model_info(model: &AgentPickerModel) -> AgentMo
         icon: None,
         is_latest: false,
         cost: model.cost_label.clone().map(Into::into),
+        disabled: None,
     }
 }
 

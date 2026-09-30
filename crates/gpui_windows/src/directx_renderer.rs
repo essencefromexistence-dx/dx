@@ -911,19 +911,21 @@ impl DirectXRenderer {
         }
         let devices = self.devices.as_ref().context("devices missing")?;
         let resources = self.resources.as_ref().context("resources missing")?;
-        let texture_view = self.atlas.get_texture_view(texture_id);
+        let Some(texture_view) = self.atlas.get_texture_view(texture_id) else {
+            return Ok(());
+        };
         let backdrop_view = resources
             .liquid_glass_backdrop_srv
-            .as_ref()
-            .context("missing liquid glass backdrop SRV")?
-            .clone();
+            .clone()
+            .context("missing liquid glass backdrop SRV")?;
         self.pipelines.liquid_glass.draw_range_with_textures(
-            &devices.device,
             &devices.device_context,
-            &texture_view[0],
-            &Some(backdrop_view),
-            slice::from_ref(&resources.viewport),
-            slice::from_ref(&self.globals.global_params_buffer),
+            &texture_view,
+            slice::from_ref(&Some(backdrop_view)),
+            self.globals
+                .batch_params_buffer
+                .as_ref()
+                .context("batch params buffer missing")?,
             slice::from_ref(&self.globals.sampler),
             start as u32,
             len as u32,
@@ -1468,32 +1470,33 @@ impl<T> PipelineState<T> {
 
     fn draw_range_with_textures(
         &self,
-        device: &ID3D11Device,
         device_context: &ID3D11DeviceContext,
-        sprite_texture: &Option<ID3D11ShaderResourceView>,
-        backdrop_texture: &Option<ID3D11ShaderResourceView>,
-        viewport: &[D3D11_VIEWPORT],
-        global_params: &[Option<ID3D11Buffer>],
+        sprite_texture: &[Option<ID3D11ShaderResourceView>],
+        backdrop_texture: &[Option<ID3D11ShaderResourceView>],
+        batch_params_buffer: &ID3D11Buffer,
         sampler: &[Option<ID3D11SamplerState>],
         first_instance: u32,
         instance_count: u32,
     ) -> Result<()> {
-        let view = create_buffer_view_range(device, &self.buffer, first_instance, instance_count)?;
+        anyhow::ensure!(
+            first_instance as usize + instance_count as usize <= self.buffer_size,
+            "DirectX instance range exceeds the {} buffer",
+            self.label
+        );
+        update_batch_start(device_context, batch_params_buffer, first_instance)?;
         set_pipeline_state(
             device_context,
-            slice::from_ref(&view),
+            slice::from_ref(&self.view),
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
-            viewport,
             &self.vertex,
             &self.fragment,
-            global_params,
             &self.blend_state,
         );
         unsafe {
             device_context.PSSetSamplers(0, Some(sampler));
-            device_context.VSSetShaderResources(0, Some(slice::from_ref(sprite_texture)));
-            device_context.PSSetShaderResources(0, Some(slice::from_ref(sprite_texture)));
-            device_context.PSSetShaderResources(2, Some(slice::from_ref(backdrop_texture)));
+            device_context.VSSetShaderResources(0, Some(sprite_texture));
+            device_context.PSSetShaderResources(0, Some(sprite_texture));
+            device_context.PSSetShaderResources(2, Some(backdrop_texture));
             device_context.DrawInstanced(4, instance_count, 0, 0);
         }
         Ok(())

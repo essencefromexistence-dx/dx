@@ -337,7 +337,7 @@ pub struct LlamaCppSettingsContent {
 }
 
 #[with_fallible_options]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
+#[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
 pub struct LlamaCppAvailableModel {
     /// The model id reported by the llama.cpp server (its `--alias` or the model file path).
     pub name: String,

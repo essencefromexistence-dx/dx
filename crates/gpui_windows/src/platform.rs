@@ -688,7 +688,7 @@ impl Platform for WindowsPlatform {
             .find_current_active_window()
             .and_then(|hwnd| self.window_from_hwnd(hwnd))
             .map(|window| window.dialog_owner.clone());
-        if window.is_none() {
+        if owner.is_none() {
             log::warn!(
                 "prompt_for_paths: no active app window to own the native dialog; showing without an owner"
             );
@@ -709,7 +709,7 @@ impl Platform for WindowsPlatform {
             .find_current_active_window()
             .and_then(|hwnd| self.window_from_hwnd(hwnd))
             .map(|window| window.dialog_owner.clone());
-        if window.is_none() {
+        if owner.is_none() {
             log::warn!(
                 "prompt_for_new_path: no active app window to own the native dialog; showing without an owner"
             );

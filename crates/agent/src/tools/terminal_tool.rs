@@ -413,6 +413,42 @@ fn wsl_zed_release(_cx: &App) -> Option<(String, String)> {
     None
 }
 
+/// User-facing title for the sandbox-escalation approval prompt. Only called
+/// when the request actually asks for something (see
+/// [`crate::sandboxing::SandboxRequest::needs_escalation`]).
+fn sandbox_approval_title(request: &crate::sandboxing::SandboxRequest) -> String {
+    if request.unsandboxed {
+        return "Allow this command to run outside the sandbox?".to_string();
+    }
+
+    let mut parts: Vec<String> = Vec::new();
+    if request.network.is_requested() {
+        parts.push("network access".to_string());
+    }
+    if request.allow_fs_write_all {
+        parts.push("unrestricted filesystem writes".to_string());
+    } else if !request.write_paths.is_empty() {
+        parts.push(format!(
+            "write access to {}",
+            write_path_summary(&request.write_paths)
+        ));
+    }
+    match parts.as_slice() {
+        [] => "Allow this command extra permissions?".to_string(),
+        [only] => format!("Allow {only}?"),
+        [first, second] => format!("Allow {first} and {second}?"),
+        _ => format!("Allow {}?", parts.join(", ")),
+    }
+}
+
+fn write_path_summary(paths: &[settings::GrantedWritePath]) -> String {
+    match paths {
+        [] => "0 paths".to_string(),
+        [path] => path.requested.display().to_string(),
+        paths => format!("{} paths", paths.len()),
+    }
+}
+
 async fn run_terminal_tool(
     project: Entity<Project>,
     environment: Rc<dyn ThreadEnvironment>,

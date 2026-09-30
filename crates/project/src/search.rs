@@ -461,7 +461,6 @@ impl SearchQuery {
                 if let Some(m) = regex.find(&text)? {
                     Ok(Some(MatchPositionHint::ByteOffset(m.start())))
                 } else {
-                    let mut text = String::new();
                     Ok(None)
                 }
             }

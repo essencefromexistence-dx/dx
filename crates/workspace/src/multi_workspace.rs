@@ -484,7 +484,7 @@ impl MultiWorkspace {
             }));
         self.sidebar = Some(Box::new(sidebar));
         if self.sidebar_open {
-            let active_workspace = self.active_workspace.clone();
+            let active_workspace = self.workspace().clone();
             self.retain_active_workspace(cx);
             self.sync_sidebar_to_workspace(&active_workspace, cx);
         }
@@ -1491,9 +1491,9 @@ impl MultiWorkspace {
         self.find_or_create_local_workspace(
             PathList::new(&[chosen_path]),
             None,
-            &[],
             None,
             OpenMode::default(),
+            None,
             window,
             cx,
         )
@@ -1541,9 +1541,9 @@ impl MultiWorkspace {
         self.find_or_create_local_workspace(
             PathList::new(&[chosen_path]),
             None,
-            &[],
             None,
             OpenMode::default(),
+            None,
             window,
             cx,
         )
@@ -1629,7 +1629,7 @@ impl MultiWorkspace {
         });
 
         cx.emit(MultiWorkspaceEvent::ActiveWorkspaceChanged {
-            active_workspace: self.active_workspace.downgrade(),
+            active_workspace: self.workspace().downgrade(),
             source_workspace,
         });
         self.serialize(cx);
@@ -1686,7 +1686,7 @@ impl MultiWorkspace {
         }
         cx.emit(MultiWorkspaceEvent::WorkspaceRemoved {
             removed_workspace: workspace.entity_id(),
-            active_workspace: self.active_workspace.downgrade(),
+            active_workspace: self.workspace().downgrade(),
         });
         workspace.update(cx, |workspace, _cx| {
             workspace.session_id.take();

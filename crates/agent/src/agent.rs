@@ -397,7 +397,6 @@ impl LanguageModels {
             catalog_bridge.enrich_model_info(model_info);
         }
     }
-    }
 
     fn map_language_model_to_info(
         model: &LanguageModel,

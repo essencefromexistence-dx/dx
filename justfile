@@ -95,6 +95,14 @@ clean-binary:
     @echo "Cleaning only the final binary (keeps incremental build cache)..."
     Remove-Item -LiteralPath "{{build_target_dir}}/debug/dx-code","{{build_target_dir}}/debug/dx-code.exe" -Force -ErrorAction SilentlyContinue
 
+# Repair a corrupted pinned toolchain (e.g. rustup "detected conflict" on
+# clippy-preview). Reinstalls exactly what rust-toolchain.toml pins so that
+# `just run` stops re-syncing components on every invocation.
+fix-toolchain:
+    @echo "Reinstalling pinned toolchain 1.98.1 with required components/targets..."
+    rustup toolchain uninstall 1.98.1
+    rustup toolchain install 1.98.1 --profile minimal -c rustfmt,clippy,rust-analyzer,rust-src -t wasm32-wasip2,wasm32-unknown-unknown,x86_64-unknown-linux-musl
+
 # Install nightly Rust and Cranelift (one-time setup)
 setup-cranelift:
     @echo "Installing nightly Rust and Cranelift backend..."
@@ -142,4 +150,5 @@ help:
     @echo ""
     @echo "SETUP:"
     @echo "  just setup-cranelift   - Install nightly Rust + Cranelift (one-time)"
+    @echo "  just fix-toolchain     - Reinstall pinned 1.98.1 toolchain if rustup reports a component conflict"
     @echo "  just show-memory-guide - Show local CPU/RAM/output configuration"

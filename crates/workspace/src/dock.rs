@@ -1447,7 +1447,7 @@ impl Dock {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> bool {
-        if let Some(serialized) = self.serialized_dock.clone() {
+        if let Some(serialized) = self.restoration.pending().cloned() {
             if let Some(active_panel) = serialized.active_panel.filter(|_| serialized.visible)
                 && let Some(idx) = self.panel_index_for_persistent_name(active_panel.as_str(), cx)
             {
@@ -1481,11 +1481,32 @@ impl Dock {
         false
     }
 
-    /// Upstream's entry point: restore from an already-deserialized [`DockData`].
+    /// Stages an already-deserialized [`DockData`] as the pending restore state.
     ///
-    /// Our fork restores from `self.serialized_dock` instead (see
-    /// [`Self::restore_state_with_persisted_stack_state`]); this keeps upstream's callers in
-    /// `workspace.rs` / `multi_workspace.rs` compiling and wired.
+    /// Seeds [`DockRestoreState::Restoring`] without applying anything yet, so
+    /// callers restoring a workspace can stage the data first and then drive
+    /// the restore via [`Self::restore_state_with_persisted_stack_state`].
+    /// This replaces upstream's direct `serialized_dock = Some(..)` field
+    /// assignment (the field no longer exists).
+    pub(crate) fn set_pending_serialized_state(&mut self, serialized: DockData) {
+        self.restoration = DockRestoreState::Restoring {
+            pending: Some(serialized),
+        };
+    }
+
+    /// New entry point: restore from an already-deserialized [`DockData`].
+    ///
+    /// Stores the data as pending and replays it immediately, deferring the
+    /// parts that need not-yet-loaded panels until they arrive (see
+    /// [`Self::restore_state_with_persisted_stack_state`] for the legacy
+    /// immediate-apply path used by workspace deserialization).
+    ///
+    /// Currently only exercised by tests; the allowance keeps builds
+    /// warning-free until the multi-workspace restore path adopts it.
+    /// (`#[cfg]`-gating is wrong here: dev-dependencies unify
+    /// `workspace/test-support` into some builds but not others, so gating
+    /// merely moves the warning between configurations.)
+    #[allow(dead_code)]
     pub(crate) fn restore_serialized_state(
         &mut self,
         serialized: DockData,
@@ -1510,6 +1531,7 @@ impl Dock {
         }
     }
 
+    #[allow(dead_code)]
     fn replay_pending_serialized_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let Some(serialized) = self.restoration.pending().cloned() else {
             return;
@@ -1527,6 +1549,7 @@ impl Dock {
         }
     }
 
+    #[allow(dead_code)]
     fn apply_serialized_state(
         &mut self,
         serialized: &DockData,

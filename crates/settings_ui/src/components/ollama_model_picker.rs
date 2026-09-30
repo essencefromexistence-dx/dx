@@ -54,11 +54,6 @@ impl OllamaModelPickerDelegate {
         }
         let models = bounded_picker_options(models, &current_model);
 
-        let selected_index = models
-            .iter()
-            .position(|model| *model == current_model)
-            .unwrap_or(0);
-
         let filtered_models = bounded_picker_matches(models.iter().enumerate());
 
         let loading = !api_url.is_empty();

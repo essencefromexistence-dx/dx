@@ -7,12 +7,12 @@ use gpui::{App, AsyncApp, Context, Entity, Task, TaskExt};
 use http_client::{CustomHeaders, HttpClient};
 use language_model::{
     ApiKeyState, AuthenticateError, EnvVar, IconOrSvg, InlineDescription, LanguageModel,
-    LanguageModelCompletionError, LanguageModelCompletionStream, LanguageModelId,
-    LanguageModelName, LanguageModelProvider, LanguageModelProviderId, LanguageModelProviderName,
-    LanguageModelProviderState, LanguageModelRequest, LanguageModelToolChoice,
-    LanguageModelToolChoiceSupport, LanguageModelToolResultContent, MessageContent,
-    ModelRateLimiters, ProviderSettingsView, RateLimiter, Role, SubPageProviderSettings, env_var,
-    unavailable_error,
+    LanguageModelCompletionError, LanguageModelCompletionEvent, LanguageModelCompletionStream,
+    LanguageModelId, LanguageModelName, LanguageModelProvider, LanguageModelProviderId,
+    LanguageModelProviderName, LanguageModelProviderState, LanguageModelRequest,
+    LanguageModelToolChoice, LanguageModelToolChoiceSupport, LanguageModelToolResultContent,
+    MessageContent, ModelRateLimiters, ProviderErrorCategory, ProviderSettingsView, RateLimiter,
+    Role, StopReason, SubPageProviderSettings, TokenUsage, env_var, unavailable_error,
 };
 use llama_cpp::{
     LLAMA_CPP_API_URL, ModelEntry, Props, get_models, get_props, stream_chat_completion,
@@ -37,7 +37,7 @@ use language_model::chat_completion::ChatCompletionEventMapper;
 use anyhow::Context as _;
 use anyhow::anyhow;
 use futures::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, io::BufReader, stream::BoxStream};
-use gpui::{AnyView, Subscription, Window};
+use gpui::{Subscription, Window};
 use http_client::{AsyncBody, Method, Request as HttpRequest, StatusCode};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -101,6 +101,7 @@ pub struct LlamaCppSettings {
 pub struct LocalLlamaCppLanguageModelProvider {
     http_client: Arc<dyn HttpClient>,
     state: Entity<LocalLlamaCppState>,
+    request_limiters: ModelRateLimiters,
 }
 
 pub struct LocalLlamaCppState {
@@ -224,17 +225,37 @@ impl LocalLlamaCppLanguageModelProvider {
             }
         });
 
-        Self { http_client, state }
+        Self {
+            http_client,
+            state,
+            request_limiters: ModelRateLimiters::default(),
+        }
     }
 
-    fn create_language_model(&self, model: AvailableModel) -> Arc<dyn LanguageModel> {
-        Arc::new(LocalLlamaCppLanguageModel {
-            id: LanguageModelId::from(model.name.clone()),
+    /// The current configuration of `model`, if this provider still offers it.
+    fn config(
+        &self,
+        model: &LanguageModel,
+        cx: &App,
+    ) -> Result<AvailableModel, LanguageModelCompletionError> {
+        self.state
+            .read(cx)
+            .all_models()
+            .into_iter()
+            .find(|model_config| model_config.name == model.id.0.as_ref())
+            .ok_or_else(|| unavailable_error(model))
+    }
+
+    fn create_language_model(&self, model: AvailableModel) -> LocalLlamaCppLanguageModel {
+        let request_limiter = self
+            .request_limiters
+            .for_model(&LanguageModelId::from(model.name.clone()));
+        LocalLlamaCppLanguageModel {
             model,
             state: self.state.clone(),
             http_client: self.http_client.clone(),
-            request_limiter: RateLimiter::new(2),
-        })
+            request_limiter,
+        }
     }
 }
 
@@ -259,25 +280,27 @@ impl LanguageModelProvider for LocalLlamaCppLanguageModelProvider {
         IconOrSvg::Icon(IconName::AiOllama)
     }
 
-    fn default_model(&self, cx: &App) -> Option<Arc<dyn LanguageModel>> {
-        Some(self.create_language_model(self.state.read(cx).selected_model()))
+    fn default_model(&self, cx: &App) -> Option<LanguageModel> {
+        Some(language_model(&self.state.read(cx).selected_model()))
     }
 
-    fn default_fast_model(&self, cx: &App) -> Option<Arc<dyn LanguageModel>> {
-        Some(self.create_language_model(self.state.read(cx).settings.low_spec_model.clone()))
+    fn default_fast_model(&self, cx: &App) -> Option<LanguageModel> {
+        Some(language_model(
+            &self.state.read(cx).settings.low_spec_model.clone(),
+        ))
     }
 
-    fn provided_models(&self, cx: &App) -> Vec<Arc<dyn LanguageModel>> {
+    fn provided_models(&self, cx: &App) -> Vec<LanguageModel> {
         self.state
             .read(cx)
             .all_models()
-            .into_iter()
-            .map(|model| self.create_language_model(model))
+            .iter()
+            .map(language_model)
             .collect()
     }
 
-    fn recommended_models(&self, cx: &App) -> Vec<Arc<dyn LanguageModel>> {
-        vec![self.create_language_model(self.state.read(cx).selected_model())]
+    fn recommended_models(&self, cx: &App) -> Vec<LanguageModel> {
+        vec![language_model(&self.state.read(cx).selected_model())]
     }
 
     fn is_authenticated(&self, _cx: &App) -> bool {
@@ -291,25 +314,67 @@ impl LanguageModelProvider for LocalLlamaCppLanguageModelProvider {
         Task::ready(Ok(()))
     }
 
-    fn configuration_view(
-        &self,
-        _target_agent: language_model::ConfigurationViewTargetAgent,
-        _window: &mut Window,
-        cx: &mut App,
-    ) -> AnyView {
-        cx.new(|cx| {
-            LocalLlamaCppConfigurationView::new(self.state.clone(), self.http_client.clone(), cx)
-        })
-        .into()
+    fn settings_view(&self, _cx: &mut App) -> Option<ProviderSettingsView> {
+        let state = self.state.clone();
+        let http_client = self.http_client.clone();
+        Some(ProviderSettingsView::SubPage(
+            SubPageProviderSettings::new(move |_window, cx| {
+                cx.new(|cx| {
+                    LocalLlamaCppConfigurationView::new(state.clone(), http_client.clone(), cx)
+                })
+                .into()
+            })
+            .description(InlineDescription::Text(
+                "Run local models on your machine with llama.cpp.".into(),
+            )),
+        ))
     }
 
-    fn reset_credentials(&self, _cx: &mut App) -> Task<Result<()>> {
-        Task::ready(Ok(()))
+    fn stream_completion(
+        &self,
+        model: &LanguageModel,
+        request: LanguageModelRequest,
+        cx: &AsyncApp,
+    ) -> BoxFuture<'static, Result<LanguageModelCompletionStream, LanguageModelCompletionError>>
+    {
+        let config = match cx.update(|cx| self.config(model, cx)) {
+            Ok(config) => config,
+            Err(error) => return async move { Err(error) }.boxed(),
+        };
+        let session = self.create_language_model(config);
+        session.stream_completion(request, cx)
+    }
+}
+
+fn language_model(model: &AvailableModel) -> LanguageModel {
+    LanguageModel {
+        supports_tools: false,
+        tool_choice_support: LanguageModelToolChoiceSupport {
+            auto: false,
+            any: false,
+            none: true,
+        },
+        supports_streaming_tools: false,
+        supports_images: model.supports_images,
+        supports_split_token_display: true,
+        max_output_tokens: model.max_output_tokens,
+        ..LanguageModel::new(
+            LanguageModelId::from(model.name.clone()),
+            LanguageModelName::from(
+                model
+                    .display_name
+                    .clone()
+                    .unwrap_or_else(|| model.name.clone()),
+            ),
+            LOCAL_LLAMA_PROVIDER_ID,
+            LOCAL_LLAMA_PROVIDER_NAME,
+            format!("llama_cpp/{}", model.name),
+            model.max_tokens,
+        )
     }
 }
 
 pub struct LocalLlamaCppLanguageModel {
-    id: LanguageModelId,
     model: AvailableModel,
     state: Entity<LocalLlamaCppState>,
     http_client: Arc<dyn HttpClient>,
@@ -346,85 +411,6 @@ impl LocalLlamaCppLanguageModel {
         });
 
         async move { Ok(future.await?.boxed()) }.boxed()
-    }
-}
-
-impl LanguageModel for LocalLlamaCppLanguageModel {
-    fn id(&self) -> LanguageModelId {
-        self.id.clone()
-    }
-
-    fn name(&self) -> LanguageModelName {
-        LanguageModelName::from(
-            self.model
-                .display_name
-                .clone()
-                .unwrap_or_else(|| self.model.name.clone()),
-        )
-    }
-
-    fn provider_id(&self) -> LanguageModelProviderId {
-        LOCAL_LLAMA_PROVIDER_ID
-    }
-
-    fn provider_name(&self) -> LanguageModelProviderName {
-        LOCAL_LLAMA_PROVIDER_NAME
-    }
-
-    fn supports_tools(&self) -> bool {
-        false
-    }
-
-    fn tool_input_format(&self) -> LanguageModelToolSchemaFormat {
-        LanguageModelToolSchemaFormat::JsonSchemaSubset
-    }
-
-    fn supports_tool_choice(&self, choice: LanguageModelToolChoice) -> bool {
-        match choice {
-            LanguageModelToolChoice::Auto | LanguageModelToolChoice::Any => false,
-            LanguageModelToolChoice::None => true,
-        }
-    }
-
-    fn supports_streaming_tools(&self) -> bool {
-        false
-    }
-
-    fn supports_images(&self) -> bool {
-        self.model.supports_images
-    }
-
-    fn supports_split_token_display(&self) -> bool {
-        true
-    }
-
-    fn telemetry_id(&self) -> String {
-        format!("llama_cpp/{}", self.model.name)
-    }
-
-    fn max_token_count(&self) -> u64 {
-        self.model.max_tokens
-    }
-
-    fn max_output_tokens(&self) -> Option<u64> {
-        self.model.max_output_tokens
-    }
-
-    fn stream_completion(
-        &self,
-        request: LanguageModelRequest,
-        cx: &AsyncApp,
-    ) -> BoxFuture<
-        'static,
-        Result<
-            futures::stream::BoxStream<
-                'static,
-                Result<LanguageModelCompletionEvent, LanguageModelCompletionError>,
-            >,
-            LanguageModelCompletionError,
-        >,
-    > {
-        self.stream_completion(request, cx)
     }
 }
 
@@ -1299,6 +1285,7 @@ fn llama_chat_message_from_request(
                 ));
             }
             MessageContent::RedactedThinking(_) | MessageContent::Image(_) => {}
+            MessageContent::Compaction(_) => {}
         }
     }
 
@@ -1338,11 +1325,18 @@ async fn send_json<T: Serialize>(
             error,
         })?;
 
+    let host = url
+        .split("://")
+        .nth(1)
+        .and_then(|rest| rest.split('/').next())
+        .unwrap_or(url)
+        .to_string();
     http_client
         .send(request)
         .await
         .map_err(|error| LanguageModelCompletionError::HttpSend {
             provider: LOCAL_LLAMA_PROVIDER_NAME,
+            host,
             error,
         })
 }
@@ -1366,7 +1360,14 @@ fn map_llama_http_error(status: StatusCode, body: String) -> LanguageModelComple
     if body.contains("exceed_context_size_error")
         || body.contains("exceeds the available context size")
     {
-        return LanguageModelCompletionError::PromptTooLarge { tokens: None };
+        return LanguageModelCompletionError::ProviderRejection {
+            provider: LOCAL_LLAMA_PROVIDER_NAME,
+            status: Some(status),
+            code: None,
+            message: body,
+            retry_after: None,
+            category: ProviderErrorCategory::PromptTooLarge { tokens: None },
+        };
     }
 
     LanguageModelCompletionError::from_http_status(LOCAL_LLAMA_PROVIDER_NAME, status, body, None)
@@ -1629,6 +1630,9 @@ fn discover_local_gguf_models(
                     local_path: Some(path.to_string_lossy().replace('\\', "/")),
                     supports_tools: false,
                     supports_images: false,
+                    remote_supports_tools: None,
+                    remote_supports_images: None,
+                    supports_thinking: None,
                 },
                 &path,
             );
@@ -2233,14 +2237,17 @@ impl Render for LocalLlamaCppConfigurationView {
             .gap_2()
             .child(Label::new("Run the agent with a local llama.cpp server."))
             .child(
-                ConfiguredApiCard::new(format!(
-                    "{} at {}",
-                    selected_model
-                        .display_name
-                        .clone()
-                        .unwrap_or_else(|| selected_model.name.clone()),
-                    config.api_url
-                ))
+                ConfiguredApiCard::new(
+                    "llama-cpp-server",
+                    format!(
+                        "{} at {}",
+                        selected_model
+                            .display_name
+                            .clone()
+                            .unwrap_or_else(|| selected_model.name.clone()),
+                        config.api_url
+                    ),
+                )
                 .disabled(true),
             )
             .child(
@@ -3394,7 +3401,7 @@ impl ConfigurationView {
                 .as_mut()
                 .and_then(|models| models.llama_cpp.as_mut())
             {
-                settings.remote_context_window = None;
+                settings.context_window = None;
             }
         });
         cx.notify();
@@ -3829,8 +3836,15 @@ mod tests {
             name: "qwen".to_string(),
             display_name: Some("Qwen Coder".to_string()),
             max_tokens: 16384,
-            supports_tools: Some(true),
-            supports_images: None,
+            max_output_tokens: None,
+            hf_repo: None,
+            hf_quant: None,
+            hf_file: None,
+            local_path: None,
+            supports_tools: false,
+            supports_images: false,
+            remote_supports_tools: Some(true),
+            remote_supports_images: None,
             supports_thinking: Some(true),
         }];
 

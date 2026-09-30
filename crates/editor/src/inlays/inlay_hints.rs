@@ -1004,9 +1004,6 @@ impl Editor {
         // Hence, clear all excerpts' hints in the multi buffer: later, the invalidated ones will re-trigger the LSP query, the rest will be restored
         // from the cache.
         if invalidate_cache.should_invalidate() {
-            for hint_id in &visible_inlay_hint_ids {
-                inlay_hints.added_hints.remove(hint_id);
-            }
             let Some(mut visible_inlay_hint_ids) = collect_visible_inlay_hint_ids_for_buffer(
                 self.display_map.read(cx),
                 &multi_buffer_snapshot,
@@ -1014,6 +1011,9 @@ impl Editor {
             ) else {
                 return;
             };
+            for hint_id in &visible_inlay_hint_ids {
+                inlay_hints.added_hints.remove(hint_id);
+            }
             hints_to_remove.append(&mut visible_inlay_hint_ids);
 
             // When invalidating, this task removes ALL visible hints for the buffer

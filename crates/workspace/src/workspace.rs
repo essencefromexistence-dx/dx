@@ -2446,7 +2446,7 @@ impl Workspace {
                                         Dock::load_persisted_stack_state(workspace, position, cx)
                                             .unwrap_or_default();
                                     dock.update(cx, |dock, cx| {
-                                        dock.serialized_dock = Some(serialized_dock);
+                                        dock.set_pending_serialized_state(serialized_dock);
                                         dock.restore_state_with_persisted_stack_state(
                                             Some(persisted_stack_state),
                                             window,
@@ -2596,7 +2596,7 @@ impl Workspace {
             let persisted_stack_state =
                 Dock::load_persisted_stack_state(self, position, cx).unwrap_or_default();
             dock.update(cx, |dock, cx| {
-                dock.serialized_dock = Some(data);
+                dock.set_pending_serialized_state(data);
                 dock.restore_state_with_persisted_stack_state(
                     Some(persisted_stack_state),
                     window,
@@ -8443,7 +8443,7 @@ impl Workspace {
                         Dock::load_persisted_stack_state(workspace, position, cx)
                             .unwrap_or_default();
                     dock.update(cx, |dock, cx| {
-                        dock.serialized_dock = Some(serialized_dock);
+                        dock.set_pending_serialized_state(serialized_dock);
                         dock.restore_state_with_persisted_stack_state(
                             Some(persisted_stack_state),
                             window,
@@ -20626,6 +20626,7 @@ mod tests {
                         visible: true,
                         active_panel: Some(SecondTestPanel::persistent_name().to_string()),
                         zoom: false,
+                        stacked_panels: Vec::new(),
                     },
                     window,
                     cx,
@@ -20698,6 +20699,7 @@ mod tests {
                         visible: true,
                         active_panel: Some(SecondTestPanel::persistent_name().to_string()),
                         zoom: false,
+                        stacked_panels: Vec::new(),
                     },
                     window,
                     cx,
@@ -20744,6 +20746,7 @@ mod tests {
                         visible: true,
                         active_panel: Some(SecondTestPanel::persistent_name().to_string()),
                         zoom: false,
+                        stacked_panels: Vec::new(),
                     },
                     window,
                     cx,
@@ -20796,6 +20799,7 @@ mod tests {
                         visible: true,
                         active_panel: Some(SecondTestPanel::persistent_name().to_string()),
                         zoom: false,
+                        stacked_panels: Vec::new(),
                     },
                     window,
                     cx,
@@ -20849,6 +20853,7 @@ mod tests {
                         visible: true,
                         active_panel: Some(SecondTestPanel::persistent_name().to_string()),
                         zoom: true,
+                        stacked_panels: Vec::new(),
                     },
                     window,
                     cx,

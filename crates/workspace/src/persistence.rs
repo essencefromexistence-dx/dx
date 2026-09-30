@@ -1790,6 +1790,11 @@ impl WorkspaceDb {
         let mut use_podman = None;
         let mut remote_env = None;
 
+        // `unreachable_patterns` is allowed: the trailing fallback below is
+        // unreachable in pure builds (all variants covered) but required when
+        // `remote/test-support` is unified on without this crate's own
+        // `test-support` (see below).
+        #[allow(unreachable_patterns)]
         match identity {
             RemoteConnectionIdentity::Ssh {
                 host: identity_host,
@@ -1825,6 +1830,14 @@ impl WorkspaceDb {
                 host = Some(format!("mock-{}", id));
                 user = Some(format!("mock-user-{}", id));
             }
+            // `Mock` only exists when `remote` is built with `test-support`,
+            // which dev-dependencies enable for test builds even when this
+            // crate's own `test-support` feature is off (feature unification
+            // across targets). It can never actually occur here — mock options
+            // cannot be constructed without `remote/test-support` — but
+            // exhaustiveness requires the arm for those unified builds.
+            #[cfg(not(any(test, feature = "test-support")))]
+            _ => unreachable!("mock remote identities only exist in test builds"),
         }
 
         if let RemoteConnectionOptions::Docker(options) = options {

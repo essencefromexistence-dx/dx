@@ -10,7 +10,7 @@ pub use settings::{
     PaneSplitDirectionHorizontal, PaneSplitDirectionVertical, RegisterSetting,
     RestoreOnStartupBehavior, Settings,
 };
-use settings::{CommandAliasTarget, SettingsStore};
+use settings::SettingsStore;
 
 #[derive(RegisterSetting)]
 pub struct WorkspaceSettings {
