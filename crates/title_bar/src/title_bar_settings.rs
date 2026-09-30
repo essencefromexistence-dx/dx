@@ -15,6 +15,7 @@ pub struct TitleBarSettings {
     pub show_user_menu: bool,
     #[allow(dead_code)]
     pub show_menus: bool,
+    pub open_menus_on_hover: bool,
     pub button_layout: Option<WindowButtonLayout>,
 }
 
@@ -31,6 +32,7 @@ impl Settings for TitleBarSettings {
             show_sign_in: content.show_sign_in.unwrap(),
             show_user_menu: content.show_user_menu.unwrap(),
             show_menus: content.show_menus.unwrap(),
+            open_menus_on_hover: content.open_menus_on_hover.unwrap(),
             button_layout: content.button_layout.unwrap_or_default().into_layout(),
         }
     }
