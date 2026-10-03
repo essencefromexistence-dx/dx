@@ -30,7 +30,8 @@
 > `5eed2397a8`, `74c134a3c1`), and **singletons** (`8da42ddee3`, `8bbcd83968`, `9874229eb7`, plus six commits
 > touching `assets/settings/default.json`).
 >
-> ⚠️ **`forge` is 65 commits ahead of `origin/forge` (`33bbb8fe13`) — NOT pushed.** Push before or with this sync.
+> ⚠️ **`forge` is 129 commits ahead of `origin/forge` (`33bbb8fe13`) — NOT pushed** (it was 65 when this was
+> measured, before the merge itself). Push before the next sync.
 >
 > Full per-file Δ, culprit map and task list: **`TODO.md` §0.14**. Record: **§Session 42** below.
 
@@ -215,8 +216,8 @@ cluster in four themes — **ACP v2 / agent-UI** (`57af58b3ad`, `3209c7d31f`, `c
 ### Session 41 (2026-09-26) — **ALL 13 CONFLICTS RESOLVED**; the last two files now compile
 
 > `forge` is **mid-merge** against `e91b82c106` (`MERGE_HEAD`, merge-base `f8adffe9d1`).
-> **0 conflict markers tree-wide.** **Still not committed and not pushed** — `origin/forge`
-> remains `33bbb8fe13`.
+> **0 conflict markers tree-wide.** ~~**Still not committed and not pushed**~~ — ✅ **corrected in §Session 42:
+> it WAS committed on 2026-09-30 as `77fc1079e2`.** `origin/forge` still remains `33bbb8fe13` (unpushed).
 >
 > ⚠️ **Status-count correction.** Sessions 40's own notes disagreed with themselves ("9 of 13"
 > in the heading, "10 of 13" in the body). The verified live count when Session 41 started was
