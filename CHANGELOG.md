@@ -30,8 +30,7 @@
 > `5eed2397a8`, `74c134a3c1`), and **singletons** (`8da42ddee3`, `8bbcd83968`, `9874229eb7`, plus six commits
 > touching `assets/settings/default.json`).
 >
-> ⚠️ **`forge` is 129 commits ahead of `origin/forge` (`33bbb8fe13`) — NOT pushed** (it was 65 when this was
-> measured, before the merge itself). Push before the next sync.
+> ⚠️ **Nothing on `forge` has been pushed — `origin/forge` is still `33bbb8fe13`.** Push before the next sync.
 >
 > Full per-file Δ, culprit map and task list: **`TODO.md` §0.14**. Record: **§Session 42** below.
 
