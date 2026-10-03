@@ -30,7 +30,7 @@
 > `5eed2397a8`, `74c134a3c1`), and **singletons** (`8da42ddee3`, `8bbcd83968`, `9874229eb7`, plus six commits
 > touching `assets/settings/default.json`).
 >
-> ⚠️ **Nothing on `forge` has been pushed — `origin/forge` is still `33bbb8fe13`.** Push before the next sync.
+> ✅ **Pushed to `origin` 2026-10-03: `33bbb8fe13..863084a9ea`** — fast-forward, no force needed.
 >
 > Full per-file Δ, culprit map and task list: **`TODO.md` §0.14**. Record: **§Session 42** below.
 
@@ -130,6 +130,13 @@ paths = 16 content + 13 modify/delete**.
   `crates/language/src/file_content.rs`) — both upstream moves — and 1 rename
   (`gpui_macos/src/dispatcher.rs` → `gpui_apple/src/dispatcher.rs`).
 - `assets/settings/default.json` validated as JSONC.
+- **Dangling-name proxy — the class neither markers nor token probes can see.** For all 14 resolved files,
+  every `self.x(` / `Self::x(` / `this.x(` call was checked against every `fn x` in `crates/`:
+  **0 real unresolved names.** The 46 raw hits are gpui builder macros (`mt_1`, `size_full`, …),
+  wayland-generated protocol methods (`set_cursor_rectangle`), and regex artifacts (`viewport_size(` matching
+  `view` + `port_size(`).
+- ✅ **Pushed to `origin` 2026-10-03: `33bbb8fe13..863084a9ea`** — fast-forward (verified with
+  `git merge-base --is-ancestor origin/forge forge`), no force needed.
 - ⚠️ **`cargo metadata` / `cargo check` NOT run** — cargo cannot resolve the workspace (`dx-media`, above), and
   `cargo check` is separately blocked by `cap-primitives`. The merge is **source-verified, not
   compiler-verified**.

@@ -210,7 +210,7 @@ with a report at `/tmp/mf2_report.tsv` (cols: `rc`, `residual_hunks`, `ours_chan
 > ⚠️ **Two items remain open:** (1) **`Cargo.lock` was not regenerated** — `cargo generate-lockfile` cannot resolve
 > the `dx-media` git dependency because `https://github.com/essence-dx/media` is currently unfetchable (150 s
 > timeout); ours' lock was kept so the fork's pins survive, and regeneration is still required for upstream's new
-> deps. (2) **Nothing on `forge` has been pushed — `origin/forge` is still `33bbb8fe13`.**
+> deps. (2) ✅ **Pushed to `origin` 2026-10-03 (`33bbb8fe13..863084a9ea`).**
 >
 > **The next sync needs a fresh measurement** — `git fetch upstream && git merge-tree --write-tree --name-only
 > forge upstream/main` — because `forge` now contains `a84689073d`, so the merge-base will have moved.
