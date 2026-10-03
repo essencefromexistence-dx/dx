@@ -1,0 +1,69 @@
+{
+  "path": "G:/Dx/code/crates/language_models/src/provider/openai_subscribed.rs",
+  "replacements": [
+    {
+      "label": "1/3 delete THEIRS' duplicate message pair (base had neither; both sides ADDED the pair with different wording). Policy: local 100% -> ours' wording wins.",
+      "expect": 1,
+      "old": [
+        "    fn authentication_error_message(&self) -> SharedString {",
+        "        \"Your ChatGPT subscription session is invalid or has expired. \\",
+        "        Sign in again via Settings > AI > LLM Providers to continue.\"",
+        "            .into()",
+        "    }",
+        "",
+        "    fn missing_credentials_error_message(&self) -> SharedString {",
+        "        \"You are not signed in to your ChatGPT account. \\",
+        "        Sign in via Settings > AI > LLM Providers to continue.\"",
+        "            .into()",
+        "    }",
+        ""
+      ],
+      "new": []
+    },
+    {
+      "label": "2/3 keep OURS' pair AND theirs' new methods; re-add the closing brace git split off at the marker boundary",
+      "expect": 1,
+      "old": [
+        "<<<<<<< HEAD",
+        "    fn authentication_error_message(&self) -> SharedString {",
+        "        \"Your ChatGPT subscription session is invalid or has expired. \\",
+        "        Sign in again via the Agent Panel settings to continue.\"",
+        "            .into()",
+        "    }",
+        "",
+        "    fn missing_credentials_error_message(&self) -> SharedString {",
+        "        \"You are not signed in to your ChatGPT account. \\",
+        "        Sign in via the Agent Panel settings to continue.\"",
+        "            .into()",
+        "=======",
+        "    fn stream_completion("
+      ],
+      "new": [
+        "    fn authentication_error_message(&self) -> SharedString {",
+        "        \"Your ChatGPT subscription session is invalid or has expired. \\",
+        "        Sign in again via the Agent Panel settings to continue.\"",
+        "            .into()",
+        "    }",
+        "",
+        "    fn missing_credentials_error_message(&self) -> SharedString {",
+        "        \"You are not signed in to your ChatGPT account. \\",
+        "        Sign in via the Agent Panel settings to continue.\"",
+        "            .into()",
+        "    }",
+        "",
+        "    fn stream_completion("
+      ]
+    },
+    {
+      "label": "3/3 drop the trailing marker (it sits INSIDE compact's body, just before its closing brace)",
+      "expect": 1,
+      "old": [
+        "        openai_subscribed::compact(&config, &self.state, &request_limiter, request, cx)",
+        ">>>>>>> upstream/main"
+      ],
+      "new": [
+        "        openai_subscribed::compact(&config, &self.state, &request_limiter, request, cx)"
+      ]
+    }
+  ]
+}

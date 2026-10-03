@@ -1,0 +1,46 @@
+{
+  "path": "G:/Dx/code/crates/gpui_wgpu/src/wgpu_renderer.rs",
+  "replacements": [
+    {
+      "label": "RESTORE ours' resources()/resources_mut() on `impl WgpuRenderer`, re-expressed through theirs' state machine. Dropping them in hunk 2 left 27 `self.resources()` call sites (lines 309, 1614, 1634, ... 2297) plus `self.resources_mut()` at 2447 with no method -- the only surviving definitions were on `impl WgpuRendererCore` (line 1351). Keeping ours' vocabulary while `core()`/`core_mut()` stay the underlying accessors is exactly the 'keep our structure, port theirs' semantics' rule.",
+      "expect": 1,
+      "old": [
+        "    fn core_mut(&mut self) -> Option<&mut WgpuRendererCore> {",
+        "        match &mut self.state {",
+        "            RendererState::Ready { core, .. } | RendererState::Unconfigured { core } => Some(core),",
+        "            RendererState::Released => None,",
+        "        }",
+        "    }",
+        "",
+        "    /// The shared instance-data storage buffer, or `None` when instance data"
+      ],
+      "new": [
+        "    fn core_mut(&mut self) -> Option<&mut WgpuRendererCore> {",
+        "        match &mut self.state {",
+        "            RendererState::Ready { core, .. } | RendererState::Unconfigured { core } => Some(core),",
+        "            RendererState::Released => None,",
+        "        }",
+        "    }",
+        "",
+        "    /// Ours: the renderer's GPU resources, reached through upstream's `state`",
+        "    /// machine. Ours' call sites speak `self.resources()`, so this keeps that",
+        "    /// vocabulary while `core()`/`core_mut()` remain the underlying accessors.",
+        "    fn resources(&self) -> &WgpuResources {",
+        "        &self",
+        "            .core()",
+        "            .expect(\"GPU resources not available\")",
+        "            .resources",
+        "    }",
+        "",
+        "    fn resources_mut(&mut self) -> &mut WgpuResources {",
+        "        &mut self",
+        "            .core_mut()",
+        "            .expect(\"GPU resources not available\")",
+        "            .resources",
+        "    }",
+        "",
+        "    /// The shared instance-data storage buffer, or `None` when instance data"
+      ]
+    }
+  ]
+}

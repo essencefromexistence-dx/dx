@@ -1,0 +1,27 @@
+{
+  "path": "G:/Dx/code/crates/gpui_wgpu/src/wgpu_renderer.rs",
+  "replacements": [
+    {
+      "label": "E0063 fix: the merged WgpuResources struct has 16 fields (it KEPT ours' two liquid-glass fields), but theirs' WgpuRendererCore::new literal only sets 14. Add ours' fields so the literal matches the struct.",
+      "expect": 1,
+      "old": [
+        "                path_msaa_texture: None,",
+        "                path_msaa_view: None,",
+        "            },",
+        "            atlas,",
+        "            path_globals_offset,"
+      ],
+      "new": [
+        "                path_msaa_texture: None,",
+        "                path_msaa_view: None,",
+        "                // Ours: the liquid-glass backdrop targets. The merge kept these two",
+        "                // fields on WgpuResources, so the literal must initialise them.",
+        "                liquid_glass_backdrop_texture: None,",
+        "                liquid_glass_backdrop_view: None,",
+        "            },",
+        "            atlas,",
+        "            path_globals_offset,"
+      ]
+    }
+  ]
+}

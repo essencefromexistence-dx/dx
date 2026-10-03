@@ -1,0 +1,37 @@
+{
+  "path": "G:/Dx/code/crates/agent_ui/src/buffer_codegen.rs",
+  "replacements": [
+    {
+      "label": "UNION, not a pick: keep OURS' source-size guard (our local feature) AND theirs' provider lookup + &model API change. provider is consumed at lines 480/492, and use_streaming_tools now takes &LanguageModel (upstream changed it from &dyn LanguageModel), so ours' model.as_ref() is stale.",
+      "expect": 1,
+      "old": [
+        "<<<<<<< HEAD",
+        "        let source_byte_len =",
+        "            Self::source_range_byte_len(&self.buffer.read(cx).snapshot(cx), &self.range);",
+        "        if let Err(error) = ensure_inline_codegen_source_within_limit(source_byte_len) {",
+        "            log::warn!(\"Inline assistant codegen source rejected: {error}\");",
+        "            self.finish_with_error(error, cx);",
+        "            return Ok(());",
+        "        }",
+        "",
+        "        if Self::use_streaming_tools(model.as_ref(), cx) {",
+        "=======",
+        "        let provider = LanguageModelRegistry::read_global(cx).provider_for_model(&model)?;",
+        "        if Self::use_streaming_tools(&model, cx) {",
+        ">>>>>>> upstream/main"
+      ],
+      "new": [
+        "        let source_byte_len =",
+        "            Self::source_range_byte_len(&self.buffer.read(cx).snapshot(cx), &self.range);",
+        "        if let Err(error) = ensure_inline_codegen_source_within_limit(source_byte_len) {",
+        "            log::warn!(\"Inline assistant codegen source rejected: {error}\");",
+        "            self.finish_with_error(error, cx);",
+        "            return Ok(());",
+        "        }",
+        "",
+        "        let provider = LanguageModelRegistry::read_global(cx).provider_for_model(&model)?;",
+        "        if Self::use_streaming_tools(&model, cx) {"
+      ]
+    }
+  ]
+}

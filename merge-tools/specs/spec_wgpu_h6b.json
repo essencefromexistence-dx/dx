@@ -1,0 +1,35 @@
+{
+  "path": "G:/Dx/code/crates/gpui_wgpu/src/wgpu_renderer.rs",
+  "replacements": [
+    {
+      "label": "ours' liquid-glass texture must also be DESTROYED on resize, not merely invalidated: ours' update_drawable_size destroyed it alongside path_intermediate/path_msaa (to avoid GPU memory spikes), and theirs' restructured body omits it. The merged invalidate_intermediate_textures() already clears the two liquid-glass fields.",
+      "expect": 1,
+      "old": [
+        "        // Destroy old textures before allocating new ones to avoid GPU memory spikes",
+        "        if let Some(ref texture) = resources.path_intermediate_texture {",
+        "            texture.destroy();",
+        "        }",
+        "        if let Some(ref texture) = resources.path_msaa_texture {",
+        "            texture.destroy();",
+        "        }",
+        "",
+        "        // Invalidate intermediate textures - they will be lazily recreated"
+      ],
+      "new": [
+        "        // Destroy old textures before allocating new ones to avoid GPU memory spikes",
+        "        if let Some(ref texture) = resources.path_intermediate_texture {",
+        "            texture.destroy();",
+        "        }",
+        "        if let Some(ref texture) = resources.path_msaa_texture {",
+        "            texture.destroy();",
+        "        }",
+        "        // Ours: the liquid-glass backdrop target is resized with the surface too.",
+        "        if let Some(ref texture) = resources.liquid_glass_backdrop_texture {",
+        "            texture.destroy();",
+        "        }",
+        "",
+        "        // Invalidate intermediate textures - they will be lazily recreated"
+      ]
+    }
+  ]
+}

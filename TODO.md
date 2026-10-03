@@ -13,6 +13,7 @@ surface for stays **compiled and wired, just unsurfaced** — never silently dro
 
 | thing | value |
 |---|---|
+| **CURRENT STATE (2026-10-03, session 43)** | Branch **`forge`** @ **`8052574a23`** — the **`a84689073d` sync is DONE** (`b97dc82680`, **29 of 29** conflicts resolved; **0 markers** tree-wide). **0 commits behind `upstream/main` `a84689073d`.** ⚠️ **`Cargo.lock` NOT regenerated** (the `dx-media` git dep is unfetchable — see §0.14 S1) and ⚠️ **68 commits ahead of `origin/forge` (`33bbb8fe13`) → NOT pushed.** Detail: **§0.14**. ⚠️ The `CURRENT STATE` row below is stale (it stops at session 32). |
 | **scratch index** | `G:/tmp/merge-idx2` — **use this, not `merge-idx`** (see trap below) |
 | **CURRENT STATE (session 32)** | Branch **`merge-20260925-1851`** @ commit **`b8f6f01740`**, tree **`a373e98640`** — **checked out in `G:/dx/code`**. This is the `baee1ca6de` merge **+ the `f8adffe9` sync**. Older: branch `merge-20260925-183508` @ `3ee3dd9628` (tree `507ef2e2ff…`) = the `baee1ca6de` merge alone. ⚠️ Merged against **`baee1ca6de`**; **upstream `main` is now `f8adffe9` = 18 commits ahead**, incl. `#64666 opencode: Dynamic model fetching improvements` which touches the session-28 provider. ⚠️ **Do the `cargo check` before the next upstream sync** so a known-good baseline exists. **NEXT SYNC MEASURED (session 31): merging the 18 new commits gives `7` conflicts — 5 content (`Cargo.lock`, `thread_view.rs`, `project_panel.rs`, `sidebar.rs`, `workspace.rs`) + 2 `modify/delete` (`docs/src/languages/json.md`, `docs/src/outline-panel.md` — we deleted, upstream modified; ⚠️ **needs a decision, and recurs every sync**). All 5 content files are ones this merge already resolved, and upstream's delta is tiny (8–109 lines) vs ours' (784–4624) → port upstream's change onto our structure. See CHANGELOG §Session 31.** Older: **`507ef2e2ff…`** (2026-09-25 **session 28** — **Q5 RESOLVED**: the 5-file `opencode` cluster; **parse gate 2 → 0 of 1 256**; **real markers 19/3 → 0**). Older: **`5d2d0e97f4…`** (session 27 — **Q6 RESOLVED**: the 4-file `llama_cpp` cluster) · **`603376f463…`** (session 27 intermediate — `settings_content` schema fixed) · **`cfe7e3d99e…`** (session 25 — `extensions_ui.rs` **9 of 9 hunks**; **Q4(a) executed**; ⚠️ **that session left no log entry — recovered by diffing the index's `git write-tree` against `911ff92a`**, exactly as session 14's row prescribes). Older still: **`911ff92a…`** (session 24 — `settings_ui/src/settings_ui.rs` **5 of 5 hunks**; **Q1 executed**) · **`7a81d380…`** (session 23 — `gpui_wgpu/src/wgpu_renderer.rs` **4 of 4 hunks**; **Q2(a) executed**) · **`138aaf35…`** (session 22 — `zed.rs` **hunk 3** + its `workspace.rs` port + the fork-owned guard-test rewrite; **Q3(a) executed**) · **`3b05ecb9…`** (session 22 intermediate — `zed.rs` + `workspace.rs`, before the test rewrite) · **`a5e29154…`** (session 21 — `thread_view.rs`, **15 of 15 hunks**). Older still: **`8146331e5c…`** (session 20 — `thread_view.rs`, 8/15) · **`6cec5632ec…`** (session 18 — `sidebar.rs`) · `9fa61cf5c9…` (session 17 — `agent_panel.rs`) · `20797fa8d8…` (session 16 — `workspace.rs`) · `4d566c9302…` (session 15 — `title_bar.rs`) · `80c746906d…` (session 14 — `project_panel.rs`) · `f178f40f28…` (session 12) · `972712b3e6…` (session 11) · `629a6c6c52…` (session 10) · `7ef2aee2dc…` (session 9) · `8eb7fc3e8b…` · `4575b0a089…` · `141b9f9fb3…` · `0d48deaa87…` · `9ef459a772…` · `5b0eb83dc9…` · `0023691c34…` · `4abbfbcf54…` · `b5d5cfa3c1…` · `9a777d4094…` · `8b6ad8ea48…` · `a0ecb881db…` · `90e21116f8…` · `ddf59339a0…` · `12325bbeaf…` · `cdff4bf9a9…` · `db0a41cf1b…` · `6ce1cf1779…` · `fe47d7116a…` · `f92501ed72…` · `82c1e0bd84…` · `a54a46f4d5…` · `a7acc7c1b9…` · `a210d3b470…` · `632b86f554…` · `21547a6c15…` · `3c13e3e881…` · `94adba6ae2…` · `4187943ac9…` · `8e970994a6…` · `49b7454893…` · `1deaff2849…` · `54dfc298…` · `80b783d154…` — **all stale** |
 | index state | 28 483 entries; **all manifests resolved — `cargo metadata --no-deps` → rc 0, 262 members** (re-run 2026-09-25 session 5 on `8b6ad8ea48`: rc 0, 262 packages / 262 members; `check_ws_inherit.py` re-run after session 9 → NONE) |
@@ -741,11 +742,112 @@ the field audit did. **Assert boundaries, then gate the whole file; do not trust
 
 ---
 
-## 0.13 Next sync — **IN PROGRESS (session 41)**. **13 of 13** resolved; **NOT committed, NOT pushed**
+## 0.14 ✅ **SYNC DONE (2026-10-03, session 43)** — upstream `a84689073d`, 60 commits, **29 of 29 conflicts resolved**, committed **`b97dc82680`**
 
-> ⚠️ **`forge` is MID-MERGE** against `e91b82c106`. Do not `git merge --abort` casually — every resolution and the
-> specs in `merge-tools/specs/` would go with it. **All 13 conflicts are resolved and 0 markers remain tree-wide.**
-> What is left is **P4** (two providers the refactor still has not been applied to) and **P8** (gates → commit → push).
+> ✅ **DONE — merged and committed `b97dc82680`.** `ours` = `forge` @ `b5142ba1aa`; `theirs` = `upstream/main` @
+> **`a84689073d`** (*path: Reimplement PathStyle on the standard library's path implementation*, #64149,
+> 2026-10-03 08:53 UTC); **merge-base `15dc0e9fa0`** — the second parent of the previous merge, so only the 60 new
+> commits replayed. The in-memory measurement (`git merge-tree --write-tree --name-only forge upstream/main` →
+> tree **`a1b33c0a79`**, **29 conflicted paths**) matched the real merge exactly.
+>
+> ⚠️ **One item outstanding: `Cargo.lock` was NOT regenerated** — `cargo generate-lockfile` cannot resolve the
+> `dx-media` git dependency (`https://github.com/essence-dx/media` is currently unfetchable: 150 s timeout, empty
+> cargo git db). Ours' lock was kept; regeneration is still required for upstream's new deps.
+> ⚠️ **`forge` is now 68 commits ahead of `origin/forge` (`33bbb8fe13`) — NOT pushed.**
+
+### The 29 conflicts — 16 content + 13 modify/delete
+
+The **13 `modify/delete` are all `docs/**`** — every one is **ours-deleted / upstream-modified**, the recurring
+decision. **Policy (session 32 precedent): honour our deletion, record upstream's text verbatim** to
+`merge-tools/evidence/`. **One command restores them all** if you ever want them back.
+
+The **16 content** conflicts, with `Δ` = lines each side changed **relative to the merge-base** (`+adds/−dels`).
+The Δ says which side owns the file, and therefore whose skeleton to keep:
+
+| # | path | theirs Δ | ours Δ | upstream commits | shape → resolution |
+|---|---|---|---|---|---|
+| 1 | `Cargo.lock` | +30/−13 | +1719/−300 | 10 | **regenerate, never hand-merge** |
+| 2 | `assets/settings/default.json` | +27/−13 | +2828/−23 | 6 | ours owns the DX settings block → ours skeleton, port theirs' new keys |
+| 3 | `crates/agent_ui/src/config_options.rs` | +170/−19 | +177/−47 | 1 | **both restructured** → semantic merge (ACP v2) |
+| 4 | `crates/agent_ui/src/conversation_view.rs` | +1823/−98 | +66/−16 | 4 | **theirs dominant** → theirs skeleton, keep ours' branding |
+| 5 | `crates/agent_ui/src/conversation_view/thread_view.rs` | +356/−155 | +3248/−248 | 4 | **ours hugely dominant** → ours skeleton, port theirs' ACP v2 |
+| 6 | `crates/editor/src/inlays/inlay_hints.rs` | +765/−55 | +341/−107 | 1 | theirs restructured → theirs skeleton, re-hang ours' bounded loop |
+| 7 | `crates/extensions_ui/src/components/extension_card.rs` | +179/−182 | +67/−17 | 1 | theirs rewrote → theirs card API, re-graft ours' bounded label |
+| 8 | `crates/extensions_ui/src/extensions_ui.rs` | +381/−263 | +213/−45 | 1 | same commit → resolve together with #7 |
+| 9 | `crates/git_ui/src/git_panel.rs` | +654/−157 | +122/−27 | 5 | theirs dominant → theirs skeleton, keep ours' `MAX_GIT_PANEL_*` |
+| 10 | `crates/gpui_linux/src/gpui_linux.rs` | +1/−1 | +2/−0 | 1 | trivial |
+| 11 | `crates/gpui_linux/src/linux.rs` | +19/−27 | +7/−0 | 1 | trivial → port ours |
+| 12 | `crates/gpui_linux/src/linux/wayland/client.rs` | +410/−235 | +25/−0 | 2 | theirs dominant → theirs skeleton, port ours |
+| 13 | `crates/gpui_linux/src/linux/wayland/window.rs` | +67/−33 | +133/−8 | 2 | ours dominant → ours skeleton |
+| 14 | `crates/gpui_linux/src/linux/x11/window.rs` | +45/−37 | +110/−4 | 1 | ours dominant → ours skeleton |
+| 15 | `crates/gpui_macos/src/window.rs` | +31/−9 | +38/−5 | 1 | both → semantic merge |
+| 16 | `crates/project/src/search.rs` | +153/−32 | +23/−6 | 1 | theirs dominant → theirs skeleton, port ours' bound |
+
+### The upstream commits that actually conflict
+
+**~27 of the 60 commits touch at least one conflicting file**; the rest merge cleanly. Four themes:
+
+1. **ACP v2 / agent-UI — the largest cluster (files 3, 4, 5).** `57af58b3ad` *acp_thread: Share v2 configuration
+   options* · `3209c7d31f` *Add generic permission prompts* · `c5b6d4386e` *Scope permission lifetimes to
+   requests* · `23d10a4754` *Append streamed tool-call content* · `f8c2cc8440` *Fix selection loss while an agent
+   thread is loading* · `2a97fbf22b` *Keep the Awaiting Confirmation label on a single line*.
+   ⚠️ **These land in exactly the files our fork rewrote hardest** (`thread_view.rs` is ours +3248) — expect the
+   same "ours skeleton, port theirs" shape as Sessions 21 and 41.
+2. **gpui Linux headless + frame journalling (files 10–15).** `f37989fbdf` *gpui: Cross-platform headless
+   windowing API and linux impl* (#64969) — **the single largest upstream change here** — plus `cd4fc8de4c`
+   *Journal platform frame requests and skipped frames* and `40180d9c40` *gpui_apple: Share dispatcher and Metal
+   renderer with iOS*. Five `gpui_linux` files + `gpui_macos/window.rs`.
+3. **git_ui (file 9).** `c83abe7d0e` *Allow collapsing the commit editor and commit details* · `651d693d42`
+   *Make Git panel file actions work with multiple selections* · `c9daddfa0a` *Show file counts in git panel
+   section headers* · `5eed2397a8` *Add command to create tags at HEAD* · `74c134a3c1` *Don't offer git init for
+   single-file worktrees*.
+4. **Singletons.** `8da42ddee3` *extensions_ui: Show installed extensions when offline* (files 7–8) ·
+   `8bbcd83968` *Speed up project search over misclassified binary files* (16) · `9874229eb7` *lsp: Fix
+   inlay_hints anchor bias* (6) · `708c7eef55` / `c83abe7d0e` / `309f91f564` / `5c5236ded8` / `28d5832adb` /
+   `54edefa083` (file 2).
+
+### Tasks, in order
+
+- [x] ✅ **S0 — Re-measured, then merged.** `git merge-tree` predicted 29 (raw `wc -l` 119) and
+  `git merge --no-commit --no-ff upstream/main` produced **exactly 29** unmerged paths. No worktree-write wedge
+  (only 2 deletions).
+- [x] ✅ **S1 — `Cargo.lock`** — ⚠️ **NOT regenerated (BLOCKED).** `cargo generate-lockfile` cannot resolve the
+  `dx-media` git dependency: `https://github.com/essence-dx/media` is currently unfetchable (150 s timeout; cargo's
+  git db for it is empty). **Ours' lock was kept** so the fork's pins survive. **Still required** for upstream's
+  new deps — retry when that repo is reachable. Never hand-merge it.
+- [x] ✅ **S2 — the 13 `docs/**`** — honoured our deletion; upstream's text recorded to
+  `merge-tools/evidence/upstream_docs_sync3.diff`.
+- [x] ✅ **S3 — the ACP v2 cluster (files 3–5)** — upstream's `id()` ctor + ours' `get(next_index)?`;
+  ours' DX permission-mode surface kept on upstream's `permission_request`.
+- [x] ✅ **S4 — the gpui cluster (files 10–15)** — unions onto upstream's headless-windowing refactor + frame
+  journalling; `X11WindowState.destroyed` superseded by upstream.
+- [x] ✅ **S5 — git_ui (9), extensions_ui (7–8), editor (6), project (16), settings (2)** — resolved per the Δ
+  table; ours' caps re-attached where upstream's pipeline replaced ours'.
+- [x] ✅ **S6 — gates.** markers **0** tree-wide (only the `.hbs` false positive) · `rustfmt --edition 2024 --check`
+  clean on all 15 touched files · **no-loss both directions: 0 local / 0 remote** across 160 changed `.rs` files ·
+  deletion audit = 2 intended · `default.json` valid. ⚠️ **`cargo metadata` / `cargo check` NOT run** — cargo cannot
+  resolve the workspace (`dx-media`) and `cargo check` is separately blocked by `cap-primitives`. **Source-verified,
+  not compiler-verified.**
+- [x] ✅ **S7 — commit.** `b97dc82680` (merge) + `8052574a23` (rustfmt follow-up). ⚠️ **Push still outstanding:**
+  `forge` is now **68 commits ahead of `origin/forge` (`33bbb8fe13`)**.
+
+### Reminders that have bitten before
+
+- **`wc -l` on merge-tree output is NOT the conflict count** — raw **119** here, real **29**.
+- **Re-derive the parse gate's file list** from `git diff --name-only <ours>..HEAD`; a "0 of N" claim is only as
+  good as the N (Session 34).
+- **Marker-free is not resolved**, and **token-level no-loss cannot see a dropped nested item** (Session 34's `IconName`).
+- **A rename is not a loss** (Session 35).
+- **For an in-progress merge, "ours" is HEAD, never the fork's older tip** (Session 40's `opencode` false alarm).
+
+---
+
+## 0.13 ✅ **SYNC DONE (session 41)** — `e91b82c106`, 13 of 13 resolved, **committed `77fc1079e2` → `41047556ff` → `2510036f8c` (HEAD)**; ⚠️ **not pushed**
+
+> ✅ **DONE and COMMITTED 2026-09-30** as `77fc1079e2` (the merge) → `41047556ff` (ACP schema v1 adaptation +
+> merge fallout) → `2510036f8c` (**HEAD**; a further 55-commit sync on top). **All 13 conflicts were resolved and
+> 0 markers remain tree-wide.** ⚠️ **Still open:** **P4** (two providers the refactor has not been applied to —
+> `nara_router.rs`, `llama_cpp.rs`) and **push** (`origin/forge` is `33bbb8fe13`, 65 commits behind HEAD).
 
 ### ✅ Resolved (13)
 
@@ -845,11 +947,12 @@ It converts **`pub trait LanguageModel`** → **`pub struct LanguageModel`** (29
       `RendererState` state machine · **9** 2 vs **250** = **upstream's Linux headless rendering** · **10** `record_frame`
       signature. Same treatment as session 23: adopt theirs' structure, **re-express our liquid-glass + our GPU
       error-recovery on it**. Full map: `CHANGELOG.md` §Session 40.
-- [ ] **P4 — ⬅ THE ONE REMAINING CONFLICT-CLASS ITEM: convert ours' remaining `impl LanguageModel for` providers**
+- [x] ✅ **P4 — DONE (verified 2026-10-03, session 42): the `LanguageModel` trait→struct conversion is complete
+      tree-wide.** `grep -rn 'impl LanguageModel for' crates/` → **0 hits** (only `impl LanguageModelProvider for`
+      remains, which is upstream's new shape). ~~Convert ours' remaining `impl LanguageModel for` providers
       (`nara_router.rs` and `llama_cpp.rs` — `opencode.rs` left this list in session 41) from trait impls into
-      **data producers** — you cannot implement a struct. Check with `grep -rn 'impl LanguageModel for' crates/`:
-      it must return **nothing** when this is done. ⚠️ `cargo check -p language_models` is blocked by the
-      `cap-primitives` build-script failure (§0.12 P1), so this item cannot be compiler-verified today.
+      **data producers** — you cannot implement a struct.~~ ⚠️ Still true: `cargo check -p language_models` is
+      blocked by the `cap-primitives` build-script failure (§0.12 P1), so this is grep-verified, not compiler-verified.
 - [x] ✅ **P5 — ours' per-model icon port — DONE (session 41).** `OpenCodeLanguageModelProvider` now overrides
       `icon_for_model` (GLM 5 / 5.1 → `IconName::AiZhipu`, reading the model segment of upstream's
       subscription-prefixed id); the consumer `agent.rs` was switched to `provider.icon_for_model(model)` in session 40.

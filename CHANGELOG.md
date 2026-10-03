@@ -7,13 +7,47 @@
 
 ---
 
-## [Unreleased] — merge of `upstream/main` (`e91b82c106`) into `dx-code`
+## [Unreleased] — next sync: `upstream/main` (`a84689073d`, 2026-10-03) into `forge`
 
-> ### ✅ IN PROGRESS — the next sync is UNDERWAY, and all 13 conflicts are RESOLVED (2026-09-26)
+> ### ✅ SYNC DONE (2026-10-03, session 43) — **29 of 29 conflicts resolved**, committed **`b97dc82680`**
 >
-> ⚠️ **This is a live merge, not a plan.** `forge` is mid-merge against `e91b82c106`
-> (`MERGE_HEAD`; merge-base `f8adffe9d1`), and **no conflict markers remain anywhere in the
-> tree**. **Not committed, not pushed** — `origin/forge` is still `33bbb8fe13`. The final two
+> ⚠️ **This was a plan; it is now executed.** `forge` was at **`2510036f8c`** + `b5142ba1aa`; `upstream/main` is
+> **`a84689073d`** (*path: Reimplement PathStyle on the standard library's path implementation*, #64149,
+> 2026-10-03 08:53 UTC); the **merge-base was `15dc0e9fa0`** — the second parent of the previous merge, so only
+> the **60 new commits** replayed. Measured in memory first: merged tree **`a1b33c0a79`**,
+> **29 conflicted paths** = **16 content + 13 modify/delete** — and the merge reproduced that exactly.
+>
+> ⚠️ **`Cargo.lock` was NOT regenerated** — the one unfinished item. `cargo generate-lockfile` cannot resolve the
+> `dx-media` git dependency because `https://github.com/essence-dx/media` is currently unfetchable (150 s timeout;
+> cargo's git db for it is empty). Ours' lock was kept so the fork's pins survive; regeneration is still required
+> for upstream's new deps. Full record: **§Session 43**.
+>
+> The **13 modify/delete are all `docs/**`** (*ours-deleted / upstream-modified*) — the recurring decision; policy
+> is to **honour our deletion and record upstream's text verbatim**. The 16 content conflicts come from
+> **~27 upstream commits**, clustered in four themes: **ACP v2 / agent-UI** (`57af58b3ad`, `3209c7d31f`,
+> `c5b6d4386e`, `23d10a4754`, `f8c2cc8440`, `2a97fbf22b`), **gpui Linux headless + frame journalling**
+> (`f37989fbdf`, `cd4fc8de4c`, `40180d9c40`), **git_ui** (`c83abe7d0e`, `651d693d42`, `c9daddfa0a`,
+> `5eed2397a8`, `74c134a3c1`), and **singletons** (`8da42ddee3`, `8bbcd83968`, `9874229eb7`, plus six commits
+> touching `assets/settings/default.json`).
+>
+> ⚠️ **`forge` is 65 commits ahead of `origin/forge` (`33bbb8fe13`) — NOT pushed.** Push before or with this sync.
+>
+> Full per-file Δ, culprit map and task list: **`TODO.md` §0.14**. Record: **§Session 42** below.
+
+---
+
+## [Landed 2026-09-30] — merge of `upstream/main` (`e91b82c106`) into `forge`, then the ACP-schema-v1 adaptation, then a 55-commit sync
+
+> ✅ **COMMITTED** as `77fc1079e2` (the `e91b82c106` merge) → `41047556ff` (ACP schema v1 adaptation + merge
+> fallout) → `2510036f8c` (**HEAD**, sync of 55 newer `upstream/main` commits). ⚠️ **Not pushed** — `origin/forge`
+> is still `33bbb8fe13`. See **§Session 42** for the record of these three commits.
+
+> ### ✅ DONE — the `e91b82c106` sync landed 2026-09-30; all 13 conflicts were resolved (2026-09-26 → 09-30)
+>
+> ⚠️ **This was a live merge; it is now committed.** `forge` was mid-merge against `e91b82c106`
+> (`MERGE_HEAD`; merge-base `f8adffe9d1`), and **no conflict markers remained anywhere in the
+> tree**. ✅ **Committed 2026-09-30** as `77fc1079e2`, then `41047556ff`, then `2510036f8c` (HEAD) —
+> see §Session 42. ⚠️ **Still not pushed** — `origin/forge` is `33bbb8fe13`. The final two
 > files (`wgpu_renderer.rs`, `opencode.rs`) are recorded in §Session 41.
 >
 > The banner that used to sit here said "PLANNED — not started" with ours at `c8df4b6303`; both
@@ -44,6 +78,139 @@
 **Goal:** 100 % of our changes survive **and** 100 % of upstream's survive. Our UI wins genuine
 conflicts; upstream code our UI has no surface for stays **compiled and wired, just unsurfaced**.
 Nothing upstream is silently dropped.
+
+### Session 43 (2026-10-03) — **the `a84689073d` sync is DONE**: 29 of 29 conflicts resolved, committed `b97dc82680`
+
+**Method:** `git merge --no-commit --no-ff upstream/main` on `forge` — **no worktree-write wedge** (the merge
+deletes only 2 files, far below the ~1815-file threshold). The in-memory prediction was exact: **29 unmerged
+paths = 16 content + 13 modify/delete**.
+
+#### What was resolved, and how
+
+| group | files | resolution |
+|---|---|---|
+| `docs/**` | 13 | **modify/delete**, all ours-deleted / upstream-modified → honour our deletion; upstream's text recorded verbatim in `merge-tools/evidence/upstream_docs_sync3.diff` |
+| gpui Linux + macOS | 6 | **union** — ours' web-preview (`exported_wayland_window_handle`) and mouse-passthrough (`mouse_passthrough_snapshot`, `update_input_shape`) onto upstream's headless-windowing refactor (`f37989fbdf`) and frame journalling (`cd4fc8de4c` → `PlatformFrameSignal` / `FrameRequestSource`) |
+| agent_ui ACP v2 | 3 | upstream's `SessionConfigOptionValue::id()` ctor **+** ours' bounds-safe `options.get(next_index)?`; ours' DX permission-mode surface kept on upstream's new `permission_request` |
+| `project/search.rs` | 1 | ours' 8 MiB bounded multiline reader **re-expressed** as a block-wise, yielding reader (upstream's `read_to_string` shape + our cap) |
+| `editor/inlay_hints.rs` | 1 | upstream's bias fix (`normalize_hint_biases`, `visible_hints_for_buffer`, `surviving_visible_hints`) unioned with ours' capped invalidation splice (`collect_visible_inlay_hint_ids_for_buffer`) |
+| `extensions_ui.rs` | 1 | upstream's offline-installed-extensions pipeline adopted; ours' `MAX_FILTERED_EXTENSION_RESULTS` cap re-attached |
+| git_ui / extension_card / settings | 3 | unions and cap preservation (the fork's duplicate `search_web` keys de-duplicated) |
+| `Cargo.lock` | 1 | **ours** — regeneration blocked, see above |
+
+#### Supersessions (upstream's own removals — nothing local was lost)
+
+- **`X11WindowState.destroyed`** — upstream deleted the field, its initialiser **and** the two `x11/client.rs`
+  filters. Ours never touched them, so the auto-merge applied the removal cleanly; only ours' conflict side still
+  set `destroyed: false`, and that line was dropped.
+- **`YIELD_THRESHOLD`** in `project/search.rs` — upstream removed the constant and its line-by-line loop; ours'
+  conflict side still referenced the (now undeclared) constant, so it could not have compiled.
+- **`extensions_ui`'s `filter_extension_entries` pipeline** — ours' `filtered_dev_extension_indices`,
+  `filtered_remote_extension_indices`, `remote_extension_entries` and `dev_extension_entries` fields **have no
+  declarations** in the merged struct (upstream removed them), so ours' pipeline could not compile either.
+  Upstream's `update_local_search_results` / `rebuild_displayed_extensions` are called from **shared** regions
+  and are therefore mandatory.
+
+#### Kept compiled but unsurfaced (policy: never delete local work)
+
+- `bounded_remote_extension_entries` and `MAX_DISPLAYED_EXTENSION_RESULTS` → `#[allow(dead_code)]`, with ours'
+  `MAX_FILTERED_EXTENSION_RESULTS` **re-attached** to `update_local_search_results` so the cap stays live.
+- `read_to_string` (upstream's plain reader) → `#[allow(dead_code)]`; ours' bounded reader is used at both
+  `detect` sites.
+
+#### Gates
+
+- **Markers: 0 tree-wide** — the only `^<<<<<<<` hit is the long-standing `.hbs` false positive in
+  `crates/agent/src/templates/edit_file_prompt_diff_fenced.hbs`.
+- **`rustfmt --edition 2024 --check`: clean on all 15 touched files.** Follow-up commit `8052574a23` also restored
+  a lost indent in `thread_view.rs` that was **pre-existing in our fork** (`b5142ba1aa:1219`), not merge damage.
+- **Nested-item no-loss audit: 0 local / 0 remote losses** across 160 changed `.rs` files
+  (`merge-tools/nested_audit.py`, adapted: ours `b5142ba1aa`, theirs `a84689073d`, base `15dc0e9fa0`).
+- **Deletion audit:** exactly **2** deletions (`crates/gpui_linux/src/linux/headless/client.rs`,
+  `crates/language/src/file_content.rs`) — both upstream moves — and 1 rename
+  (`gpui_macos/src/dispatcher.rs` → `gpui_apple/src/dispatcher.rs`).
+- `assets/settings/default.json` validated as JSONC.
+- ⚠️ **`cargo metadata` / `cargo check` NOT run** — cargo cannot resolve the workspace (`dx-media`, above), and
+  `cargo check` is separately blocked by `cap-primitives`. The merge is **source-verified, not
+  compiler-verified**.
+
+#### Traps this session confirmed (all cost real time)
+
+- **`grep -c $'\r'` returns 0 on a CRLF file.** `inlay_hints.rs` and `extensions_ui.rs` are CRLF
+  (`git ls-files --eol` → `w/crlf`) while the shell tool reported **0** CR. A naive `line == "======="` marker
+  parser therefore found **no** conflict blocks at all; strip `\r` before comparing.
+- **`git merge-tree` takes the base via `--merge-base=`, never positionally.** A positional third argument fails,
+  and with `2>/dev/null` it silently yields a **bogus 0 conflicts**.
+- **`/tmp` in Git Bash is `G:/Temp/UserTemp`, not `G:/tmp`** — two different directories.
+- **Unioning two functions that shared one closing brace needs one more `}`** (`gpui_linux/src/linux.rs`).
+
+---
+
+### Session 42 (2026-10-03) — **no tree change**: measured the next sync (60 upstream commits → 29 conflicts), and recorded the three commits that had landed unlogged
+
+**Deliverable = measurement + doc reconciliation.** No merge was started; `forge` is untouched at
+`2510036f8c`, worktree clean apart from an unrelated `tabular_data_preview/src/table_view.rs` edit and the
+untracked `merge-tools/` scratch tree.
+
+#### The docs had rotted — three landed commits were in no ledger
+
+`CHANGELOG.md`'s newest entry was §Session 41 and its `[Unreleased]` banner still read *"mid-merge …
+**not committed, not pushed**"*, while `forge`'s reflog showed **three** commits after that point:
+
+| commit | date | what |
+|---|---|---|
+| `77fc1079e2` | 2026-09-30 20:56 | **the merge** — `chore(merge): sync upstream/main into forge (MERGE_HEAD e91b82c106)`; parents `33bbb8fe13` + `e91b82c106` |
+| `41047556ff` | 2026-09-30 20:57 | `chore: adapt the fork to upstream's ACP schema v1 and land the merge fallout` |
+| `2510036f8c` | 2026-09-30 21:59 | **HEAD** — `chore(merge): sync 55 new upstream/main commits into forge`; parents `41047556ff` + `15dc0e9fa0` |
+
+So **P8 of §0.13 was executed** (gates → commit), and a **further 55-commit sync landed on top** — while
+**`origin/forge` is still `33bbb8fe13`**, i.e. **65 commits unpushed**. This is exactly the "commit with no
+ledger entry" failure mode `AGENTS.md` §5 warns about, in the other direction from the 2026-09-19 incident.
+
+#### The measurement (verified against the live remote, not assumed)
+
+`git ls-remote upstream main` → **`a84689073d296dfd39987bc7dd478e43ef76d83a`**, identical to the local
+`upstream/main`; the local ref was refreshed the same day (`FETCH_HEAD` mtime 16:02, ten minutes before the
+measurement). Subject *path: Reimplement PathStyle on the standard library's path implementation* (#64149),
+committed **2026-10-03 08:53 UTC**.
+
+`git rev-list --left-right --count upstream/main...forge` → **60 behind / 71 ahead**. Merge-base
+**`15dc0e9fa0`** = the second parent of `2510036f8c`, so **only the 60 new commits replay**.
+
+`git merge-tree --write-tree --name-only forge upstream/main` → tree **`a1b33c0a79`**, **29 conflicted paths**:
+
+* **13 `modify/delete`** — every one `docs/**`, all *ours-deleted / upstream-modified* (`docs/src/ai/*`,
+  `docs/src/configuring-languages.md`, `docs/src/extensions/*`, `docs/src/git.md`,
+  `docs/src/languages/python.md`, `docs/src/reference/all-settings.md`, `docs/src/tab-switcher.md`,
+  `docs/src/visual-customization.md`, `docs/src/windows-and-projects.md`, `docs/theme/plugins.js`).
+* **16 `content`** — `Cargo.lock` (mechanical) plus 15 real: `assets/settings/default.json` ·
+  `agent_ui/src/config_options.rs` · `agent_ui/src/conversation_view.rs` ·
+  `agent_ui/src/conversation_view/thread_view.rs` · `editor/src/inlays/inlay_hints.rs` ·
+  `extensions_ui/src/components/extension_card.rs` · `extensions_ui/src/extensions_ui.rs` ·
+  `git_ui/src/git_panel.rs` · 5 × `gpui_linux/**` · `gpui_macos/src/window.rs` · `project/src/search.rs`.
+
+⚠️ **The raw `wc -l` of the merge-tree output is 119 — the real count is 29.** Extract with
+`awk 'NR==1{next} /^$/{exit} {print}'` and cross-check `grep -c '^CONFLICT'`.
+
+**~27 of the 60 commits touch at least one conflicting file**; the other ~33 merge cleanly. The drivers
+cluster in four themes — **ACP v2 / agent-UI** (`57af58b3ad`, `3209c7d31f`, `c5b6d4386e`, `23d10a4754`,
+`f8c2cc8440`, `2a97fbf22b`), **gpui Linux headless + frame journalling** (`f37989fbdf`, `cd4fc8de4c`,
+`40180d9c40`), **git_ui** (`c83abe7d0e`, `651d693d42`, `c9daddfa0a`, `5eed2397a8`, `74c134a3c1`) and
+**singletons** (`8da42ddee3`, `8bbcd83968`, `9874229eb7`) — with full per-file Δ in **`TODO.md` §0.14**.
+
+#### Also confirmed this session
+
+* ✅ **P4 is DONE.** `grep -rn 'impl LanguageModel for' crates/` → **0 hits** (only `impl LanguageModelProvider
+  for` remains — upstream's new shape). So §0.13's last conflict-class item is closed, and the
+  `LanguageModel` trait→struct conversion is complete tree-wide. ⚠️ Grep-verified, not compiler-verified:
+  `cargo check -p language_models` is still blocked by `cap-primitives` (§0.12 P1).
+* `forge` has **no `MERGE_HEAD` and no unmerged paths** — the previous sync is fully committed.
+* `TODO.md` §0.13's "NOT committed, NOT pushed" and `PLAN.md` §5's banner were both stale → **§0.13 is now
+  marked DONE** and the new state is filed as **§0.14**.
+* Docs were backed up to `G:/tmp/s42-docs/` **before** editing (the session-18 lesson: `TODO.md`/`CHANGELOG.md`
+  are large and a scripted edit once swallowed ~420 lines).
+
+---
 
 ### Session 41 (2026-09-26) — **ALL 13 CONFLICTS RESOLVED**; the last two files now compile
 

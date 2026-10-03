@@ -1,0 +1,31 @@
+{
+  "path": "G:/Dx/code/crates/language_models/src/provider/llama_cpp.rs",
+  "replacements": [
+    {
+      "label": "collapse the double blank left by the rebuilt import region",
+      "expect": 1,
+      "old": [
+        "use language_model::chat_completion::ChatCompletionEventMapper;",
+        "",
+        "",
+        "// --- ours' local-runtime imports (ours == base for the router side; these are the"
+      ],
+      "new": [
+        "use language_model::chat_completion::ChatCompletionEventMapper;",
+        "",
+        "// --- ours' local-runtime imports (ours == base for the router side; these are the"
+      ]
+    },
+    {
+      "label": "rustfmt: wrap OURS' LOCAL_LLAMA_PROVIDER_NAME const (pre-existing, one of the 5 hunks the untouched file already had)",
+      "expect": 1,
+      "old": [
+        "const LOCAL_LLAMA_PROVIDER_NAME: LanguageModelProviderName = LanguageModelProviderName::new(\"Llama.cpp\");"
+      ],
+      "new": [
+        "const LOCAL_LLAMA_PROVIDER_NAME: LanguageModelProviderName =",
+        "    LanguageModelProviderName::new(\"Llama.cpp\");"
+      ]
+    }
+  ]
+}

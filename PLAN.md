@@ -198,16 +198,25 @@ with a report at `/tmp/mf2_report.tsv` (cols: `rc`, `residual_hunks`, `ours_chan
 
 ---
 
-## 5. Next sync — **IN PROGRESS (session 41)**: upstream `e91b82c106`, 7 commits, **13 conflicts — all resolved**
+## 5. Next sync — **DONE (2026-10-03, session 43)**: upstream `a84689073d`, 60 commits, **29 of 29 conflicts resolved** (`b97dc82680`)
 
-> ⚠️ **This section is no longer a plan.** The sync was **started in session 40 and finished in session 41**:
-> `forge` is mid-merge against `e91b82c106`, **0 markers remain tree-wide**, and **nothing is committed or pushed**
-> (`origin/forge` is still `33bbb8fe13`). What remains is **P4** (two providers the `LanguageModel` trait→struct
-> refactor has not been applied to: `nara_router.rs`, `llama_cpp.rs`) and **P8** (gates → commit → push).
-> Full record: `CHANGELOG.md` §Session 41 · `TODO.md` §0.13.
+> ✅ **Both of §5's subjects are now closed.** The `e91b82c106` sync was committed 2026-09-30 as `77fc1079e2`
+> → `41047556ff` → `2510036f8c`; its one outstanding item, **P4**, is **also DONE** (`grep -rn 'impl LanguageModel
+> for' crates/` returns **0**). The **`a84689073d` sync then landed as `b97dc82680`** (+ `8052574a23`, a rustfmt
+> follow-up), replaying the 60 new commits from merge-base `15dc0e9fa0` with **29 conflicts** (16 content +
+> 13 `docs/**` modify/delete) all resolved — the in-memory prediction matched the merge exactly.
+> Records: `CHANGELOG.md` §Session 41 + §Session 43 · `TODO.md` §0.13 + §0.14.
 >
-> The measurements below were taken in memory **before** the sync started; the strategy section is what was
-> executed, kept as the record of the plan.
+> ⚠️ **Two items remain open:** (1) **`Cargo.lock` was not regenerated** — `cargo generate-lockfile` cannot resolve
+> the `dx-media` git dependency because `https://github.com/essence-dx/media` is currently unfetchable (150 s
+> timeout); ours' lock was kept so the fork's pins survive, and regeneration is still required for upstream's new
+> deps. (2) **`forge` is 68 commits ahead of `origin/forge` (`33bbb8fe13`) — NOT pushed.**
+>
+> **The next sync needs a fresh measurement** — `git fetch upstream && git merge-tree --write-tree --name-only
+> forge upstream/main` — because `forge` now contains `a84689073d`, so the merge-base will have moved.
+>
+> The measurements below were taken in memory **before** the `e91b82c106` sync started; the strategy section is
+> what was executed, kept as the record of the plan.
 
 **Measured in memory on 2026-09-26** with `git merge-tree --write-tree --name-only forge upstream/main`.
 
