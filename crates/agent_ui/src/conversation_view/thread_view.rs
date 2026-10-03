@@ -5,8 +5,8 @@ use crate::{
         is_agent_www_tool_preview_enabled, placeholder_preview_html_data_url,
         preview_url_for_agent_www_tool,
     },
-    dx_agent_bridge::DxConfiguredPluginSummary,
     conversation_view::thread_search_bar::{ThreadSearchBar, ThreadSearchBarEvent},
+    dx_agent_bridge::DxConfiguredPluginSummary,
     open_abs_path_at_point,
     thread_metadata_store::{ThreadId, ThreadMetadataStore},
     workflow_node_icons::{
@@ -19,7 +19,8 @@ use std::{cell::RefCell, ops::Range};
 use acp_thread::{
     AcpThreadEvent, ContentBlock, Elicitation, ElicitationEntryId, ElicitationStatus,
     ForegroundActivity, SandboxAuthorizationDetails, SandboxFallbackAuthorizationDetails,
-    SandboxNotAppliedReason, SubmissionId, SubmissionResponse, SubmissionState, decode_path_escapes,
+    SandboxNotAppliedReason, SubmissionId, SubmissionResponse, SubmissionState,
+    decode_path_escapes,
 };
 use agent::{
     SandboxStatusKey, SandboxStatusRefresh, SkillLoadingIssue, SkillLoadingIssueKind,
@@ -60,12 +61,12 @@ use workspace::{OpenOptions, SERIALIZATION_THROTTLE_TIME, Workspace};
 use super::composer_profile_options::{
     ComposerOptionEntry, ComposerOptionSlot, ComposerProfileKind,
 };
+use super::elicitation::{
+    ElicitationCard, ElicitationCardHandlers, ElicitationFormState, should_render_elicitation,
+};
 use super::voice_controls::{
     ComposerVoiceAvailability, ComposerVoicePhase, ComposerVoiceState, render_voice_buttons,
     render_voice_recording_panel,
-};
-use super::elicitation::{
-    ElicitationCard, ElicitationCardHandlers, ElicitationFormState, should_render_elicitation,
 };
 use super::*;
 use crate::flow_speech_runtime::{
@@ -1217,7 +1218,7 @@ impl ThreadView {
             }));
         }));
 
-let flow_voice_runtime = FlowSpeechRuntime::detect();
+        let flow_voice_runtime = FlowSpeechRuntime::detect();
         let composer_voice_availability = ComposerVoiceAvailability {
             stt_ready: flow_voice_runtime.stt_available(),
             stt_status: flow_voice_runtime.stt_readiness_summary().into(),
@@ -5311,93 +5312,93 @@ let flow_voice_runtime = FlowSpeechRuntime::detect();
                 .into_any(),
         )
 
-                        // ---------------------------------------------------------------------------
-                        // PRESERVED, UNSURFACED: upstream's `render_message_editor` container.
-                        // Our fork replaced this container with the DX chat-input lane
-                        // (`v_flex().id("agent-chat-input-lane")`), so upstream's version has no
-                        // surface to render into. Per the merge policy it stays in the tree rather
-                        // than being dropped. Upstream's refinements over base were `.py_2()`,
-                        // `.min_w_0()` and `.px_2()` on this container.
-                        // ---------------------------------------------------------------------------
-                        //
-                        //         let max_content_width = AgentSettings::get_global(cx).max_content_width;
-                        //         let has_messages = self.list_state.item_count() > 0;
-                        //         let fills_container = !has_messages || editor_expanded;
-                        //
-                        //         h_flex()
-                        //             .py_2()
-                        //             .bg(editor_bg_color)
-                        //             .justify_center()
-                        //             .on_action(cx.listener(Self::handle_message_editor_move_up))
-                        //             .map(|this| {
-                        //                 if has_messages {
-                        //                     this.on_action(cx.listener(Self::expand_message_editor))
-                        //                         .border_t_1()
-                        //                         .border_color(cx.theme().colors().border)
-                        //                         .when(editor_expanded, |this| this.h(vh(0.8, window)))
-                        //                 } else {
-                        //                     this.flex_1().size_full()
-                        //                 }
-                        //             })
-                        //             .child(
-                        //                 v_flex()
-                        //                     .when_some(max_content_width, |this, max_w| this.flex_basis(max_w))
-                        //                     .when(max_content_width.is_none(), |this| this.w_full())
-                        //                     .min_w_0()
-                        //                     .when(fills_container, |this| this.h_full())
-                        //                     .px_2()
-                        //                     .flex_shrink_1()
-                        //                     .flex_grow_0()
-                        //                     .justify_between()
-                        //                     .gap_2()
-                        //                     .child(
-                        //                         v_flex()
-                        //                             .relative()
-                        //                             .w_full()
-                        //                             .min_h_0()
-                        //                             .when(fills_container, |this| this.flex_1())
-                        //                             .pt_1()
-                        //                             .pr_2p5()
-                        //                             .child(self.message_editor.clone())
-                        //                             .when(has_messages, |this| {
-                        //                                 this.child(
-                        //                             }),
-                        //                     )
-                        //                     .child(
-                        //                         h_flex()
-                        //                             .w_full()
-                        //                             .min_w_0()
-                        //                             .flex_none()
-                        //                             .flex_wrap()
-                        //                             .justify_between()
-                        //                             .child(
-                        //                                 h_flex()
-                        //                                     .min_w_0()
-                        //                                     .flex_wrap()
-                        //                                     .gap_0p5()
-                        //                                     .child(self.render_add_context_button(cx))
-                        //                                     .child(self.render_follow_toggle(cx))
-                        //                                     .children(self.render_fast_mode_control(cx))
-                        //                                     .children(self.render_thinking_control(cx)),
-                        //                             )
-                        //                             .child(
-                        //                                 h_flex()
-                        //                                     .min_w_0()
-                        //                                     .flex_wrap()
-                        //                                     .gap_1()
-                        //                                     .children(self.render_token_usage(cx))
-                        //                                     .children(self.profile_selector.clone())
-                        //                                     .map(|this| match self.config_options_view.clone() {
-                        //                                         Some(config_view) => this.child(config_view),
-                        //                                         None => this
-                        //                                             .children(self.mode_selector.clone())
-                        //                                             .children(self.model_selector.clone()),
-                        //                                     })
-                        //                                     .child(self.render_send_button(cx)),
-                        //                             ),
-                        //                     ),
-                        //             )
-                        //             .into_any()
+        // ---------------------------------------------------------------------------
+        // PRESERVED, UNSURFACED: upstream's `render_message_editor` container.
+        // Our fork replaced this container with the DX chat-input lane
+        // (`v_flex().id("agent-chat-input-lane")`), so upstream's version has no
+        // surface to render into. Per the merge policy it stays in the tree rather
+        // than being dropped. Upstream's refinements over base were `.py_2()`,
+        // `.min_w_0()` and `.px_2()` on this container.
+        // ---------------------------------------------------------------------------
+        //
+        //         let max_content_width = AgentSettings::get_global(cx).max_content_width;
+        //         let has_messages = self.list_state.item_count() > 0;
+        //         let fills_container = !has_messages || editor_expanded;
+        //
+        //         h_flex()
+        //             .py_2()
+        //             .bg(editor_bg_color)
+        //             .justify_center()
+        //             .on_action(cx.listener(Self::handle_message_editor_move_up))
+        //             .map(|this| {
+        //                 if has_messages {
+        //                     this.on_action(cx.listener(Self::expand_message_editor))
+        //                         .border_t_1()
+        //                         .border_color(cx.theme().colors().border)
+        //                         .when(editor_expanded, |this| this.h(vh(0.8, window)))
+        //                 } else {
+        //                     this.flex_1().size_full()
+        //                 }
+        //             })
+        //             .child(
+        //                 v_flex()
+        //                     .when_some(max_content_width, |this, max_w| this.flex_basis(max_w))
+        //                     .when(max_content_width.is_none(), |this| this.w_full())
+        //                     .min_w_0()
+        //                     .when(fills_container, |this| this.h_full())
+        //                     .px_2()
+        //                     .flex_shrink_1()
+        //                     .flex_grow_0()
+        //                     .justify_between()
+        //                     .gap_2()
+        //                     .child(
+        //                         v_flex()
+        //                             .relative()
+        //                             .w_full()
+        //                             .min_h_0()
+        //                             .when(fills_container, |this| this.flex_1())
+        //                             .pt_1()
+        //                             .pr_2p5()
+        //                             .child(self.message_editor.clone())
+        //                             .when(has_messages, |this| {
+        //                                 this.child(
+        //                             }),
+        //                     )
+        //                     .child(
+        //                         h_flex()
+        //                             .w_full()
+        //                             .min_w_0()
+        //                             .flex_none()
+        //                             .flex_wrap()
+        //                             .justify_between()
+        //                             .child(
+        //                                 h_flex()
+        //                                     .min_w_0()
+        //                                     .flex_wrap()
+        //                                     .gap_0p5()
+        //                                     .child(self.render_add_context_button(cx))
+        //                                     .child(self.render_follow_toggle(cx))
+        //                                     .children(self.render_fast_mode_control(cx))
+        //                                     .children(self.render_thinking_control(cx)),
+        //                             )
+        //                             .child(
+        //                                 h_flex()
+        //                                     .min_w_0()
+        //                                     .flex_wrap()
+        //                                     .gap_1()
+        //                                     .children(self.render_token_usage(cx))
+        //                                     .children(self.profile_selector.clone())
+        //                                     .map(|this| match self.config_options_view.clone() {
+        //                                         Some(config_view) => this.child(config_view),
+        //                                         None => this
+        //                                             .children(self.mode_selector.clone())
+        //                                             .children(self.model_selector.clone()),
+        //                                     })
+        //                                     .child(self.render_send_button(cx)),
+        //                             ),
+        //                     ),
+        //             )
+        //             .into_any()
     }
 
     fn render_profile_telemetry(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
