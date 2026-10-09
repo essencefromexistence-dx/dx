@@ -1,10 +1,11 @@
 use anyhow::{Context as _, Result};
 use collections::HashMap;
 use cpal::{
-    DeviceDescription, DeviceId, default_host,
+    DeviceDescription, DeviceId, Error, ErrorKind, default_host,
     traits::{DeviceTrait, HostTrait},
 };
-use gpui::{App, AsyncApp, BorrowAppContext, Global};
+use futures::channel::oneshot;
+use gpui::{App, AsyncApp, BorrowAppContext, Global, Task};
 
 pub(super) use cpal::Sample;
 
@@ -55,6 +56,7 @@ pub fn ensure_devices_initialized(cx: &mut App) {
 #[derive(Default)]
 pub struct Audio {
     output: Option<(MixerDeviceSink, Mixer)>,
+    output_error_task: Option<Task<()>>,
     pub echo_canceller: EchoCanceller,
     source_cache: HashMap<Sound, Buffered<Decoder<Cursor<Vec<u8>>>>>,
     dx_sound_last_played: HashMap<DxSoundEvent, Instant>,
@@ -149,16 +151,25 @@ impl<S> Drop for TrackedAudioSource<S> {
 }
 
 impl Audio {
-    fn ensure_output_exists(&mut self, output_audio_device: Option<DeviceId>) -> Result<&Mixer> {
-        if self.output.is_none() {
-            #[cfg(debug_assertions)]
-            log::debug!(
-                "Audio does not sound correct without optimizations. Use a release build to debug audio issues"
-            );
+    fn ensure_output_exists(
+        &mut self,
+        output_audio_device: Option<DeviceId>,
+        cx: &mut App,
+    ) -> Result<&Mixer> {
+        #[cfg(debug_assertions)]
+        log::warn!(
+            "Audio does not sound correct without optimizations. Use a release build to debug audio issues"
+        );
 
-            let (output_handle, output_mixer) =
-                open_output_stream(output_audio_device, self.echo_canceller.clone())?;
-            self.output = Some((output_handle, output_mixer));
+        if self.output.is_none() {
+            let (error_callback, error_task) = output_error_handler(cx);
+            let output = open_output_stream(
+                output_audio_device,
+                self.echo_canceller.clone(),
+                error_callback,
+            )?;
+            self.output = Some(output);
+            self.output_error_task = Some(error_task);
         }
 
         Ok(self
@@ -173,7 +184,7 @@ impl Audio {
         cx.update_default_global(|this: &mut Self, cx| {
             let source = this.sound_source(sound, cx).log_err()?;
             let output_mixer = this
-                .ensure_output_exists(output_audio_device)
+                .ensure_output_exists(output_audio_device, cx)
                 .context("Could not get output mixer")
                 .log_err()?;
 
@@ -207,7 +218,7 @@ impl Audio {
 
             let source = this.sound_source(event.sound(), cx).log_err()?;
             let output_mixer = this
-                .ensure_output_exists(output_audio_device)
+                .ensure_output_exists(output_audio_device, cx)
                 .context("Could not get output mixer")
                 .log_err()?;
 
@@ -237,7 +248,7 @@ impl Audio {
         let bytes = std::fs::read(path)
             .with_context(|| format!("Could not read WAV file {}", path.display()))?;
 
-        cx.update_default_global(|this: &mut Self, _cx| {
+        cx.update_default_global(|this: &mut Self, cx| {
             let source = Decoder::new(Cursor::new(bytes))?;
             let state = AudioPlaybackState::new();
             let handle = AudioPlaybackHandle {
@@ -248,7 +259,7 @@ impl Audio {
                 state,
             };
             let output_mixer = this
-                .ensure_output_exists(output_audio_device)
+                .ensure_output_exists(output_audio_device, cx)
                 .context("Could not get output mixer")?;
 
             // TTS (Kokoro read-aloud) volume is set to 5% to keep it non-intrusive.
@@ -258,8 +269,9 @@ impl Audio {
     }
 
     pub fn end_call(cx: &mut App) {
-        cx.update_default_global(|this: &mut Self, _cx| {
-            this.output.take();
+        cx.update_default_global(|audio: &mut Self, _cx| {
+            audio.output_error_task.take();
+            audio.output.take();
         });
     }
 
@@ -340,6 +352,7 @@ pub fn resolve_device(device_id: Option<&DeviceId>, input: bool) -> anyhow::Resu
 pub fn open_test_output(device_id: Option<DeviceId>) -> anyhow::Result<MixerDeviceSink> {
     let device = resolve_device(device_id.as_ref(), false)?;
     DeviceSinkBuilder::from_device(device)?
+        .with_buffer_size(cpal::BufferSize::Default)
         .open_stream()
         .context("Could not open output stream")
 }
@@ -347,9 +360,12 @@ pub fn open_test_output(device_id: Option<DeviceId>) -> anyhow::Result<MixerDevi
 pub fn open_output_stream(
     device_id: Option<DeviceId>,
     mut echo_canceller: EchoCanceller,
+    error_callback: impl FnMut(Error) + Send + 'static,
 ) -> anyhow::Result<(MixerDeviceSink, Mixer)> {
     let device = resolve_device(device_id.as_ref(), false)?;
     let mut output_handle = DeviceSinkBuilder::from_device(device)?
+        .with_buffer_size(cpal::BufferSize::Default)
+        .with_error_callback(error_callback)
         .open_stream()
         .context("Could not open output stream")?;
     output_handle.log_on_drop(false);
@@ -411,3 +427,91 @@ fn get_available_audio_devices() -> Vec<AudioDeviceInfo> {
 pub struct AvailableAudioDevices(pub Vec<AudioDeviceInfo>);
 
 impl Global for AvailableAudioDevices {}
+
+fn output_error_handler(cx: &mut App) -> (impl FnMut(Error) + Send + 'static + use<>, Task<()>) {
+    let (sender, receiver) = oneshot::channel();
+    let mut sender = Some(sender);
+    let callback = move |error: Error| {
+        if matches!(
+            error.kind(),
+            ErrorKind::Xrun | ErrorKind::DeviceChanged | ErrorKind::RealtimeDenied
+        ) {
+            return;
+        }
+        if let Some(sender) = sender.take() {
+            sender.send(error).ok();
+        }
+    };
+    let task = cx.spawn(async move |cx| {
+        if let Ok(error) = receiver.await {
+            log::error!("Audio output stream failed: {error}");
+            cx.update(Audio::end_call);
+        }
+    });
+    (callback, task)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui::TestAppContext;
+
+    #[gpui::test]
+    fn test_output_error_handler(cx: &mut TestAppContext) {
+        for error_kind in [
+            ErrorKind::DeviceNotAvailable,
+            ErrorKind::StreamInvalidated,
+            ErrorKind::BackendError,
+        ] {
+            let mut callback = cx.update(install_output_error_handler);
+            for recoverable_kind in [
+                ErrorKind::Xrun,
+                ErrorKind::DeviceChanged,
+                ErrorKind::RealtimeDenied,
+            ] {
+                callback(Error::new(recoverable_kind));
+                cx.run_until_parked();
+                cx.update(|cx| assert!(cx.global::<Audio>().output_error_task.is_some()));
+            }
+
+            callback(Error::new(error_kind));
+            callback(Error::new(error_kind));
+            cx.run_until_parked();
+            cx.update(|cx| assert!(cx.global::<Audio>().output_error_task.is_none()));
+        }
+    }
+
+    #[gpui::test]
+    fn test_output_error_handler_cancellation(cx: &mut TestAppContext) {
+        for error_before_close in [false, true] {
+            let mut old_callback = cx.update(install_output_error_handler);
+            if error_before_close {
+                old_callback(Error::new(ErrorKind::DeviceNotAvailable));
+            }
+            cx.update(Audio::end_call);
+
+            let mut callback = cx.update(install_output_error_handler);
+            old_callback(Error::new(ErrorKind::DeviceNotAvailable));
+            cx.run_until_parked();
+            cx.update(|cx| assert!(cx.global::<Audio>().output_error_task.is_some()));
+
+            callback(Error::new(ErrorKind::StreamInvalidated));
+            cx.run_until_parked();
+            cx.update(|cx| assert!(cx.global::<Audio>().output_error_task.is_none()));
+        }
+
+        let callback = cx.update(install_output_error_handler);
+        drop(callback);
+        cx.run_until_parked();
+        cx.update(|cx| assert!(cx.global::<Audio>().output_error_task.is_some()));
+        cx.update(Audio::end_call);
+    }
+
+    fn install_output_error_handler(cx: &mut App) -> impl FnMut(Error) + Send + 'static + use<> {
+        let (callback, task) = output_error_handler(cx);
+        cx.update_default_global(|audio: &mut Audio, _cx| {
+            audio.output_error_task = Some(task);
+        });
+        callback
+    }
+}

@@ -58,12 +58,14 @@ pub(crate) fn start_scan(panel: &mut ProjectPanel, cx: &mut Context<ProjectPanel
     // The previous tree is remembered so a *widening* scan can skip it, but the
     // handle to the running scan is not: a scan already in flight is replaced,
     // not raced.
-    tree.scan.known = tree.scan.tree.take().map(|scanned| {
-        disk_tree_core::scan::Known {
+    tree.scan.known = tree
+        .scan
+        .tree
+        .take()
+        .map(|scanned| disk_tree_core::scan::Known {
             path: tree.scan.root.clone(),
             tree: scanned,
-        }
-    });
+        });
     tree.scan.tree = None;
     tree.scan.epoch += 1;
     let epoch = tree.scan.epoch;
@@ -104,8 +106,6 @@ pub(crate) fn start_scan(panel: &mut ProjectPanel, cx: &mut Context<ProjectPanel
     poll_scan(panel, handle, epoch, cx);
 }
 
-
-
 /// The polling loop. Detached: it ends when the scan finishes, is cancelled, or
 /// a newer scan bumps the epoch.
 fn poll_scan(
@@ -117,9 +117,7 @@ fn poll_scan(
     let _ = panel;
     cx.spawn(async move |panel, cx| {
         loop {
-            cx.background_executor()
-                .timer(POLL_INTERVAL)
-                .await;
+            cx.background_executor().timer(POLL_INTERVAL).await;
             let keep = panel
                 .update(cx, |panel, cx| poll_scan_once(panel, &handle, epoch, cx))
                 .unwrap_or(false);
@@ -204,13 +202,20 @@ pub(crate) fn cancel_scan(panel: &mut ProjectPanel, cx: &mut Context<ProjectPane
 ///
 /// Started once when the tree is built rather than per-scan, because the ticker
 /// is cheap and the alternative is a second timer to reason about.
-pub(crate) fn start_space_ticker(panel: &mut ProjectPanel, window: &mut Window, cx: &mut Context<ProjectPanel>) {
+pub(crate) fn start_space_ticker(
+    panel: &mut ProjectPanel,
+    window: &mut Window,
+    cx: &mut Context<ProjectPanel>,
+) {
     let _ = panel;
     cx.spawn_in(window, async move |panel, cx| {
         loop {
             let interval = panel
                 .update(cx, |panel, _| {
-                    if panel.disk_tree().is_some_and(|t| t.screen == Screen::Running) {
+                    if panel
+                        .disk_tree()
+                        .is_some_and(|t| t.screen == Screen::Running)
+                    {
                         SPACE_INTERVAL_SCANNING
                     } else {
                         SPACE_INTERVAL_EXPLORING

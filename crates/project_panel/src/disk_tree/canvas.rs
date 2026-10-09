@@ -42,10 +42,10 @@
 
 use disk_tree_core::classify::Category;
 use gpui::{
-    App, Bounds, ContentMask, Corners, Edges, FocusHandle, Font, FontWeight, Hsla, InteractiveElement,
-    MouseDownEvent, MouseMoveEvent, ParentElement, Pixels, Point, ScrollWheelEvent, SharedString,
-    Size, StatefulInteractiveElement, Styled, TextAlign, TextRun, Window, canvas,
-    pattern_slash, px, quad, transparent_black,
+    App, Bounds, ContentMask, Corners, Edges, FocusHandle, Font, FontWeight, Hsla,
+    InteractiveElement, MouseDownEvent, MouseMoveEvent, ParentElement, Pixels, Point,
+    ScrollWheelEvent, SharedString, Size, StatefulInteractiveElement, Styled, TextAlign, TextRun,
+    Window, canvas, pattern_slash, px, quad, transparent_black,
 };
 use std::cell::Cell;
 use std::rc::Rc;
@@ -114,59 +114,45 @@ pub(crate) fn render(
         .on_mouse_move(cx.listener(|panel, event: &MouseMoveEvent, window, cx| {
             crate::disk_tree::mouse::on_move(panel, event, window, cx);
         }))
-        .on_any_mouse_down(cx.listener(
-            |panel, event: &MouseDownEvent, window, cx| {
-                crate::disk_tree::mouse::on_down(panel, event, window, cx);
-            },
-        ))
-        .on_scroll_wheel(cx.listener(
-            |panel, event: &ScrollWheelEvent, window, cx| {
-                crate::disk_tree::mouse::on_scroll(panel, event, window, cx);
-            },
-        ))
+        .on_any_mouse_down(cx.listener(|panel, event: &MouseDownEvent, window, cx| {
+            crate::disk_tree::mouse::on_down(panel, event, window, cx);
+        }))
+        .on_scroll_wheel(cx.listener(|panel, event: &ScrollWheelEvent, window, cx| {
+            crate::disk_tree::mouse::on_scroll(panel, event, window, cx);
+        }))
         .child(
             // A `Canvas` implements `Styled` but not `Div`, so it has neither
             // `absolute()` nor an element id. Upstream chained
             // `.absolute().inset_0()` onto the canvas itself; here the absolute
             // positioning lives on a wrapping `div` and the canvas fills it.
-            gpui::div().absolute().inset_0().child(
-                canvas(
-                    // Closure 1: prepaint / measure. This is the only channel from
-                    // the paint pass back to state - a `canvas` prepaint closure's
-                    // return value goes to paint, not to the entity.
-                    move |bounds: Bounds<Pixels>, window: &mut Window, _| {
-                        // Both cells are the ones the tree holds, so a mouse event
-                        // later in this frame maps back to the same coordinates the
-                        // paint pass used.
-                        canvas_origin.set(bounds.origin);
-                        if canvas_measured.get() != bounds.size {
-                            canvas_measured.set(bounds.size);
-                            // The mosaic depends on the viewport size (clamping,
-                            // label sizes), so a resize needs a second frame.
-                            window.request_animation_frame();
-                        }
-                        bounds.size
-                    },
-                    // Closure 2: paint.
-                    move |bounds: Bounds<Pixels>,
-                          _: Size<Pixels>,
-                          window: &mut Window,
-                          cx: &mut App| {
-                        paint_tiles(&tiles, bounds, view, &colors, window);
-                        paint_labels(
-                            &labels,
-                            bounds,
-                            view,
-                            &colors,
-                            &font,
-                            name_size,
-                            size_size,
-                            window,
-                            cx,
-                        );
-                    },
-                ),
-            ),
+            gpui::div().absolute().inset_0().child(canvas(
+                // Closure 1: prepaint / measure. This is the only channel from
+                // the paint pass back to state - a `canvas` prepaint closure's
+                // return value goes to paint, not to the entity.
+                move |bounds: Bounds<Pixels>, window: &mut Window, _| {
+                    // Both cells are the ones the tree holds, so a mouse event
+                    // later in this frame maps back to the same coordinates the
+                    // paint pass used.
+                    canvas_origin.set(bounds.origin);
+                    if canvas_measured.get() != bounds.size {
+                        canvas_measured.set(bounds.size);
+                        // The mosaic depends on the viewport size (clamping,
+                        // label sizes), so a resize needs a second frame.
+                        window.request_animation_frame();
+                    }
+                    bounds.size
+                },
+                // Closure 2: paint.
+                move |bounds: Bounds<Pixels>,
+                      _: Size<Pixels>,
+                      window: &mut Window,
+                      cx: &mut App| {
+                    paint_tiles(&tiles, bounds, view, &colors, window);
+                    paint_labels(
+                        &labels, bounds, view, &colors, &font, name_size, size_size, window, cx,
+                    );
+                },
+            )),
         )
 }
 
@@ -417,10 +403,7 @@ fn snap(bounds: Bounds<Pixels>, scale: f32) -> Bounds<Pixels> {
     let bottom = round(bounds.origin.y + bounds.size.height);
     Bounds::new(
         Point::new(left, top),
-        Size::new(
-            (right - left).max(px(0.)),
-            (bottom - top).max(px(0.)),
-        ),
+        Size::new((right - left).max(px(0.)), (bottom - top).max(px(0.))),
     )
 }
 
@@ -478,18 +461,15 @@ fn paint_labels(
             color: colors.label[(label.depth.min(1)) as usize],
             ..TextRun::default()
         };
-        let line =
-            text_system.shape_line(SharedString::from(label.text.clone()), name_size, &[name_run], None);
+        let line = text_system.shape_line(
+            SharedString::from(label.text.clone()),
+            name_size,
+            &[name_run],
+            None,
+        );
 
         window.with_content_mask(Some(ContentMask { bounds: mask }), |window| {
-            let _ = line.paint(
-                origin,
-                name_line_height,
-                TextAlign::Left,
-                None,
-                window,
-                cx,
-            );
+            let _ = line.paint(origin, name_line_height, TextAlign::Left, None, window, cx);
 
             if label.size_text.is_empty() {
                 return;

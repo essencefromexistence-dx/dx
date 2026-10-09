@@ -48,6 +48,10 @@ indoc.workspace = true
 itertools.workspace = true
 language.workspace = true
 language_model.workspace = true
+# Needed in production, not just tests: src/dx_catalog_agent_bridge.rs:18 imports
+# `language_models::AllLanguageModelSettings` to write the
+# `language_models.openai_compatible.*` settings path. It was only declared in
+# [dev-dependencies], so the import failed to resolve.
 language_models.workspace = true
 log.workspace = true
 parking_lot.workspace = true
@@ -106,6 +110,7 @@ gpui = { workspace = true, "features" = ["test-support"] }
 gpui_tokio.workspace = true
 language = { workspace = true, "features" = ["test-support"] }
 language_model = { workspace = true, "features" = ["test-support"] }
+language_models.workspace = true
 lsp = { workspace = true, "features" = ["test-support"] }
 pretty_assertions.workspace = true
 project = { workspace = true, "features" = ["test-support"] }
@@ -116,7 +121,7 @@ settings = { workspace = true, "features" = ["test-support"] }
 theme = { workspace = true, "features" = ["test-support"] }
 theme_settings.workspace = true
 
-unindent = { workspace = true }
+unindent.workspace = true
 
 zlog.workspace = true
 

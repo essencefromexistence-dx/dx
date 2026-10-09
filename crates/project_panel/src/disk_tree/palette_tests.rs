@@ -32,8 +32,8 @@ use theme::Appearance;
 
 use crate::disk_tree::{
     palette::{
-        AGE_BUCKETS, age_accent, age_bucket, age_fill, category_accent, category_fill,
-        highlight, mix,
+        AGE_BUCKETS, age_accent, age_bucket, age_fill, category_accent, category_fill, highlight,
+        mix,
     },
     theme::DiskTreeTokens,
 };

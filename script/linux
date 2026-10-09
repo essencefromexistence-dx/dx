@@ -80,7 +80,7 @@ if [[ -n $apt ]]; then
     curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x1E9377A2BA9EF27F' | \
       sed -n '/-----BEGIN PGP PUBLIC KEY BLOCK-----/,/-----END PGP PUBLIC KEY BLOCK-----/p' | \
       $maysudo gpg --dearmor -o /etc/apt/trusted.gpg.d/ubuntu-toolchain-r-test.gpg
-    deps+=( clang-18 libstdc++-11-dev )
+    deps+=( clang-18 lld-18 libstdc++-11-dev )
   fi
 
   $maysudo "$apt" update
@@ -101,6 +101,7 @@ if [[ -n $dnf ]] || [[ -n $yum ]]; then
     musl-gcc
     gcc
     clang
+    lld
     cmake
     alsa-lib-devel
     fontconfig-devel
@@ -167,6 +168,7 @@ if [[ -n $zyp ]]; then
   deps=(
     alsa-devel
     clang
+    lld
     cmake
     fontconfig-devel
     gcc
@@ -203,6 +205,7 @@ if [[ -n $pacman ]]; then
   deps=(
     gcc
     clang
+    lld
     musl
     cmake
     alsa-lib
@@ -234,6 +237,7 @@ if [[ -n $xbps ]]; then
   deps=(
     gettext-devel
     clang
+    lld
     cmake
     jq
     elfutils-devel
@@ -268,6 +272,7 @@ if [[ -n $emerge ]]; then
     dev-libs/openssl
     dev-libs/wayland
     dev-build/cmake
+    llvm-core/lld
     media-libs/alsa-lib
     media-libs/fontconfig
     media-libs/libva

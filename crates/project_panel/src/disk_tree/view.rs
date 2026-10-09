@@ -259,7 +259,11 @@ mod tests {
         let clamped = view.clamped(area(600.0, 800.0));
         assert_eq!(clamped.origin_x, 0.0);
         let max_y = 800.0 - 800.0 / 3.0;
-        assert!((clamped.origin_y - max_y).abs() < 1e-3, "{}", clamped.origin_y);
+        assert!(
+            (clamped.origin_y - max_y).abs() < 1e-3,
+            "{}",
+            clamped.origin_y
+        );
     }
 
     #[test]

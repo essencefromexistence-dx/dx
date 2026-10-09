@@ -68,11 +68,11 @@ use std::{
 };
 use theme_settings::ThemeSettings;
 use ui::{
-    ButtonStyle, Chip, Color, ContextMenu, DecoratedIcon, Divider, Icon,
-    IconButton, IconButtonShape, IconDecoration, IconDecorationKind, IndentGuideColors,
-    IndentGuideLayout, Indicator, KeyBinding, Label, LabelSize, ListHeader, ListItem,
-    ListItemSpacing, PopoverMenu, ProjectEmptyState, ScrollAxes, ScrollableHandle, Scrollbars,
-    StickyCandidate, Tooltip, WithScrollbar, prelude::*, v_flex,
+    ButtonStyle, Chip, Color, ContextMenu, DecoratedIcon, Divider, Icon, IconButton,
+    IconButtonShape, IconDecoration, IconDecorationKind, IndentGuideColors, IndentGuideLayout,
+    Indicator, KeyBinding, Label, LabelSize, ListHeader, ListItem, ListItemSpacing, PopoverMenu,
+    ProjectEmptyState, ScrollAxes, ScrollableHandle, Scrollbars, StickyCandidate, Tooltip,
+    WithScrollbar, prelude::*, v_flex,
 };
 use util::{
     ResultExt, TryFutureExt,
@@ -413,7 +413,7 @@ enum DragTarget {
     Background,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct FoldedDirectoryDragTarget {
     entry_id: ProjectEntryId,
     index: usize,
@@ -2009,9 +2009,7 @@ impl ProjectPanel {
                     continue;
                 }
 
-                if dirs_to_expand.len()
-                    >= MAX_PROJECT_PANEL_EXPANDED_DIRS_PER_WORKTREE
-                {
+                if dirs_to_expand.len() >= MAX_PROJECT_PANEL_EXPANDED_DIRS_PER_WORKTREE {
                     project_panel_cap_hit(
                         "expand-all-worklist",
                         MAX_PROJECT_PANEL_EXPANDED_DIRS_PER_WORKTREE,
@@ -2185,7 +2183,7 @@ impl ProjectPanel {
             });
             return;
         }
-        if let Some(selection) = self.selection {
+        if let Some(previous_selection) = self.selection {
             if self.select_media_shelf_entry(
                 MediaShelfNavigationDirection::Previous,
                 window.modifiers().shift,
@@ -2194,8 +2192,9 @@ impl ProjectPanel {
                 return;
             }
 
-            let (mut worktree_ix, mut entry_ix, _) =
-                self.index_for_selection(selection).unwrap_or_default();
+            let (mut worktree_ix, mut entry_ix, _) = self
+                .index_for_selection(previous_selection)
+                .unwrap_or_default();
             if entry_ix > 0 {
                 entry_ix -= 1;
             } else if worktree_ix > 0 {
@@ -2230,12 +2229,36 @@ impl ProjectPanel {
             };
             self.selection = Some(selection);
             if window.modifiers().shift {
-                self.marked_entries.push(selection);
+                self.extend_marked_entries(previous_selection, selection);
             }
             self.autoscroll(cx);
             cx.notify();
         } else {
             self.select_first(&SelectFirst {}, window, cx);
+        }
+    }
+
+    fn extend_marked_entries(
+        &mut self,
+        previous_selection: SelectedEntry,
+        selection: SelectedEntry,
+    ) {
+        // Mark the entry the selection started from too, so that extending a selection
+        // with the keyboard includes it, the same as a shift-click range does.
+        if !self.marked_entries.contains(&previous_selection) {
+            self.marked_entries.push(previous_selection);
+        }
+        if !self.marked_entries.contains(&selection) {
+            self.marked_entries.push(selection);
+        }
+        self.select_outermost_folded_ancestor(selection.entry_id);
+    }
+
+    // A vertical selection gesture says nothing about which segment of a folded
+    // directory is meant, so select the whole folded directory.
+    fn select_outermost_folded_ancestor(&mut self, entry_id: ProjectEntryId) {
+        if let Some(folds) = self.state.ancestors.get_mut(&entry_id) {
+            folds.set_active_index(0);
         }
     }
 
@@ -3538,7 +3561,7 @@ impl ProjectPanel {
             });
             return;
         }
-        if let Some(selection) = self.selection {
+        if let Some(previous_selection) = self.selection {
             if self.select_media_shelf_entry(
                 MediaShelfNavigationDirection::Next,
                 window.modifiers().shift,
@@ -3547,8 +3570,9 @@ impl ProjectPanel {
                 return;
             }
 
-            let (mut worktree_ix, mut entry_ix, _) =
-                self.index_for_selection(selection).unwrap_or_default();
+            let (mut worktree_ix, mut entry_ix, _) = self
+                .index_for_selection(previous_selection)
+                .unwrap_or_default();
             if let Some(worktree_entries) = self
                 .state
                 .visible_entries
@@ -3576,7 +3600,7 @@ impl ProjectPanel {
                 };
                 self.selection = Some(selection);
                 if window.modifiers().shift {
-                    self.marked_entries.push(selection);
+                    self.extend_marked_entries(previous_selection, selection);
                 }
 
                 self.autoscroll(cx);
@@ -3905,7 +3929,8 @@ impl ProjectPanel {
         let source_entry = source_worktree.read(cx).entry_for_id(source.entry_id)?;
 
         let clipboard_entry_file_name = source_entry.path.file_name()?.to_string();
-        let Ok(clipboard_entry_file_name_path) = RelPath::from_unix_str(&clipboard_entry_file_name) else {
+        let Ok(clipboard_entry_file_name_path) = RelPath::from_unix_str(&clipboard_entry_file_name)
+        else {
             return None;
         };
         new_path.push(clipboard_entry_file_name_path);
@@ -5168,7 +5193,7 @@ impl ProjectPanel {
             && (project.is_local() || project.is_via_wsl_with_host_interop(cx))
     }
 
-fn toggle_storage_details_visible(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    fn toggle_storage_details_visible(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         // The treemap and the drilldown are one user-visible choice, so showing
         // one hides the other. See `storage_surface()`.
         self.disk_tree_visible = false;
@@ -5325,7 +5350,7 @@ fn toggle_storage_details_visible(&mut self, window: &mut Window, cx: &mut Conte
         let new_file_tooltip_focus_handle = new_file_focus_handle.clone();
         let new_folder_focus_handle = header_focus_handle.clone();
         let new_folder_tooltip_focus_handle = new_folder_focus_handle.clone();
-let storage_details_focus_handle = header_focus_handle.clone();
+        let storage_details_focus_handle = header_focus_handle.clone();
         let disk_tree_focus_handle = header_focus_handle.clone();
         let project_options_focus_handle = header_focus_handle.clone();
         let panel_for_project_options = cx.entity().downgrade();
@@ -5334,14 +5359,13 @@ let storage_details_focus_handle = header_focus_handle.clone();
             SharedString::from(format!("dx-explorer-project-options-menu-{panel_id:?}"));
         let project_options_button_id =
             SharedString::from(format!("dx-explorer-project-options-{panel_id:?}"));
-let storage_details_button_id =
-        SharedString::from(format!("dx-explorer-storage-details-{panel_id:?}"));
-    let disk_tree_button_id =
-        SharedString::from(format!("dx-explorer-disk-tree-{panel_id:?}"));
-    // Read through `storage_surface()`, not straight off the field, so the header
-    // cannot disagree with what is actually drawn below it.
-    let disk_tree_visible = self.storage_surface() == Some(StorageSurface::Treemap);
-    let storage_details_visible = self.storage_details_visible;
+        let storage_details_button_id =
+            SharedString::from(format!("dx-explorer-storage-details-{panel_id:?}"));
+        let disk_tree_button_id = SharedString::from(format!("dx-explorer-disk-tree-{panel_id:?}"));
+        // Read through `storage_surface()`, not straight off the field, so the header
+        // cannot disagree with what is actually drawn below it.
+        let disk_tree_visible = self.storage_surface() == Some(StorageSurface::Treemap);
+        let storage_details_visible = self.storage_details_visible;
 
         let _header_summary_meta = [
             format!("Source: {source_label}"),
@@ -6943,6 +6967,7 @@ let storage_details_button_id =
                     this.update_visible_entries_task.autoscroll = false;
                     this.autoscroll(cx);
                 }
+                this.preload_initial_entry_icons(window, cx);
                 cx.notify();
             })
             .ok();
@@ -6954,6 +6979,77 @@ let storage_details_button_id =
                 || self.update_visible_entries_task.focus_filename_editor,
             autoscroll: autoscroll || self.update_visible_entries_task.autoscroll,
         };
+    }
+
+    fn preload_initial_entry_icons(&self, window: &Window, cx: &mut Context<Self>) {
+        if self.state.edit_state.is_some() {
+            return;
+        }
+        {
+            let scroll = self.scroll_handle.0.borrow();
+            if scroll
+                .last_item_size
+                .is_some_and(|size| size.contents.height > Pixels::ZERO)
+                || scroll.base_handle.offset().y != Pixels::ZERO
+                || scroll.deferred_scroll_to_item.is_some()
+            {
+                return;
+            }
+        }
+
+        let Some(workspace) = Workspace::for_window(window, cx)
+            .filter(|workspace| workspace.entity_id() == self.workspace.entity_id())
+        else {
+            return;
+        };
+        let workspace = workspace.read(cx);
+        let panel_id = cx.entity_id();
+        if workspace
+            .zoomed_item()
+            .and_then(|view| view.upgrade())
+            .is_some_and(|view| view.entity_id() != panel_id)
+            || !workspace.all_docks().into_iter().any(|dock| {
+                dock.read(cx)
+                    .visible_panel()
+                    .is_some_and(|panel| panel.panel_id() == panel_id)
+            })
+        {
+            return;
+        }
+
+        let scale_factor = window.scale_factor();
+        if !scale_factor.is_finite() || scale_factor <= 0.0 {
+            return;
+        }
+        let font_size = ThemeSettings::get_global(cx).ui_font_size(cx).as_f32();
+        let minimum_row_height = (1.5 * font_size * scale_factor).floor() / scale_factor;
+        let row_count = (window.viewport_size().height.as_f32() / minimum_row_height).ceil();
+        if minimum_row_height <= 0.0 || !row_count.is_finite() || row_count <= 0.0 {
+            return;
+        }
+        let row_count = (row_count as usize).saturating_add(1);
+        for (worktree_id, entry) in self
+            .state
+            .visible_entries
+            .iter()
+            .flat_map(|worktree| {
+                worktree
+                    .entries
+                    .iter()
+                    .map(move |entry| (worktree.worktree_id, entry))
+            })
+            .take(row_count)
+        {
+            let is_expanded = self
+                .state
+                .expanded_dir_ids
+                .get(&worktree_id)
+                .is_some_and(|entries| entries.binary_search(&entry.id).is_ok());
+            let (chevron, icon) = Self::entry_icons(entry, is_expanded, cx);
+            for path in chevron.into_iter().chain(icon) {
+                Icon::from_path(path).preload(cx);
+            }
+        }
     }
 
     fn expand_entry(
@@ -7144,6 +7240,18 @@ let storage_details_button_id =
             if existing_cursor != new_cursor {
                 cx.set_active_drag_cursor_style(new_cursor, window);
             }
+        }
+    }
+
+    fn update_folded_directory_drag_target(
+        &mut self,
+        is_hovered: bool,
+        target: FoldedDirectoryDragTarget,
+    ) {
+        if is_hovered {
+            self.folded_directory_drag_target = Some(target);
+        } else if self.folded_directory_drag_target == Some(target) {
+            self.folded_directory_drag_target = None;
         }
     }
 
@@ -8638,9 +8746,18 @@ let storage_details_button_id =
                                 },
                             );
 
-                            for selection in &new_selections {
-                                if !project_panel.marked_entries.contains(selection) {
-                                    project_panel.marked_entries.push(*selection);
+                            for new_selection in &new_selections {
+                                if !project_panel.marked_entries.contains(new_selection) {
+                                    project_panel.marked_entries.push(*new_selection);
+                                }
+
+                                let is_intermediate_entry = new_selection.entry_id
+                                    != selection.entry_id
+                                    && new_selection.entry_id != clicked_entry.entry_id;
+
+                                if is_intermediate_entry {
+                                    project_panel
+                                        .select_outermost_folded_ancestor(new_selection.entry_id);
                                 }
                             }
 
@@ -8992,32 +9109,21 @@ let storage_details_button_id =
                                     .ancestors
                                     .get(components_len - 1 - index)
                                     .cloned();
+                                let drag_target = FoldedDirectoryDragTarget {
+                                    entry_id,
+                                    index,
+                                    is_delimiter_target: false,
+                                };
                                 div.when(drag_and_drop_enabled, |div| {
                                     div.on_drag_move(cx.listener(
                                         move |this,
                                               event: &DragMoveEvent<DraggedSelection>,
                                               _,
                                               _| {
-                                            if event.bounds.contains(&event.event.position) {
-                                                this.folded_directory_drag_target =
-                                                    Some(FoldedDirectoryDragTarget {
-                                                        entry_id,
-                                                        index,
-                                                        is_delimiter_target: false,
-                                                    });
-                                            } else {
-                                                let is_current_target = this
-                                                    .folded_directory_drag_target
-                                                    .as_ref()
-                                                    .is_some_and(|target| {
-                                                        target.entry_id == entry_id
-                                                            && target.index == index
-                                                            && !target.is_delimiter_target
-                                                    });
-                                                if is_current_target {
-                                                    this.folded_directory_drag_target = None;
-                                                }
-                                            }
+                                            this.update_folded_directory_drag_target(
+                                                event.bounds.contains(&event.event.position),
+                                                drag_target,
+                                            );
                                         },
                                     ))
                                     .on_drop(cx.listener(
@@ -9033,6 +9139,27 @@ let storage_details_button_id =
                                                 );
                                             }
                                             cx.stop_propagation();
+                                        },
+                                    ))
+                                    .on_drag_move(cx.listener(
+                                        move |this, event: &DragMoveEvent<ExternalPaths>, _, _| {
+                                            this.update_folded_directory_drag_target(
+                                                event.bounds.contains(&event.event.position),
+                                                drag_target,
+                                            );
+                                        },
+                                    ))
+                                    .on_drop(cx.listener(
+                                        move |this, external_paths: &ExternalPaths, window, cx| {
+                                            this.clear_drag_state(cx);
+                                            if let Some(target_entry_id) = target_entry_id {
+                                                this.drop_external_files(
+                                                    external_paths.paths(),
+                                                    target_entry_id,
+                                                    window,
+                                                    cx,
+                                                );
+                                            }
                                         },
                                     ))
                                     .when(
@@ -9064,6 +9191,7 @@ let storage_details_button_id =
                                 }
                             }),
                         )
+                        .debug_selector(|| format!("project_panel_path_component_{component}"))
                         .child(
                             Label::new(component)
                                 .single_line()
@@ -9116,6 +9244,11 @@ let storage_details_button_id =
             .ancestors
             .get(components_len - 1 - delimiter_target_index)
             .cloned();
+        let drag_target = FoldedDirectoryDragTarget {
+            entry_id,
+            index: delimiter_target_index,
+            is_delimiter_target: true,
+        };
         div()
             .when(!is_sticky, |div| {
                 div.when(drag_and_drop_enabled, |div| {
@@ -9130,24 +9263,31 @@ let storage_details_button_id =
                     ))
                     .on_drag_move(cx.listener(
                         move |this, event: &DragMoveEvent<DraggedSelection>, _, _| {
-                            if event.bounds.contains(&event.event.position) {
-                                this.folded_directory_drag_target =
-                                    Some(FoldedDirectoryDragTarget {
-                                        entry_id,
-                                        index: delimiter_target_index,
-                                        is_delimiter_target: true,
-                                    });
-                            } else {
-                                let is_current_target =
-                                    this.folded_directory_drag_target.is_some_and(|target| {
-                                        target.entry_id == entry_id
-                                            && target.index == delimiter_target_index
-                                            && target.is_delimiter_target
-                                    });
-                                if is_current_target {
-                                    this.folded_directory_drag_target = None;
-                                }
+                            this.update_folded_directory_drag_target(
+                                event.bounds.contains(&event.event.position),
+                                drag_target,
+                            );
+                        },
+                    ))
+                    .on_drop(cx.listener(
+                        move |this, external_paths: &ExternalPaths, window, cx| {
+                            this.clear_drag_state(cx);
+                            if let Some(target_entry_id) = target_entry_id {
+                                this.drop_external_files(
+                                    external_paths.paths(),
+                                    target_entry_id,
+                                    window,
+                                    cx,
+                                );
                             }
+                        },
+                    ))
+                    .on_drag_move(cx.listener(
+                        move |this, event: &DragMoveEvent<ExternalPaths>, _, _| {
+                            this.update_folded_directory_drag_target(
+                                event.bounds.contains(&event.event.position),
+                                drag_target,
+                            );
                         },
                     ))
                 })
@@ -9423,6 +9563,36 @@ let storage_details_button_id =
         true
     }
 
+    /// Upstream's shared icon resolver (#65259/#65266 move the icon lookup out
+    /// of `render_entry` so the drop and selection paths can reuse it). Kept as
+    /// its own fn because two call sites below now use it.
+    fn entry_icons(
+        entry: &Entry,
+        is_expanded: bool,
+        cx: &App,
+    ) -> (Option<SharedString>, Option<SharedString>) {
+        let settings = ProjectPanelSettings::get_global(cx);
+        match entry.kind {
+            EntryKind::File => {
+                let icon = if settings.file_icons {
+                    FileIcons::get_icon(entry.path.as_std_path(), cx)
+                } else {
+                    None
+                };
+                (None, icon)
+            }
+            _ => {
+                let indicator = FileIcons::get_folder_indicators(
+                    settings.folder_indicator,
+                    is_expanded,
+                    entry.path.as_std_path(),
+                    cx,
+                );
+                (indicator.chevron, indicator.icon)
+            }
+        }
+    }
+
     fn details_for_entry(
         &self,
         entry: &Entry,
@@ -9434,10 +9604,7 @@ let storage_details_button_id =
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) -> EntryDetails {
-        let (show_file_icons, folder_indicator) = {
-            let settings = ProjectPanelSettings::get_global(cx);
-            (settings.file_icons, settings.folder_indicator)
-        };
+        let folder_indicator = ProjectPanelSettings::get_global(cx).folder_indicator;
 
         let expanded_entry_ids = self
             .state
@@ -9447,25 +9614,7 @@ let storage_details_button_id =
             .unwrap_or(&[]);
         let is_expanded = expanded_entry_ids.binary_search(&entry.id).is_ok();
 
-        let (chevron, icon) = match entry.kind {
-            EntryKind::File => {
-                let icon = if show_file_icons {
-                    FileIcons::get_icon(entry.path.as_std_path(), cx)
-                } else {
-                    None
-                };
-                (None, icon)
-            }
-            _ => {
-                let indicator = FileIcons::get_folder_indicators(
-                    folder_indicator,
-                    is_expanded,
-                    entry.path.as_std_path(),
-                    cx,
-                );
-                (indicator.chevron, indicator.icon)
-            }
-        };
+        let (chevron, icon) = Self::entry_icons(entry, is_expanded, cx);
 
         let path_style = self.project.read(cx).path_style(cx);
         let (depth, difference) =
@@ -9829,23 +9978,23 @@ let storage_details_button_id =
                     cx,
                 );
                 self.render_entry(entry.id, details, window, cx)
-                .when(index == last_item_index, |this| {
-                    let shadow_color_top = hsla(0.0, 0.0, 0.0, 0.1);
-                    let shadow_color_bottom = hsla(0.0, 0.0, 0.0, 0.);
-                    let sticky_shadow = div()
-                        .absolute()
-                        .left_0()
-                        .bottom_neg_1p5()
-                        .h_1p5()
-                        .w_full()
-                        .bg(linear_gradient(
-                            0.,
-                            linear_color_stop(shadow_color_top, 1.),
-                            linear_color_stop(shadow_color_bottom, 0.),
-                        ));
-                    this.child(sticky_shadow)
-                })
-                .into_any()
+                    .when(index == last_item_index, |this| {
+                        let shadow_color_top = hsla(0.0, 0.0, 0.0, 0.1);
+                        let shadow_color_bottom = hsla(0.0, 0.0, 0.0, 0.);
+                        let sticky_shadow = div()
+                            .absolute()
+                            .left_0()
+                            .bottom_neg_1p5()
+                            .h_1p5()
+                            .w_full()
+                            .bg(linear_gradient(
+                                0.,
+                                linear_color_stop(shadow_color_top, 1.),
+                                linear_color_stop(shadow_color_bottom, 0.),
+                            ));
+                        this.child(sticky_shadow)
+                    })
+                    .into_any()
             })
             .collect()
     }
@@ -10905,6 +11054,14 @@ impl Panel for ProjectPanel {
         })
     }
 
+    fn set_active(&mut self, active: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if active {
+            cx.defer_in(window, |panel, window, cx| {
+                panel.preload_initial_entry_icons(window, cx);
+            });
+        }
+    }
+
     fn activation_priority(&self) -> u32 {
         1
     }
@@ -11189,7 +11346,11 @@ impl ProjectPanel {
                 }
                 // One printable character extends the needle.
                 other if key.key_char.is_some() && !other.chars().any(char::is_whitespace) => {
-                    disk_tree::moves::start_find(self.ensure_disk_tree(cx), format!("{needle}{other}"), cx);
+                    disk_tree::moves::start_find(
+                        self.ensure_disk_tree(cx),
+                        format!("{needle}{other}"),
+                        cx,
+                    );
                 }
                 _ => return,
             }

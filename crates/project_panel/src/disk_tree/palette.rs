@@ -48,11 +48,7 @@ const fn hue(category: Category) -> (f32, f32) {
 }
 
 /// The fill for a tile of `category`, `depth` levels into the view.
-pub(crate) fn category_fill(
-    tokens: &DiskTreeTokens,
-    category: Category,
-    depth: u32,
-) -> Hsla {
+pub(crate) fn category_fill(tokens: &DiskTreeTokens, category: Category, depth: u32) -> Hsla {
     let (h, chroma) = hue(category);
     let step = depth.min(4) as f32;
     let (s, l) = if tokens.is_dark() {
@@ -61,11 +57,7 @@ pub(crate) fn category_fill(
         (0.30 * chroma, step.mul_add(-0.03, 0.84))
     };
     // Pulled a little toward the theme surface, so each theme tints it.
-    mix(
-        Hsla { h, s, l, a: 1.0 },
-        tokens.surface,
-        0.12,
-    )
+    mix(Hsla { h, s, l, a: 1.0 }, tokens.surface, 0.12)
 }
 
 /// The saturated version of a category's hue: the strip over a top-level

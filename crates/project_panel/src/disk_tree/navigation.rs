@@ -18,9 +18,8 @@
 //! Relative crumbs look correct at the root and silently point at other
 //! directories after descending - including for marks.
 
-
-use disk_tree_core::treemap::{self, LayoutOptions, Rect, Tile, TileKind};
 use disk_tree_core::tree::Node;
+use disk_tree_core::treemap::{self, LayoutOptions, Rect, Tile, TileKind};
 use gpui::Pixels;
 
 use crate::disk_tree::model::{
@@ -66,7 +65,8 @@ fn compute_tiles(tree: &DiskTree, area: gpui::Size<Pixels>, rem: f32) -> Vec<Til
         return Vec::new();
     };
     let options = layout_options(tree.max_depth, rem);
-    let area = disk_tree_core::treemap::Rect::new(0.0, 0.0, area.width.as_f32(), area.height.as_f32());
+    let area =
+        disk_tree_core::treemap::Rect::new(0.0, 0.0, area.width.as_f32(), area.height.as_f32());
     treemap::layout(node, &tree.crumbs, area, tree.metric(), &options)
 }
 
@@ -200,7 +200,6 @@ impl<'a> TileView<'a> {
         self.tile.header
     }
 
-
     /// Whether this tile is reclaimable - a cache, a sync client's old versions, a
     /// package store, build output, trash, and so on.
     ///
@@ -255,4 +254,3 @@ pub(crate) fn tile_at(tiles: &[Tile], x: f32, y: f32) -> Option<&Tile> {
 pub(crate) fn is_descendable(kind: &TileKind) -> bool {
     matches!(kind, TileKind::Node { .. })
 }
-

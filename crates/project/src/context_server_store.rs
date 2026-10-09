@@ -1,12 +1,13 @@
 pub mod extension;
 pub mod registry;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context as _, Result};
 use collections::{HashMap, HashSet};
+use context_server::client::StdinPrefix;
 use context_server::oauth::{self, McpOAuthTokenProvider, OAuthDiscovery, OAuthSession};
 use context_server::transport::HttpTransport;
 use context_server::{ContextServer, ContextServerCommand, ContextServerId};
@@ -20,7 +21,7 @@ use http_client::HttpClient;
 use itertools::Itertools;
 use rand::Rng as _;
 use registry::ContextServerDescriptorRegistry;
-use remote::{Interactive, RemoteClient};
+use remote::{RemoteClient, command::RemoteCommand};
 use rpc::{AnyProtoClient, TypedEnvelope, proto};
 use settings::{Settings as _, SettingsLocation, SettingsStore, WorktreeId};
 use util::{ResultExt as _, rel_path::RelPath};
@@ -358,6 +359,7 @@ pub enum ContextServerConfiguration {
     Custom {
         command: ContextServerCommand,
         remote: bool,
+        launcher: Option<RemoteStdioLauncher>,
     },
     Extension {
         command: ContextServerCommand,
@@ -370,6 +372,12 @@ pub enum ContextServerConfiguration {
         timeout: Option<u64>,
         oauth: Option<OAuthClientSettings>,
     },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RemoteStdioLauncher {
+    pub command: ContextServerCommand,
+    pub stdin_prefix: StdinPrefix,
 }
 
 impl ContextServerConfiguration {
@@ -414,7 +422,11 @@ impl ContextServerConfiguration {
                 remote,
             } => {
                 let command = bounded_context_server_command(command)?;
-                Ok(Some(ContextServerConfiguration::Custom { command, remote }))
+                Ok(Some(ContextServerConfiguration::Custom {
+                    command,
+                    remote,
+                    launcher: None,
+                }))
             }
             ContextServerSettings::Extension {
                 enabled: _,
@@ -654,6 +666,7 @@ impl ContextServerStore {
                 timeout: None,
             },
             remote: false,
+            launcher: None,
         });
         self.run_server(server, configuration, cx);
     }
@@ -1200,50 +1213,56 @@ impl ContextServerStore {
                 })
                 .await?;
 
+            // The fork bounds every server-supplied string before it reaches a
+            // process spawn; upstream builds the same values unchecked. The
+            // fork's previous extra `build_command` round-trip is dropped: it
+            // produced a `command` that the launcher immediately re-derived
+            // from the same response, so it added a second shell invocation
+            // path and nothing else.
             let response = Self::bounded_remote_context_server_command(response)?;
-            let response_env: HashMap<_, _> = bounded_context_server_env_entries(
-                response.env,
-                "remote context server command environment",
-            )?
-            .into_iter()
-            .collect();
-            let response_args = response.args;
-            let response_path = response.path;
-
-            let remote_command = upstream_client.update(cx, |client, _| {
-                client.build_command(
-                    Some(response_path),
-                    &response_args,
-                    &response_env,
-                    root_dir,
-                    None,
-                    Interactive::Yes,
-                )
-            })?;
-
-            let remote_command_program = bounded_context_server_string(
-                remote_command.program,
-                "remote context server wrapper path",
-            )?;
-            let remote_command_args = bounded_context_server_args(
-                remote_command.args,
-                "remote context server wrapper argument",
-            )?;
-            let remote_command_env: HashMap<_, _> = bounded_context_server_env_entries(
-                remote_command.env,
-                "remote context server wrapper environment",
-            )?
-            .into_iter()
-            .collect();
-
             let command = ContextServerCommand {
-                path: remote_command_program.into(),
-                args: remote_command_args,
-                env: Some(remote_command_env),
+                path: bounded_context_server_string(
+                    response.path.clone(),
+                    "remote context server command path",
+                )?
+                .into(),
+                args: bounded_context_server_args(
+                    response.args.clone(),
+                    "remote context server command argument",
+                )?,
+                env: Some(
+                    bounded_context_server_env_entries(
+                        response.env.clone(),
+                        "remote context server command environment",
+                    )?
+                    .into_iter()
+                    .collect(),
+                ),
                 timeout: None,
             };
 
-            Arc::new(ContextServerConfiguration::Custom { command, remote })
+            let (launcher_command, stdin_prefix) = upstream_client.update(cx, |client, _| {
+                client.build_stdio_command(RemoteCommand {
+                    program: response.path,
+                    args: response.args,
+                    env: response.env.into_iter().collect(),
+                    working_dir: root_dir,
+                })
+            })?;
+
+            Arc::new(ContextServerConfiguration::Custom {
+                command,
+                remote,
+                launcher: Some(RemoteStdioLauncher {
+                    command: ContextServerCommand {
+                        path: launcher_command.program.into(),
+                        args: launcher_command.args,
+                        env: Some(launcher_command.env.into_iter().collect()),
+                        timeout: None,
+                    },
+                    stdin_prefix: StdinPrefix(stdin_prefix),
+                }),
+            })
         } else {
             configuration
         };
@@ -1313,10 +1332,22 @@ impl ContextServerStore {
                     )))
                 }
                 _ => {
-                    let mut command = configuration
-                        .command()
-                        .context("Missing command configuration for stdio context server")?
-                        .clone();
+                    let (mut command, stdin_prefix) = match configuration.as_ref() {
+                        ContextServerConfiguration::Custom {
+                            launcher: Some(launcher),
+                            ..
+                        } => (
+                            launcher.command.clone(),
+                            Some(launcher.stdin_prefix.clone()),
+                        ),
+                        _ => (
+                            configuration
+                                .command()
+                                .context("Missing command configuration for stdio context server")?
+                                .clone(),
+                            None,
+                        ),
+                    };
                     command.timeout = Some(
                         command
                             .timeout
@@ -1330,6 +1361,7 @@ impl ContextServerStore {
                         id,
                         command,
                         working_directory,
+                        stdin_prefix,
                     )))
                 }
             }

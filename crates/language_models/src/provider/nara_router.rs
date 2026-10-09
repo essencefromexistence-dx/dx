@@ -5,15 +5,16 @@ use credentials_provider::CredentialsProvider;
 use futures::{FutureExt, StreamExt, future::BoxFuture};
 use gpui::{App, AppContext, AsyncApp, Context, Entity, SharedString, Task};
 use http_client::{CustomHeaders, HttpClient};
+use language_model::chat_completion::ChatCompletionEventMapper;
 use language_model::{
     ApiKeyConfiguration, ApiKeyState, AuthenticateError, EnvVar, IconOrSvg, LanguageModel,
-    LanguageModelCompletionError, LanguageModelCompletionStream, LanguageModelId,
-    LanguageModelName, LanguageModelProvider, LanguageModelProviderId, LanguageModelProviderName,
-    LanguageModelProviderState, LanguageModelRequest, LanguageModelToolChoiceSupport,
-    ModelRateLimiters, NARA_ROUTER_PROVIDER_ID, NARA_ROUTER_PROVIDER_NAME, ProviderSettingsView,
-    RateLimiter, env_var, stream_in_background, unavailable_error,
+    LanguageModelClient, LanguageModelCompletionError, LanguageModelCompletionStream,
+    LanguageModelId, LanguageModelName, LanguageModelProvider, LanguageModelProviderId,
+    LanguageModelProviderName, LanguageModelProviderState, LanguageModelRequest,
+    LanguageModelToolChoiceSupport, ModelRateLimiters, NARA_ROUTER_PROVIDER_ID,
+    NARA_ROUTER_PROVIDER_NAME, ProviderSettingsView, RateLimiter, env_var, stream_in_background,
+    unavailable_error,
 };
-use language_model::chat_completion::ChatCompletionEventMapper;
 use open_ai::completion::{
     ChatCompletionMaxTokensParameter, OpenAiResponseEventMapper, into_open_ai,
     into_open_ai_response,
@@ -278,7 +279,9 @@ impl LanguageModelProvider for NaraRouterLanguageModelProvider {
         self.state
             .update(cx, |state, cx| state.set_api_key(api_key, cx))
     }
+}
 
+impl LanguageModelClient for NaraRouterLanguageModelProvider {
     fn stream_completion(
         &self,
         model: &LanguageModel,

@@ -5,9 +5,9 @@
 //! resolution stay in `navigation.rs`; the actions a key or a click performs stay
 //! here.
 
-use disk_tree_core::filter::{Keep, filter, Matches};
-use disk_tree_core::treemap::{self, Rect, Tile};
+use disk_tree_core::filter::{Keep, Matches, filter};
 use disk_tree_core::tree::{Metric, Node};
+use disk_tree_core::treemap::{self, Rect, Tile};
 use gpui::{Context, Entity, Pixels, px};
 use project::Project;
 use std::path::PathBuf;
@@ -89,7 +89,9 @@ impl DiskTree {
         if self.mode != ColorMode::Age || node.modified == 0 {
             return None;
         }
-        Some(crate::disk_tree::palette::age_bucket(days_since(node.modified)))
+        Some(crate::disk_tree::palette::age_bucket(days_since(
+            node.modified,
+        )))
     }
 }
 
@@ -101,7 +103,7 @@ fn days_since(unix_seconds: i64) -> i64 {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
-// No timestamp at all, or one at or before the epoch, means the age is
+    // No timestamp at all, or one at or before the epoch, means the age is
     // unknown, which is "just now" rather than the oldest bucket. A timestamp
     // in the future must not wrap either, which a plain subtraction does in
     // release builds.
@@ -119,12 +121,7 @@ pub(crate) fn find_by_name(tree: &DiskTree, needle: &str) -> Option<Vec<usize>> 
 
 /// Enter a directory: the selection becomes the crumbs, and the layout is
 /// rebuilt around it.
-pub(crate) fn descend(
-    tree: &mut DiskTree,
-    crumbs: Vec<usize>,
-    area: gpui::Size<Pixels>,
-    rem: f32,
-) {
+pub(crate) fn descend(tree: &mut DiskTree, crumbs: Vec<usize>, area: gpui::Size<Pixels>, rem: f32) {
     if crumbs == tree.crumbs {
         return;
     }
@@ -169,12 +166,8 @@ fn current_rect(
     rem: f32,
 ) -> Option<Rect> {
     let node = tree.node(crumbs)?;
-    let area = disk_tree_core::treemap::Rect::new(
-        0.0,
-        0.0,
-        area.width.as_f32(),
-        area.height.as_f32(),
-    );
+    let area =
+        disk_tree_core::treemap::Rect::new(0.0, 0.0, area.width.as_f32(), area.height.as_f32());
     let tiles = treemap::layout(node, crumbs, area, tree.metric(), &layout_options(1, rem));
     // The root's own tile is the first one laid out at depth 1.
     tiles.first().map(|tile| tile.rect)
@@ -318,11 +311,7 @@ pub(crate) fn set_mode(tree: &mut DiskTree, mode: ColorMode) {
 ///
 /// `find_epoch` supersedes an in-flight search: a slower earlier search must
 /// not overwrite a newer one.
-pub(crate) fn start_find(
-    tree: &mut DiskTree,
-    needle: String,
-    cx: &mut Context<ProjectPanel>,
-) {
+pub(crate) fn start_find(tree: &mut DiskTree, needle: String, cx: &mut Context<ProjectPanel>) {
     tree.find = Some(needle.clone());
     tree.find_epoch += 1;
     let epoch = tree.find_epoch;
@@ -335,15 +324,13 @@ pub(crate) fn start_find(
     // goes onto the background executor via `spawn`, awaited from inside
     // `cx.spawn`: `App::background_spawn` exists, but it is on `AppContext` and
     // neither `Context<ProjectPanel>` nor `AsyncApp` derefs to it.
-    let search = cx
-        .background_executor()
-        .spawn({
-            // `root` is already owned (`tree.tree().cloned()` above),
-            // so the async block can take it directly. `find` returns a reference
-            // into root, so keep only the owned crumbs: nothing borrowed may escape
-            // a `static background task.`
-            async move { root.find(&needle).map(|(crumbs, _)| crumbs) }
-        });
+    let search = cx.background_executor().spawn({
+        // `root` is already owned (`tree.tree().cloned()` above),
+        // so the async block can take it directly. `find` returns a reference
+        // into root, so keep only the owned crumbs: nothing borrowed may escape
+        // a `static background task.`
+        async move { root.find(&needle).map(|(crumbs, _)| crumbs) }
+    });
 
     cx.spawn(async move |panel, cx| {
         let found = search.await;
@@ -523,7 +510,7 @@ mod tests {
         assert!(!pointer_inside(-1.0, 10.0, area));
     }
 
-fn dummy_tree() -> DiskTree {
+    fn dummy_tree() -> DiskTree {
         DiskTree::new(
             None,
             crate::disk_tree::model::Root {

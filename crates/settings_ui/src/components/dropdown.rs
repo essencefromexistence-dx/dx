@@ -97,8 +97,11 @@ impl RenderOnce for EnumVariantDropdown {
 
         let context_menu = window.use_keyed_state(current_value_label, cx, |window, cx| {
             ContextMenu::new(window, cx, move |mut menu, _, _| {
-                for (index, &label) in
-                    self.labels.iter().enumerate().take(MAX_ENUM_DROPDOWN_VARIANTS)
+                for (index, &label) in self
+                    .labels
+                    .iter()
+                    .enumerate()
+                    .take(MAX_ENUM_DROPDOWN_VARIANTS)
                 {
                     let on_change = self.on_change.clone();
                     menu = menu.toggleable_entry(

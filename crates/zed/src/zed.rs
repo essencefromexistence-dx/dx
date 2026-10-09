@@ -93,7 +93,7 @@ use std::{
     sync::atomic::{self, AtomicBool},
 };
 use terminal_view::terminal_panel::{self, TerminalPanel};
-use theme::{ActiveTheme, SystemAppearance, ThemeRegistry, deserialize_icon_theme};
+use theme::{ActiveTheme, SystemAppearance, ThemeRegistry};
 use theme_settings::{ThemeSettings, load_user_theme};
 use ui::{Navigable, NavigableEntry, PopoverMenuHandle, TintColor, prelude::*};
 use util::markdown::MarkdownString;
@@ -3018,7 +3018,7 @@ pub(crate) fn eager_load_active_theme_and_icon_theme(fs: Arc<dyn Fs>, cx: &mut A
                             && let Some(icon_theme_family) =
                                 deserialize_icon_theme(&bytes).log_err()
                             && theme_registry
-                                .load_icon_theme(icon_theme_family, &icons_root_path)
+                                .load_icon_theme(&icon_theme_path, &icons_root_path, bytes)
                                 .log_err()
                                 .is_some()
                         {

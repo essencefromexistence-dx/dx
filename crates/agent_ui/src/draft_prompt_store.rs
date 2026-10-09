@@ -9,7 +9,7 @@
 //! the format we persist.
 
 use agent::ZED_AGENT_ID;
-use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Context as _;
 use db::kvp::KeyValueStore;
 use gpui::{App, AppContext as _, Entity, Task};
@@ -42,7 +42,9 @@ fn ensure_draft_prompt_json_within_limit(raw: &str) -> Option<()> {
     Some(())
 }
 
-pub fn read(thread_id: ThreadId, cx: &App) -> Option<Vec<acp::ContentBlock>> {
+// acp_v2, not the old acp: `write` above already takes `&[acp_v2::ContentBlock]`,
+// so the old spelling was a stale signature from before the v2 move.
+pub fn read(thread_id: ThreadId, cx: &App) -> Option<Vec<acp_v2::ContentBlock>> {
     let kvp = KeyValueStore::global(cx);
     let raw = kvp
         .scoped(NAMESPACE)
@@ -55,7 +57,7 @@ pub fn read(thread_id: ThreadId, cx: &App) -> Option<Vec<acp::ContentBlock>> {
 
 pub fn write(
     thread_id: ThreadId,
-    prompt: &[acp::ContentBlock],
+    prompt: &[acp_v2::ContentBlock],
     cx: &App,
 ) -> Task<anyhow::Result<()>> {
     let kvp = KeyValueStore::global(cx);
@@ -101,9 +103,9 @@ pub fn draft_has_user_content<'a>(
     }
 }
 
-fn blocks_have_user_content(blocks: &[acp::ContentBlock]) -> bool {
+fn blocks_have_user_content(blocks: &[acp_v2::ContentBlock]) -> bool {
     blocks.iter().any(|block| match block {
-        acp::ContentBlock::Text(text) => !text.text.trim().is_empty(),
+        acp_v2::ContentBlock::Text(text) => !text.text.trim().is_empty(),
         _ => true,
     })
 }
@@ -174,8 +176,8 @@ pub fn display_label_for_draft(
     let raw = blocks
         .iter()
         .filter_map(|block| match block {
-            acp::ContentBlock::Text(text) => Some(text.text.as_str()),
-            acp::ContentBlock::ResourceLink(link) => Some(link.uri.as_str()),
+            acp_v2::ContentBlock::Text(text) => Some(text.text.as_str()),
+            acp_v2::ContentBlock::ResourceLink(link) => Some(link.uri.as_str()),
             _ => None,
         })
         .join(" ");

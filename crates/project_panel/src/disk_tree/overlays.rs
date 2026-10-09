@@ -20,7 +20,11 @@ pub(crate) fn review_help() -> AnyElement {
     ];
     widgets::section(
         "Keys",
-        gpui::div().flex().flex_col().children(hints).into_any_element(),
+        gpui::div()
+            .flex()
+            .flex_col()
+            .children(hints)
+            .into_any_element(),
     )
 }
 

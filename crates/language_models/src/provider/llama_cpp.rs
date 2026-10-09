@@ -330,7 +330,9 @@ impl LanguageModelProvider for LocalLlamaCppLanguageModelProvider {
             )),
         ))
     }
+}
 
+impl LanguageModelClient for LocalLlamaCppLanguageModelProvider {
     fn stream_completion(
         &self,
         model: &LanguageModel,

@@ -22,9 +22,9 @@ use gpui::{
 
 use crate::ProjectPanel;
 use crate::disk_tree::model::{Direction, DiskTree};
-use crate::disk_tree::navigation::{is_descendable, tile_at};
 use crate::disk_tree::moves;
 use crate::disk_tree::navigation;
+use crate::disk_tree::navigation::{is_descendable, tile_at};
 use crate::disk_tree::view::View;
 
 /// Wheel zoom per notch. 1.15 is a whole-feeling step: at 1.1 the mosaic appears
@@ -85,7 +85,9 @@ pub(crate) fn on_move(
     };
     let rem = panel.disk_tree_rem(window);
     let tiles = navigation::layout(panel.disk_tree_mut(), area, rem);
-    let Some(tree) = panel.disk_tree() else { return };
+    let Some(tree) = panel.disk_tree() else {
+        return;
+    };
     let Some((x, y)) = to_base(tree, event.position) else {
         on_leave(panel, cx);
         return;
@@ -132,7 +134,9 @@ pub(crate) fn on_down(
 
     let rem = panel.disk_tree_rem(window);
     let tiles = navigation::layout(panel.disk_tree_mut(), area, rem);
-    let Some(tree) = panel.disk_tree() else { return };
+    let Some(tree) = panel.disk_tree() else {
+        return;
+    };
     let Some((x, y)) = to_base(tree, event.position) else {
         return;
     };
@@ -144,8 +148,9 @@ pub(crate) fn on_down(
 
     // The tile under the pointer must be readable at this moment: a hit-test
     // against a stale layout selects the wrong thing.
-    let already_selected =
-        panel.disk_tree().is_some_and(|t| t.selected.as_deref() == Some(crumbs.as_slice()));
+    let already_selected = panel
+        .disk_tree()
+        .is_some_and(|t| t.selected.as_deref() == Some(crumbs.as_slice()));
 
     match event.button {
         MouseButton::Left => {
@@ -204,7 +209,9 @@ pub(crate) fn on_scroll(
         return;
     }
 
-    let Some(tree) = panel.disk_tree() else { return };
+    let Some(tree) = panel.disk_tree() else {
+        return;
+    };
     let Some((x, y)) = to_base(tree, event.position) else {
         return;
     };
@@ -221,7 +228,11 @@ pub(crate) fn on_scroll(
     // descending: in a ~300 px panel the ceiling is two notches away, and
     // silently changing directory made the wheel feel broken. `enter` is the
     // only way in.
-    let factor = if lines > 0.0 { WHEEL_ZOOM } else { 1.0 / WHEEL_ZOOM };
+    let factor = if lines > 0.0 {
+        WHEEL_ZOOM
+    } else {
+        1.0 / WHEEL_ZOOM
+    };
     let tree = panel.disk_tree_mut();
     tree.view = tree
         .view
@@ -238,7 +249,12 @@ fn toggle_mark(panel: &mut ProjectPanel, crumbs: &[usize], cx: &mut Context<Proj
     cx.notify();
 }
 
-fn go_back(panel: &mut ProjectPanel, area: gpui::Size<gpui::Pixels>, window: &mut Window, cx: &mut Context<ProjectPanel>) {
+fn go_back(
+    panel: &mut ProjectPanel,
+    area: gpui::Size<gpui::Pixels>,
+    window: &mut Window,
+    cx: &mut Context<ProjectPanel>,
+) {
     let rem = panel.disk_tree_rem(window);
     let tree = panel.disk_tree_mut();
     let crumbs = tree.history_mut().back().map(<[usize]>::to_vec);

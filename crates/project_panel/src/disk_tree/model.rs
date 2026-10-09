@@ -24,9 +24,9 @@ use disk_tree_core::classify::Category;
 use disk_tree_core::removal::RemovalMode;
 use disk_tree_core::scan::{Known, ScanProgress, ScanSnapshot};
 use disk_tree_core::space::SpaceInfo;
-use disk_tree_core::treemap::{LayoutOptions, Rect, Tile};
 use disk_tree_core::tree::{Metric, Node};
-use gpui::{Entity, Point, Pixels, Size};
+use disk_tree_core::treemap::{LayoutOptions, Rect, Tile};
+use gpui::{Entity, Pixels, Point, Size};
 use std::cell::Cell;
 
 use crate::disk_tree::marks::Marks;
@@ -542,7 +542,8 @@ impl DiskTree {
     pub(crate) fn path_at(&self, crumbs: &[usize]) -> Option<PathBuf> {
         let tree = self.tree()?;
         let node = tree.resolve(crumbs)?;
-        node.is_dir().then(|| disk_tree_core::tree::path_of(&self.root.path, tree, crumbs))
+        node.is_dir()
+            .then(|| disk_tree_core::tree::path_of(&self.root.path, tree, crumbs))
     }
 
     /// The absolute path of any node, including a file.
@@ -612,5 +613,3 @@ impl DiskTree {
 /// a mosaic in a ~300 px panel can resolve anything, so it is the ceiling
 /// upstream chose and the ceiling kept here.
 pub(crate) const DEPTH_STEPS: std::ops::RangeInclusive<u32> = 1..=6;
-
-

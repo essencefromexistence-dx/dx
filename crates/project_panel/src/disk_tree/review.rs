@@ -109,7 +109,11 @@ fn is_hidden_path(path: &std::path::Path) -> bool {
 }
 
 /// Pick how the removal happens. Choosing a mode is not consent; [`confirm`] is.
-pub(crate) fn set_mode(panel: &mut ProjectPanel, mode: RemovalMode, cx: &mut Context<ProjectPanel>) {
+pub(crate) fn set_mode(
+    panel: &mut ProjectPanel,
+    mode: RemovalMode,
+    cx: &mut Context<ProjectPanel>,
+) {
     let tree = panel.disk_tree_mut();
     // Changing the mode invalidates any previous confirmation: the user has not
     // seen *this* mode's warning yet.
@@ -207,9 +211,7 @@ fn poll_removal(panel: &mut ProjectPanel, cx: &mut Context<ProjectPanel>) {
         repaint = true;
         match event {
             RemovalEvent::Start { .. } => {}
-            RemovalEvent::Item {
-                bytes, outcome, ..
-            } => {
+            RemovalEvent::Item { bytes, outcome, .. } => {
                 let tree = panel.disk_tree_mut();
                 tree.review.removed += 1;
                 match outcome {
@@ -230,11 +232,7 @@ fn poll_removal(panel: &mut ProjectPanel, cx: &mut Context<ProjectPanel>) {
         tree.marks.clear();
         repaint = true;
 
-        let (removed, freed, failed) = (
-            tree.review.removed,
-            tree.review.freed,
-            tree.review.failed,
-        );
+        let (removed, freed, failed) = (tree.review.removed, tree.review.freed, tree.review.failed);
         announce(panel, removed, freed, failed, cx);
     }
 
@@ -303,19 +301,16 @@ pub(crate) fn render(
         .flex()
         .flex_col()
         .child(format!("{} selected", plan.targets.len()))
-        .child(format!("{} to be freed", widgets::human_bytes(plan.bytes())))
+        .child(format!(
+            "{} to be freed",
+            widgets::human_bytes(plan.bytes())
+        ))
         .child(format!("{} mode: {}", mode.label(), mode.detail()))
         .into_any_element();
     let rows = plan
         .targets
         .iter()
-        .map(|target| {
-            widgets::path_row(
-                &target.path,
-                widgets::human_bytes(target.bytes),
-                false,
-            )
-        })
+        .map(|target| widgets::path_row(&target.path, widgets::human_bytes(target.bytes), false))
         .collect::<Vec<_>>();
     let covered = plan
         .covered
@@ -419,7 +414,11 @@ fn metric_bytes(tree: &DiskTree, node: &Node) -> u64 {
 /// back into the other, which is a walk down the root's children matching names
 /// one component at a time - `Path::components`, not string prefixes, so
 /// `C:\a` never matches `C:\ab`.
-fn crumbs_for_path(root_path: &std::path::Path, root: &Node, path: &std::path::Path) -> Option<Vec<usize>> {
+fn crumbs_for_path(
+    root_path: &std::path::Path,
+    root: &Node,
+    path: &std::path::Path,
+) -> Option<Vec<usize>> {
     let rest = path.strip_prefix(root_path).ok()?;
     let mut node = root;
     let mut crumbs = Vec::new();

@@ -1091,20 +1091,24 @@ fn workspace_menu_worktree_labels(
     let root_paths = workspace.read(cx).root_paths(cx);
     let show_folder_name = root_paths.len() > 1;
     let project = workspace.read(cx).project().clone();
-    let repository_snapshots: Vec<_> = project
-        .read(cx)
-        .repositories(cx)
-        .values()
-        .map(|repo| repo.read(cx).snapshot())
-        .collect();
+    let (path_style, repository_snapshots) = {
+        let project = project.read(cx);
+        let path_style = project.path_style(cx);
+        let repository_snapshots = project
+            .repositories(cx)
+            .values()
+            .map(|repo| repo.read(cx).snapshot())
+            .collect::<Vec<_>>();
+        (path_style, repository_snapshots)
+    };
 
     root_paths
         .into_iter()
         .map(|root_path| {
             let root_path = root_path.as_ref();
-            let folder_name = root_path
-                .file_name()
-                .map(|name| SharedString::from(name.to_string_lossy().to_string()))
+            let folder_name = path_style
+                .file_name(root_path)
+                .map(|name| SharedString::from(name.to_string_lossy().into_owned()))
                 .unwrap_or_default();
             let repository_snapshot = repository_snapshots
                 .iter()
@@ -1120,7 +1124,11 @@ fn workspace_menu_worktree_labels(
                         .main_worktree_abs_path()
                         .or(identity_fallback)
                         .and_then(|name_anchor_path| {
-                            project::linked_worktree_short_name(name_anchor_path, root_path)
+                            project::linked_worktree_short_name(
+                                name_anchor_path,
+                                root_path,
+                                snapshot.path_style,
+                            )
                         })
                         .unwrap_or_else(|| folder_name.clone())
                 } else {
@@ -3220,9 +3228,9 @@ impl Sidebar {
 
         let color = cx.theme().colors();
         let sidebar_base_bg = if is_sticky {
-            color.surface_overlay_background()
+            color.panel_background_for_overlay()
         } else {
-            color.surface_background
+            color.panel_background
         };
 
         // The fade gradient renders as a visible patch on transparent windows,
@@ -3245,7 +3253,7 @@ impl Sidebar {
 
         let base_bg = color.background.blend(sidebar_base_bg);
 
-let drop_target_background = color.drop_target_background;
+        let drop_target_background = color.drop_target_background;
         let drop_target_border = color.drop_target_border;
         let hover_solid = base_bg.blend(color.ghost_element_hover);
         let active_solid = base_bg.blend(color.ghost_element_active);
@@ -4223,7 +4231,7 @@ let drop_target_background = color.drop_target_background;
             .unwrap_or(px(0.));
 
         let color = cx.theme().colors();
-        let background = color.surface_overlay_background();
+        let background = color.panel_background_for_overlay();
 
         let element = v_flex()
             .absolute()
@@ -4258,7 +4266,10 @@ let drop_target_background = color.drop_target_background;
 
         let is_archived_search_focused = matches!(&self.view, SidebarView::Archive(archive) if archive.read(cx).is_filter_editor_focused(window, cx));
 
-        let is_renaming = self.thread_rename_editor.focus_handle(cx).is_focused(window);
+        let is_renaming = self
+            .thread_rename_editor
+            .focus_handle(cx)
+            .is_focused(window);
 
         let identifier = if self.filter_editor.focus_handle(cx).is_focused(window)
             || is_archived_search_focused
@@ -7514,7 +7525,10 @@ let drop_target_background = color.drop_target_background;
         let id = SharedString::from(format!("thread-entry-{}", ix));
 
         let color = cx.theme().colors();
-let sidebar_bg = color.surface_background;
+        // panel_background, not surface_background: surface_background is
+        // semi-transparent in themes such as VSCode Dark Modern, which made the
+        // sidebar background render transparent (#65343).
+        let sidebar_bg = color.panel_background;
         let button_hover_bg = color.element_background;
         let button_active_bg = color.element_active;
         let drop_target_background = color.element_hover;
@@ -7650,7 +7664,7 @@ let sidebar_bg = color.surface_background;
             .when_some(rename_title_editor, |this, title_editor| {
                 this.is_truncated(false).title_slot(title_editor)
             })
-.when(
+            .when(
                 (is_hovered || is_icon_picker_open || is_thread_more_menu_open || is_focused)
                     && !is_renaming,
                 |this| {
@@ -7706,70 +7720,70 @@ let sidebar_bg = color.surface_background;
                             })
                     });
 
-                let contextual_action: Option<AnyElement> = if is_running {
-                    Some(
-                        IconButton::new("stop-thread", IconName::Stop)
-                            .icon_size(IconSize::Small)
-                            .icon_color(Color::Error)
-                            .style(ButtonStyle::Tinted(TintColor::Error))
-                            .tooltip(Tooltip::text("Stop Generation"))
-                            .on_click(cx.listener(move |this, _, _window, cx| {
-                                this.stop_thread(&thread_id_for_actions, cx);
-                            }))
-                            .into_any_element(),
-                    )
-                } else {
-                    match thread.draft {
-                        Some(DraftKind::Empty) => None,
-                        Some(DraftKind::WithContent) => Some(
-                            IconButton::new("discard_thread", IconName::Close)
-                                .hover_background(button_hover_bg)
-                                .active_background(button_active_bg)
+                    let contextual_action: Option<AnyElement> = if is_running {
+                        Some(
+                            IconButton::new("stop-thread", IconName::Stop)
                                 .icon_size(IconSize::Small)
-                                .icon_color(Color::Muted)
-                                .tooltip(Tooltip::text("Discard Draft"))
-                                .on_click({
-                                    let thread_workspace = thread_workspace.clone();
-                                    cx.listener(move |this, _, window, cx| {
-                                        this.remove_draft(
-                                            thread_id_for_actions,
-                                            &thread_workspace,
-                                            window,
-                                            cx,
-                                        );
-                                    })
-                                })
+                                .icon_color(Color::Error)
+                                .style(ButtonStyle::Tinted(TintColor::Error))
+                                .tooltip(Tooltip::text("Stop Generation"))
+                                .on_click(cx.listener(move |this, _, _window, cx| {
+                                    this.stop_thread(&thread_id_for_actions, cx);
+                                }))
                                 .into_any_element(),
-                        ),
-                        None => Some(
-                            IconButton::new("archive-thread", IconName::Archive)
-                                .hover_background(button_hover_bg)
-                                .active_background(button_active_bg)
-                                .icon_size(IconSize::Small)
-                                .icon_color(Color::Muted)
-                                .tooltip({
-                                    let focus_handle = focus_handle.clone();
-                                    move |_window, cx| {
-                                        Tooltip::for_action_in(
-                                            "Archive Thread",
-                                            &ArchiveSelectedThread,
-                                            &focus_handle,
-                                            cx,
-                                        )
-                                    }
-})
-                                .on_click({
-                                    let session_id = session_id_for_delete.clone();
-                                    cx.listener(move |this, _, window, cx| {
-                                        if let Some(ref session_id) = session_id {
-                                            this.archive_thread(session_id, window, cx);
+                        )
+                    } else {
+                        match thread.draft {
+                            Some(DraftKind::Empty) => None,
+                            Some(DraftKind::WithContent) => Some(
+                                IconButton::new("discard_thread", IconName::Close)
+                                    .hover_background(button_hover_bg)
+                                    .active_background(button_active_bg)
+                                    .icon_size(IconSize::Small)
+                                    .icon_color(Color::Muted)
+                                    .tooltip(Tooltip::text("Discard Draft"))
+                                    .on_click({
+                                        let thread_workspace = thread_workspace.clone();
+                                        cx.listener(move |this, _, window, cx| {
+                                            this.remove_draft(
+                                                thread_id_for_actions,
+                                                &thread_workspace,
+                                                window,
+                                                cx,
+                                            );
+                                        })
+                                    })
+                                    .into_any_element(),
+                            ),
+                            None => Some(
+                                IconButton::new("archive-thread", IconName::Archive)
+                                    .hover_background(button_hover_bg)
+                                    .active_background(button_active_bg)
+                                    .icon_size(IconSize::Small)
+                                    .icon_color(Color::Muted)
+                                    .tooltip({
+                                        let focus_handle = focus_handle.clone();
+                                        move |_window, cx| {
+                                            Tooltip::for_action_in(
+                                                "Archive Thread",
+                                                &ArchiveSelectedThread,
+                                                &focus_handle,
+                                                cx,
+                                            )
                                         }
                                     })
-                                })
-                                .into_any_element(),
-                        ),
-                    }
-                };
+                                    .on_click({
+                                        let session_id = session_id_for_delete.clone();
+                                        cx.listener(move |this, _, window, cx| {
+                                            if let Some(ref session_id) = session_id {
+                                                this.archive_thread(session_id, window, cx);
+                                            }
+                                        })
+                                    })
+                                    .into_any_element(),
+                            ),
+                        }
+                    };
 
                     this.action_slot(
                         h_flex()
@@ -7868,7 +7882,7 @@ let sidebar_bg = color.surface_background;
         let timestamp = format_history_entry_timestamp(terminal.metadata.created_at);
         let is_hovered = self.hovered_thread_index == Some(ix);
         let color = cx.theme().colors();
-        let sidebar_bg = color.surface_background;
+        let sidebar_bg = color.panel_background;
         let button_hover_bg = color.element_background;
         let button_active_bg = color.element_active;
         let metadata = terminal.metadata.clone();
@@ -11873,7 +11887,7 @@ impl Render for Sidebar {
             .flatten();
 
         let color = cx.theme().colors();
-        let bg = color.surface_background;
+        let bg = color.background.blend(color.panel_background);
 
         let no_open_projects = !self.contents.has_open_projects;
         let no_search_results = self.contents.entries.is_empty();
