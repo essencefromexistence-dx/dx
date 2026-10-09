@@ -8,6 +8,7 @@ use clock::Global;
 use collections::{HashMap, HashSet};
 use futures::future::join_all;
 use gpui::{App, Entity, Pixels, Task, TaskExt};
+use itertools::Itertools as _;
 use language::{
     BufferRow, BufferSnapshot,
     language_settings::{InlayHintKind, InlayHintSettings},
@@ -73,7 +74,6 @@ const MAX_VISIBLE_INLAY_HINT_BUFFERS: usize = 512;
 const MAX_INLAY_HINT_RANGES_PER_BUFFER: usize = 4_096;
 const MAX_INLAY_HINT_CHUNKS_PER_BUFFER: usize = 4_096;
 const MAX_INLAY_HINT_REQUEST_TASKS_PER_BUFFER: usize = 4_096;
-const MAX_INLAY_HINT_RESULTS_PER_REFRESH: usize = 100_000;
 const MAX_INLAY_HINT_LABEL_BYTES: usize = 16 * 1024;
 const MAX_INLAY_HINT_LABEL_PARTS: usize = 512;
 const MAX_INLAY_HINT_UI_SPLICE_ITEMS: usize = 100_000;
@@ -1139,6 +1139,11 @@ impl Editor {
             HashMap::default();
         let new_hints = new_hints
             .into_iter()
+            // Drop a hint whose label is too large to be worth keeping before it
+            // reaches the dedupe table or the splice: `hint.text()` copies the
+            // whole label, and one unbounded label from a server would be copied
+            // into every slot below.
+            .filter(|(_, _, hint, _)| inlay_hint_label_text_for_cache(buffer_id, hint).is_some())
             // Hidden kinds must not claim a dedup slot, or they could suppress a visible
             // identical hint from another server.
             .filter(|(_, _, hint, _)| {
@@ -1194,78 +1199,6 @@ impl Editor {
         {
             inlay_hints.invalidate_hints_for_buffers = invalidate_hints_for_buffers;
             return;
-        }
-
-        let mut inserted_hint_text = HashMap::default();
-        let mut new_hints_to_insert = Vec::new();
-        'hint_results: for (chunk_range, hints_result) in new_hints {
-            let new_hints_by_server = match hints_result {
-                Ok(new_hints_by_server) => {
-                    if new_hints_by_server.is_empty()
-                        && let Some((_, chunks_fetched)) =
-                            inlay_hints.hint_chunk_fetching.get_mut(&buffer_id)
-                    {
-                        chunks_fetched.remove(&chunk_range);
-                    }
-                    new_hints_by_server
-                }
-                Err(e) => {
-                    log::error!(
-                        "Failed to query inlays for buffer row range {chunk_range:?}, {e:#}"
-                    );
-                    if let Some((for_version, chunks_fetched)) =
-                        inlay_hints.hint_chunk_fetching.get_mut(&buffer_id)
-                        && for_version == &query_version
-                    {
-                        chunks_fetched.remove(&chunk_range);
-                    }
-                    continue;
-                }
-            };
-
-            let dedupe_by_text = new_hints_by_server.len() > 1;
-            for (server_id, server_hints) in new_hints_by_server {
-                for (new_id, new_hint) in server_hints {
-                    if !push_bounded_inlay_hint_result(
-                        buffer_id,
-                        inlay_hints,
-                        &mut inserted_hint_text,
-                        &mut new_hints_to_insert,
-                        server_id,
-                        new_id,
-                        new_hint,
-                        dedupe_by_text,
-                        should_show,
-                    ) {
-                        break 'hint_results;
-                    }
-                }
-            }
-        }
-
-        new_hints_to_insert.sort_by(|(_, a), (_, b)| a.position.cmp(&b.position, &buffer_snapshot));
-
-        let mut hints_to_insert = Vec::new();
-        for (position, (hint_id, hint)) in multi_buffer_snapshot
-            .text_anchors_to_visible_anchors(
-                new_hints_to_insert
-                    .iter()
-                    .map(|(_, lsp_hint)| lsp_hint.position),
-            )
-            .into_iter()
-            .zip(&new_hints_to_insert)
-        {
-            let Some(position) = position else {
-                continue;
-            };
-            if hints_to_insert.len() >= MAX_INLAY_HINT_UI_SPLICE_ITEMS {
-                log::warn!(
-                    "truncating inlay hint insertions for buffer {buffer_id:?} at {}",
-                    MAX_INLAY_HINT_UI_SPLICE_ITEMS
-                );
-                return;
-            }
-            hints_to_insert.push(Inlay::hint(*hint_id, position, hint));
         }
 
         self.splice_inlays(&hints_to_remove, hints_to_insert, cx);
@@ -1370,59 +1303,6 @@ fn inlay_hint_label_text_for_cache(buffer_id: BufferId, hint: &InlayHint) -> Opt
             Some(text)
         }
     }
-}
-
-fn push_bounded_inlay_hint_result(
-    buffer_id: BufferId,
-    inlay_hints: &mut LspInlayHintData,
-    inserted_hint_text: &mut HashMap<language::Anchor, HashMap<String, LanguageServerId>>,
-    new_hints_to_insert: &mut Vec<(InlayId, InlayHint)>,
-    server_id: LanguageServerId,
-    new_id: InlayId,
-    new_hint: InlayHint,
-    dedupe_by_text: bool,
-    should_show: bool,
-) -> bool {
-    if new_hints_to_insert.len() >= MAX_INLAY_HINT_RESULTS_PER_REFRESH {
-        log::warn!(
-            "truncating inlay hint results for buffer {buffer_id:?} at {}",
-            MAX_INLAY_HINT_RESULTS_PER_REFRESH
-        );
-        return false;
-    }
-
-    let Some(label_text) = inlay_hint_label_text_for_cache(buffer_id, &new_hint) else {
-        return true;
-    };
-
-    if dedupe_by_text {
-        let hints_text_for_position = inserted_hint_text
-            .entry(new_hint.position)
-            .or_insert_with(HashMap::default);
-        let insert = match hints_text_for_position.entry(label_text) {
-            hash_map::Entry::Occupied(o) => o.get() == &server_id,
-            hash_map::Entry::Vacant(v) => {
-                v.insert(server_id);
-                true
-            }
-        };
-
-        if !insert {
-            return true;
-        }
-    }
-
-    if should_show
-        && inlay_hints.allowed_hint_kinds.contains(&new_hint.kind)
-        && inlay_hints
-            .added_hints
-            .insert(new_id, new_hint.kind)
-            .is_none()
-    {
-        new_hints_to_insert.push((new_id, new_hint));
-    }
-
-    true
 }
 
 /// Makes all hints at the same buffer offset share one bias: `Right` on conflict,
