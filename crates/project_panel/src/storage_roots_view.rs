@@ -89,11 +89,17 @@ fn render_storage_root_strip_row(
             .when(available, |this| {
                 let row_focus_handle = focus_handle.clone();
                 let click_focus_handle = row_focus_handle.clone();
+                let shortcut_id = shortcut.id.clone();
                 this.on_click(move |_, window, cx| {
                     window.focus(&click_focus_handle, cx);
                     panel
                         .update_in(cx, |this, window, cx| {
-                            this.open_dx_explorer_storage_root(path.clone(), window, cx);
+                            this.open_dx_explorer_storage_root(
+                                path.clone(),
+                                Some(shortcut_id.clone()),
+                                window,
+                                cx,
+                            );
                         })
                         .log_err();
                 })

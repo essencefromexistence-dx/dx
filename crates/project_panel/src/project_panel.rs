@@ -1,3 +1,4 @@
+mod disk_tree;
 mod media_preview;
 mod operation_status;
 pub mod project_panel_settings;
@@ -67,7 +68,7 @@ use std::{
 };
 use theme_settings::ThemeSettings;
 use ui::{
-    ButtonStyle, Chip, Color, ContextMenu, ContextMenuEntry, DecoratedIcon, Divider, Icon,
+    ButtonStyle, Chip, Color, ContextMenu, DecoratedIcon, Divider, Icon,
     IconButton, IconButtonShape, IconDecoration, IconDecorationKind, IndentGuideColors,
     IndentGuideLayout, Indicator, KeyBinding, Label, LabelSize, ListHeader, ListItem,
     ListItemSpacing, PopoverMenu, ProjectEmptyState, ScrollAxes, ScrollableHandle, Scrollbars,
@@ -91,11 +92,12 @@ use workspace::{
 };
 use worktree::{ChildEntriesOptions, CreatedEntry};
 use zed_actions::{
-    project_panel::{Toggle, ToggleFocus},
+    project_panel::{Toggle, ToggleDiskTree, ToggleFocus, ToggleStorageDetails},
     workspace::OpenWithSystem,
 };
 
 use crate::{
+    disk_tree::model::Direction,
     project_panel_settings::ProjectPanelScrollbarProxy,
     undo::{Change, UndoManager},
 };
@@ -167,6 +169,20 @@ struct VisibleEntriesForWorktree {
     worktree_id: WorktreeId,
     entries: Vec<GitEntry>,
     index: OnceCell<HashSet<Arc<RelPath>>>,
+}
+
+/// Which storage surface the panel's storage area is showing.
+///
+/// One user-visible choice. It is derived from two `bool` fields rather than
+/// stored, because `storage_details_visible` is pinned by name, type and default
+/// in `script/dx-project-panel-source.test.ts:891-908`; see
+/// `ProjectPanel::storage_surface`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StorageSurface {
+    /// The treemap: a mosaic of the storage root.
+    Treemap,
+    /// The largest-folders drilldown list.
+    Details,
 }
 
 #[derive(Clone, Copy)]
@@ -324,6 +340,12 @@ pub struct ProjectPanel {
     storage_root_refresh_task: Task<()>,
     storage_sort_mode: storage::StorageSortMode,
     storage_details_visible: bool,
+    /// The disk-tree sibling of `storage_details_visible`. Together they are one
+    /// user-visible choice, resolved by `storage_surface()`. Built lazily: the
+    /// treemap's first scan walks a volume, so a user who never opens it must not
+    /// pay for it.
+    disk_tree_visible: bool,
+    disk_tree: Option<disk_tree::model::DiskTree>,
     generated_media_metadata:
         RefCell<HashMap<(WorktreeId, ProjectEntryId), media_preview::GeneratedMediaMetadataIndex>>,
     media_metadata_generation_tasks: RefCell<HashMap<(WorktreeId, ProjectEntryId), Task<()>>>,
@@ -1137,6 +1159,8 @@ impl ProjectPanel {
                 storage_root_refresh_task: Task::ready(()),
                 storage_sort_mode: storage::StorageSortMode::default(),
                 storage_details_visible: false,
+                disk_tree_visible: false,
+                disk_tree: None,
                 generated_media_metadata: Default::default(),
                 media_metadata_generation_tasks: Default::default(),
                 folder_media_previews: Default::default(),
@@ -5144,13 +5168,39 @@ impl ProjectPanel {
             && (project.is_local() || project.is_via_wsl_with_host_interop(cx))
     }
 
-    fn toggle_storage_details_visible(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+fn toggle_storage_details_visible(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        // The treemap and the drilldown are one user-visible choice, so showing
+        // one hides the other. See `storage_surface()`.
+        self.disk_tree_visible = false;
+
         self.storage_details_visible = !self.storage_details_visible;
 
         if self.storage_details_visible {
             self.refresh_dx_explorer_storage_roots(cx);
         } else {
             self.storage_root_shortcuts.clear();
+        }
+
+        self.update_visible_entries(None, false, false, window, cx);
+        cx.notify();
+    }
+
+    /// Show the treemap, or hide it if it is already showing.
+    ///
+    /// The treemap gets the Storage strip too - it is the same set of roots, and
+    /// picking a volume is the first thing anyone wants from a disk view.
+    ///
+    /// The scan is *not* started here. Building the tree is cheap; the first scan
+    /// walks a volume and takes seconds, so it belongs to the treemap's first
+    /// render, where it can show progress rather than appearing to hang.
+    pub fn toggle_disk_tree_visible(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let next = !self.disk_tree_visible;
+        self.disk_tree_visible = next;
+        self.storage_details_visible = false;
+
+        if next {
+            self.refresh_dx_explorer_storage_roots(cx);
+            self.ensure_disk_tree(cx);
         }
 
         self.update_visible_entries(None, false, false, window, cx);
@@ -5220,8 +5270,9 @@ impl ProjectPanel {
     }
 
     pub(crate) fn open_dx_explorer_storage_root(
-        &self,
+        &mut self,
         path: PathBuf,
+        shortcut_id: Option<String>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -5230,6 +5281,15 @@ impl ProjectPanel {
         }
 
         if !path.is_absolute() || !path.is_dir() {
+            return;
+        }
+
+        // With the treemap up, a drive in the strip is a place to *look*, not a
+        // workspace to open: it retargets the treemap and rescans from there.
+        // Opening `C:\` as a workspace would drop the user out of the panel
+        // they clicked in, which is not what a storage strip promises.
+        if self.storage_surface() == Some(StorageSurface::Treemap) {
+            disk_tree::scan::set_root(self, path, shortcut_id, cx);
             return;
         }
 
@@ -5265,7 +5325,8 @@ impl ProjectPanel {
         let new_file_tooltip_focus_handle = new_file_focus_handle.clone();
         let new_folder_focus_handle = header_focus_handle.clone();
         let new_folder_tooltip_focus_handle = new_folder_focus_handle.clone();
-        let storage_details_focus_handle = header_focus_handle.clone();
+let storage_details_focus_handle = header_focus_handle.clone();
+        let disk_tree_focus_handle = header_focus_handle.clone();
         let project_options_focus_handle = header_focus_handle.clone();
         let panel_for_project_options = cx.entity().downgrade();
         let panel_id = cx.entity().entity_id();
@@ -5273,9 +5334,14 @@ impl ProjectPanel {
             SharedString::from(format!("dx-explorer-project-options-menu-{panel_id:?}"));
         let project_options_button_id =
             SharedString::from(format!("dx-explorer-project-options-{panel_id:?}"));
-        let storage_details_button_id =
-            SharedString::from(format!("dx-explorer-storage-details-{panel_id:?}"));
-        let storage_details_visible = self.storage_details_visible;
+let storage_details_button_id =
+        SharedString::from(format!("dx-explorer-storage-details-{panel_id:?}"));
+    let disk_tree_button_id =
+        SharedString::from(format!("dx-explorer-disk-tree-{panel_id:?}"));
+    // Read through `storage_surface()`, not straight off the field, so the header
+    // cannot disagree with what is actually drawn below it.
+    let disk_tree_visible = self.storage_surface() == Some(StorageSurface::Treemap);
+    let storage_details_visible = self.storage_details_visible;
 
         let _header_summary_meta = [
             format!("Source: {source_label}"),
@@ -5520,6 +5586,32 @@ impl ProjectPanel {
                         this.toggle_storage_details_visible(window, cx);
                     })),
             )
+            // The treemap's own toggle, immediately beside the drilldown's, so the
+            // relationship between "the list" and "the picture of the same data"
+            // is visible rather than something to discover in the palette.
+            .when(has_worktree, |header| {
+                header.child(
+                    IconButton::new(disk_tree_button_id, dx_icon(DxUiIcon::Storage))
+                        .shape(IconButtonShape::Square)
+                        .style(ButtonStyle::Subtle)
+                        .icon_size(IconSize::Small)
+                        .icon_color(if disk_tree_visible {
+                            Color::Accent
+                        } else {
+                            Color::Muted
+                        })
+                        .tab_index(0_isize)
+                        .track_focus(&disk_tree_focus_handle)
+                        .tooltip(Tooltip::text(if disk_tree_visible {
+                            "Show storage list"
+                        } else {
+                            "Show disk tree"
+                        }))
+                        .on_click(cx.listener(|this, _, window, cx| {
+                            this.toggle_disk_tree_visible(window, cx);
+                        })),
+                )
+            })
             .child(self.render_side_panel_header_controls("dx-explorer", cx));
 
         let more_menu_id = SharedString::from(format!("dx-explorer-more-menu-{panel_id:?}"));
@@ -8074,7 +8166,6 @@ impl ProjectPanel {
         &self,
         entry_id: ProjectEntryId,
         details: EntryDetails,
-        marked_selections: Arc<[SelectedEntry]>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Stateful<Div> {
@@ -8120,7 +8211,6 @@ impl ProjectPanel {
         let diagnostic_count = details.diagnostic_count;
         let item_colors = get_item_color(is_sticky, cx);
 
-        let canonical_path = details.canonical_path.clone();
         let canonical_path = details
             .canonical_path
             .as_ref()
@@ -8152,14 +8242,6 @@ impl ProjectPanel {
             } else {
                 Arc::from(self.marked_entries.clone())
             };
-        let dragged_selection = DraggedSelection {
-            active_selection: SelectedEntry {
-                worktree_id: selection.worktree_id,
-                entry_id: selection.entry_id,
-            },
-            marked_selections,
-        };
-
         let bg_color = if is_marked {
             item_colors.marked
         } else {
@@ -8298,7 +8380,7 @@ impl ProjectPanel {
                     let path_for_dragged_selection = path.clone();
                     let dragged_selection = DraggedSelection {
                         active_selection: selection,
-                        marked_selections: marked_selections.clone(),
+                        marked_selections,
                     };
 
                     this.on_drag_move::<ExternalPaths>(cx.listener(
@@ -8688,7 +8770,7 @@ impl ProjectPanel {
                                         .id("symlink_icon")
                                         .tooltip(move |_window, cx| {
                                             Tooltip::with_meta(
-                                                path.to_string_lossy().into_owned(),
+                                                path.clone(),
                                                 None,
                                                 "Symbolic Link",
                                                 cx,
@@ -9725,7 +9807,6 @@ impl ProjectPanel {
 
         // already checked if non empty above
         let last_item_index = sticky_parents.len() - 1;
-        let marked_selections: Arc<[SelectedEntry]> = Arc::from(self.marked_entries.clone());
         sticky_parents
             .iter()
             .enumerate()
@@ -9747,13 +9828,7 @@ impl ProjectPanel {
                     window,
                     cx,
                 );
-                self.render_entry(
-                    entry.id,
-                    details,
-                    Arc::clone(&marked_selections),
-                    window,
-                    cx,
-                )
+                self.render_entry(entry.id, details, window, cx)
                 .when(index == last_item_index, |this| {
                     let shadow_color_top = hsla(0.0, 0.0, 0.0, 0.1);
                     let shadow_color_bottom = hsla(0.0, 0.0, 0.0, 0.);
@@ -9946,7 +10021,6 @@ impl Render for ProjectPanel {
         let (
             is_read_only,
             is_remote,
-            is_local,
             is_local_or_wsl,
             is_via_remote_server,
             dx_explorer_source_kind,
@@ -9956,7 +10030,6 @@ impl Render for ProjectPanel {
             (
                 project.is_read_only(cx),
                 project.is_remote(),
-                project.is_local(),
                 project.is_local() || project.is_via_wsl_with_host_interop(cx),
                 project.is_via_remote_server(),
                 dx_explorer_source_kind,
@@ -9999,8 +10072,8 @@ impl Render for ProjectPanel {
         // functionality and the plan is to eventually remove this check, once a
         // considerable portion of collab hosts had the chance to upgrade to a
         // version that understands these messages.
-        let is_collab = project.is_via_collab();
-        let is_local = project.is_local();
+        let is_collab = self.project.read(cx).is_via_collab();
+        let is_local = self.project.read(cx).is_local();
 
         if has_worktree {
             let item_count = self
@@ -10179,6 +10252,15 @@ impl Render for ProjectPanel {
                         .on_action(cx.listener(Self::download_from_remote))
                 })
                 .track_focus(&self.focus_handle(cx))
+                // The treemap's keys, only while it is the visible surface, so the
+                // Project Panel's own bindings are untouched otherwise.
+                .on_key_down(cx.listener(
+                    |this, event: &gpui::KeyDownEvent, window, cx| {
+                        this.disk_tree_key(&event.keystroke, window, cx);
+                    },
+                ))
+                .on_action(cx.listener(Self::toggle_disk_tree))
+                .on_action(cx.listener(Self::toggle_storage_details))
                 .child(
                     v_flex()
                         .child(self.render_dx_explorer_header(
@@ -10194,40 +10276,158 @@ impl Render for ProjectPanel {
                             |this, root_strip| this.child(root_strip),
                         )
                         .when_some(
+                            self.render_disk_tree(window, cx),
+                            |this, treemap| this.child(treemap),
+                        )
+                        .when_some(
                             self.render_dx_explorer_storage_drilldown(cx),
                             |this, drilldown| this.child(drilldown),
                         )
-                        .child(
-                            uniform_list("entries", item_count, {
-                                cx.processor(|this, range: Range<usize>, window, cx| {
-                                    this.rendered_entries_len = range.end - range.start;
-                                    let mut items = Vec::with_capacity(this.rendered_entries_len);
-                                    let marked_selections: Arc<[SelectedEntry]> =
-                                        Arc::from(this.marked_entries.clone());
-                                    this.for_each_visible_entry(
-                                        range,
-                                        window,
-                                        cx,
-                                        &mut |id, details, window, cx| {
-                                            items.push(this.render_entry(
-                                                id,
-                                                details,
-                                                Arc::clone(&marked_selections),
-                                                window,
-                                                cx,
-                                            ));
-                                        },
-                                    );
-                                    items
+                        // The treemap replaces the entry list entirely rather than
+                        // sitting above it: the two answer the same question, and
+                        // a mosaic above a file tree in a 300 px panel leaves the
+                        // tree too short to be useful.
+                        .when(
+                            !self.storage_surface().is_some_and(|s| {
+                                s == StorageSurface::Treemap
+                            }),
+                            |this| {
+                                this.child(uniform_list("entries", item_count, {
+                                    cx.processor(|this, range: Range<usize>, window, cx| {
+                                        this.rendered_entries_len = range.end - range.start;
+                                        let mut items = Vec::with_capacity(this.rendered_entries_len);
+                                        this.for_each_visible_entry(
+                                            range,
+                                            window,
+                                            cx,
+                                            &mut |id, details, window, cx| {
+                                                items.push(this.render_entry(id, details, window, cx));
+                                            },
+                                        );
+                                        items
+                                    })
                                 })
-                            })
-                            .when(show_indent_guides, |list| {
-                                list.with_decoration(
-                                    ui::indent_guides(
-                                        px(indent_size),
-                                        IndentGuideColors::panel(cx),
+                                .when(show_indent_guides, |list| {
+                                    list.with_decoration(
+                                        ui::indent_guides(
+                                            px(indent_size),
+                                            IndentGuideColors::panel(cx),
+                                        )
+                                        .with_compute_indents_fn(
+                                            cx.entity(),
+                                            |this, range, window, cx| {
+                                                let mut items =
+                                                    SmallVec::with_capacity(range.end - range.start);
+                                                this.iter_visible_entries(
+                                                    range,
+                                                    window,
+                                                    cx,
+                                                    &mut |entry, _, entries, _, _| {
+                                                        let (depth, _) =
+                                                            Self::calculate_depth_and_difference(
+                                                                entry, entries,
+                                                            );
+                                                        items.push(depth);
+                                                    },
+                                                );
+                                                items
+                                            },
+                                        )
+                                        .on_click(cx.listener(
+                                            |this,
+                                             active_indent_guide: &IndentGuideLayout,
+                                             window,
+                                             cx| {
+                                                if window.modifiers().secondary() {
+                                                    let ix = active_indent_guide.offset.y;
+                                                    let Some((target_entry, worktree)) = maybe!({
+                                                        let (worktree_id, entry) =
+                                                            this.entry_at_index(ix)?;
+                                                        let worktree = this
+                                                            .project
+                                                            .read(cx)
+                                                            .worktree_for_id(worktree_id, cx)?;
+                                                        let target_entry = worktree
+                                                            .read(cx)
+                                                            .entry_for_path(&entry.path.parent()?)?;
+                                                        Some((target_entry, worktree))
+                                                    }) else {
+                                                        return;
+                                                    };
+
+                                                    this.collapse_entry(
+                                                        target_entry.clone(),
+                                                        worktree,
+                                                        window,
+                                                        cx,
+                                                    );
+                                                }
+                                            },
+                                        ))
+                                        .with_render_fn(
+                                            cx.entity(),
+                                            move |this, params, _, cx| {
+                                                const LEFT_OFFSET: Pixels =
+                                                    ui::LIST_ITEM_INDENT_GUIDE_LEFT_OFFSET;
+                                                const PADDING_Y: Pixels = px(4.);
+                                                const HITBOX_OVERDRAW: Pixels = px(3.);
+
+                                                let active_indent_guide_index = this
+                                                    .find_active_indent_guide(
+                                                        &params.indent_guides,
+                                                        cx,
+                                                    );
+
+                                                let indent_size = params.indent_size;
+                                                let item_height = params.item_height;
+
+                                                params
+                                                    .indent_guides
+                                                    .into_iter()
+                                                    .enumerate()
+                                                    .map(|(idx, layout)| {
+                                                        let offset = if layout.continues_offscreen {
+                                                            px(0.)
+                                                        } else {
+                                                            PADDING_Y
+                                                        };
+                                                        let bounds = Bounds::new(
+                                                            point(
+                                                                layout.offset.x * indent_size
+                                                                    + LEFT_OFFSET,
+                                                                layout.offset.y * item_height + offset,
+                                                            ),
+                                                            size(
+                                                                px(1.),
+                                                                layout.length * item_height
+                                                                    - offset * 2.,
+                                                            ),
+                                                        );
+                                                        ui::RenderedIndentGuide {
+                                                            bounds,
+                                                            layout,
+                                                            is_active: Some(idx)
+                                                                == active_indent_guide_index,
+                                                            hitbox: Some(Bounds::new(
+                                                                point(
+                                                                    bounds.origin.x - HITBOX_OVERDRAW,
+                                                                    bounds.origin.y,
+                                                                ),
+                                                                size(
+                                                                    bounds.size.width
+                                                                        + HITBOX_OVERDRAW * 2.,
+                                                                    bounds.size.height,
+                                                                ),
+                                                            )),
+                                                        }
+                                                    })
+                                                    .collect()
+                                            },
+                                        ),
                                     )
-                                    .with_compute_indents_fn(
+                                })
+                                .when(show_sticky_entries, |list| {
+                                    let sticky_items = ui::sticky_items(
                                         cx.entity(),
                                         |this, range, window, cx| {
                                             let mut items =
@@ -10236,198 +10436,86 @@ impl Render for ProjectPanel {
                                                 range,
                                                 window,
                                                 cx,
-                                                &mut |entry, _, entries, _, _| {
+                                                &mut |entry, index, entries, _, _| {
                                                     let (depth, _) =
                                                         Self::calculate_depth_and_difference(
                                                             entry, entries,
                                                         );
-                                                    items.push(depth);
+                                                    let candidate =
+                                                        StickyProjectPanelCandidate { index, depth };
+                                                    items.push(candidate);
                                                 },
                                             );
                                             items
                                         },
-                                    )
-                                    .on_click(cx.listener(
-                                        |this,
-                                         active_indent_guide: &IndentGuideLayout,
-                                         window,
-                                         cx| {
-                                            if window.modifiers().secondary() {
-                                                let ix = active_indent_guide.offset.y;
-                                                let Some((target_entry, worktree)) = maybe!({
-                                                    let (worktree_id, entry) =
-                                                        this.entry_at_index(ix)?;
-                                                    let worktree = this
-                                                        .project
-                                                        .read(cx)
-                                                        .worktree_for_id(worktree_id, cx)?;
-                                                    let target_entry = worktree
-                                                        .read(cx)
-                                                        .entry_for_path(&entry.path.parent()?)?;
-                                                    Some((target_entry, worktree))
-                                                }) else {
-                                                    return;
-                                                };
-
-                                                this.collapse_entry(
-                                                    target_entry.clone(),
-                                                    worktree,
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
+                                        |this, marker_entry, window, cx| {
+                                            let sticky_entries =
+                                                this.render_sticky_entries(marker_entry, window, cx);
+                                            this.sticky_items_count = sticky_entries.len();
+                                            sticky_entries
                                         },
-                                    ))
-                                    .with_render_fn(
-                                        cx.entity(),
-                                        move |this, params, _, cx| {
-                                            const LEFT_OFFSET: Pixels =
-                                                ui::LIST_ITEM_INDENT_GUIDE_LEFT_OFFSET;
-                                            const PADDING_Y: Pixels = px(4.);
-                                            const HITBOX_OVERDRAW: Pixels = px(3.);
+                                    );
+                                    list.with_decoration(if show_indent_guides {
+                                        sticky_items.with_decoration(
+                                            ui::indent_guides(
+                                                px(indent_size),
+                                                IndentGuideColors::panel(cx),
+                                            )
+                                            .with_render_fn(
+                                                cx.entity(),
+                                                move |_, params, _, _| {
+                                                    const LEFT_OFFSET: Pixels =
+                                                        ui::LIST_ITEM_INDENT_GUIDE_LEFT_OFFSET;
 
-                                            let active_indent_guide_index = this
-                                                .find_active_indent_guide(
-                                                    &params.indent_guides,
-                                                    cx,
-                                                );
+                                                    let indent_size = params.indent_size;
+                                                    let item_height = params.item_height;
 
-                                            let indent_size = params.indent_size;
-                                            let item_height = params.item_height;
-
-                                            params
-                                                .indent_guides
-                                                .into_iter()
-                                                .enumerate()
-                                                .map(|(idx, layout)| {
-                                                    let offset = if layout.continues_offscreen {
-                                                        px(0.)
-                                                    } else {
-                                                        PADDING_Y
-                                                    };
-                                                    let bounds = Bounds::new(
-                                                        point(
-                                                            layout.offset.x * indent_size
-                                                                + LEFT_OFFSET,
-                                                            layout.offset.y * item_height + offset,
-                                                        ),
-                                                        size(
-                                                            px(1.),
-                                                            layout.length * item_height
-                                                                - offset * 2.,
-                                                        ),
-                                                    );
-                                                    ui::RenderedIndentGuide {
-                                                        bounds,
-                                                        layout,
-                                                        is_active: Some(idx)
-                                                            == active_indent_guide_index,
-                                                        hitbox: Some(Bounds::new(
-                                                            point(
-                                                                bounds.origin.x - HITBOX_OVERDRAW,
-                                                                bounds.origin.y,
-                                                            ),
-                                                            size(
-                                                                bounds.size.width
-                                                                    + HITBOX_OVERDRAW * 2.,
-                                                                bounds.size.height,
-                                                            ),
-                                                        )),
-                                                    }
-                                                })
-                                                .collect()
-                                        },
-                                    ),
-                                )
-                            })
-                            .when(show_sticky_entries, |list| {
-                                let sticky_items = ui::sticky_items(
-                                    cx.entity(),
-                                    |this, range, window, cx| {
-                                        let mut items =
-                                            SmallVec::with_capacity(range.end - range.start);
-                                        this.iter_visible_entries(
-                                            range,
-                                            window,
-                                            cx,
-                                            &mut |entry, index, entries, _, _| {
-                                                let (depth, _) =
-                                                    Self::calculate_depth_and_difference(
-                                                        entry, entries,
-                                                    );
-                                                let candidate =
-                                                    StickyProjectPanelCandidate { index, depth };
-                                                items.push(candidate);
-                                            },
-                                        );
-                                        items
-                                    },
-                                    |this, marker_entry, window, cx| {
-                                        let sticky_entries =
-                                            this.render_sticky_entries(marker_entry, window, cx);
-                                        this.sticky_items_count = sticky_entries.len();
-                                        sticky_entries
-                                    },
-                                );
-                                list.with_decoration(if show_indent_guides {
-                                    sticky_items.with_decoration(
-                                        ui::indent_guides(
-                                            px(indent_size),
-                                            IndentGuideColors::panel(cx),
+                                                    params
+                                                        .indent_guides
+                                                        .into_iter()
+                                                        .map(|layout| {
+                                                            let bounds = Bounds::new(
+                                                                point(
+                                                                    layout.offset.x * indent_size
+                                                                        + LEFT_OFFSET,
+                                                                    layout.offset.y * item_height,
+                                                                ),
+                                                                size(
+                                                                    px(1.),
+                                                                    layout.length * item_height,
+                                                                ),
+                                                            );
+                                                            ui::RenderedIndentGuide {
+                                                                bounds,
+                                                                layout,
+                                                                is_active: false,
+                                                                hitbox: None,
+                                                            }
+                                                        })
+                                                        .collect()
+                                                },
+                                            ),
                                         )
-                                        .with_render_fn(
-                                            cx.entity(),
-                                            move |_, params, _, _| {
-                                                const LEFT_OFFSET: Pixels =
-                                                    ui::LIST_ITEM_INDENT_GUIDE_LEFT_OFFSET;
-
-                                                let indent_size = params.indent_size;
-                                                let item_height = params.item_height;
-
-                                                params
-                                                    .indent_guides
-                                                    .into_iter()
-                                                    .map(|layout| {
-                                                        let bounds = Bounds::new(
-                                                            point(
-                                                                layout.offset.x * indent_size
-                                                                    + LEFT_OFFSET,
-                                                                layout.offset.y * item_height,
-                                                            ),
-                                                            size(
-                                                                px(1.),
-                                                                layout.length * item_height,
-                                                            ),
-                                                        );
-                                                        ui::RenderedIndentGuide {
-                                                            bounds,
-                                                            layout,
-                                                            is_active: false,
-                                                            hitbox: None,
-                                                        }
-                                                    })
-                                                    .collect()
-                                            },
-                                        ),
-                                    )
-                                } else {
-                                    sticky_items
+                                    } else {
+                                        sticky_items
+                                    })
                                 })
-                            })
-                            .with_decoration(ProjectPanelMarqueeDecoration {
-                                layout: self.marquee_layout.clone(),
-                                selection: self.marquee_selection.clone(),
-                            })
-                            .with_sizing_behavior(ListSizingBehavior::Infer)
-                            .with_horizontal_sizing_behavior(if horizontal_scroll {
-                                ListHorizontalSizingBehavior::Unconstrained
-                            } else {
-                                ListHorizontalSizingBehavior::FitList
-                            })
-                            .when(horizontal_scroll, |list| {
-                                list.with_width_from_item(self.state.max_width_item_index)
-                            })
-                            .track_scroll(&self.scroll_handle),
+                                .with_decoration(ProjectPanelMarqueeDecoration {
+                                    layout: self.marquee_layout.clone(),
+                                    selection: self.marquee_selection.clone(),
+                                })
+                                .with_sizing_behavior(ListSizingBehavior::Infer)
+                                .with_horizontal_sizing_behavior(if horizontal_scroll {
+                                    ListHorizontalSizingBehavior::Unconstrained
+                                } else {
+                                    ListHorizontalSizingBehavior::FitList
+                                })
+    .when(horizontal_scroll, |list| {
+                                            list.with_width_from_item(self.state.max_width_item_index)
+                                        })
+                                        .track_scroll(&self.scroll_handle),
+                                )
+                            },
                         )
                         // Media accordion at the most bottom (after file tree list)
                         .when_some(
@@ -10829,6 +10917,451 @@ impl Panel for ProjectPanel {
 }
 
 impl ProjectPanel {
+    /// The disk tree, if it has been built.
+    ///
+    /// Built lazily on first use rather than in `new`: the initial scan walks a
+    /// volume, and a user who never opens the treemap should never pay for it.
+    pub(crate) fn disk_tree(&self) -> Option<&disk_tree::model::DiskTree> {
+        self.disk_tree.as_ref()
+    }
+
+    pub(crate) fn disk_tree_mut(&mut self) -> &mut disk_tree::model::DiskTree {
+        // `expect` rather than a lazy build: every caller is reached through
+        // `ensure_disk_tree`, which is the only thing that constructs one.
+        self.disk_tree
+            .as_mut()
+            .expect("disk_tree accessed before it was built")
+    }
+
+    /// Build the disk tree on first use, and return it.
+    fn ensure_disk_tree(&mut self, cx: &mut Context<Self>) -> &mut disk_tree::model::DiskTree {
+        if self.disk_tree.is_none() {
+            let root = self.disk_tree_root(cx);
+            let mut tree = disk_tree::model::DiskTree::new(Some(cx.entity()), root);
+            // Settings are read once, here. A change to any of them is picked up
+            // the next time the treemap is built rather than pushed into a scan
+            // that is already running.
+            let settings = ProjectPanelSettings::get_global(cx).disk_tree;
+            tree.include_hidden = settings.include_hidden;
+            tree.on_disk_size = settings.on_disk_size;
+            tree.follow_links = settings.follow_links;
+            tree.one_filesystem = settings.one_filesystem;
+            tree.max_depth = settings.depth;
+            self.disk_tree = Some(tree);
+        }
+        self.disk_tree.as_mut().expect("just built")
+    }
+
+    /// The interface's rem, for the layout's header bands.
+    ///
+    /// Read from the window rather than hardcoded, so the treemap's bands track
+    /// the editor's interface zoom (`ctrl =` / `ctrl -`) the way every other
+    /// dimension in this panel does.
+    pub fn disk_tree_rem(&self, window: &Window) -> f32 {
+        window.rem_size().as_f32()
+    }
+
+    /// Where the treemap is rooted.
+    ///
+    /// The first worktree root, so the treemap opens on what the user is actually
+    /// working in rather than on a whole drive. The Storage strip can retarget it
+    /// at a volume.
+    fn disk_tree_root(&mut self, cx: &App) -> disk_tree::model::Root {
+        // The first visible worktree, so the treemap opens on what the user is
+        // actually working in rather than on a whole drive. The Storage strip can
+        // retarget it at a volume.
+        //
+        // Read through `Worktree` rather than a `Project` convenience, because
+        // `abs_path` is a worktree property and it is the same lookup the panel
+        // already does everywhere else (e.g. `project_panel.rs:1963`).
+        let path = self
+            .state
+            .visible_entries
+            .first()
+            .map(|worktree| worktree.worktree_id)
+            .and_then(|worktree_id| self.project.read(cx).worktree_for_id(worktree_id, cx))
+            // `Worktree::abs_path` returns an `Arc<Path>` already, so there is
+            // no Option to flatten - just copy the path out.
+            .map(|worktree| worktree.read(cx).abs_path().to_path_buf());
+        disk_tree::model::Root {
+            path: path.unwrap_or_else(std::env::temp_dir),
+            shortcut_id: None,
+        }
+    }
+
+    /// The treemap, or nothing when the storage surfaces are hidden.
+    ///
+    /// Starts the first scan here rather than in `toggle_disk_tree_visible`, so
+    /// that by the time the user sees the panel the scan is already running and
+    /// showing progress.
+    pub fn render_disk_tree(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        if self.storage_surface() != Some(StorageSurface::Treemap) {
+            return None;
+        }
+        let screen = self.ensure_disk_tree(cx).screen;
+        let tokens = disk_tree::theme::DiskTreeTokens::resolve(cx);
+
+        // The review screen replaces the treemap entirely rather than drawing
+        // over it: a list of paths the user is about to lose must not share
+        // space with the mosaic they came from.
+        match screen {
+            disk_tree::model::Screen::Review | disk_tree::model::Screen::Removing => {
+                let tree = self.disk_tree().expect("just ensured");
+                return Some(disk_tree::review::render(tree, tokens, cx).into_any_element());
+            }
+            disk_tree::model::Screen::Explore | disk_tree::model::Screen::Running => {}
+        }
+
+        let tree = self.ensure_disk_tree(cx);
+        if !tree.scan.is_running() && tree.tree().is_none() {
+            // The first scan, or one after a rescan was asked for. Started once
+            // per emptiness, so a render cannot restart a scan.
+            disk_tree::scan::start_scan(self, cx);
+            disk_tree::scan::start_space_ticker(self, window, cx);
+        }
+
+        // The canvas writes the measured size and its on-screen origin back
+        // through these cells, so they must be the *same* cells the tree holds -
+        // not copies made per render. The origin is what turns a mouse position
+        // into a canvas-local one, so a canvas that painted at its own cell's
+        // zero would make every click land on the tile at 0, 0.
+        let measured = self.disk_tree().map(|tree| tree.viewport.size.clone())?;
+        let origin = self.disk_tree().map(|tree| tree.viewport.origin.clone())?;
+        // Labels are shaped here rather than composed as elements so they can
+        // clip to their own tile, which means picking a font family explicitly
+        // rather than inheriting one from a wrapping div.
+        let font = theme_settings::ThemeSettings::get_global(cx)
+            .ui_font
+            .family
+            .clone();
+        let area = measured.get();
+        let rem = self.disk_tree_rem(window);
+        // Layout needs `&mut` (it owns the cache) and `prepare` needs `&`, so
+        // the two borrows cannot overlap.
+        let tiles = disk_tree::navigation::layout(self.disk_tree_mut(), area, rem);
+        let mosaic = match self.disk_tree() {
+            Some(tree) => disk_tree::navigation::prepare(tree, tiles, area),
+            // `ensure_disk_tree` above guarantees one exists; this arm only
+            // satisfies the borrow checker without a panic path.
+            None => return None,
+        };
+
+        Some(
+            disk_tree::canvas::render(
+                mosaic,
+                tokens,
+                font,
+                rem,
+                &self.focus_handle(cx),
+                origin,
+                measured,
+                cx,
+            )
+            .into_any_element(),
+        )
+    }
+
+    /// The palette/keymap entry point for the treemap.
+    ///
+    /// Registered as an action rather than handled inline, so it appears in the
+    /// command palette with a description and can be bound to a key. Registered
+    /// with `on_action`, not `register_action`, because the action belongs to the
+    /// focused panel rather than to the workspace - the same split the file
+    /// tree's own actions use.
+    fn toggle_disk_tree(
+        &mut self,
+        _: &ToggleDiskTree,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.toggle_disk_tree_visible(window, cx);
+    }
+
+    fn toggle_storage_details(
+        &mut self,
+        _: &ToggleStorageDetails,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.toggle_storage_details_visible(window, cx);
+    }
+
+    /// The treemap's keyboard contract.
+    ///
+    /// Ported from `disktree-app/src/state.rs:2524-2779`, and the **ladder is the
+    /// behaviour** - upstream's dispatch order is a priority list, not a flat
+    /// match, and flattening it changes what a key does when two screens both
+    /// want it:
+    ///
+    /// 1. the find field, when it is open
+    /// 2. the screen
+    /// 3. the help overlay
+    /// 4. the breadcrumb menu
+    /// 5. **the platform modifier passthrough** - `cmd`/`super` returns here, so
+    ///    the treemap never steals the window's own chords
+    /// 6. history
+    ///
+    /// Called only when the treemap is the visible surface, so the Project
+    /// Panel's own bindings are untouched while the file tree is showing.
+    pub fn disk_tree_key(
+        &mut self,
+        key: &gpui::Keystroke,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.storage_surface() != Some(StorageSurface::Treemap) {
+            return;
+        }
+        let screen = self.ensure_disk_tree(cx).screen;
+        // Ladder step 5: hand the platform modifier back to the window.
+        if key.modifiers.platform {
+            return;
+        }
+
+        // The review and removal screens own every key while they are up. They
+        // are above the find field and the treemap's own bindings because a
+        // screen that can lose data must not also have `r` meaning "rescan".
+        match screen {
+            disk_tree::model::Screen::Review => {
+                match key.key.as_str() {
+                    "escape" => disk_tree::review::cancel(self, cx),
+                    "enter" => disk_tree::review::confirm(self, cx),
+                    // `t` picks the recoverable mode; `d` the permanent one.
+                    "t" => disk_tree::review::set_mode(
+                        self,
+                        disk_tree_core::removal::RemovalMode::Trash,
+                        cx,
+                    ),
+                    "d" => disk_tree::review::set_mode(
+                        self,
+                        disk_tree_core::removal::RemovalMode::Permanent,
+                        cx,
+                    ),
+                    "r" => disk_tree::review::start_removal(self, cx),
+                    _ => return,
+                }
+                return;
+            }
+            disk_tree::model::Screen::Removing => {
+                // Only cancellation is available; everything else would be a
+                // second gesture at a screen that is already acting.
+                match key.key.as_str() {
+                    "escape" | "q" => disk_tree::review::cancel_running(self, cx),
+                    _ => return,
+                }
+                return;
+            }
+            disk_tree::model::Screen::Explore | disk_tree::model::Screen::Running => {}
+        }
+
+        // Ladder step 1: an open find field owns every key it can use.
+        let tree = self.ensure_disk_tree(cx);
+        if let Some(needle) = tree.find.clone() {
+            match key.key.as_str() {
+                "escape" => {
+                    tree.find = None;
+                    tree.filter = None;
+                    tree.filter_epoch += 1;
+                    tree.cache = None;
+                }
+                "enter" => {
+                    let tree = self.ensure_disk_tree(cx);
+                    if let Some(crumbs) = disk_tree::moves::find_by_name(tree, &needle) {
+                        tree.selected = Some(crumbs);
+                    }
+                }
+                "backspace" => {
+                    let mut needle = needle;
+                    needle.pop();
+                    if needle.is_empty() {
+                        tree.find = None;
+                        tree.filter = None;
+                        tree.filter_epoch += 1;
+                        tree.cache = None;
+                    } else {
+                        let tree = self.ensure_disk_tree(cx);
+                        disk_tree::moves::start_find(tree, needle, cx);
+                    }
+                }
+                // One printable character extends the needle.
+                other if key.key_char.is_some() && !other.chars().any(char::is_whitespace) => {
+                    disk_tree::moves::start_find(self.ensure_disk_tree(cx), format!("{needle}{other}"), cx);
+                }
+                _ => return,
+            }
+            cx.notify();
+            return;
+        }
+
+        // Ladder step 2 and below: the treemap's own keys.
+        let area = self
+            .disk_tree()
+            .map(|tree| tree.viewport.size.get())
+            .unwrap_or(gpui::Size {
+                width: px(0.),
+                height: px(0.),
+            });
+        let rem = self.disk_tree_rem(window);
+        let scrolling = key.modifiers.shift || area.width <= px(0.);
+
+        match key.key.as_str() {
+            // Navigation. These never change depth - that is `enter` and
+            // `backspace` - because a jump that changes depth has no geometric
+            // meaning to the user.
+            "up" | "k" => disk_tree::mouse::move_selection(self, Direction::Up, window, cx),
+            "down" | "j" => disk_tree::mouse::move_selection(self, Direction::Down, window, cx),
+            "left" | "h" => disk_tree::mouse::move_selection(self, Direction::Left, window, cx),
+            "right" | "l" => disk_tree::mouse::move_selection(self, Direction::Right, window, cx),
+            "enter" => {
+                if scrolling {
+                    return;
+                }
+                let Some(area) = (area.width > px(0.)).then_some(area) else {
+                    return;
+                };
+                let tree = self.ensure_disk_tree(cx);
+                if let Some(crumbs) = tree.selected.clone() {
+                    let descendable = tree
+                        .node(&crumbs)
+                        .map(|node| node.is_dir() && !node.children.is_empty())
+                        .unwrap_or(false);
+                    if descendable {
+                        disk_tree::moves::descend(tree, crumbs, area, rem);
+                        cx.notify();
+                    }
+                }
+            }
+            "backspace" | "u" => {
+                let Some(area) = (area.width > px(0.)).then_some(area) else {
+                    return;
+                };
+                let tree = self.ensure_disk_tree(cx);
+                if !tree.crumbs.is_empty() {
+                    disk_tree::moves::ascend(tree, area, rem);
+                    cx.notify();
+                }
+            }
+            // Siblings.
+            "tab" => {
+                disk_tree::moves::cycle_sibling(self.ensure_disk_tree(cx), 1);
+                cx.notify();
+            }
+            "shift-tab" => {
+                disk_tree::moves::cycle_sibling(self.ensure_disk_tree(cx), -1);
+                cx.notify();
+            }
+            // Marking.
+            "space" | "x" => {
+                let tree = self.ensure_disk_tree(cx);
+                tree.adopt_pointer_target();
+                let Some(crumbs) = tree.action_target().map(<[usize]>::to_vec) else {
+                    return;
+                };
+                let Some(path) = tree.path_of_any(&crumbs) else {
+                    return;
+                };
+                tree.marks.toggle(path);
+                cx.notify();
+            }
+            // Depth.
+            "[" => disk_tree::moves::adjust_depth(self.ensure_disk_tree(cx), -1),
+            "]" => disk_tree::moves::adjust_depth(self.ensure_disk_tree(cx), 1),
+            // Zoom.
+            "-" => {
+                let Some(area) = (area.width > px(0.)).then_some(area) else {
+                    return;
+                };
+                disk_tree::moves::reset_view(self.ensure_disk_tree(cx), area);
+                cx.notify();
+            }
+            "=" | "+" => {
+                let Some(area) = (area.width > px(0.)).then_some(area) else {
+                    return;
+                };
+                let center = (area.width.as_f32() / 2.0, area.height.as_f32() / 2.0);
+                let tree = self.ensure_disk_tree(cx);
+                let (bx, by) = tree.view.unproject(center.0, center.1);
+                disk_tree::moves::zoom_at(tree, bx, by, 1.25, area);
+                cx.notify();
+            }
+            "0" => {
+                let Some(area) = (area.width > px(0.)).then_some(area) else {
+                    return;
+                };
+                disk_tree::moves::reset_view(self.ensure_disk_tree(cx), area);
+                cx.notify();
+            }
+            // Cycle Size -> Files -> Age.
+            "t" => {
+                let next = self.ensure_disk_tree(cx).mode.next();
+                disk_tree::moves::set_mode(self.ensure_disk_tree(cx), next);
+                cx.notify();
+            }
+            // Scan controls.
+            "r" => disk_tree::scan::rescan(self, cx),
+            // Review the marked paths. Nothing is removed by this key: it opens
+            // the screen, and the screen is what requires a confirmed mode.
+            "m" => disk_tree::review::open(self, cx),
+            // Cancel a scan in flight. `escape` is here rather than in the find
+            // arm above because find claims the key only while a field is open,
+            // and cancelling is what escape should otherwise do.
+            "escape" | "q" => {
+                let running = self
+                    .disk_tree()
+                    .map(|tree| tree.scan.handle.is_some())
+                    .unwrap_or(false);
+                if running {
+                    disk_tree::scan::cancel_scan(self, cx);
+                }
+            }
+            // Go to the scanned root.
+            "g" => {
+                let Some(area) = (area.width > px(0.)).then_some(area) else {
+                    return;
+                };
+                disk_tree::moves::descend(self.ensure_disk_tree(cx), Vec::new(), area, rem);
+                cx.notify();
+            }
+            // Find.
+            "/" | "s" => {
+                self.ensure_disk_tree(cx).find = Some(String::new());
+                cx.notify();
+            }
+            // Reveal.
+            "o" => {
+                let project = self.project.clone();
+                let tree = self.ensure_disk_tree(cx);
+                disk_tree::moves::reveal(tree, &project, cx);
+            }
+            _ => return,
+        }
+    }
+
+    /// Re-read whatever the treemap's header shows. A no-op hook kept so the
+    /// history actions have one place to land if the header ever grows state.
+    pub fn refresh_disk_tree_header(&mut self, _window: &mut Window) {}
+
+    /// Which storage surface the header's storage area is showing.
+    ///
+    /// **One user-visible choice, expressed as two fields.** The
+    /// `storage_details_visible` field and its default are pinned by
+    /// `script/dx-project-panel-source.test.ts:891-908`, so it stays a `bool`
+    /// with that name; `disk_tree_visible` is the sibling. Mutually exclusive by
+    /// construction, because every read goes through here.
+    pub fn storage_surface(&self) -> Option<StorageSurface> {
+        if self.disk_tree_visible {
+            Some(StorageSurface::Treemap)
+        } else if self.storage_details_visible {
+            Some(StorageSurface::Details)
+        } else {
+            None
+        }
+    }
+
     pub fn select_path_for_test(&mut self, project_path: ProjectPath, cx: &App) {
         let Some(worktree) = self
             .project

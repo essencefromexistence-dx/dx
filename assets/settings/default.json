@@ -309,6 +309,7 @@
     // Whether cursor movement animation is enabled.
     "enabled": false,
   },
+  },
   // Determines when the mouse cursor should be hidden in response to keyboard
   // input.
   //
@@ -990,6 +991,21 @@
     "diagnostic_badges": false,
     // Whether to show the git status indicator next to file names in the project panel.
     "git_status_indicator": false,
+    // Settings for the disk treemap, shown in place of the storage list.
+    "disk_tree": {
+      // Whether the treemap may include dotfiles.
+      "include_hidden": false,
+      // Report allocated bytes (`st_blocks * 512`) rather than apparent size.
+      // Allocated is what a deleted file actually gives back.
+      "on_disk_size": true,
+      // Follow symbolic links. Off by default because a link cycle is a scan
+      // that never ends.
+      "follow_links": false,
+      // Stay on a single filesystem, so a bind mount is not counted twice.
+      "one_filesystem": true,
+      // How many levels of the mosaic to draw.
+      "depth": 2,
+    },
     // Whether to enable drag-and-drop operations in the project panel.
     "drag_and_drop": true,
     // Whether to hide the root entry when only one folder is open in the window;

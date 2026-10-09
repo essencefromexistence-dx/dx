@@ -18,6 +18,8 @@ use gpui::{
     linear_color_stop, linear_gradient,
 };
 use project::{Entry, ProjectEntryId, WorktreeId};
+
+use super::ContextMenuPlacement;
 use settings::Settings;
 use ui::{
     ButtonLike, ButtonSize, ContextMenu, ListHeader, PopoverMenu, TintColor, Tooltip, prelude::*,
@@ -464,7 +466,7 @@ fn render_media_shelf_card(
                 panel.marked_entries.clear();
             }
             panel.selection = Some(selection);
-            panel.deploy_context_menu(event.position(), entry_id, window, cx);
+            panel.deploy_context_menu(ContextMenuPlacement::AtMouse(event.position()), entry_id, window, cx);
             cx.notify();
         }),
     )

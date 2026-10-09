@@ -55,6 +55,7 @@ members = [
     "crates/deepseek",
     "crates/dev_container",
     "crates/diagnostics",
+    "crates/disk_tree_core",
     "crates/docs_preprocessor",
     "crates/dx_catalog",
     "crates/edit_prediction",
@@ -353,6 +354,7 @@ deepseek = { path = "crates/deepseek" }
 derive_refineable = { path = "crates/refineable/derive_refineable" }
 dev_container = { path = "crates/dev_container" }
 diagnostics = { path = "crates/diagnostics" }
+disk_tree_core = { path = "crates/disk_tree_core" }
 dx_catalog = { path = "crates/dx_catalog" }
 edit_prediction = { path = "crates/edit_prediction" }
 edit_prediction_context = { path = "crates/edit_prediction_context" }
@@ -913,6 +915,24 @@ toml_edit = { version = "0.22", default-features = false, features = [
     "serde",
 ] }
 tower-http = "0.4.4"
+# zed-industries' fork of trash-rs, already resolved in our lock (5.2.5) and
+# already used by `crates/fs`. Hoisted here so `disk_tree_core` shares the exact
+# same package rather than resolving a second `trash`. Verified to carry every
+# API `disk_tree_core/removal.rs` touches: `trash::delete` (src/lib.rs:144),
+# `trash::TrashContext` (:61) and
+# `trash::macos::{DeleteMethod, TrashContextExtMacos}` (src/macos/mod.rs:23,66).
+#
+# `default-features = false` plus an explicit feature list is *required* here:
+# cargo refuses to let a member set `default-features = false` on an inherited
+# dependency, so the flags have to live on this entry. The list is exactly
+# trash-rs' own `default = ["coinit_apartmentthreaded", "chrono"]`, so
+# `crates/fs` keeps the features it had before this hoist - `coinit_apartmentthreaded`
+# only gates trash's own `#[cfg(windows)]` module, so naming it on every platform
+# is a no-op off Windows.
+trash = { git = "https://github.com/zed-industries/trash-rs", rev = "41c6c800d884a89351f3b8856d12894cccee261d", default-features = false, features = [
+    "chrono",
+    "coinit_apartmentthreaded",
+] }
 tree-sitter = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
 tracing = "0.1.40"
 tree-sitter-bash = "0.25.1"
@@ -1134,6 +1154,15 @@ wasmtime-environ = { opt-level = 3 }
 wasmtime-internal-cranelift = { opt-level = 3 }
 minidumper = { opt-level = 3 }
 serde_json = { opt-level = 3 }
+# Upstream `disktree-core` runs its own tests with `opt-level = 1` in dev
+# (`inspirations/disktree/Cargo.toml`). At our workspace default of `opt-level = 0`
+# the `mft::tests::a_directory_beneath_itself_gives_up_rather_than_recurse` frame
+# chain is large enough to exhaust the 2 MB test thread stack: that test builds a
+# deliberately *cyclic* master-file-table (loop -> inner -> again -> loop) to prove
+# the scanner terminates, and it does terminate - just too late for an unoptimised
+# frame layout. Matching upstream's dev opt-level makes the whole suite pass in
+# debug instead of needing `--release` for one test.
+disk_tree_core = { opt-level = 1 }
 # Build single-source-file crates with cg=1 as it helps make `cargo build` of a whole workspace a bit faster
 activity_indicator = { codegen-units = 1 }
 assets = { codegen-units = 1 }

@@ -387,6 +387,7 @@ dependencies = [
  "agent-client-protocol",
  "anyhow",
  "async-channel 2.5.0",
+ "base64 0.22.1",
  "chrono",
  "client",
  "collections",
@@ -663,6 +664,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc890384c8602f339876ded803c97ad529f3842aba97f6392b3dba0dd171769b"
 dependencies = [
  "equator",
+]
+
+[[package]]
+name = "alloc-no-stdlib"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc7bb162ec39d46ab1ca8c77bf72e890535becd1751bb45f64c597edb4c8c6b3"
+
+[[package]]
+name = "alloc-stdlib"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e76a019e91224d279006ff972f1e984179a6e9feb050adba6ce8274aef23195"
+dependencies = [
+ "alloc-no-stdlib",
 ]
 
 [[package]]
@@ -2772,7 +2788,7 @@ dependencies = [
 [[package]]
 name = "calloop"
 version = "0.14.3"
-source = "git+https://github.com/zed-industries/calloop#eb6b4fd17b9af5ecc226546bdd04185391b3e265"
+source = "git+https://github.com/zed-industries/calloop?rev=3759371fee14c40066d64777e2a36b6ffcc22590#3759371fee14c40066d64777e2a36b6ffcc22590"
 dependencies = [
  "bitflags 2.13.1",
  "polling",
@@ -3582,7 +3598,7 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f849b92c694fe237ecd8fafd1ba0df7ae0d45c1df6daeb7f68ed4220d51640bd"
 dependencies = [
- "nix",
+ "nix 0.30.1",
  "thiserror 2.0.17",
 ]
 
@@ -4628,7 +4644,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "881c5d0a13b2f1498e2306e82cbada78390e152d4b1378fb28a84f4dcd0dc4f3"
 dependencies = [
  "dispatch",
- "nix",
+ "nix 0.30.1",
  "windows-sys 0.61.2",
 ]
 
@@ -5250,6 +5266,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "disk_tree_core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rayon",
+ "rustc-hash 2.1.1",
+ "rustix",
+ "sysinfo 0.39.6",
+ "tempfile",
+ "trash",
+ "winapi-util",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "dispatch"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5685,7 +5716,6 @@ dependencies = [
  "codestral",
  "command_palette_hooks",
  "copilot",
- "copilot_chat",
  "copilot_ui",
  "edit_prediction",
  "edit_prediction_types",
@@ -6296,7 +6326,6 @@ dependencies = [
  "parking_lot",
  "path",
  "pretty_assertions",
- "proto",
  "semver",
  "serde",
  "serde_json",
@@ -6575,6 +6604,16 @@ checksum = "38e2275cc4e4fc009b0669731a1e5ab7ebf11f469eaede2bab9309a5b4d6057f"
 dependencies = [
  "memoffset 0.9.1",
  "rustc_version",
+]
+
+[[package]]
+name = "file_content"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chardetng",
+ "encoding_rs",
+ "futures-lite 2.6.1",
 ]
 
 [[package]]
@@ -7480,6 +7519,7 @@ dependencies = [
  "async-trait",
  "collections",
  "derive_more 2.1.1",
+ "file_content",
  "futures 0.3.34",
  "gpui",
  "http_client",
@@ -7986,20 +8026,26 @@ name = "gpui_apple"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-task",
  "block2 0.6.2",
  "cbindgen",
- "cocoa 0.26.0",
  "core-foundation 0.10.0",
+ "core-graphics 0.24.0",
  "core-video",
  "derive_more 2.1.1",
+ "dispatch2",
  "etagere",
  "foreign-types 0.5.0",
  "gpui",
+ "gpui_util",
  "image",
+ "libc",
  "log",
+ "mach2 0.5.0",
  "metal",
- "objc",
  "objc2 0.6.3",
+ "objc2-foundation 0.3.2",
+ "objc2-quartz-core 0.3.2",
  "parking_lot",
 ]
 
@@ -8012,7 +8058,6 @@ dependencies = [
  "anyhow",
  "as-raw-xcb-connection",
  "ashpd",
- "bitflags 2.13.1",
  "bytemuck",
  "calloop",
  "calloop-wayland-source",
@@ -8054,7 +8099,6 @@ dependencies = [
  "accesskit",
  "accesskit_macos",
  "anyhow",
- "async-task",
  "block2 0.6.2",
  "cocoa 0.26.0",
  "collections",
@@ -8062,6 +8106,7 @@ dependencies = [
  "core-foundation-sys",
  "core-graphics 0.24.0",
  "core-text",
+ "core-video",
  "ctor",
  "dispatch2",
  "foreign-types 0.5.0",
@@ -8071,9 +8116,7 @@ dependencies = [
  "gpui_util",
  "image",
  "itertools 0.14.0",
- "libc",
  "log",
- "mach2 0.5.0",
  "objc",
  "objc2 0.6.3",
  "objc2-app-kit 0.3.2",
@@ -8085,6 +8128,7 @@ dependencies = [
  "parking_lot",
  "pathfinder_geometry",
  "raw-window-handle",
+ "scheduler",
  "semver",
  "smallvec",
  "strum 0.28.0",
@@ -8221,6 +8265,7 @@ dependencies = [
  "parking_lot",
  "rand 0.9.4",
  "raw-window-handle",
+ "scheduler",
  "serde_json",
  "smallvec",
  "util",
@@ -10089,7 +10134,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "chardetng",
  "clock",
  "collections",
  "criterion",
@@ -10097,6 +10141,7 @@ dependencies = [
  "diffy",
  "ec4rs",
  "encoding_rs",
+ "file_content",
  "fs",
  "futures 0.3.34",
  "futures-lite 2.6.1",
@@ -10286,7 +10331,6 @@ dependencies = [
  "gpui",
  "gpui_tokio",
  "http_client",
- "language",
  "language_model",
  "language_models_cloud",
  "llama_cpp",
@@ -11983,6 +12027,18 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "nix"
+version = "0.26.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "598beaf3cc6fdd9a5dfb1630c2800c7acd31df7aaf0f565796fba2b53ca1af1b"
+dependencies = [
+ "bitflags 1.3.2",
+ "cfg-if",
+ "libc",
+ "memoffset 0.7.1",
+]
+
+[[package]]
+name = "nix"
 version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
@@ -13608,7 +13664,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9c25955321465255e437600b54296983fab1feac2cd0c38958adeb26dbae49e"
 dependencies = [
  "libc",
- "memoffset",
+ "memoffset 0.9.1",
 ]
 
 [[package]]
@@ -14858,6 +14914,7 @@ dependencies = [
  "encoding_rs",
  "extension",
  "fancy-regex",
+ "file_content",
  "fs",
  "futures 0.3.34",
  "fuzzy",
@@ -14950,6 +15007,7 @@ dependencies = [
  "client",
  "collections",
  "criterion",
+ "disk_tree_core",
  "editor",
  "file_icons",
  "fs",
@@ -16868,7 +16926,7 @@ dependencies = [
  "http_proxy",
  "libc",
  "log",
- "nix",
+ "nix 0.30.1",
  "seccompiler",
  "serde",
  "serde_json",
@@ -18087,7 +18145,6 @@ version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4aaa7368fcf4852a4c2dd92df0cace6a71f2091ca0a23391ce7f3a31833f1523"
 dependencies = [
- "borsh",
  "serde_core",
 ]
 
@@ -19132,6 +19189,8 @@ dependencies = [
  "picker",
  "project",
  "proptest",
+ "schemars 1.0.4",
+ "serde",
  "serde_json",
  "text",
  "ui",
@@ -20900,7 +20959,7 @@ dependencies = [
  "libc",
  "log",
  "mach2 0.5.0",
- "nix",
+ "nix 0.30.1",
  "path",
  "percent-encoding",
  "rand 0.9.4",
@@ -23695,6 +23754,7 @@ dependencies = [
  "clock",
  "collections",
  "encoding_rs",
+ "file_content",
  "fs",
  "futures 0.3.34",
  "futures-lite 2.6.1",
@@ -23816,6 +23876,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "502da5464ccd04011667b11c435cb992822c2c0dbde1770c988480d312a0db2e"
 dependencies = [
  "libc",
+ "pkg-config",
+]
+
+[[package]]
+name = "x11-dl"
+version = "2.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38735924fedd5314a6e548792904ed8c6de6636285cb9fec04d5b1db85c1516f"
+dependencies = [
+ "libc",
+ "once_cell",
  "pkg-config",
 ]
 
@@ -23963,35 +24034,6 @@ name = "xmlwriter"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
-
-[[package]]
-name = "xtask"
-version = "0.1.0"
-dependencies = [
- "annotate-snippets",
- "anyhow",
- "backtrace",
- "cargo_metadata 0.19.2",
- "cargo_toml",
- "clap",
- "compliance",
- "gh-workflow",
- "guppy",
- "indexmap 2.14.0",
- "indoc",
- "itertools 0.14.0",
- "regex",
- "serde",
- "serde_json",
- "serde_yaml",
- "strum 0.28.0",
- "tempfile",
- "thiserror 2.0.17",
- "tokio",
- "toml 0.8.23",
- "toml_edit 0.22.27",
- "url",
-]
 
 [[package]]
 name = "xxhash-rust"
@@ -24194,7 +24236,7 @@ dependencies = [
 
 [[package]]
 name = "zed"
-version = "1.23.0"
+version = "1.24.0"
 dependencies = [
  "acp_thread",
  "acp_tools",

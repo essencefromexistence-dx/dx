@@ -913,6 +913,40 @@ pub struct ProjectPanelSettingsContent {
     ///
     /// Default: false
     pub git_status_indicator: Option<bool>,
+    /// Settings for the disk treemap, shown in place of the storage list.
+    pub disk_tree: Option<ProjectPanelDiskTreeSettingsContent>,
+}
+
+/// Settings for the disk treemap.
+///
+/// These are the knobs the treemap reads when it is first built. A change to any
+/// of them that a *running* treemap cannot apply in place is picked up the next
+/// time the treemap is created, not pushed into an existing scan.
+#[with_fallible_options]
+#[derive(Clone, PartialEq, Default, Serialize, Deserialize, JsonSchema, MergeFrom, Debug)]
+pub struct ProjectPanelDiskTreeSettingsContent {
+    /// Whether the treemap may include dotfiles.
+    ///
+    /// Default: false
+    pub include_hidden: Option<bool>,
+    /// Report allocated bytes (`st_blocks * 512`) rather than apparent size.
+    /// Allocated is what a deleted file actually gives back.
+    ///
+    /// Default: true
+    pub on_disk_size: Option<bool>,
+    /// Follow symbolic links. Off by default because a link cycle is a scan
+    /// that never ends.
+    ///
+    /// Default: false
+    pub follow_links: Option<bool>,
+    /// Stay on a single filesystem, so a bind mount is not counted twice.
+    ///
+    /// Default: true
+    pub one_filesystem: Option<bool>,
+    /// How many levels of the mosaic to draw.
+    ///
+    /// Default: 2
+    pub depth: Option<u32>,
 }
 
 /// Controls the width of the git diff hunk indicators in the gutter.

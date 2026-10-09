@@ -900,6 +900,8 @@ impl VsCodeSettings {
             auto_open: None,
             diagnostic_badges: None,
             git_status_indicator: None,
+            // VS Code has no disk treemap, so there is nothing to import.
+            disk_tree: None,
         };
 
         if let (Some(false), Some(false)) = (

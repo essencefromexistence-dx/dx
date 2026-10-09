@@ -425,7 +425,12 @@ pub mod project_panel {
             /// Toggles the project panel.
             Toggle,
             /// Toggles focus on the project panel.
-            ToggleFocus
+            ToggleFocus,
+            /// Toggles the disk usage treemap in the project panel, in place of
+            /// the largest-folders storage list.
+            ToggleDiskTree,
+            /// Toggles the largest-folders storage list in the project panel.
+            ToggleStorageDetails
         ]
     );
 }

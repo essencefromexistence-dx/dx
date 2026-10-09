@@ -1,0 +1,68 @@
+[package]
+name = "disk_tree_core"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+description = "Filesystem scanning and treemap layout for the Project Panel's disk tree, vendored from tobi/disktree"
+
+[lints]
+workspace = true
+
+# Upstream `disktree-core` is MIT licensed (Copyright (c) 2026 Tobi Lütke) and
+# carried its own lint table: `unsafe_code = "deny"`, `clippy::all`/`pedantic`
+# `= "deny"`, `nursery = "warn"`, plus ~13 documented allows. None of that is
+# inherited here, on purpose:
+#
+#   * `unsafe_code = "deny"` cannot be inherited: `mft.rs` and `windows.rs` are
+#     FFI-heavy by nature (NTFS master file table, volume handles). This
+#     workspace's root `[workspace.lints.rust]` (Cargo.toml:1214-1215) sets
+#     `unexpected_cfgs = "allow"` and says nothing about `unsafe_code`, so the
+#     FFI compiles as-is.
+#   * `clippy::pedantic`/`nursery` deny would fight our own house style and the
+#     surrounding crates.
+#
+# What survives is upstream's *reasoning*, recorded as comments next to the code
+# it applies to, so a future sync knows which deviations were deliberate.
+
+[dependencies]
+chrono.workspace = true
+rayon.workspace = true
+rustc-hash.workspace = true
+
+# rustix has no filesystem calls on Windows; `windows.rs` covers them there.
+[target.'cfg(not(windows))'.dependencies]
+rustix.workspace = true
+
+# CPU-only sampling for the scan worker governor. Upstream pins 0.31.4; we use
+# the workspace version (0.39) so the whole workspace builds one `sysinfo`.
+# `scan_threads.rs` only touches `System::new`, `refresh_cpu_usage`,
+# `global_cpu_usage` and `cpus`, all of which survive the 0.31 -> 0.39 bump.
+[target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
+sysinfo.workspace = true
+
+# The Recycle Bin, through the shell's own file operation. Upstream wants
+# crates.io 5.2.9; we use the workspace fork (zed-industries/trash-rs 41c6c80,
+# 5.2.5), which is the only `trash` in our lock. Verified to carry every API
+# `removal.rs` touches: `trash::delete` (src/lib.rs:144), `trash::TrashContext`
+# (:61) and `trash::macos::{DeleteMethod, TrashContextExtMacos}`
+# (src/macos/mod.rs:23,66).
+[target.'cfg(windows)'.dependencies]
+trash.workspace = true
+winapi-util = "0.1.11"
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Com",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+# The system trash, through NSFileManager: what Finder's Move to Trash does,
+# without asking to control Finder. Only this backend is used; the crate's
+# Linux and Windows code is not built.
+[target.'cfg(target_os = "macos")'.dependencies]
+trash.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

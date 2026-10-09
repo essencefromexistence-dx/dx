@@ -37,6 +37,21 @@ pub struct ProjectPanelSettings {
     pub sort_order: ProjectPanelSortOrder,
     pub diagnostic_badges: bool,
     pub git_status_indicator: bool,
+    pub disk_tree: DiskTreeSettings,
+}
+
+/// The disk treemap's settings, read once when the treemap is built.
+///
+/// Every field has a default in `assets/settings/default.json`; a missing one is
+/// an `unwrap` panic in `Settings::from_settings`, which is why they are `Option`
+/// on the raw side and resolved here.
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
+pub struct DiskTreeSettings {
+    pub include_hidden: bool,
+    pub on_disk_size: bool,
+    pub follow_links: bool,
+    pub one_filesystem: bool,
+    pub depth: u32,
 }
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
@@ -145,6 +160,16 @@ impl Settings for ProjectPanelSettings {
             sort_order: project_panel.sort_order.unwrap(),
             diagnostic_badges: project_panel.diagnostic_badges.unwrap(),
             git_status_indicator: project_panel.git_status_indicator.unwrap(),
+            disk_tree: {
+                let disk_tree = project_panel.disk_tree.unwrap();
+                DiskTreeSettings {
+                    include_hidden: disk_tree.include_hidden.unwrap(),
+                    on_disk_size: disk_tree.on_disk_size.unwrap(),
+                    follow_links: disk_tree.follow_links.unwrap(),
+                    one_filesystem: disk_tree.one_filesystem.unwrap(),
+                    depth: disk_tree.depth.unwrap(),
+                }
+            },
         }
     }
 }

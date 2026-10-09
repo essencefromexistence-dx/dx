@@ -1391,7 +1391,30 @@ test("project panel storage overview and root shortcuts stay cached and professi
     "local storage-root shortcuts must not render for read-only or remote-only project contexts",
   );
   assert.match(source, /fn storage_root_shortcuts_allowed\(&self, cx: &mut Context<Self>\) -> bool \{[\s\S]*if !self\.storage_details_visible \{[\s\S]*return false;[\s\S]*\}[\s\S]*!project\.is_read_only\(cx\)[\s\S]*project\.is_local\(\) \|\| project\.is_via_wsl_with_host_interop\(cx\)/);
-  assert.match(source, /fn toggle_storage_details_visible\(&mut self, window: &mut Window, cx: &mut Context<Self>\) \{[\s\S]*self\.storage_details_visible = !self\.storage_details_visible;[\s\S]*if self\.storage_details_visible \{[\s\S]*self\.refresh_dx_explorer_storage_roots\(cx\);[\s\S]*\} else \{[\s\S]*self\.storage_root_shortcuts\.clear\(\);[\s\S]*\}[\s\S]*self\.update_visible_entries\(None, false, false, window, cx\);[\s\S]*cx\.notify\(\);[\s\S]*\}/);
+  // The drilldown toggle. `storage_details_visible` is still flipped by a `!`,
+  // then the disk-tree sibling is cleared so the two storage surfaces stay one
+  // user-visible choice - see `ProjectPanel::storage_surface`. The assertion
+  // allows for those extra lines rather than pinning the old body exactly, and
+  // asserts the exclusivity itself below.
+  // The exclusivity clear comes first, then the `!` flip: the treemap must be off
+  // *before* the drilldown is turned on, so the two can never both be true even
+  // for one frame. Asserted against the function body rather than the whole file,
+  // and as separate statements rather than one adjacency chain, so adding a
+  // comment between them does not fail the guard.
+  const toggleStorageDetails = functionBody(source, "toggle_storage_details_visible");
+  assert.match(
+    toggleStorageDetails,
+    /self\.disk_tree_visible = false;/,
+    "showing the storage list must hide the treemap",
+  );
+  assert.match(toggleStorageDetails, /self\.storage_details_visible = !self\.storage_details_visible;/);
+  assert.match(source, /fn toggle_storage_details_visible\(&mut self, window: &mut Window, cx: &mut Context<Self>\) \{[\s\S]*if self\.storage_details_visible \{[\s\S]*self\.refresh_dx_explorer_storage_roots\(cx\);[\s\S]*\} else \{[\s\S]*self\.storage_root_shortcuts\.clear\(\);[\s\S]*\}[\s\S]*self\.update_visible_entries\(None, false, false, window, cx\);[\s\S]*cx\.notify\(\);[\s\S]*\}/);
+  // And the treemap's own toggle clears this one, so neither can be on alone.
+  assert.match(
+    source,
+    /fn toggle_disk_tree_visible\(&mut self, window: &mut Window, cx: &mut Context<Self>\) \{[\s\S]*self\.disk_tree_visible = next;[\s\S]*self\.storage_details_visible = false;/,
+    "the treemap and the storage list must stay mutually exclusive",
+  );
   assert.match(source, /if this\.storage_root_shortcuts_allowed\(cx\) \{[\s\S]*this\.refresh_dx_explorer_storage_roots\(cx\);[\s\S]*\}/);
   assert.match(source, /fn refresh_dx_explorer_storage_roots\(&mut self, cx: &mut Context<Self>\)[\s\S]*if !self\.storage_root_shortcuts_allowed\(cx\) \{[\s\S]*self\.storage_root_shortcuts\.clear\(\);[\s\S]*return;[\s\S]*\}/);
   assert.match(source, /if !this\.storage_root_shortcuts_allowed\(cx\) \{[\s\S]*this\.storage_root_shortcuts\.clear\(\);[\s\S]*cx\.notify\(\);[\s\S]*return;[\s\S]*\}/);
@@ -1453,7 +1476,7 @@ test("project panel storage overview and root shortcuts stay cached and professi
   assert.match(renderRootStripRow, /let row_focus_handle = focus_handle\.clone\(\);/);
   assert.match(renderRootStripRow, /let click_focus_handle = row_focus_handle\.clone\(\);/);
   assert.match(renderRootStripRow, /window\.focus\(&click_focus_handle, cx\)/);
-  assert.match(renderRootStripRow, /this\.open_dx_explorer_storage_root\(path\.clone\(\), window, cx\)/);
+  assert.match(renderRootStripRow, /this\.open_dx_explorer_storage_root\(\s*path\.clone\(\),\s*Some\(shortcut_id\.clone\(\)\),\s*window,\s*cx,?\s*\)/);
   assert.match(renderRootStripRow, /let status_label = shortcut\.status_label\(\);/);
   assert.match(
     capacityUsedBytes,
@@ -2433,7 +2456,7 @@ test("project panel media preview renders direct image previews and video frames
   );
   assert.match(
     renderMediaShelfCard,
-    /\.on_right_click\([\s\S]*panel\.deploy_context_menu\(event\.position\(\), entry_id, window, cx\)/,
+    /\.on_right_click\([\s\S]*panel\.deploy_context_menu\(ContextMenuPlacement::AtMouse\(event\.position\(\)\), entry_id, window, cx\)/,
     "media shelf cards must use ButtonLike right-click handling and the real project-panel context menu",
   );
   assert.match(
