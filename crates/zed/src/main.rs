@@ -1,5 +1,12 @@
 // Keep local `just run` launches from opening a transient console window on Windows.
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+// `libwasmtime_c_api` and `libtree_sitter` are third-party static rlibs that
+// cross-import each other's symbols by construction (tree-sitter's WASM support
+// requires wasmtime), so the linker emits ~60 benign LNK4217s for this binary
+// and they bury real diagnostics in every build log. Scoped to this crate root
+// rather than `.cargo/config.toml`, because a `link-arg` there would also be
+// forwarded to every `cc` build script (tree-sitter, aws-lc-sys, libsqlite3-sys).
+#![allow(linker_messages)]
 
 mod dx_config;
 mod reliability;

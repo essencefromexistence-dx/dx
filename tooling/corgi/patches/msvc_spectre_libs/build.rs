@@ -1,8 +1,9 @@
 //! Local patch of `msvc_spectre_libs 0.1.3` (see Cargo.toml and the workspace
 //! `[patch.crates-io]` entry for rationale). Identical to upstream except the
 //! `error` feature no longer panics when the VS Spectre-mitigated libs are
-//! absent: it emits a warning and carries on, since nothing in this workspace
-//! compiles with `/Qspectre`.
+//! absent. And unlike the first revision of this patch, it no longer warns
+//! unconditionally either: the warning fires only when `/Qspectre` is actually
+//! requested, which is the only situation where absent libs matter.
 
 fn main() {
     #[cfg(all(target_os = "windows", target_env = "msvc"))]
@@ -40,7 +41,16 @@ fn add_spectre_link_search() {
         // Upstream panics here when the `error` feature is enabled (which the
         // pinned python-environment-tools rev requests unconditionally via
         // pet-*/Cargo.toml). That turns an optional VS component into a hard
-        // Windows build failure, so this patch always degrades to a warning.
-        println!("cargo:warning=No spectre-mitigated libs were found. This workspace does not build with /Qspectre, so linking proceeds with the regular CRT libs.");
+        // Windows build failure, so this patch degrades instead — but only
+        // shouts when it matters: if nobody passes `/Qspectre`, absent libs
+        // change nothing about the link and warning every build is pure noise.
+        // If `/Qspectre` IS requested without the libs installed, the link
+        // fails cryptically, so that case keeps the warning.
+        let spectre_requested = env::var("CARGO_ENCODED_RUSTFLAGS")
+            .map(|flags| flags.to_ascii_lowercase().contains("qspectre"))
+            .unwrap_or(false);
+        if spectre_requested {
+            println!("cargo:warning=No spectre-mitigated libs were found, but /Qspectre was requested. Linking proceeds with the regular CRT libs and will likely fail.");
+        }
     }
 }
