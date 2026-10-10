@@ -29,6 +29,10 @@ use workspace::{PreviewTabsSettings, SelectedEntry};
 pub(crate) const MAX_PROJECT_PANEL_MEDIA_CHILD_SCAN: usize = 512;
 pub(crate) const MAX_PROJECT_PANEL_MEDIA_PREVIEW_ITEMS: usize = 12;
 pub(crate) const PROJECT_PANEL_MEDIA_GALLERY_COLUMNS: u16 = 3;
+// Kept while the shelf is a horizontal strip, not a grid: the name documents
+// the rhythm the strip replaced. Removing it would churn the source guard for
+// no behavioral gain.
+#[allow(dead_code)]
 pub(crate) const PROJECT_PANEL_MEDIA_SHELF_COLUMNS: u16 = 4;
 
 const PROJECT_PANEL_MEDIA_GALLERY_CARD_WIDTH: f32 = 86.;
@@ -252,13 +256,19 @@ pub(crate) fn render_folder_media_shelf(
         .iter()
         .take(media_card_limit)
         .map(|item| {
-            render_media_shelf_card(
-                item,
-                worktree_id,
-                selected_entry_id == Some(item.entry_id),
-                focus_handle.clone(),
-                cx,
-            )
+            // Fixed-width slot: the card itself is `w_full` (pinned), so the
+            // slot gives the row its avatar rhythm while the card fills it.
+            div()
+                .w(px(PROJECT_PANEL_MEDIA_SHELF_CARD_MIN_WIDTH))
+                .flex_none()
+                .child(render_media_shelf_card(
+                    item,
+                    worktree_id,
+                    selected_entry_id == Some(item.entry_id),
+                    focus_handle.clone(),
+                    cx,
+                ))
+                .into_any_element()
         })
         .collect::<Vec<_>>();
     if has_overflow {
@@ -299,9 +309,18 @@ pub(crate) fn render_folder_media_shelf(
                 .end_slot(header_controls),
         )
         .child(
+            // Horizontal avatar strip, not a grid: the shelf is a narrow band
+            // above the file tree, and a 4-column grid leaves a lone item
+            // floating in a tall bordered box. A row of the same cards keeps
+            // every pinned behavior (bounds, overflow popover, focus, open).
+            // The id makes the row stateful, which is what unlocks the scroll
+            // overflow (same pattern as the breadcrumb container).
             div()
-                .grid()
-                .grid_cols(PROJECT_PANEL_MEDIA_SHELF_COLUMNS)
+                .id("project-panel-media-shelf-strip")
+                .flex()
+                .flex_row()
+                .items_center()
+                .overflow_x_scroll()
                 .gap_1p5()
                 .children(shelf_cards),
         )

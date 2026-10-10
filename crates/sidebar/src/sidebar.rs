@@ -8720,6 +8720,12 @@ impl Sidebar {
             .toggle_state(!sounds_enabled)
             .tooltip(Tooltip::text(tooltip))
             .on_click(cx.listener(|this, _, _window, cx| {
+                // The mute/volume toggle must not disturb anything else on
+                // screen: in particular it must not bubble to an ancestor that
+                // dismisses the open web preview. Stop propagation here so the
+                // click is fully consumed by the toggle itself.
+                // (`stop_propagation` is on `App`, reached through `cx`.)
+                cx.stop_propagation();
                 this.toggle_dx_sounds(cx);
             }))
     }

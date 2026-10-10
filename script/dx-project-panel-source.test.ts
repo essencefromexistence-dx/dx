@@ -2415,8 +2415,8 @@ test("project panel media preview renders direct image previews and video frames
   );
   assert.match(
     renderFolderMediaShelf,
-    /\.border_b_1\(\)[\s\S]*\.grid\(\)[\s\S]*\.grid_cols\(PROJECT_PANEL_MEDIA_SHELF_COLUMNS\)[\s\S]*\.children\(shelf_cards\)/,
-    "folder media shelf must render as a top four-column media grid",
+    /\.border_b_1\(\)[\s\S]*\.flex\(\)[\s\S]*\.flex_row\(\)[\s\S]*\.overflow_x_scroll\(\)[\s\S]*\.children\(shelf_cards\)/,
+    "folder media shelf must render as a horizontal avatar strip: a 4-column grid leaves a lone item floating in a tall box",
   );
   assert.match(
     renderFolderMediaShelf,

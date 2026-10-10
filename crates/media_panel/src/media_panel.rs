@@ -1331,7 +1331,7 @@ impl MediaPanel {
                         .min_w_0()
                         .flex_1()
                         .gap_0p5()
-                        .child(Label::new(label.clone()).size(LabelSize::Small).truncate())
+                    .child(Label::new(label.clone()).size(LabelSize::Small).truncate())
                         .child(
                             Label::new(url.clone())
                                 .size(LabelSize::XSmall)
@@ -1514,7 +1514,7 @@ impl MediaPanel {
                             .gap_1()
                             .child(Label::new(label).size(LabelSize::Small).truncate())
                             .child(
-                                Label::new(relative_display.clone())
+                                Label::new(relative_display)
                                     .size(LabelSize::XSmall)
                                     .color(Color::Muted)
                                     .truncate(),
@@ -1631,7 +1631,6 @@ impl MediaPanel {
             .start_slot(thumbnail)
             .tooltip(Tooltip::text(url.clone()))
             .on_click(cx.listener({
-                let url = url.clone();
                 let label = label.clone();
                 move |panel, _, window, cx| {
                     panel.preview_media_url(url.clone(), kind, label.clone(), window, cx);
@@ -1641,7 +1640,7 @@ impl MediaPanel {
                 v_flex()
                     .flex_1()
                     .gap_1()
-                    .child(Label::new(label.clone()).size(LabelSize::Small).truncate())
+                    .child(Label::new(label).size(LabelSize::Small).truncate())
                     .child(
                         Label::new(attribution)
                             .size(LabelSize::XSmall)

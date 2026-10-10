@@ -10674,18 +10674,16 @@ impl Render for ProjectPanel {
                                 .flatten(),
                             |this, mp| {
                                 let (active_media_folder, media_preview) = mp;
+                                // No header of our own: render_folder_media_shelf
+                                // already renders the shared ListHeader ("Media"
+                                // + count). A second header here doubled the
+                                // chrome and nested the shelf in a lookalike
+                                // container.
                                 this.child(
                                     v_flex()
                                         .w_full()
                                         .border_t_1()
                                         .border_color(cx.theme().colors().border.opacity(0.5))
-                                        .child(
-                                            ListHeader::new("Media").start_slot(
-                                                Icon::new(IconName::Image)
-                                                    .size(IconSize::Small)
-                                                    .color(Color::Muted),
-                                            ),
-                                        )
                                         .child(media_preview::render_folder_media_shelf(
                                             &media_preview,
                                             active_media_folder.worktree_id,

@@ -804,15 +804,10 @@ impl TitleBar {
         active_screen_kind: WorkspaceScreenKind,
         _cx: &mut Context<Self>,
     ) -> AnyElement {
-        let icon = match active_screen_kind {
-            WorkspaceScreenKind::Agent => IconName::NewThread,
-            WorkspaceScreenKind::Browser => dx_icon(DxUiIcon::Browser),
-            // Keep these aligned with ScreenCarousel::screen_kind_icon so the
-            // dock button and the carousel preview show the same glyph.
-            WorkspaceScreenKind::Terminal => IconName::Terminal,
-            WorkspaceScreenKind::Editor => IconName::Code,
-            _ => IconName::Plus,
-        };
+        // Always a plus: the button sits immediately left of Show Screens and
+        // must read as "new screen" at a glance. The per-screen glyph (code,
+        // browser, terminal icons) made it look like another screen switcher.
+        let icon = IconName::Plus;
 
         IconButton::new("screen-dock-add-trigger", icon)
             .size(ButtonSize::Default)
@@ -1144,10 +1139,13 @@ impl TitleBar {
                             workspace.close_side_panel_by_id(panel_id, window, cx);
                         });
                     }
-                } else if let Some(workspace) = workspace.upgrade() {
-                    let focus_handle = workspace.read(cx).focus_handle(cx);
-                    focus_handle.dispatch_action(action.as_ref(), window, cx);
                 } else {
+                    // Dispatch on the window, not the workspace focus handle:
+                    // FocusHandle::dispatch_action silently drops when its node
+                    // is absent from the rendered frame, which is exactly the
+                    // agent-fullscreen state this button must work in. Window
+                    // dispatch routes through the focused chain and reaches the
+                    // workspace-registered toggle like menu items do.
                     window.dispatch_action(action.boxed_clone(), cx);
                 }
             })
