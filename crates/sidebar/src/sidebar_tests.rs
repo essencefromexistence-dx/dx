@@ -585,7 +585,7 @@ fn enter_renamed_title(
         assert_eq!(sidebar.rename_target, Some(target));
     });
     sidebar.update_in(cx, |sidebar, window, cx| {
-        sidebar.rename_editor.update(cx, |editor, cx| {
+        sidebar.thread_rename_editor.update(cx, |editor, cx| {
             editor.set_text(renamed_title, window, cx);
         });
     });
@@ -5787,7 +5787,7 @@ async fn test_rename_thread_from_sidebar_updates_title_override(cx: &mut TestApp
     });
     cx.run_until_parked();
     sidebar.update_in(cx, |sidebar, window, cx| {
-        sidebar.rename_editor.update(cx, |editor, cx| {
+        sidebar.thread_rename_editor.update(cx, |editor, cx| {
             editor.set_text(renamed_title, window, cx);
         });
     });

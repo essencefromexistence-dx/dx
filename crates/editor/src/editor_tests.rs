@@ -44346,12 +44346,12 @@ async fn test_autoscroll_margin_reserves_sticky_header_space(cx: &mut TestAppCon
         });
     });
 
-#[gpui::test]
-async fn test_sticky_scroll_anchors_multiline_c_signature_on_name_row(cx: &mut TestAppContext) {
-    init_test(cx, |_| {});
-    let mut cx = EditorTestContext::new(cx).await;
+    #[gpui::test]
+    async fn test_sticky_scroll_anchors_multiline_c_signature_on_name_row(cx: &mut TestAppContext) {
+        init_test(cx, |_| {});
+        let mut cx = EditorTestContext::new(cx).await;
 
-    let buffer = indoc! {"
+        let buffer = indoc! {"
         ˇvoid
         evdev_post_scroll(struct evdev_device *device,
                   usec_t time,
@@ -44364,47 +44364,47 @@ async fn test_sticky_scroll_anchors_multiline_c_signature_on_name_row(cx: &mut T
             };
         }
     "};
-    cx.set_state(buffer);
+        cx.set_state(buffer);
 
-    cx.update_editor(|editor, _, cx| {
-        editor
-            .buffer()
-            .read(cx)
-            .as_singleton()
-            .unwrap()
-            .update(cx, |buffer, cx| {
-                buffer.set_language(
-                    Some(languages::language("c", tree_sitter_c::LANGUAGE.into())),
-                    cx,
-                );
-            })
-    });
-
-    let mut sticky_headers = |offset: ScrollOffset| {
-        cx.update_editor(|editor, window, cx| {
-            editor.scroll(gpui::Point { x: 0., y: offset }, window, cx);
+        cx.update_editor(|editor, _, cx| {
+            editor
+                .buffer()
+                .read(cx)
+                .as_singleton()
+                .unwrap()
+                .update(cx, |buffer, cx| {
+                    buffer.set_language(
+                        Some(languages::language("c", tree_sitter_c::LANGUAGE.into())),
+                        cx,
+                    );
+                })
         });
-        cx.run_until_parked();
-        cx.update_editor(|editor, window, cx| {
-            EditorElement::sticky_headers(&editor, &editor.snapshot(window, cx))
-                .into_iter()
-                .map(
-                    |StickyHeader {
-                         start_point,
-                         offset,
-                         ..
-                     }| { (start_point, offset) },
-                )
-                .collect::<Vec<_>>()
-        })
-    };
 
-    let function_name_row = Point { row: 1, column: 0 };
+        let mut sticky_headers = |offset: ScrollOffset| {
+            cx.update_editor(|editor, window, cx| {
+                editor.scroll(gpui::Point { x: 0., y: offset }, window, cx);
+            });
+            cx.run_until_parked();
+            cx.update_editor(|editor, window, cx| {
+                EditorElement::sticky_headers(&editor, &editor.snapshot(window, cx))
+                    .into_iter()
+                    .map(
+                        |StickyHeader {
+                             start_point,
+                             offset,
+                             ..
+                         }| { (start_point, offset) },
+                    )
+                    .collect::<Vec<_>>()
+            })
+        };
 
-    assert_eq!(sticky_headers(1.0), vec![]);
-    assert_eq!(sticky_headers(1.5), vec![(function_name_row, 0.0)]);
-    assert_eq!(sticky_headers(5.0), vec![(function_name_row, 0.0)]);
-}
+        let function_name_row = Point { row: 1, column: 0 };
+
+        assert_eq!(sticky_headers(1.0), vec![]);
+        assert_eq!(sticky_headers(1.5), vec![(function_name_row, 0.0)]);
+        assert_eq!(sticky_headers(5.0), vec![(function_name_row, 0.0)]);
+    }
 
     let mut cx = EditorTestContext::new(cx).await;
     cx.set_state(indoc! {"

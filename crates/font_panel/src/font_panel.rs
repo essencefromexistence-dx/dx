@@ -819,11 +819,7 @@ impl FontPanel {
                             .flex_1()
                             .gap_0p5()
                             .font_family(font.name.clone())
-                            .child(
-                                Label::new(font.name.clone())
-                                    .size(LabelSize::Small)
-                                    .truncate(),
-                            )
+                            .child(Label::new(font.name).size(LabelSize::Small).truncate())
                             .child(
                                 Label::new("Aa Bb Cc 123")
                                     .size(LabelSize::XSmall)

@@ -9779,19 +9779,15 @@ impl Sidebar {
                 return;
             };
 
+            // Upstream replaced the replacement-selecting closure with a
+            // `RemovalIntent`. This fork wanted to land on a neighbouring space
+            // (or a fresh empty local workspace when there is none), which is
+            // what `KeepProject` expresses: the project bookkeeping survives and
+            // a different workspace is shown.
             multi_workspace
                 .remove(
                     [workspace],
-                    move |multi_workspace, window, cx| {
-                        if let Some(neighbor_workspace_id) = neighbor_workspace_id
-                            && let Some(neighbor_workspace) =
-                                multi_workspace.workspace_for_database_id(neighbor_workspace_id, cx)
-                        {
-                            return Task::ready(Ok(neighbor_workspace));
-                        }
-
-                        multi_workspace.create_empty_local_workspace(window, cx)
-                    },
+                    workspace::RemovalIntent::KeepProject,
                     window,
                     cx,
                 )

@@ -331,7 +331,7 @@ impl Component for ThemePreviewTile {
 
         let themes_to_preview = vec![
             dx_dark.clone().ok(),
-            one_dark.clone().ok(),
+            one_dark.ok(),
             one_light.ok(),
             ayu_dark.ok(),
             gruvbox_dark.ok(),

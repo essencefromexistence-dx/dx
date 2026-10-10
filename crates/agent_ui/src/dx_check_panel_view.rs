@@ -26,7 +26,9 @@ use crate::dx_check_panel_view::view_rows::{
 // `ContentBlock`/`TextContent` live under the version submodule, not at the
 // schema root, so this alias has to be the version module itself (matching
 // acp_thread, which uses `v2 as acp_v2`).
-use agent_client_protocol::schema::v1 as acp_v1;
+// v2: `AgentPanel::insert_content_blocks` (and the thread's draft storage) are
+// on the v2 schema, so the prompt block has to be a v2 ContentBlock.
+use agent_client_protocol::schema::v2 as acp_v1;
 
 mod tabs;
 mod view_rows;

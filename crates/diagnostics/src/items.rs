@@ -141,10 +141,13 @@ impl Render for DiagnosticIndicator {
 }
 
 fn diagnostic_status_message(diagnostic: &Diagnostic) -> SharedString {
+    // DiagnosticMessage wraps its text, so borrow the &str via `as_str()`
+    // rather than dereferencing (which is not implemented).
     let message = diagnostic
         .message
+        .as_str()
         .split_once('\n')
-        .map_or(&*diagnostic.message, |(first, _)| first);
+        .map_or(diagnostic.message.as_str(), |(first, _)| first);
 
     let Some((byte_limit, _)) = message
         .char_indices()

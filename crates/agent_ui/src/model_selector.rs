@@ -772,14 +772,14 @@ mod tests {
 
     fn picker_entries(
         models: AgentModelList,
-        favorites: &HashSet<acp::ModelId>,
+        favorites: &HashSet<AgentModelId>,
     ) -> Vec<ModelPickerEntry> {
         info_list_to_picker_entries(models, favorites, &HashSet::default(), false)
     }
 
     fn picker_entries_with_collapsed_groups(
         models: AgentModelList,
-        favorites: &HashSet<acp::ModelId>,
+        favorites: &HashSet<AgentModelId>,
         collapsed_groups: &[&str],
         force_groups_expanded: bool,
     ) -> Vec<ModelPickerEntry> {

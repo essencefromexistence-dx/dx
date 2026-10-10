@@ -94,13 +94,12 @@ use crate::terminal_thread_metadata_store::{
 };
 use crate::thread_metadata_store::{ThreadId, ThreadMetadataStore, ThreadMetadataStoreEvent};
 use crate::{
-    Agent, AgentDiffPane, AgentInitialContent, AgentThreadSource,
-    AutomationScreen, ConnectionsScreen, ConversationView, CopyThreadToClipboard,
-    ExternalSourcePrompt, Follow, LoadThreadFromClipboard, NewExternalAgentThread,
-    NewNativeAgentThreadFromSummary, NewTerminalThread, NewThread, OpenActiveThreadAsMarkdown,
-    OpenAgentDiff, RenameSelectedThread, ResetFastModeWarnings, ResetTrialEndUpsell,
-    ResetTrialUpsell, ShowAllSidebarThreadMetadata, ShowThreadMetadata, ToggleNewThreadMenu,
-    ToggleOptionsMenu, ToolsScreen,
+    Agent, AgentDiffPane, AgentInitialContent, AgentThreadSource, AutomationScreen,
+    ConnectionsScreen, ConversationView, CopyThreadToClipboard, ExternalSourcePrompt, Follow,
+    LoadThreadFromClipboard, NewExternalAgentThread, NewNativeAgentThreadFromSummary,
+    NewTerminalThread, NewThread, OpenActiveThreadAsMarkdown, OpenAgentDiff, RenameSelectedThread,
+    ResetFastModeWarnings, ResetTrialEndUpsell, ResetTrialUpsell, ShowAllSidebarThreadMetadata,
+    ShowThreadMetadata, ToggleNewThreadMenu, ToggleOptionsMenu, ToolsScreen,
     agent_configuration::{AgentConfiguration, AssistantConfigurationEvent},
     conversation_view::{
         AcpThreadViewEvent, AgentResponseAnchor, RootThreadUpdated, ThreadView,
@@ -7819,10 +7818,9 @@ impl AgentPanel {
                     .and_then(|item| dropped_web_preview_url(*item, cx))
                 {
                     this.insert_content_blocks(
-                        vec![acp_v2::ContentBlock::ResourceLink(acp_v2::ResourceLink::new(
-                            url.clone(),
-                            url,
-                        ))],
+                        vec![acp_v2::ContentBlock::ResourceLink(
+                            acp_v2::ResourceLink::new(url.clone(), url),
+                        )],
                         window,
                         cx,
                     );
@@ -9457,7 +9455,7 @@ impl AgentPanel {
                 continue;
             }
 
-            let parent_status = Self::dx_subagent_status_from_tool_call(tool_call.status());
+            let parent_status = Self::dx_subagent_status_from_tool_call(&tool_call.status());
             let parent_label = Self::dx_subagent_tool_call_label(tool_call, cx);
             let (label, status, detail) =
                 if let Some(subagent_view) = conversation_view.thread_view(&session_id) {

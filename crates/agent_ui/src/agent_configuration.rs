@@ -232,17 +232,15 @@ impl AgentConfiguration {
         // `settings_view(cx)`, which returns the presentation mode rather than
         // a view. Only SubPage/Inline can be turned into an AnyView here;
         // ApiKey providers are rendered by their own section.
-        let configuration_view = provider
-            .settings_view(cx)
-            .and_then(|view| match view {
-                language_model::ProviderSettingsView::SubPage(sub_page) => {
-                    Some((sub_page.create_view)(window, cx))
-                }
-                language_model::ProviderSettingsView::Inline(inline) => {
-                    Some((inline.create_view)(window, cx))
-                }
-                language_model::ProviderSettingsView::ApiKey(_) => None,
-            });
+        let configuration_view = provider.settings_view(cx).and_then(|view| match view {
+            language_model::ProviderSettingsView::SubPage(sub_page) => {
+                Some((sub_page.create_view)(window, cx))
+            }
+            language_model::ProviderSettingsView::Inline(inline) => {
+                Some((inline.create_view)(window, cx))
+            }
+            language_model::ProviderSettingsView::ApiKey(_) => None,
+        });
         if let Some(configuration_view) = configuration_view {
             self.configuration_views_by_provider
                 .insert(provider.id(), configuration_view);

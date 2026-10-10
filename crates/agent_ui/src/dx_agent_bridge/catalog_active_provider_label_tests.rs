@@ -26,6 +26,13 @@ fn provider(display_name: &str) -> DxAgentProvider {
         id: "nvidia".to_string(),
         display_name: display_name.to_string(),
         status: "not_configured".to_string(),
+        // The bridge gained account/auth fields; use the not-configured values.
+        account_state: "signed_out".to_string(),
+        auth_method: "api_key".to_string(),
+        credential_health: "ok".to_string(),
+        credential_expires_at: None,
+        credential_error: None,
+        qr_connect_supported: false,
         configured: false,
         active: false,
         local: false,

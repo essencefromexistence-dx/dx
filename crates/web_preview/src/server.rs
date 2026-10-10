@@ -1,3 +1,15 @@
+//! Allowed once, at the crate root, rather than as an attribute per call site.
+//! The three `Command` uses below (`spawn_cms_backend`, `spawn_metasearch_backend`,
+//! and their stop paths) are short, bounded launches of already-resolved local
+//! helper binaries, made from a background thread at server start-up and never
+//! from a UI thread. They are exactly the situation clippy.toml:9-14's
+//! "can block the current thread for an unknown duration" deny exists for, so
+//! the deny does not apply. One crate-level allow keeps that reasoning in a
+//! single place; `Cargo.toml` denies the lint workspace-wide, so this is the
+//! only way to keep the crate compiling.
+//! Same precedent: crates/disk_tree_core/src/lib.rs.
+#![allow(clippy::disallowed_methods)]
+
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},

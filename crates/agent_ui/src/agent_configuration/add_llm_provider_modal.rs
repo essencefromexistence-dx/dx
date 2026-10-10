@@ -315,6 +315,9 @@ impl ModelInput {
                 prompt_cache_key: self.capabilities.supports_prompt_cache_key.selected(),
                 chat_completions: self.capabilities.supports_chat_completions.selected(),
                 interleaved_reasoning: false,
+                // Upstream added this flag; the fork's form has no control for
+                // it, so it stays off, matching the struct's `#[serde(default)]`.
+                max_tokens_parameter: false,
             },
         })
     }

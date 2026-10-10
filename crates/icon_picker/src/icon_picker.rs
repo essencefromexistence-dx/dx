@@ -1084,7 +1084,7 @@ impl IconPickerPanel {
     fn render_selected_icon_actions(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
         let icon = self.selected_icon.clone()?;
         let payload = self.payload_for_icon(&icon);
-        let label = payload.label.clone();
+        let label = payload.label;
         let source_label = icon_source_label(&icon);
         let preview = self.render_icon_preview(&icon, IconSize::Custom(rems_from_px(24.)), cx);
 
@@ -1284,7 +1284,7 @@ impl IconPickerPanel {
         let icon = entry.icon;
         let pin_icon = icon.clone();
         let payload = self.payload_for_icon(&icon);
-        let label = payload.label.clone();
+        let label = payload.label;
         let source_label = icon_source_label(&icon);
         let action_label = recent_icon_action_label(entry.action);
         let preview = self.render_icon_preview(&icon, IconSize::Medium, cx);

@@ -1,4 +1,6 @@
-use agent_client_protocol::schema as acp;
+// v2: `AgentPanel::insert_content_blocks` consumes v2 ContentBlocks. The
+// `TextContent`/`ResourceLink` values this file builds are passed straight to it.
+use agent_client_protocol::schema::v2 as acp;
 use agent_ui::AgentPanel;
 use anyhow::{Context as _, Result, anyhow, bail};
 use base64::Engine as _;

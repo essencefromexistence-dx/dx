@@ -57,8 +57,8 @@ use ui::{
 };
 use url::Url;
 use util::markdown::{source_position_from_fragment, split_local_url_fragment};
-use workspace::{OpenOptions, SERIALIZATION_THROTTLE_TIME, Toast, Workspace};
 use workspace::notifications::NotificationId;
+use workspace::{OpenOptions, SERIALIZATION_THROTTLE_TIME, Toast, Workspace};
 
 use super::composer_profile_options::{
     ComposerOptionEntry, ComposerOptionSlot, ComposerProfileKind,
@@ -5461,7 +5461,6 @@ impl ThreadView {
                                         .shape(IconButtonShape::Square)
                                         .disabled(pending_edits)
                                         .tooltip({
-                                            let focus_handle = focus_handle.clone();
                                             move |_window, cx| {
                                                 Tooltip::for_action_in(
                                                     "Last message",
@@ -5741,10 +5740,12 @@ impl ThreadView {
                     .child(v_flex().gap_1p5()
                         .child(h_flex().gap_1p5().child(Icon::new(IconName::ListTodo).size(IconSize::Small).color(Color::Accent)).child(Label::new("Plan — open questions").size(LabelSize::Small).color(Color::Default)).child(Label::new(format!("{} steps", plan.entries.len())).size(LabelSize::XSmall).color(Color::Muted)))
                         .when(has_plan, |this| this.child(v_flex().gap_1().children(plan.entries.iter().enumerate().take(6).map(|(ix, entry)| {
-                            let status_icon = match entry.status {
-                                acp::PlanEntryStatus::Pending => IconName::Circle,
-                                acp::PlanEntryStatus::InProgress => IconName::PlayFilled,
-                                acp::PlanEntryStatus::Completed => IconName::CheckDouble,
+                            // `status` is on the wrapped `source`, not on PlanEntry,
+                            // and `source` is a v2 PlanEntry.
+                            let status_icon = match entry.source.status {
+                                acp_v2::PlanEntryStatus::Pending => IconName::Circle,
+                                acp_v2::PlanEntryStatus::InProgress => IconName::PlayFilled,
+                                acp_v2::PlanEntryStatus::Completed => IconName::CheckDouble,
                                 _ => IconName::Circle,
                             };
                             h_flex().id(("plan-question", ix)).gap_1p5().child(Icon::new(status_icon).size(IconSize::XSmall).color(Color::Muted)).child(Label::new(entry.content.read(cx).source().to_string()).size(LabelSize::Small).color(Color::Muted)).into_any_element()
@@ -5772,7 +5773,7 @@ impl ThreadView {
                 div().id("goal-mode-details").w_full().rounded_md().border_1().border_color(cx.theme().colors().border_variant).bg(cx.theme().colors().element_background.opacity(0.5)).p_2()
                     .child(v_flex().gap_1p5()
                         .child(h_flex().gap_1p5().child(Icon::new(IconName::Crosshair).size(IconSize::Small).color(Color::Accent)).child(Label::new("Goal").size(LabelSize::Small).color(Color::Default)).child(Label::new(format!("{pending} prompts • {} steps", entries.len())).size(LabelSize::XSmall).color(Color::Muted)))
-                        .child(Label::new(title.clone()).size(LabelSize::Small).color(Color::Muted))
+                        .child(Label::new(title).size(LabelSize::Small).color(Color::Muted))
                         .child(Label::new("Verified by: cargo test / build • Constraints: do not regress • /goal pause|resume|clear to control").size(LabelSize::XSmall).color(Color::Disabled))
                     ).into_any(),
             );
@@ -16542,7 +16543,7 @@ pub(crate) fn open_link(
                                 });
                                 if !has_code_pane {
                                     workspace.split_and_move(
-                                        agent_pane.clone(),
+                                        agent_pane,
                                         workspace::pane_group::SplitDirection::Right,
                                         window,
                                         cx,

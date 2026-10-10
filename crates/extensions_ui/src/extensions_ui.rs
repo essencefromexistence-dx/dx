@@ -293,7 +293,8 @@ pub fn init(cx: &mut App) {
                     _ => {
                         workspace.toggle_modal(window, cx, |window, cx| {
                             let delegate = DevExtensionRebuildPickerDelegate::new(dev_extensions);
-                            Picker::uniform_list(delegate, window, cx).width(rems(34.))
+                            // `width` was renamed to `initial_width`.
+                            Picker::uniform_list(delegate, window, cx).initial_width(rems(34.))
                         });
                     }
                 }
