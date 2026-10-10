@@ -228,13 +228,25 @@ impl AgentConfiguration {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let configuration_view = provider.configuration_view(
-            language_model::ConfigurationViewTargetAgent::ZedAgent,
-            window,
-            cx,
-        );
-        self.configuration_views_by_provider
-            .insert(provider.id(), configuration_view);
+        // Upstream replaced `configuration_view(target, window, cx)` with
+        // `settings_view(cx)`, which returns the presentation mode rather than
+        // a view. Only SubPage/Inline can be turned into an AnyView here;
+        // ApiKey providers are rendered by their own section.
+        let configuration_view = provider
+            .settings_view(cx)
+            .and_then(|view| match view {
+                language_model::ProviderSettingsView::SubPage(sub_page) => {
+                    Some((sub_page.create_view)(window, cx))
+                }
+                language_model::ProviderSettingsView::Inline(inline) => {
+                    Some((inline.create_view)(window, cx))
+                }
+                language_model::ProviderSettingsView::ApiKey(_) => None,
+            });
+        if let Some(configuration_view) = configuration_view {
+            self.configuration_views_by_provider
+                .insert(provider.id(), configuration_view);
+        }
     }
 }
 
@@ -2062,6 +2074,9 @@ impl AgentConfiguration {
                 Plan::ZedPro => ("Pro", Color::Accent, pro_chip_bg),
                 Plan::ZedBusiness => ("Business", Color::Accent, pro_chip_bg),
                 Plan::ZedStudent => ("Student", Color::Accent, pro_chip_bg),
+                // Matching title_bar/src/plan_chip.rs:37, which renders this
+                // variant with the same treatment as the other paid plans.
+                Plan::ZedVip => ("VIP", Color::Accent, pro_chip_bg),
             };
 
             Chip::new(plan_name.to_string())
@@ -2090,12 +2105,10 @@ impl AgentConfiguration {
             .menu({
                 move |window, cx| {
                     Some(ContextMenu::build(window, cx, |menu, _window, _cx| {
-                        menu.entry("Add Custom Server", None, {
-                            |window, cx| {
-                                window.dispatch_action(crate::AddContextServer.boxed_clone(), cx)
-                            }
-                        })
-                        .entry("Install from Extensions", None, {
+                        // "Install from Extensions" is the only working entry:
+                        // there is no AddContextServer action in this fork to
+                        // dispatch, and the menu item silently did nothing.
+                        menu.entry("Install from Extensions", None, {
                             |window, cx| {
                                 window.dispatch_action(
                                     zed_actions::Extensions {

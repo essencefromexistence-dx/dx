@@ -1480,8 +1480,9 @@ impl Editor {
                 return anyhow::Ok(Navigated::No);
             };
             let mut locations = cx.update(|_, cx| {
+                // `cap_reference_locations_for_navigation` already returns an
+                // iterator, so `.into_iter()` on it was a useless conversion.
                 cap_reference_locations_for_navigation(locations)
-                    .into_iter()
                     .map(|location| {
                         let buffer = location.buffer.read(cx);
                         (location.buffer, location.range.to_point(buffer))

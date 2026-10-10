@@ -455,11 +455,10 @@ fn path_match<T: EventListener>(
 
     for regex in path_hyperlink_regexes {
         let mut path_found = false;
-        let mut captures_seen = 0usize;
-
-        for (line_start_offset, captures) in regex
+        for (captures_seen, (line_start_offset, captures)) in regex
             .captures_iter(&line)
             .map(|captures| (0usize, captures))
+            .enumerate()
         {
             if captures_seen >= TERMINAL_HYPERLINK_REGEX_MATCH_LIMIT {
                 log::warn!(
@@ -468,7 +467,6 @@ fn path_match<T: EventListener>(
                 );
                 return None;
             }
-            captures_seen += 1;
             if let Some((timed_out_ms, timeout_ms)) = timed_out() {
                 warn!("Timed out processing path hyperlink regexes after {timed_out_ms}ms");
                 info!("{timeout_ms}ms time out specified in `terminal.path_hyperlink_timeout_ms`");

@@ -379,6 +379,21 @@ impl SlashCompletionCandidate {
             Self::LocalCommand(command) => command.keyword(),
         }
     }
+
+    /// Order within the command groups: native Zed commands sort above MCP
+    /// prompts, matching the order the enum declares them in.
+    /// `category_order` is not a method on `AvailableCommand`; there is no such
+    /// helper, so the mapping is made explicit here.
+    fn category_order(&self) -> u32 {
+        match self {
+            Self::Command(command) => match command.category {
+                Some(acp_thread::CommandCategory::Native) => 0,
+                Some(acp_thread::CommandCategory::Mcp) => 1,
+                None => 2,
+            },
+            _ => 3,
+        }
+    }
 }
 
 /// Stable group identity for a slash completion: skills are one group, commands
@@ -388,7 +403,7 @@ impl SlashCompletionCandidate {
 fn slash_completion_group_key(candidate: &SlashCompletionCandidate) -> u32 {
     match candidate {
         SlashCompletionCandidate::Skill(_) => 0,
-        SlashCompletionCandidate::Command(command) => 1 + command.category_order() as u32,
+        SlashCompletionCandidate::Command(_) => 1 + candidate.category_order(),
         SlashCompletionCandidate::LocalCommand(_) => 4,
     }
 }
@@ -1469,6 +1484,10 @@ impl<T: PromptCompletionProviderDelegate> CompletionProvider for PromptCompletio
                     slash_candidates.sort_by_key(|(candidate, _)| match candidate {
                         SlashCompletionCandidate::Skill(_) => 0,
                         SlashCompletionCandidate::Command(_) => 1,
+                        // Added alongside the LocalCommand variant; sorts after
+                        // commands, which is what the pre-variant code's two-arm
+                        // sort effectively did by omission.
+                        SlashCompletionCandidate::LocalCommand(_) => 2,
                     });
                     let completions = slash_candidates
                         .into_iter()

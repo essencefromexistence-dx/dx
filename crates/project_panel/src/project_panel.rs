@@ -6575,8 +6575,9 @@ impl ProjectPanel {
                                     < MAX_PROJECT_PANEL_BACKGROUND_FOLDER_STORAGE_DIRS
                                 {
                                     let mut summary = storage::FolderStorageSummary::default();
-                                    let mut child_file_count = 0usize;
-                                    for child in worktree_snapshot
+                                    // `child_file_count` is the loop index from
+                                    // `enumerate()` rather than a manual counter.
+                                    for (child_file_count, child) in worktree_snapshot
                                         .child_entries_with_options(
                                             &entry.path,
                                             ChildEntriesOptions {
@@ -6586,6 +6587,7 @@ impl ProjectPanel {
                                             },
                                         )
                                         .filter(|child| !hide_hidden || !child.is_hidden)
+                                        .enumerate()
                                     {
                                         if child_file_count
                                             >= MAX_PROJECT_PANEL_FOLDER_STORAGE_CHILD_FILES
@@ -6600,7 +6602,6 @@ impl ProjectPanel {
                                             break;
                                         }
                                         summary.record_file(child);
-                                        child_file_count += 1;
                                     }
                                     folder_storage_summary_updates.push((cache_key, summary));
                                 } else if !folder_storage_background_cap_reported {

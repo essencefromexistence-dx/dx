@@ -2025,6 +2025,7 @@ impl SettingsWindow {
             custom_agent_form: None,
             external_agent_add_focus_handle: cx.focus_handle(),
             skill_creator_page: None,
+            bottom_spacer_height: px(0.),
         };
 
         log::info!(
@@ -4001,62 +4002,20 @@ impl SettingsWindow {
                         }
                     });
                 }
-                let list_content =
-                    div()
-                        .size_full()
-                        .child(list(list_state, move |index, window, cx| {
-                            if Some(index) == last_index
-                                && let Some(last_item) = last_item.take()
-                            {
-                                last_item
-                            } else {
-                                render_item(index, window, cx)
-                            }
-
-                            let mut visible_items = this.visible_page_items();
-                            let Some((actual_item_index, item)) = visible_items.nth(index - 1)
-                            else {
-                                return gpui::Empty.into_any_element();
-                            };
-
-                            let next_is_header = visible_items
-                                .next()
-                                .map(|(_, item)| matches!(item, SettingsPageItem::SectionHeader(_)))
-                                .unwrap_or(false);
-
-                            let is_last = Some(actual_item_index) == last_non_header_index;
-                            let is_last_in_section = next_is_header || is_last;
-
-                            let bottom_border = !is_last_in_section;
-                            let extra_bottom_padding = is_last_in_section;
-
-                            let Some(item_focus_handle) = this.focus_handle_for_content_element(
-                                current_page_index,
-                                actual_item_index,
-                                cx,
-                            ) else {
-                                return gpui::Empty.into_any_element();
-                            };
-
-                            v_flex()
-                                .id(("settings-page-item", actual_item_index))
-                                .track_focus(&item_focus_handle)
-                                .w_full()
-                                .min_w_0()
-                                .child(item.render(
-                                    this,
-                                    actual_item_index,
-                                    bottom_border,
-                                    extra_bottom_padding,
-                                    window,
-                                    cx,
-                                ))
-                                .into_any_element()
-                        }));
-                // The closure must evaluate to the element: upstream returned
-                // the list directly, the fork binds it first for the
-                // size_full() below. Either way the tail expression is the row.
-                list_content
+                // The per-item rendering lives in `render_item` above, which is a
+                // `cx.processor` and therefore receives the entity. This closure
+                // only has to serve the measured last item (upstream's shape);
+                // duplicating the body here would have no `this` in scope.
+                list(list_state, move |index, window, cx| {
+                    if Some(index) == last_index
+                        && let Some(last_item) = last_item.take()
+                    {
+                        last_item
+                    } else {
+                        render_item(index, window, cx)
+                    }
+                })
+                .size_full()
             }))
         }
         page_content
@@ -4659,7 +4618,12 @@ impl SettingsWindow {
             return;
         }
 
-        let root_index = self.root_entry_containing(self.navbar_entry);
+        // Matches the other caller (line 3362): this helper returns Option, and
+        // there is no sensible root to fall back to, so leave the selection
+        // alone rather than panicking the way upstream's `usize` version did.
+        let Some(root_index) = self.root_entry_containing(self.navbar_entry) else {
+            return;
+        };
         if !self.navbar_entries[root_index].expanded && !self.has_query {
             self.navbar_entry = root_index;
             return;

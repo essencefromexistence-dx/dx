@@ -246,8 +246,10 @@ pub(crate) fn storage_heat_level(file_bytes: u64, max_file_bytes: u64) -> u8 {
         return 0;
     }
 
-    let scaled = ((u128::from(file_bytes) * 4) + (u128::from(max_file_bytes) - 1))
-        / u128::from(max_file_bytes);
+    // div_ceil on u128: scale `file_bytes` into 1..=4 heat buckets without
+    // floating point. This is the ceil-div-by-max pattern clippy's
+    // manual_div_ceil lint targets.
+    let scaled = (u128::from(file_bytes) * 4).div_ceil(u128::from(max_file_bytes));
     scaled.clamp(1, 4) as u8
 }
 

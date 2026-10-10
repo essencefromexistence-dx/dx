@@ -3561,7 +3561,7 @@ impl Editor {
                 let amount =
                     POWER_MODE_SHAKE_MAX_PX * (remaining / POWER_MODE_SHAKE_LIFETIME.as_secs_f32());
                 let frame = ((POWER_MODE_SHAKE_LIFETIME.as_secs_f32() - remaining) * 60.0) as u32;
-                let sign = if frame % 2 == 0 { 1.0 } else { -1.0 };
+                let sign = if frame.is_multiple_of(2) { 1.0 } else { -1.0 };
                 Some(point(px(amount * sign), px(amount * -0.35 * sign)))
             })
             .unwrap_or(zero);
@@ -7164,7 +7164,7 @@ impl Editor {
                     .map(|selection| {
                         let point = buffer.offset_to_point(selection.start);
                         let Some(&old_index) = row_to_index.get(&point.row) else {
-                            return selection.clone();
+                            return *selection;
                         };
                         let new_index = if reverse {
                             (old_index + num_rows - 1) % num_rows
@@ -7172,7 +7172,7 @@ impl Editor {
                             (old_index + 1) % num_rows
                         };
                         let Some(&new_line_start) = new_line_starts.get(new_index) else {
-                            return selection.clone();
+                            return *selection;
                         };
                         let new_offset = MultiBufferOffset(new_line_start + point.column as usize);
                         Selection {

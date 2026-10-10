@@ -3496,7 +3496,7 @@ impl ConversationView {
 
     pub(crate) fn insert_content_blocks(
         &self,
-        blocks: Vec<acp::ContentBlock>,
+        blocks: Vec<acp_v2::ContentBlock>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {

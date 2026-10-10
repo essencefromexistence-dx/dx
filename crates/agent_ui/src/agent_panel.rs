@@ -94,7 +94,7 @@ use crate::terminal_thread_metadata_store::{
 };
 use crate::thread_metadata_store::{ThreadId, ThreadMetadataStore, ThreadMetadataStoreEvent};
 use crate::{
-    AddContextServer, Agent, AgentDiffPane, AgentInitialContent, AgentThreadSource,
+    Agent, AgentDiffPane, AgentInitialContent, AgentThreadSource,
     AutomationScreen, ConnectionsScreen, ConversationView, CopyThreadToClipboard,
     ExternalSourcePrompt, Follow, LoadThreadFromClipboard, NewExternalAgentThread,
     NewNativeAgentThreadFromSummary, NewTerminalThread, NewThread, OpenActiveThreadAsMarkdown,
@@ -2323,7 +2323,7 @@ impl AgentPanel {
     fn message_editor_draft_content_blocks_snapshot_with_size_limit(
         message_editor: &Entity<MessageEditor>,
         cx: &App,
-    ) -> std::result::Result<Vec<acp::ContentBlock>, ()> {
+    ) -> std::result::Result<Vec<acp_v2::ContentBlock>, ()> {
         Self::message_editor_within_size_limit(
             message_editor,
             MAX_AGENT_PANEL_MESSAGE_EDITOR_TEXT_BYTES,
@@ -6749,6 +6749,17 @@ impl AgentPanel {
             })
     }
 
+    /// Dispatches `GoBack` to the workspace's active pane - the same route the
+    /// title bar's back button takes (title_bar/src/title_bar.rs:714). A panel
+    /// is not a `Pane`, so it cannot call `Workspace::go_back` on itself.
+    fn go_back(&mut self, _: &workspace::GoBack, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(workspace) = self.workspace.upgrade() else {
+            return;
+        };
+        let focus_handle = workspace.read(cx).active_pane().focus_handle(cx);
+        focus_handle.dispatch_action(&workspace::GoBack, window, cx);
+    }
+
     fn render_no_project_state(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let focus_handle = self.focus_handle(cx);
 
@@ -7808,7 +7819,7 @@ impl AgentPanel {
                     .and_then(|item| dropped_web_preview_url(*item, cx))
                 {
                     this.insert_content_blocks(
-                        vec![acp::ContentBlock::ResourceLink(acp::ResourceLink::new(
+                        vec![acp_v2::ContentBlock::ResourceLink(acp_v2::ResourceLink::new(
                             url.clone(),
                             url,
                         ))],
@@ -8007,7 +8018,7 @@ impl AgentPanel {
 
     pub fn insert_content_blocks(
         &mut self,
-        blocks: Vec<acp::ContentBlock>,
+        blocks: Vec<acp_v2::ContentBlock>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -8746,7 +8757,7 @@ impl AgentPanel {
 
         self.activate_draft(true, AgentThreadSource::AgentPanel, window, cx);
         self.insert_content_blocks(
-            vec![acp::ContentBlock::Text(acp::TextContent::new(
+            vec![acp_v2::ContentBlock::Text(acp_v2::TextContent::new(
                 prompt.into(),
             ))],
             window,
@@ -9446,7 +9457,7 @@ impl AgentPanel {
                 continue;
             }
 
-            let parent_status = Self::dx_subagent_status_from_tool_call(&tool_call.status);
+            let parent_status = Self::dx_subagent_status_from_tool_call(tool_call.status());
             let parent_label = Self::dx_subagent_tool_call_label(tool_call, cx);
             let (label, status, detail) =
                 if let Some(subagent_view) = conversation_view.thread_view(&session_id) {
@@ -9594,7 +9605,9 @@ impl AgentPanel {
         thread_view: &ThreadView,
         session_id: &acp::SessionId,
     ) -> SharedString {
-        let queued = thread_view.local_queued_messages.len();
+        // Upstream replaced the two drift-prone `Vec`s with `MessageQueue`, so
+        // the count now comes from the queue itself.
+        let queued = thread_view.message_queue.len();
         let session = session_id.to_string();
         match (queued, session.is_empty()) {
             (0, true) => kind.into(),

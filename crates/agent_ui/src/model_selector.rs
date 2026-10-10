@@ -44,7 +44,7 @@ pub fn acp_model_selector(
     Picker::list(delegate, window, cx)
         .show_scrollbar(true)
         .initial_width(rems(26.))
-        .max_height(Some(rems(24.).into()))
+        .max_height(rems(24.))
 }
 
 enum ModelPickerEntry {

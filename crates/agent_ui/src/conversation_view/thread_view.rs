@@ -30,6 +30,7 @@ use cloud_api_types::{SubmitAgentThreadFeedbackBody, SubmitAgentThreadFeedbackCo
 use editor::actions::OpenExcerpts;
 use git_ui::git_panel::GitPanel;
 use sandbox::{SandboxFsPolicy, SandboxNetPolicy, SandboxPolicy};
+use std::{cell::RefCell, ops::Range};
 
 use crate::completion_provider::{AvailableSkill, PromptLocalCommand, pluralize};
 use crate::message_editor::SharedSessionCapabilities;
@@ -56,7 +57,8 @@ use ui::{
 };
 use url::Url;
 use util::markdown::{source_position_from_fragment, split_local_url_fragment};
-use workspace::{OpenOptions, SERIALIZATION_THROTTLE_TIME, Workspace};
+use workspace::{OpenOptions, SERIALIZATION_THROTTLE_TIME, Toast, Workspace};
+use workspace::notifications::NotificationId;
 
 use super::composer_profile_options::{
     ComposerOptionEntry, ComposerOptionSlot, ComposerProfileKind,
@@ -5264,8 +5266,15 @@ impl ThreadView {
         let file_count = changed_buffers.len();
         let stats = DiffStats::all_files(changed_buffers.iter().cloned(), cx);
         // Only show on threads that have messages, like before (empty threads hidden)
+        // plan() is an Option (no plan at all is the common case), so test the
+        // two emptiness conditions separately rather than field-accessing
+        // through the Option.
         let is_empty_thread = self.thread.read(cx).entries().is_empty()
-            && self.thread.read(cx).plan().entries.is_empty();
+            && self
+                .thread
+                .read(cx)
+                .plan()
+                .is_none_or(|plan| plan.entries.is_empty());
         if is_empty_thread {
             return None;
         }
@@ -5725,7 +5734,7 @@ impl ThreadView {
             return None;
         }
         if is_plan {
-            let plan = self.thread.read(cx).plan();
+            let plan = self.thread.read(cx).plan()?;
             let has_plan = !plan.entries.is_empty();
             return Some(
                 div().id("plan-mode-questions").w_full().rounded_md().border_1().border_color(cx.theme().colors().border_variant).bg(cx.theme().colors().element_background.opacity(0.5)).p_2()
@@ -5960,7 +5969,11 @@ impl ThreadView {
             })
             .when(
                 self.thread.read(cx).entries().is_empty()
-                    && self.thread.read(cx).plan().entries.is_empty(),
+                    && self
+                        .thread
+                        .read(cx)
+                        .plan()
+                        .is_none_or(|plan| plan.entries.is_empty()),
                 |this| {
                     let folder = self
                         .project
@@ -10095,9 +10108,10 @@ impl ThreadView {
                     return None;
                 }
 
-                let raw_label = message
-                    .content
-                    .to_markdown(cx)
+                // `to_markdown` returns a temporary `String`; binding it first
+                // keeps the slice below borrowed from something that lives.
+                let markdown = message.content.to_markdown(cx);
+                let raw_label = markdown
                     .lines()
                     .find(|line| !line.trim().is_empty())
                     .unwrap_or("User prompt")
@@ -14618,13 +14632,6 @@ impl ThreadView {
 
     fn tool_name_font_size(&self) -> Rems {
         rems_from_px(13_f32)
-    }
-
-    fn provider_by_name(name: &SharedString, cx: &App) -> Option<Arc<dyn LanguageModelProvider>> {
-        LanguageModelRegistry::read_global(cx)
-            .providers()
-            .into_iter()
-            .find(|provider| provider.name().0 == *name)
     }
 
     fn provider_by_name(name: &SharedString, cx: &App) -> Option<Arc<dyn LanguageModelProvider>> {

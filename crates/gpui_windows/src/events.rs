@@ -1,8 +1,8 @@
 use std::{cell::Cell, rc::Rc, sync::atomic::Ordering};
 
 use anyhow::Context as _;
-use webview2_com::Microsoft::Web::WebView2::Win32::*;
 use gpui_util::ResultExt;
+use webview2_com::Microsoft::Web::WebView2::Win32::*;
 use windows::{
     Win32::{
         Foundation::*,
@@ -1915,7 +1915,7 @@ fn webview_button_mouse_data(button: MouseButton) -> u32 {
 }
 
 fn wheel_mouse_data_from_wparam(wparam: WPARAM) -> u32 {
-    (wparam.signed_hiword() as i16 as i32) as u32
+    (wparam.signed_hiword() as i32) as u32
 }
 
 struct ImeContext {

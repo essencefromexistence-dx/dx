@@ -23,7 +23,10 @@ use crate::dx_check_panel_view::view_rows::{
     notice_title, outcome_label, overflow_row, quick_fix_row, section, section_row, status_color,
     web_audit_row,
 };
-use agent_client_protocol::schema as acp;
+// `ContentBlock`/`TextContent` live under the version submodule, not at the
+// schema root, so this alias has to be the version module itself (matching
+// acp_thread, which uses `v2 as acp_v2`).
+use agent_client_protocol::schema::v1 as acp_v1;
 
 mod tabs;
 mod view_rows;
@@ -332,8 +335,8 @@ impl DxCheckPanel {
                                                         window,
                                                         cx,
                                                     );
-                                                    let blocks = vec![acp::ContentBlock::Text(
-                                                        acp::TextContent::new(&prompt),
+                                                    let blocks = vec![acp_v1::ContentBlock::Text(
+                                                        acp_v1::TextContent::new(&prompt),
                                                     )];
                                                     panel.insert_content_blocks(blocks, window, cx);
                                                 });

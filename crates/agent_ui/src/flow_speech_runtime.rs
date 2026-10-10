@@ -1345,9 +1345,11 @@ where
     T: Sample + SizedSample + Send + Copy + 'static,
     f32: FromSample<T>,
 {
+    // cpal 0.18 takes `config` by value and the data callback now receives a
+    // `&InputCallbackInfo` alongside the samples.
     let stream = device.build_input_stream(
-        &config,
-        move |data: &[T], _| {
+        config,
+        move |data: &[T], _: &cpal::InputCallbackInfo| {
             let processed = downmix_and_resample(data, channels, input_sample_rate);
             if let Ok(mut buffer) = samples.try_lock() {
                 let limit = TARGET_SAMPLE_RATE as usize * MAX_RECORDING_SECONDS;

@@ -573,8 +573,8 @@ impl LanguageRegistry {
         let mut result = state
             .grammars
             .keys()
-            .cloned()
             .take(MAX_GRAMMAR_NAMES_TO_MATERIALIZE)
+            .cloned()
             .collect::<Vec<_>>();
         result.sort_unstable_by_key(|grammar_name| grammar_name.to_lowercase());
         result

@@ -1,7 +1,10 @@
 pub mod extension;
 pub mod registry;
 
-use std::path::{Path, PathBuf};
+// PathBuf dropped from this import: the only use was in the remote
+// context-server path, which the upstream merge replaced with the bounded
+// helpers. `Path` is still used.
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 

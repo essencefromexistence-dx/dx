@@ -2122,7 +2122,7 @@ impl Terminal {
                 );
                 break;
             }
-            matches_to_select.push(self_match.clone());
+            matches_to_select.push(*self_match);
         }
         for match_to_select in matches_to_select {
             self.set_selection(Some(Selection::simple_range(match_to_select)));
