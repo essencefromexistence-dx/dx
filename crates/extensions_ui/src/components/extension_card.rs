@@ -108,29 +108,9 @@ pub struct ExtensionCard {
 }
 
 impl ExtensionCard {
-    /// A card with no extension behind it.
-    ///
-    /// `ExtensionsPage::render_extensions` uses this as its out-of-range
-    /// placeholder, so a `uniform_list` index that outruns the filtered entries
-    /// renders an empty card instead of panicking on an index.
-    pub fn new() -> Self {
-        Self {
-            details: ExtensionCardDetails {
-                id: "".into(),
-                name: "".into(),
-                version: "".into(),
-                description: None,
-                authors: "".into(),
-                repository_url: None,
-                repository_icon: IconName::Link,
-                provided_features: Vec::new(),
-                source: ExtensionCardSource::Dev,
-            },
-            actions: [None, None, None],
-            context_menu: None,
-        }
-    }
-
+    // `new()` was removed: its doc comment claimed
+    // `ExtensionsPage::render_extensions` used it as an out-of-range
+    // placeholder, but no caller exists in any target, so it was dead code.
     pub fn for_dev(extension: Arc<ExtensionManifest>, extension_store: &ExtensionStore) -> Self {
         let status = extension_store.extension_status(&extension.id);
         Self::manifest(extension, status, LocalExtensionKind::Dev)

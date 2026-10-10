@@ -15,7 +15,11 @@ pub const EDITORCONFIG_NAME: &str = ".editorconfig";
 /// and state directory paths.
 ///
 /// Forks should change this to avoid colliding with Zed's user data.
-pub const APP_NAME: &str = "Dx-Desktop";
+// "Dx-Code" (not "Dx-Desktop"): the binary was renamed to `dx-code`
+// (commit 94e6c93c) and main.rs asserts APP_NAME_LOWERCASE matches
+// CARGO_BIN_NAME, so the two must agree. This tree never produced a working
+// binary, so no user data lives under the old name to migrate.
+pub const APP_NAME: &str = "Dx-Code";
 
 /// Lowercased form of [`APP_NAME`], for use in XDG-style paths on
 /// Linux/FreeBSD and the macOS `~/.config` fallback.

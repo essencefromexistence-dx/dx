@@ -93,7 +93,7 @@ use std::{
     sync::atomic::{self, AtomicBool},
 };
 use terminal_view::terminal_panel::{self, TerminalPanel};
-use theme::{ActiveTheme, SystemAppearance, ThemeRegistry};
+use theme::{ActiveTheme, SystemAppearance, ThemeRegistry, deserialize_icon_theme};
 use theme_settings::{ThemeSettings, load_user_theme};
 use ui::{Navigable, NavigableEntry, PopoverMenuHandle, TintColor, prelude::*};
 use util::markdown::MarkdownString;
@@ -2545,6 +2545,10 @@ fn filter_disabled_ai_bindings(bindings: Vec<KeyBinding>, cx: &App) -> Vec<KeyBi
 ///
 /// For `EmptyTab` this opens an empty buffer. For `Launchpad` the window is left
 /// without any items so the pane falls back to displaying the Launchpad.
+// Test-only helper: the only caller is the launchpad test below. Upstream has
+// no equivalent (their window init lives elsewhere), so this stays out of
+// production builds rather than carrying an allow(dead_code).
+#[cfg(test)]
 fn initialize_new_window(
     workspace: &mut Workspace,
     window: &mut Window,
@@ -3015,7 +3019,9 @@ pub(crate) fn eager_load_active_theme_and_icon_theme(fs: Arc<dyn Fs>, cx: &mut A
                         .await
                         .log_err()
                         .flatten()
-                            && let Some(icon_theme_family) =
+                            // Bound only to prove the bytes parse; the registry
+                            // takes `bytes` directly below.
+                            && let Some(_icon_theme_family) =
                                 deserialize_icon_theme(&bytes).log_err()
                             && theme_registry
                                 .load_icon_theme(&icon_theme_path, &icons_root_path, bytes)

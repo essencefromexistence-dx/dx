@@ -49,7 +49,6 @@ use crate::extension_version_selector::{
 
 const MAX_EXTENSION_SEARCH_QUERY_CHARS: usize = 256;
 const MAX_EXTENSION_LIST_ENTRIES: usize = 2_000;
-const MAX_EXTENSION_FUZZY_CANDIDATES: usize = 1_000;
 const MAX_FILTERED_EXTENSION_RESULTS: usize = 1_000;
 #[allow(dead_code)]
 const MAX_DISPLAYED_EXTENSION_RESULTS: usize = MAX_FILTERED_EXTENSION_RESULTS;
