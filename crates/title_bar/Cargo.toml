@@ -47,6 +47,9 @@ command_palette_hooks.workspace = true
 db.workspace = true
 
 git_ui_core.workspace = true
+# The branch picker's popover is invoked directly from the title bar; the dep
+# was never declared (same omission as agent_ui's git_ui in this same pass).
+git_ui.workspace = true
 gpui = { workspace = true, features = ["screen-capture"] }
 icons.workspace = true
 livekit_client.workspace = true

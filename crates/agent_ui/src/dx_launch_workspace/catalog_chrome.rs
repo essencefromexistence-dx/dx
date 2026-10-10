@@ -18,7 +18,7 @@ pub(super) fn render_catalog_search(
         .id(id)
         .key_context(key_context)
         .h_8()
-        .min_w(rems_from_px(320.))
+        .min_w(rems_from_px(320_f32))
         .flex_1()
         .pl_1p5()
         .pr_2()

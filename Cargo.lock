@@ -19568,6 +19568,7 @@ dependencies = [
  "db",
  "font_panel",
  "fs",
+ "git_ui",
  "git_ui_core",
  "gpui",
  "icon_picker",

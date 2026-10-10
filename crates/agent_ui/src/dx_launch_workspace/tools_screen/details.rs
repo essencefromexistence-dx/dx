@@ -16,7 +16,7 @@ pub(super) fn render_selected_workflow_node_detail(
 ) -> AnyElement {
     let Some(node) = node else {
         return v_flex()
-            .w(rems_from_px(340.))
+            .w(rems_from_px(340_f32))
             .flex_none()
             .child(screen_empty_state(
                 "dx-workflow-node-detail-empty",
@@ -28,7 +28,7 @@ pub(super) fn render_selected_workflow_node_detail(
     };
 
     v_flex()
-        .w(rems_from_px(340.))
+        .w(rems_from_px(340_f32))
         .flex_none()
         .gap_3()
         .child(render_workflow_node_summary(node, cx))

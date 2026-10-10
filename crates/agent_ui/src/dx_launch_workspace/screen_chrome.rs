@@ -47,8 +47,8 @@ pub(super) fn workspace_stat(
 ) -> AnyElement {
     div()
         .id(id)
-        .min_w(rems_from_px(104.))
-        .max_w(rems_from_px(176.))
+        .min_w(rems_from_px(104_f32))
+        .max_w(rems_from_px(176_f32))
         .rounded_md()
         .border_1()
         .border_color(cx.theme().colors().border_variant)

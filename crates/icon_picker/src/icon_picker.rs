@@ -1032,7 +1032,8 @@ impl IconPickerPanel {
             .selected_icon
             .as_ref()
             .is_some_and(|selected| selected.same_identity_as(&icon));
-        let icon_preview = self.render_icon_preview(&icon, IconSize::Custom(rems_from_px(22.)), cx);
+        let icon_preview =
+            self.render_icon_preview(&icon, IconSize::Custom(rems_from_px(22_f32)), cx);
 
         div()
             .id(tile_id)
@@ -1086,7 +1087,7 @@ impl IconPickerPanel {
         let payload = self.payload_for_icon(&icon);
         let label = payload.label;
         let source_label = icon_source_label(&icon);
-        let preview = self.render_icon_preview(&icon, IconSize::Custom(rems_from_px(24.)), cx);
+        let preview = self.render_icon_preview(&icon, IconSize::Custom(rems_from_px(24_f32)), cx);
 
         Some(
             h_flex()

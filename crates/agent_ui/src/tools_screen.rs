@@ -168,7 +168,7 @@ impl Render for ToolsScreen {
         // Each card takes a fixed share of the row and shrinks so that multiple
         // cards fit per row when there is horizontal space (mirrors the
         // extensions grid behavior), wrapping to the next line otherwise.
-        let card_min = rems_from_px(280.);
+        let card_min = rems_from_px(280_f32);
 
         v_flex()
             .size_full()
@@ -194,7 +194,7 @@ impl Render for ToolsScreen {
                         )
                         .child(
                             h_flex()
-                                .w(rems_from_px(240.))
+                                .w(rems_from_px(240_f32))
                                 .child(self.query_editor.clone()),
                         )
                         .child(
@@ -218,7 +218,7 @@ impl Render for ToolsScreen {
                                 .id(("node-card", node.id))
                                 .flex_1()
                                 .min_w(card_min)
-                                .max_w(rems_from_px(480.))
+                                .max_w(rems_from_px(480_f32))
                                 .p_3()
                                 .rounded_md()
                                 .bg(cx.theme().colors().elevated_surface_background)

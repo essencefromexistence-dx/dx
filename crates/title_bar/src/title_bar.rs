@@ -49,8 +49,8 @@ use update_version::UpdateVersion;
 use util::ResultExt;
 use workspace::dock::DockPosition;
 use workspace::{
-    AccessibleMode, GoBack, GoForward, MultiWorkspace, NewCenterTerminal, NewFile, NewWebPreview,
-    OpenLog, ToggleFileFinder, ToggleProjectSymbols, ToggleWorktreeSecurity, Workspace,
+    GoBack, GoForward, MultiWorkspace, NewCenterTerminal, NewFile, NewWebPreview, OpenLog,
+    ToggleFileFinder, ToggleProjectSymbols, ToggleWorktreeSecurity, Workspace,
     item::{ItemHandle, WorkspaceScreenKind},
     notifications::{NotifyResultExt, NotifyTaskExt as _},
 };

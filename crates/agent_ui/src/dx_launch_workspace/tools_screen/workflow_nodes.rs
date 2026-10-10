@@ -33,7 +33,7 @@ pub(super) fn workflow_node_card(
             v_flex()
                 .id(workflow_node_element_id("dx-workflow-node-card", &node.id))
                 .w_full()
-                .h(rems_from_px(140.))
+                .h(rems_from_px(140_f32))
                 .overflow_hidden()
                 .p_3()
                 .gap_2()

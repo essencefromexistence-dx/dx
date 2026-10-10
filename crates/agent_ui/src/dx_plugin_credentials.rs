@@ -229,7 +229,7 @@ impl Render for DxPluginCredentialModal {
                                     .id("dx-plugin-credential-modal-content")
                                     .size_full()
                                     .tab_group()
-                                    .max_h(rems_from_px(380.))
+                                    .max_h(rems_from_px(380_f32))
                                     .pl_3()
                                     .pr_4()
                                     .pb_2()
@@ -250,7 +250,7 @@ impl Render for DxPluginCredentialModal {
                                             &focus_handle,
                                             cx,
                                         )
-                                        .map(|kb| kb.size(rems_from_px(12.))),
+                                        .map(|kb| kb.size(rems_from_px(12_f32))),
                                     )
                                     .on_click(cx.listener(|this, _event, window, cx| {
                                         this.cancel(&menu::Cancel, window, cx)
@@ -264,7 +264,7 @@ impl Render for DxPluginCredentialModal {
                                             &focus_handle,
                                             cx,
                                         )
-                                        .map(|kb| kb.size(rems_from_px(12.))),
+                                        .map(|kb| kb.size(rems_from_px(12_f32))),
                                     )
                                     .disabled(!self.can_submit(cx))
                                     .on_click(cx.listener(|this, _event, window, cx| {

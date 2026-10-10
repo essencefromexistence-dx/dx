@@ -209,8 +209,8 @@ pub(crate) fn render_workflow_node_catalog(
                 .child(
                     v_flex()
                         .flex_1()
-                        .min_w(rems_from_px(360.))
-                        .min_h(rems_from_px(420.))
+                        .min_w(rems_from_px(360_f32))
+                        .min_h(rems_from_px(420_f32))
                         .overflow_y_hidden()
                         .map(|this| {
                             if catalog.nodes.is_empty() {
@@ -402,7 +402,7 @@ fn render_catalog_controls(
                 ],
             )
             .style(ToggleButtonGroupStyle::Outlined)
-            .size(ToggleButtonGroupSize::Custom(rems_from_px(30.)))
+            .size(ToggleButtonGroupSize::Custom(rems_from_px(30_f32)))
             .label_size(LabelSize::Default)
             .auto_width()
             .selected_index(match state.filter {

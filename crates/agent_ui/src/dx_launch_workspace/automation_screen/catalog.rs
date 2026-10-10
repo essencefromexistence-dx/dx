@@ -214,7 +214,7 @@ fn render_automation_list(
     cx: &mut Context<AgentPanel>,
 ) -> AnyElement {
     let body = v_flex()
-        .min_h(rems_from_px(360.))
+        .min_h(rems_from_px(360_f32))
         .overflow_y_hidden()
         .map(|this| {
             if count == 0 {
@@ -238,7 +238,7 @@ fn render_automation_list(
 
     v_flex()
         .flex_1()
-        .min_w(rems_from_px(360.))
+        .min_w(rems_from_px(360_f32))
         .child(screen_section(
             "dx-automation-catalog-list",
             "Automation Catalog",
@@ -300,7 +300,7 @@ fn render_automation_controls(
                 ],
             )
             .style(ToggleButtonGroupStyle::Outlined)
-            .size(ToggleButtonGroupSize::Custom(rems_from_px(30.)))
+            .size(ToggleButtonGroupSize::Custom(rems_from_px(30_f32)))
             .label_size(LabelSize::Default)
             .auto_width()
             .selected_index(match state.filter {
@@ -365,8 +365,8 @@ fn render_selected_automation_detail(
     };
 
     v_flex()
-        .w(rems_from_px(344.))
-        .min_w(rems_from_px(304.))
+        .w(rems_from_px(344_f32))
+        .min_w(rems_from_px(304_f32))
         .flex_none()
         .child(screen_section(
             "dx-automation-selected-detail",
