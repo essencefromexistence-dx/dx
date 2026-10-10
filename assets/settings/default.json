@@ -3041,7 +3041,7 @@
     "google": {
       "api_url": "https://generativelanguage.googleapis.com",
     },
-    "llama_cpp": {
+    "llama.cpp": {
       "api_url": "http://127.0.0.1:8080/v1",
       "host": "127.0.0.1",
       "port": 8080,
@@ -3114,9 +3114,6 @@
     },
     "ollama": {
       "api_url": "http://localhost:11434",
-    },
-    "llama.cpp": {
-      "api_url": "http://localhost:8080",
     },
     "openai": {
       "api_url": "https://api.openai.com/v1",
