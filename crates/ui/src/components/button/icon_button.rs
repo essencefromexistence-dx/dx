@@ -32,6 +32,7 @@ pub struct IconButton {
     indicator: Option<Indicator>,
     indicator_border_color: Option<Hsla>,
     alpha: Option<f32>,
+    hover_color: Option<Color>,
 }
 
 impl IconButton {
@@ -52,6 +53,7 @@ impl IconButton {
             indicator: None,
             indicator_border_color: None,
             alpha: None,
+            hover_color: None,
         };
         this.base.base = this.base.base.debug_selector(|| format!("ICON-{:?}", icon));
         this
@@ -126,6 +128,13 @@ impl IconButton {
 
     pub fn hover_icon(mut self, icon: impl Into<Option<IconName>>) -> Self {
         self.hover_icon = icon.into();
+        self
+    }
+
+    /// Sets the icon color to use while hovered (added by upstream #65448,
+    /// consumed by git_ui/src/git_panel.rs).
+    pub fn hover_color(mut self, color: impl Into<Option<Color>>) -> Self {
+        self.hover_color = color.into();
         self
     }
 
@@ -299,10 +308,20 @@ impl RenderOnce for IconButton {
             Color::Custom(base_color.opacity(self.alpha.unwrap_or(1.0)))
         };
 
+        // Upstream #65448's hover color (applied via group-hover) and the fork's
+        // own `icon_hover_effect` animation are both kept. Upstream applies the
+        // color in the builder; the fork wraps the element afterwards with a
+        // hover animation, which only runs when the animation is configured.
+        let hover_color = self
+            .hover_color
+            .filter(|_| !is_disabled && !is_selected)
+            .map(|color| Color::Custom(color.color(cx).opacity(self.alpha.unwrap_or(1.0))));
+
         let icon_element = Icon::new(icon)
             .size(self.icon_size)
             .color(icon_color)
-            .transform(self.icon_transformation);
+            .transform(self.icon_transformation)
+            .group_hover_color(hover_color);
         let icon_element = if let Some(effect) = self.icon_hover_effect.filter(|_| !is_disabled) {
             icon_element.with_hover_effect(self.base.id().clone(), effect, is_hovered)
         } else {

@@ -164,6 +164,7 @@ pub struct Icon {
     color: Color,
     size: Rems,
     transformation: Transformation,
+    group_hover_color: Option<Color>,
     opacity: f32,
 }
 
@@ -174,6 +175,7 @@ impl Icon {
             color: Color::default(),
             size: IconSize::default().rems(),
             transformation: Transformation::default(),
+            group_hover_color: None,
             opacity: 1.0,
         }
     }
@@ -193,6 +195,7 @@ impl Icon {
             color: Color::default(),
             size: IconSize::default().rems(),
             transformation: Transformation::default(),
+            group_hover_color: None,
             opacity: 1.0,
         }
     }
@@ -203,6 +206,7 @@ impl Icon {
             color: Color::default(),
             size: IconSize::default().rems(),
             transformation: Transformation::default(),
+            group_hover_color: None,
             opacity: 1.0,
         }
     }
@@ -213,6 +217,7 @@ impl Icon {
             color: Color::default(),
             size: IconSize::default().rems(),
             transformation: Transformation::default(),
+            group_hover_color: None,
             opacity: 1.0,
         }
     }
@@ -235,6 +240,15 @@ impl Icon {
 
     pub fn opacity(mut self, opacity: f32) -> Self {
         self.opacity = opacity;
+        self
+    }
+
+    /// Sets the color used while the enclosing unnamed (`""`) group is hovered,
+    /// such as the one set up by [`crate::ButtonLike`].
+    ///
+    /// Not to be exposed outside of the `ui` crate.
+    pub(crate) fn group_hover_color(mut self, color: impl Into<Option<Color>>) -> Self {
+        self.group_hover_color = color.into();
         self
     }
 
@@ -284,35 +298,44 @@ impl Transformable for Icon {
 
 impl RenderOnce for Icon {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
-        match self.source {
-            IconSource::Embedded(path) => svg()
-                .with_transformation(self.transformation)
-                .size(self.size)
-                .flex_none()
-                .path(path)
-                .text_color(self.color.color(cx))
-                .opacity(self.opacity)
-                .into_any_element(),
-            IconSource::ExternalSvg(path) => svg()
-                .external_path(path)
-                .with_transformation(self.transformation)
-                .size(self.size)
-                .flex_none()
-                .text_color(self.color.color(cx))
-                .opacity(self.opacity)
-                .into_any_element(),
-            IconSource::OriginalColorExternalSvg(path) => img(path)
-                .size(self.size)
-                .flex_none()
-                .opacity(self.opacity)
-                .into_any_element(),
-            IconSource::External(path) => img(path)
-                .size(self.size)
-                .flex_none()
-                .text_color(self.color.color(cx))
-                .opacity(self.opacity)
-                .into_any_element(),
-        }
+        // Upstream #65448 restructured this to add group-hover support. Their
+        // match dropped the fork's `OriginalColorExternalSvg` variant (a
+        // fork-only icon source) and its `opacity` field, so both are kept here:
+        // upstream's `group_hover` wiring plus the fork's original-color branch
+        // and opacity propagation.
+        let color = self.color.color(cx);
+        let svg = match self.source {
+            IconSource::Embedded(path) => svg().path(path),
+            IconSource::ExternalSvg(path) => svg().external_path(path),
+            // `Img` has no `with_transformation`, so these return early the way
+            // upstream's External arm does.
+            IconSource::OriginalColorExternalSvg(path) => {
+                return img(path)
+                    .size(self.size)
+                    .flex_none()
+                    .opacity(self.opacity)
+                    .into_any_element();
+            }
+            IconSource::External(path) => {
+                return img(path)
+                    .size(self.size)
+                    .flex_none()
+                    .opacity(self.opacity)
+                    .text_color(color)
+                    .into_any_element();
+            }
+        };
+        let group_hover_color = self.group_hover_color.map(|color| color.color(cx));
+
+        svg.with_transformation(self.transformation)
+            .size(self.size)
+            .flex_none()
+            .text_color(color)
+            .opacity(self.opacity)
+            .when_some(group_hover_color, |this, hover_color| {
+                this.group_hover("", |style| style.text_color(hover_color))
+            })
+            .into_any_element()
     }
 }
 

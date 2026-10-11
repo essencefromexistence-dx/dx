@@ -2351,7 +2351,7 @@ mod tests {
             create_test_branch("main", false, Some("fork"), Some(800)),
         ]);
 
-        let checkout_branches = process_branches(&branches, true);
+        let checkout_branches = process_branches(&branches, true, None);
         assert!(
             checkout_branches
                 .iter()
@@ -2359,7 +2359,7 @@ mod tests {
             "remote branches tracked by a local branch should be collapsed when checking out"
         );
 
-        let processed_branches = process_branches(&branches, false);
+        let processed_branches = process_branches(&branches, false, None);
         assert_eq!(
             processed_branches.len(),
             branches.len(),
@@ -3570,6 +3570,11 @@ mod tests {
 
         branch_list.update(cx, |branch_list, cx| {
             branch_list.picker.update(cx, |picker, _cx| {
+                // Upstream removed the picker's branch cap, so their assertion is
+                // `matches.len() == branch_count`. The fork keeps a bound
+                // (MAX_BRANCH_PICKER_BRANCHES, see `process_branches`), and
+                // `branch_count` here can reach 540 -- below that cap, but the
+                // form is kept explicit so it stays honest if the range widens.
                 assert_eq!(picker.delegate.matches.len(), branch_count as usize);
             })
         });
