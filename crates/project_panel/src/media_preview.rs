@@ -14,15 +14,17 @@ use std::{
 };
 
 use gpui::{
-    AnyElement, App, Context, Div, FocusHandle, Hsla, ObjectFit, SharedString, Stateful, hsla, img,
-    linear_color_stop, linear_gradient,
+    AnyElement, App, ClickEvent, Context, Div, FocusHandle, Hsla, ObjectFit, ScrollHandle,
+    SharedString, Stateful, Window, hsla, img, linear_color_stop, linear_gradient,
 };
 use project::{Entry, ProjectEntryId, WorktreeId};
 
 use super::ContextMenuPlacement;
 use settings::Settings;
+use std::sync::Arc;
 use ui::{
-    ButtonLike, ButtonSize, ContextMenu, ListHeader, PopoverMenu, TintColor, Tooltip, prelude::*,
+    ButtonLike, ButtonSize, ContextMenu, Disclosure, Icon, IconName, IconSize, ListHeader,
+    PopoverMenu, ScrollAxes, Scrollbars, TintColor, Tooltip, WithScrollbar, prelude::*,
 };
 use workspace::{PreviewTabsSettings, SelectedEntry};
 
@@ -232,10 +234,14 @@ pub(crate) fn render_folder_media_gallery(
 
 pub(crate) fn render_folder_media_shelf(
     preview: &FolderMediaPreview,
+    media_expanded: bool,
+    on_toggle_expanded: Option<Arc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     worktree_id: WorktreeId,
     selected_entry_id: Option<ProjectEntryId>,
     focus_handle: FocusHandle,
+    scroll_handle: ScrollHandle,
     panel_controls: Option<AnyElement>,
+    window: &mut Window,
     cx: &mut Context<super::ProjectPanel>,
 ) -> AnyElement {
     let summary = media_preview_summary(preview);
@@ -287,6 +293,46 @@ pub(crate) fn render_folder_media_shelf(
         )
         .when_some(panel_controls, |this, controls| this.child(controls));
 
+    // Accordion: collapsed, only the header and the count show; expanded, the
+    // avatar strip appears below it. Disclosure owns the disclosure triangle, so
+    // the chevron is the whole header's affordance rather than a second control
+    // fighting for the same click.
+    let disclosure = Disclosure::new(
+        SharedString::from(format!("dx-explorer-media-{:016x}", stable_text_hash(&summary))),
+        media_expanded,
+    )
+    .opened_icon(IconName::ChevronDown)
+    .closed_icon(IconName::ChevronRight)
+    .on_toggle_expanded(on_toggle_expanded);
+
+    let body = if media_expanded {
+        // Horizontal strip with a real, draggable scrollbar. `overflow_x_scroll`
+        // alone scrolls (wheel / trackpad) but draws nothing, which in a ~300 px
+        // panel with 10+ cards hides that there is more off-screen. This is the
+        // pattern markdown's code blocks use: `div().id(..)` yields a
+        // `Stateful<Div>`, which is what `custom_scrollbars` is implemented for.
+        let strip = div()
+            .id("dx-explorer-media-shelf-strip")
+            .flex()
+            .flex_row()
+            .items_center()
+            .overflow_x_scroll()
+            .gap_1p5()
+            .children(shelf_cards);
+
+        let scrollbars = Scrollbars::new(ScrollAxes::Horizontal)
+            .id("dx-explorer-media-shelf-scrollbar")
+            .tracked_scroll_handle(&scroll_handle)
+            .with_track_along(
+                ScrollAxes::Horizontal,
+                cx.theme().colors().editor_background,
+            )
+            .notify_content();
+        strip.custom_scrollbars(scrollbars, window, cx).into_any_element()
+    } else {
+        div().into_any_element()
+    };
+
     v_flex()
         .id(SharedString::from(format!(
             "project-panel-media-shelf-{:016x}",
@@ -305,25 +351,17 @@ pub(crate) fn render_folder_media_shelf(
         })
         .child(
             ListHeader::new("Media")
-                .start_slot(Icon::new(dx_icon(DxUiIcon::Media)).size(IconSize::Small))
+                .start_slot(
+                    h_flex()
+                        .items_center()
+                        .gap_0p5()
+                        .child(disclosure)
+                        .child(Icon::new(dx_icon(DxUiIcon::Media)).size(IconSize::Small))
+                        .into_any_element(),
+                )
                 .end_slot(header_controls),
         )
-        .child(
-            // Horizontal avatar strip, not a grid: the shelf is a narrow band
-            // above the file tree, and a 4-column grid leaves a lone item
-            // floating in a tall bordered box. A row of the same cards keeps
-            // every pinned behavior (bounds, overflow popover, focus, open).
-            // The id makes the row stateful, which is what unlocks the scroll
-            // overflow (same pattern as the breadcrumb container).
-            div()
-                .id("project-panel-media-shelf-strip")
-                .flex()
-                .flex_row()
-                .items_center()
-                .overflow_x_scroll()
-                .gap_1p5()
-                .children(shelf_cards),
-        )
+        .child(body)
         .into_any_element()
 }
 

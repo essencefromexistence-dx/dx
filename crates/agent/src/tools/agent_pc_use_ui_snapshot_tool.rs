@@ -2,7 +2,6 @@ use crate::{
     AGENT_PC_USE_UI_SNAPSHOT_CONTRACT_TOOL_NAME, AgentTool, PC_USE_FUTURE_UI_TARGET_PREFIXES,
     ToolCallEventStream, ToolInput,
 };
-use agent_client_protocol::schema::v1 as acp;
 use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};

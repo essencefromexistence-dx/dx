@@ -3,7 +3,6 @@ use super::agent_pc_use_payload_tool::{
     AGENT_PC_USE_PAYLOAD_SCHEMA, AgentPcUsePayloadQueueRootMode,
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
-use agent_client_protocol::schema::v1 as acp;
 use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};

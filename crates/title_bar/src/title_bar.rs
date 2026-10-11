@@ -1306,9 +1306,12 @@ impl TitleBar {
             }
             #[cfg(any(test, feature = "test-support"))]
             RemoteConnectionOptions::Mock(_) => (None, "Mock Remote Project", IconName::Server),
-            // Non-test builds have no Mock variant, so without this arm the
-            // match is non-exhaustive there.
-            #[cfg(not(any(test, feature = "test-support")))]
+            // Feature unification can enable `remote/test-support` (which adds
+            // the `Mock` enum variant) without enabling `title_bar/test-support`
+            // (which gates the arm above) - then this wildcard is the only arm
+            // covering Mock. In builds where both agree, this arm is unreachable
+            // by construction; the allow keeps that configuration warning-free.
+            #[allow(unreachable_patterns)]
             _ => (None, "Remote Project", IconName::Server),
         };
 

@@ -1,5 +1,4 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_forge_backup_executor};
-use agent_client_protocol::schema::v1 as acp;
 use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};

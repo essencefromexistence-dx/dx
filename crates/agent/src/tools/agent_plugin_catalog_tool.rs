@@ -35,7 +35,6 @@ use crate::{
     AGENT_PLUGIN_ASSET_READINESS_SUMMARY_SCHEMA, AGENT_PLUGIN_RUNTIME_STATUS_SCHEMA,
     AGENT_PLUGIN_RUNTIME_STATUS_TOOL_NAME, AgentTool, ToolCallEventStream, ToolInput,
 };
-use agent_client_protocol::schema::v1 as acp;
 use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};

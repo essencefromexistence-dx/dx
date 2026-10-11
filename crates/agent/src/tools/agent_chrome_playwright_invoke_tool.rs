@@ -10,7 +10,6 @@ use super::agent_chrome_runner_gate_tool::{
     AGENT_CHROME_RUNNER_RECEIPT_FILE_NAME, AGENT_CHROME_RUNNER_RECEIPT_SCHEMA,
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
-use agent_client_protocol::schema::v1 as acp;
 use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};

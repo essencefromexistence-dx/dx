@@ -30,7 +30,7 @@ use gpui::{
     FileDropEvent, FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement, KeyContext,
     ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent,
     MouseButton, MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, ParentElement,
-    PathPromptOptions, Pixels, Point, PromptLevel, Render, ScrollStrategy, Stateful, Styled,
+    PathPromptOptions, Pixels, Point, PromptLevel, Render, ScrollHandle, ScrollStrategy, Stateful, Styled,
     Subscription, Task, UniformListDecoration, UniformListScrollHandle, WeakEntity, Window,
     actions, anchored, deferred, div, hsla, linear_color_stop, linear_gradient, point, px, size,
     transparent_white, uniform_list,
@@ -346,6 +346,13 @@ pub struct ProjectPanel {
     /// pay for it.
     disk_tree_visible: bool,
     disk_tree: Option<disk_tree::model::DiskTree>,
+    /// The Media accordion's expanded state. Independent of the storage
+    /// surfaces: this is the header of the media shelf, which owns its own
+    /// `Disclosure`. Defaults to collapsed so the panel opens on the file tree.
+    media_expanded: bool,
+    /// The media shelf's own horizontal scroll handle, so scrolling the avatar
+    /// strip never disturbs the file tree's scroll offset.
+    media_scroll_handle: ScrollHandle,
     generated_media_metadata:
         RefCell<HashMap<(WorktreeId, ProjectEntryId), media_preview::GeneratedMediaMetadataIndex>>,
     media_metadata_generation_tasks: RefCell<HashMap<(WorktreeId, ProjectEntryId), Task<()>>>,
@@ -1161,6 +1168,8 @@ impl ProjectPanel {
                 storage_details_visible: false,
                 disk_tree_visible: false,
                 disk_tree: None,
+                media_expanded: true,
+                media_scroll_handle: ScrollHandle::new(),
                 generated_media_metadata: Default::default(),
                 media_metadata_generation_tasks: Default::default(),
                 folder_media_previews: Default::default(),
@@ -5229,6 +5238,13 @@ impl ProjectPanel {
         }
 
         self.update_visible_entries(None, false, false, window, cx);
+        cx.notify();
+    }
+
+    /// Flip the Media accordion. The shelf itself is a pure function of the
+    /// flag; the Disclosure in its header calls back here through the entity.
+    pub(crate) fn toggle_media_expanded(&mut self, cx: &mut Context<Self>) {
+        self.media_expanded = !self.media_expanded;
         cx.notify();
     }
 
@@ -10679,6 +10695,15 @@ impl Render for ProjectPanel {
                                 // + count). A second header here doubled the
                                 // chrome and nested the shelf in a lookalike
                                 // container.
+                                //
+                                // The accordion's expanded state and its toggle
+                                // live on the panel; the shelf is a pure function
+                                // of them. This is a workspace panel, not a dock
+                                // panel, so it has no serialized open state to
+                                // persist - the flag lives for the session.
+                                let media_expanded = self.media_expanded;
+                                let media_scroll_handle = self.media_scroll_handle.clone();
+                                let panel_entity = cx.entity();
                                 this.child(
                                     v_flex()
                                         .w_full()
@@ -10686,10 +10711,20 @@ impl Render for ProjectPanel {
                                         .border_color(cx.theme().colors().border.opacity(0.5))
                                         .child(media_preview::render_folder_media_shelf(
                                             &media_preview,
+                                            media_expanded,
+                                            Some(std::sync::Arc::new(
+                                                move |_, _, cx: &mut App| {
+                                                    panel_entity.update(cx, |panel, cx| {
+                                                        panel.toggle_media_expanded(cx);
+                                                    });
+                                                },
+                                            )),
                                             active_media_folder.worktree_id,
                                             active_media_folder.selected_media_entry_id,
                                             self.focus_handle(cx),
+                                            media_scroll_handle,
                                             None,
+                                            window,
                                             cx,
                                         )),
                                 )
