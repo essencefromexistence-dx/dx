@@ -385,10 +385,11 @@ impl Render for TitleBar {
                 client::Status::SignedOut | client::Status::AuthenticationError
             );
 
+        // The three values below are not used again after the dock renders.
         let center_dock = self.render_screen_dock(
-            project_name.clone(),
-            repository.clone(),
-            linked_worktree_name.clone(),
+            project_name,
+            repository,
+            linked_worktree_name,
             window,
             cx,
         );
@@ -1305,6 +1306,10 @@ impl TitleBar {
             }
             #[cfg(any(test, feature = "test-support"))]
             RemoteConnectionOptions::Mock(_) => (None, "Mock Remote Project", IconName::Server),
+            // Non-test builds have no Mock variant, so without this arm the
+            // match is non-exhaustive there.
+            #[cfg(not(any(test, feature = "test-support")))]
+            _ => (None, "Remote Project", IconName::Server),
         };
 
         let nickname = nickname.unwrap_or_else(|| host.clone());

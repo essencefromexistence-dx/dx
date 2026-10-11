@@ -13,10 +13,14 @@ use crate::{
         WorkflowNodeIconAsset, workflow_node_element_id, workflow_node_icon_asset_for,
     },
 };
+// Union of both sides: the fork keeps AcpThreadEvent and ContentBlock (its
+// event handling and rendering use them), and gains ToolCallLocation from
+// upstream #65384. Upstream's own `acp_v2` and std imports are duplicates of
+// the ones below (lines 36 and 43), so they are not repeated here.
 use acp_thread::{
     AcpThreadEvent, ContentBlock, Elicitation, ElicitationEntryId, ElicitationStatus,
     ForegroundActivity, SandboxAuthorizationDetails, SandboxFallbackAuthorizationDetails,
-    SandboxNotAppliedReason, SubmissionId, SubmissionResponse, SubmissionState,
+    SandboxNotAppliedReason, SubmissionId, SubmissionResponse, SubmissionState, ToolCallLocation,
     decode_path_escapes,
 };
 use agent::{
@@ -641,8 +645,8 @@ impl ComposerPermissionMode {
 
 pub struct ThreadView {
     pub(crate) root_thread_id: ThreadId,
-    pub session_id: acp_v1::SessionId,
-    pub parent_session_id: Option<acp_v1::SessionId>,
+    pub session_id: acp_v2::SessionId,
+    pub parent_session_id: Option<acp_v2::SessionId>,
     pub thread: Entity<AcpThread>,
     pub(crate) conversation: Entity<super::Conversation>,
     pub server_view: WeakEntity<ConversationView>,
@@ -668,14 +672,14 @@ pub struct ThreadView {
     thread_feedback: ThreadFeedbackState,
     pub list_state: ListState,
     pub session_capabilities: SharedSessionCapabilities,
-    pub expanded_tool_call_raw_inputs: HashSet<acp_v1::ToolCallId>,
-    collapsed_sandbox_authorization_details: HashSet<acp_v1::ToolCallId>,
-    collapsed_sandbox_network_details: HashSet<acp_v1::ToolCallId>,
+    pub expanded_tool_call_raw_inputs: HashSet<acp_v2::ToolCallId>,
+    collapsed_sandbox_authorization_details: HashSet<acp_v2::ToolCallId>,
+    collapsed_sandbox_network_details: HashSet<acp_v2::ToolCallId>,
     /// Sandbox escalation prompts whose "surprising Unicode" warning the user
     /// has explicitly acknowledged. Until a prompt's tool call is in this set,
     /// its allow buttons stay disabled. See [`Self::sandbox_confusable_findings`].
-    acknowledged_confusable_warnings: HashSet<acp_v1::ToolCallId>,
-    pub subagent_scroll_handles: RefCell<HashMap<acp_v1::SessionId, ScrollHandle>>,
+    acknowledged_confusable_warnings: HashSet<acp_v2::ToolCallId>,
+    pub subagent_scroll_handles: RefCell<HashMap<acp_v2::SessionId, ScrollHandle>>,
     pub edits_expanded: bool,
     pub plan_expanded: bool,
     pub queue_expanded: bool,
@@ -684,7 +688,7 @@ pub struct ThreadView {
     pub editing_message: Option<usize>,
     pub message_queue: MessageQueue,
     pub turn_fields: TurnFields,
-    pub discarded_partial_edits: HashSet<acp_v1::ToolCallId>,
+    pub discarded_partial_edits: HashSet<acp_v2::ToolCallId>,
     pub is_loading_contents: bool,
     pub new_server_version_available: Option<SharedString>,
     pub resumed_without_history: bool,
@@ -1839,7 +1843,8 @@ impl ThreadView {
             Some(
                 acp_v2::StopReason::MaxTokens
                 | acp_v2::StopReason::MaxTurnRequests
-                | acp_v2::StopReason::Refusal,
+                | acp_v2::StopReason::Refusal
+                | acp_v2::StopReason::Error(_),
             ) => "failure",
             _ => "unknown",
         }
@@ -3265,7 +3270,7 @@ impl ThreadView {
 
     pub fn authorize_permission_request(
         &mut self,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         request_id: PermissionRequestId,
         outcome: SelectedPermissionOutcome,
         window: &mut Window,
@@ -3288,7 +3293,7 @@ impl ThreadView {
         if self.pending_allow_blocked_by_confusables(cx) {
             return;
         }
-        self.authorize_pending_tool_call(acp_v1::PermissionOptionKind::AllowAlways, window, cx);
+        self.authorize_pending_tool_call(acp_v2::PermissionOptionKind::AllowAlways, window, cx);
     }
 
     pub fn allow_once(&mut self, _: &AllowOnce, window: &mut Window, cx: &mut Context<Self>) {
@@ -3325,7 +3330,7 @@ impl ThreadView {
 
     pub fn authorize_pending_tool_call(
         &mut self,
-        kind: acp_v1::PermissionOptionKind,
+        kind: acp_v2::PermissionOptionKind,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Option<()> {
@@ -3561,13 +3566,13 @@ impl ThreadView {
         ) else {
             return;
         };
-        let option_id = acp_v1::PermissionOptionId::new(action.option_id.clone());
+        let option_id = acp_v2::PermissionOptionId::new(action.option_id.clone());
         let option_kind = match action.option_kind.as_str() {
-            "AllowOnce" => acp_v1::PermissionOptionKind::AllowOnce,
-            "AllowAlways" => acp_v1::PermissionOptionKind::AllowAlways,
-            "RejectOnce" => acp_v1::PermissionOptionKind::RejectOnce,
-            "RejectAlways" => acp_v1::PermissionOptionKind::RejectAlways,
-            _ => acp_v1::PermissionOptionKind::AllowOnce,
+            "AllowOnce" => acp_v2::PermissionOptionKind::AllowOnce,
+            "AllowAlways" => acp_v2::PermissionOptionKind::AllowAlways,
+            "RejectOnce" => acp_v2::PermissionOptionKind::RejectOnce,
+            "RejectAlways" => acp_v2::PermissionOptionKind::RejectAlways,
+            _ => return,
         };
 
         self.authorize_permission_request(
@@ -3585,9 +3590,9 @@ impl ThreadView {
         request_id: Option<PermissionRequestId>,
         tool_call_id: &str,
         cx: &App,
-    ) -> Option<(acp_v1::SessionId, PermissionRequestId)> {
+    ) -> Option<(acp_v2::SessionId, PermissionRequestId)> {
         let session_id = session_id
-            .map(acp_v1::SessionId::new)
+            .map(acp_v2::SessionId::new)
             .unwrap_or_else(|| self.thread.read(cx).session_id().clone());
         let conversation = self.conversation.read(cx);
         let request = if let Some(id) = request_id {
@@ -3597,7 +3602,7 @@ impl ThreadView {
                 .threads
                 .get(&session_id)?
                 .read(cx)
-                .permission_request_for_tool(&acp_v1::ToolCallId::new(tool_call_id))?
+                .permission_request_for_tool(&acp_v2::ToolCallId::new(tool_call_id))?
         };
         request.legacy_options()?;
         Some((session_id, request.id))
@@ -3662,7 +3667,7 @@ impl ThreadView {
 
     fn authorize_with_granularity(
         &mut self,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         request_id: PermissionRequestId,
         is_allow: bool,
         window: &mut Window,
@@ -4220,7 +4225,7 @@ impl ThreadView {
 
     fn collect_subagent_items_for_sessions(
         entries: &[AgentThreadEntry],
-        awaiting_session_ids: &[acp_v1::SessionId],
+        awaiting_session_ids: &[acp_v2::SessionId],
         cx: &App,
     ) -> Vec<(SharedString, usize)> {
         let tool_calls_by_session: HashMap<_, _> = entries
@@ -4297,7 +4302,7 @@ impl ThreadView {
 
     pub(super) fn render_generic_permission_card(
         &self,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         request_id: PermissionRequestId,
         request: &acp_v2::RequestPermissionRequest,
         source: Option<String>,
@@ -6495,8 +6500,11 @@ impl ThreadView {
         }
         // Full access = always bypass permission prompts by auto-approving pending tool calls
         // Use AllowAlways so future identical commands are also auto-approved
-        let _ =
-            self.authorize_pending_tool_call(acp::PermissionOptionKind::AllowAlways, window, cx);
+        let _ = self.authorize_pending_tool_call(
+            acp_v2::PermissionOptionKind::AllowAlways,
+            window,
+            cx,
+        );
     }
 
     fn handle_thread_event_for_auto_approve(
@@ -6522,7 +6530,7 @@ impl ThreadView {
                 };
                 if has_pending {
                     let _ = self.authorize_pending_tool_call(
-                        acp::PermissionOptionKind::AllowAlways,
+                        acp_v2::PermissionOptionKind::AllowAlways,
                         window,
                         cx,
                     );
@@ -11225,7 +11233,7 @@ impl ThreadView {
 
     fn render_terminal_tool_call(
         &self,
-        active_session_id: &acp_v1::SessionId,
+        active_session_id: &acp_v2::SessionId,
         entry_ix: usize,
         terminal: &Entity<acp_thread::Terminal>,
         tool_call: &ToolCall,
@@ -11486,8 +11494,8 @@ impl ThreadView {
 
     fn is_first_tool_call(
         &self,
-        active_session_id: &acp_v1::SessionId,
-        tool_call_id: &acp_v1::ToolCallId,
+        active_session_id: &acp_v2::SessionId,
+        tool_call_id: &acp_v2::ToolCallId,
         cx: &App,
     ) -> bool {
         self.conversation
@@ -11501,7 +11509,7 @@ impl ThreadView {
 
     fn render_any_tool_call(
         &self,
-        active_session_id: &acp_v1::SessionId,
+        active_session_id: &acp_v2::SessionId,
         entry_ix: usize,
         tool_call: &ToolCall,
         focus_handle: &FocusHandle,
@@ -11568,7 +11576,7 @@ impl ThreadView {
 
     fn render_tool_call(
         &self,
-        active_session_id: &acp_v1::SessionId,
+        active_session_id: &acp_v2::SessionId,
         entry_ix: usize,
         tool_call: &ToolCall,
         focus_handle: &FocusHandle,
@@ -12111,7 +12119,7 @@ impl ThreadView {
     fn render_sandbox_authorization_details(
         &self,
         entry_ix: usize,
-        tool_call_id: &acp_v1::ToolCallId,
+        tool_call_id: &acp_v2::ToolCallId,
         details: &SandboxAuthorizationDetails,
         window: &Window,
         cx: &Context<Self>,
@@ -12479,7 +12487,7 @@ impl ThreadView {
     /// allow buttons. See [`Self::sandbox_confusables_block_allow`].
     fn render_sandbox_confusable_warning(
         &self,
-        tool_call_id: &acp_v1::ToolCallId,
+        tool_call_id: &acp_v2::ToolCallId,
         findings: &[(String, Vec<unicode_confusables::SuspiciousChar>)],
         window: &Window,
         cx: &Context<Self>,
@@ -12828,7 +12836,7 @@ impl ThreadView {
 
     fn render_permission_buttons(
         &self,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         is_first: bool,
         request: &PermissionRequest,
         entry_ix: usize,
@@ -12891,9 +12899,9 @@ impl ThreadView {
         choices: &[PermissionOptionChoice],
         patterns: Option<(&[PermissionPattern], &str)>,
         entry_ix: usize,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         request_id: PermissionRequestId,
-        tool_call_id: acp_v1::ToolCallId,
+        tool_call_id: acp_v2::ToolCallId,
         focus_handle: &FocusHandle,
         allow_disabled: bool,
         cx: &Context<Self>,
@@ -13032,9 +13040,9 @@ impl ThreadView {
         choices: &[PermissionOptionChoice],
         current_label: SharedString,
         entry_ix: usize,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         request_id: PermissionRequestId,
-        tool_call_id: acp_v1::ToolCallId,
+        tool_call_id: acp_v2::ToolCallId,
         selected_index: usize,
         is_first: bool,
         cx: &Context<Self>,
@@ -13113,7 +13121,7 @@ impl ThreadView {
         _tool_name: &str,
         current_label: SharedString,
         entry_ix: usize,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         request_id: PermissionRequestId,
         is_first: bool,
         cx: &Context<Self>,
@@ -13282,16 +13290,16 @@ impl ThreadView {
 
     fn render_permission_buttons_flat(
         &self,
-        session_id: acp_v1::SessionId,
+        session_id: acp_v2::SessionId,
         is_first: bool,
-        options: &[acp_v1::PermissionOption],
+        options: &[acp_v2::PermissionOption],
         entry_ix: usize,
         request_id: PermissionRequestId,
         focus_handle: &FocusHandle,
         allow_disabled: bool,
         cx: &Context<Self>,
     ) -> Div {
-        let mut seen_kinds: ArrayVec<acp_v1::PermissionOptionKind, 3, u8> = ArrayVec::new();
+        let mut seen_kinds: ArrayVec<acp_v2::PermissionOptionKind, 3, u8> = ArrayVec::new();
 
         div()
             .p_1()
@@ -13318,14 +13326,14 @@ impl ThreadView {
                                 None,
                             )
                         } else {
-                            match option.kind {
-                                acp_v1::PermissionOptionKind::AllowOnce => (
+                            match &option.kind {
+                                acp_v2::PermissionOptionKind::AllowOnce => (
                                     Icon::new(IconName::Check)
                                         .size(IconSize::XSmall)
                                         .color(Color::Success),
                                     Some(&AllowOnce as &dyn Action),
                                 ),
-                                acp_v1::PermissionOptionKind::AllowAlways => (
+                                acp_v2::PermissionOptionKind::AllowAlways => (
                                     Icon::new(IconName::CheckDouble)
                                         .size(IconSize::XSmall)
                                         .color(Color::Success),
@@ -13337,13 +13345,13 @@ impl ThreadView {
                                         Some(&AllowAlways as &dyn Action)
                                     },
                                 ),
-                                acp_v1::PermissionOptionKind::RejectOnce => (
+                                acp_v2::PermissionOptionKind::RejectOnce => (
                                     Icon::new(IconName::Close)
                                         .size(IconSize::XSmall)
                                         .color(Color::Error),
                                     Some(&RejectOnce as &dyn Action),
                                 ),
-                                acp_v1::PermissionOptionKind::RejectAlways | _ => (
+                                acp_v2::PermissionOptionKind::RejectAlways | _ => (
                                     Icon::new(IconName::Close)
                                         .size(IconSize::XSmall)
                                         .color(Color::Error),
@@ -13356,8 +13364,8 @@ impl ThreadView {
                         // warning is unacknowledged; "deny"/"retry" stay enabled.
                         let is_allow = matches!(
                             option.kind,
-                            acp_v1::PermissionOptionKind::AllowOnce
-                                | acp_v1::PermissionOptionKind::AllowAlways
+                            acp_v2::PermissionOptionKind::AllowOnce
+                                | acp_v2::PermissionOptionKind::AllowAlways
                         ) && !is_retry;
                         let disabled = allow_disabled && is_allow;
 
@@ -13371,7 +13379,7 @@ impl ThreadView {
                             return this;
                         }
 
-                        seen_kinds.push(option.kind).unwrap();
+                        seen_kinds.push(option.kind.clone()).unwrap();
 
                         this.key_binding(
                             KeyBinding::for_action_in(action, focus_handle, cx)
@@ -13381,13 +13389,16 @@ impl ThreadView {
                     .label_size(LabelSize::Small)
                     .on_click(cx.listener({
                         let option_id = option.option_id.clone();
-                        let option_kind = option.kind;
+                        let option_kind = option.kind.clone();
                         let session_id = session_id.clone();
                         move |this, _, window, cx| {
                             this.authorize_permission_request(
                                 session_id.clone(),
                                 request_id,
-                                SelectedPermissionOutcome::new(option_id.clone(), option_kind),
+                                SelectedPermissionOutcome::new(
+                                    option_id.clone(),
+                                    option_kind.clone(),
+                                ),
                                 window,
                                 cx,
                             );
@@ -13681,7 +13692,7 @@ impl ThreadView {
 
     fn render_tool_call_content(
         &self,
-        session_id: &acp_v1::SessionId,
+        session_id: &acp_v2::SessionId,
         entry_ix: usize,
         content: &ToolCallContent,
         context_ix: usize,
@@ -14071,7 +14082,7 @@ impl ThreadView {
         &self,
         entry_ix: usize,
         image: Arc<gpui::Image>,
-        location: Option<acp_v1::ToolCallLocation>,
+        location: Option<ToolCallLocation>,
         card_layout: bool,
         cx: &Context<Self>,
     ) -> AnyElement {
@@ -14110,10 +14121,10 @@ impl ThreadView {
 
     fn render_subagent_tool_call(
         &self,
-        active_session_id: &acp_v1::SessionId,
+        active_session_id: &acp_v2::SessionId,
         entry_ix: usize,
         tool_call: &ToolCall,
-        subagent_session_id: Option<acp_v1::SessionId>,
+        subagent_session_id: Option<acp_v2::SessionId>,
         focus_handle: &FocusHandle,
         window: &Window,
         cx: &Context<Self>,
@@ -14140,7 +14151,7 @@ impl ThreadView {
 
     fn render_subagent_card(
         &self,
-        active_session_id: &acp_v1::SessionId,
+        active_session_id: &acp_v2::SessionId,
         entry_ix: usize,
         thread_view: Option<&Entity<ThreadView>>,
         tool_call: &ToolCall,
@@ -16757,12 +16768,19 @@ mod tests {
         use acp_v2::StopReason::*;
         for (reason, expected) in [
             (None, "unknown"),
-            (Some(Other("_custom".into())), "unknown"),
+            (
+                Some(Other(acp_v2::OtherStopReason::new(
+                    "_custom",
+                    Default::default(),
+                ))),
+                "unknown",
+            ),
             (Some(EndTurn), "success"),
             (Some(Cancelled), "cancelled"),
             (Some(Refusal), "failure"),
             (Some(MaxTokens), "failure"),
             (Some(MaxTurnRequests), "failure"),
+            (Some(Error(acp_v2::ErrorStopReason::new())), "failure"),
         ] {
             assert_eq!(
                 ThreadView::activity_completion_status(reason.as_ref()),

@@ -4,6 +4,7 @@ use super::agent_pc_use_payload_tool::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -61,8 +62,8 @@ impl AgentTool for AgentPcUsePayloadQueueInspectTool {
 
     const NAME: &'static str = AGENT_PC_USE_PAYLOAD_QUEUE_INSPECT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -91,7 +92,7 @@ impl AgentTool for AgentPcUsePayloadQueueInspectTool {
             let output = serde_json::to_string_pretty(&result)
                 .map_err(|error| format!("Failed to serialize PC-use queue inspection: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match status {
+            event_stream.update_fields(|update| update.title(match status {
                 "ready_for_future_pc_use_import" => "Zed PC-use queue ready",
                 "missing_queue" => "Zed PC-use payload queue is empty",
                 "invalid_queue" => "Zed PC-use payload queue needs fixes",

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_serializer_rlm_external_execution};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -97,8 +98,8 @@ impl AgentTool for DxSerializerRlmExternalExecutionTool {
 
     const NAME: &'static str = "execute_dx_serializer_rlm_reducer";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -187,7 +188,7 @@ impl AgentTool for DxSerializerRlmExternalExecutionTool {
                     format!("Failed to write DX serializer/RLM external execution receipt: {error}")
                 })?);
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "DX serializer/RLM reducer: {}",
                 response.execution.status
             )));

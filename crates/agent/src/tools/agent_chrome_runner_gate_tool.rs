@@ -8,6 +8,7 @@ use super::agent_chrome_playwright_adapter_tool::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -66,8 +67,8 @@ impl AgentTool for AgentChromeRunnerGateTool {
 
     const NAME: &'static str = AGENT_CHROME_RUNNER_GATE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -165,7 +166,7 @@ impl AgentTool for AgentChromeRunnerGateTool {
             let output = serde_json::to_string_pretty(&output)
                 .map_err(|error| format!("Failed to serialize Chrome run request: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match outcome.as_str() {
+            event_stream.update_fields(|update| update.title(match outcome.as_str() {
                 "ready_runner_adapter_pending" => "Chrome run gate ready",
                 "blocked_missing_queue" => "Chrome run blocked: missing queue",
                 "blocked_invalid_queue" => "Chrome run blocked: invalid queue",

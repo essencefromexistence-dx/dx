@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_forge_safety_policy};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -80,8 +81,8 @@ impl AgentTool for DxForgeSafetyPolicyTool {
 
     const NAME: &'static str = "plan_dx_forge_safety_policy";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -152,7 +153,7 @@ impl AgentTool for DxForgeSafetyPolicyTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Planned DX Forge safety: {}",
                 response.policy.status
             )));

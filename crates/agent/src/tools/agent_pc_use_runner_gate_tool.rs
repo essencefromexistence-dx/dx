@@ -4,6 +4,7 @@ use super::agent_pc_use_payload_tool::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -61,8 +62,8 @@ impl AgentTool for AgentPcUseRunnerGateTool {
 
     const NAME: &'static str = AGENT_PC_USE_RUNNER_GATE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -161,7 +162,7 @@ impl AgentTool for AgentPcUseRunnerGateTool {
             let output = serde_json::to_string_pretty(&output)
                 .map_err(|error| format!("Failed to serialize PC-use run request: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match outcome.as_str() {
+            event_stream.update_fields(|update| update.title(match outcome.as_str() {
                 "ready_future_executor_pending" => "Zed PC-use run gate ready",
                 "blocked_missing_queue" => "Zed PC-use run blocked: missing queue",
                 "blocked_invalid_queue" => "Zed PC-use run blocked: invalid queue",

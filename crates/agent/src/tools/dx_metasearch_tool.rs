@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_metasearch_agent_bridge};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use futures::FutureExt as _;
 use gpui::{App, AppContext, Entity, SharedString, Task};
@@ -112,8 +113,8 @@ impl AgentTool for DxMetasearchTool {
 
     const NAME: &'static str = "search_dx_metasearch";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Fetch
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Fetch
     }
 
     fn initial_title(
@@ -195,7 +196,7 @@ impl AgentTool for DxMetasearchTool {
             }
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new()
+                |update| update
                     .title(format!(
                         "Searched DX metasearch: {} result(s)",
                         response.summary.returned_result_count
@@ -205,18 +206,24 @@ impl AgentTool for DxMetasearchTool {
                             .results
                             .iter()
                             .map(|result| {
-                                acp::ToolCallContent::Content(acp::Content::new(
-                                    acp::ContentBlock::ResourceLink(
-                                        acp::ResourceLink::new(
+                                // v2's `ToolCallUpdate::content` takes
+                                // `Vec<acp_v2::ToolCallContent>`, and its
+                                // `Content` variant wraps a `Box<Content>`.
+                                acp_v2::ToolCallContent::Content(Box::new(acp_v2::Content::new(
+                                    acp_v2::ContentBlock::ResourceLink(
+                                        acp_v2::ResourceLink::new(
                                             result.title.clone(),
                                             result.url.clone(),
                                         )
-                                        .title(format!("[{}] {}", result.citation_id, result.title))
+                                        .title(format!(
+                                            "[{}] {}",
+                                            result.citation_id, result.title
+                                        ))
                                         .description(
                                             format!("{} ({})", result.snippet, result.engine),
                                         ),
                                     ),
-                                ))
+                                )))
                             })
                             .collect::<Vec<_>>(),
                     ),

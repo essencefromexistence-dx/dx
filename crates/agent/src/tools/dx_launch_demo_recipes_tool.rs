@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use project::Project;
@@ -51,8 +52,8 @@ impl AgentTool for DxLaunchDemoRecipesTool {
 
     const NAME: &'static str = "list_dx_launch_demo_recipes";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Fetch
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Fetch
     }
 
     fn initial_title(
@@ -93,7 +94,7 @@ impl AgentTool for DxLaunchDemoRecipesTool {
 
             authorize.await.map_err(|error| error.to_string())?;
             let response = build_launch_demo_recipes(input, workspace_root);
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Listed {} DX launch demo recipe(s)",
                 response.summary.recipe_count
             )));

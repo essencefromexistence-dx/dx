@@ -4,6 +4,7 @@ use super::agent_browser_payload_tool::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -66,8 +67,8 @@ impl AgentTool for AgentBrowserPayloadQueueInspectTool {
 
     const NAME: &'static str = AGENT_BROWSER_PAYLOAD_QUEUE_INSPECT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -97,7 +98,7 @@ impl AgentTool for AgentBrowserPayloadQueueInspectTool {
                 format!("Failed to serialize browser queue inspection: {error}")
             })?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match status {
+            event_stream.update_fields(|update| update.title(match status {
                 "ready_for_webpreview_import" => "Browser payload queue ready",
                 "missing_queue" => "Browser payload queue is empty",
                 "invalid_queue" => "Browser payload queue needs fixes",

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, SharedString, Task};
 use schemars::JsonSchema;
@@ -93,8 +94,8 @@ impl AgentTool for AgentPcUseUiSnapshotContractTool {
 
     const NAME: &'static str = AGENT_PC_USE_UI_SNAPSHOT_CONTRACT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -119,7 +120,7 @@ impl AgentTool for AgentPcUseUiSnapshotContractTool {
             })?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Inspected Zed UI snapshot contract"),
+                |update| update.title("Inspected Zed UI snapshot contract"),
             );
 
             Ok(output)

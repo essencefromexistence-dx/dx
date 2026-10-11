@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_forge_backup_runner_gate};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -73,8 +74,8 @@ impl AgentTool for DxForgeBackupRunnerGateTool {
 
     const NAME: &'static str = "gate_dx_forge_backup_runner";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -142,7 +143,7 @@ impl AgentTool for DxForgeBackupRunnerGateTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Gated DX Forge backup runner: {}",
                 response.validation.status
             )));

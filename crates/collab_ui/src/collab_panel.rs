@@ -2787,13 +2787,17 @@ impl CollabPanel {
             .id("collab-panel-signed-out-state")
             .size_full()
             .p_4()
-            .gap_4()
+            // Upstream #65290 retunes the empty state's spacing.
+            // Upstream's side also re-added `.size_full()`, but that is already
+            // set above, so taking it verbatim would duplicate the call.
+            .gap_1()
             .text_center()
             .justify_center()
-            .child(Label::new(collab_blurb))
+            .items_center()
+            .child(Label::new(collab_blurb).color(Color::Muted))
             .child(
                 Button::new(button_id, button_label)
-                    .full_width()
+                    .label_size(LabelSize::Small)
                     .start_icon(Icon::new(button_icon).color(Color::Muted))
                     .style(ButtonStyle::Outlined)
                     .disabled(is_busy)

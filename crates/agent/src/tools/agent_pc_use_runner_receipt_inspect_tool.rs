@@ -6,6 +6,7 @@ use super::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -70,8 +71,8 @@ impl AgentTool for AgentPcUseRunnerReceiptInspectTool {
 
     const NAME: &'static str = AGENT_PC_USE_RUNNER_RECEIPT_INSPECT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -102,7 +103,7 @@ impl AgentTool for AgentPcUseRunnerReceiptInspectTool {
                 format!("Failed to serialize PC-use receipt inspection: {error}")
             })?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match status {
+            event_stream.update_fields(|update| update.title(match status {
                 "has_ready_runner_receipt" => "Zed PC-use runner receipt is ready",
                 "has_blocked_runner_receipt" => "Zed PC-use runner receipt is blocked",
                 "empty" => "No Zed PC-use runner receipts yet",

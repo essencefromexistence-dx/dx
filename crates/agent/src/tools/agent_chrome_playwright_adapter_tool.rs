@@ -1,6 +1,7 @@
 use super::agent_chrome_payload_tool::AgentChromePayloadQueueRootMode;
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -67,8 +68,8 @@ impl AgentTool for AgentChromePlaywrightAdapterTool {
 
     const NAME: &'static str = AGENT_CHROME_PLAYWRIGHT_ADAPTER_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -107,7 +108,7 @@ impl AgentTool for AgentChromePlaywrightAdapterTool {
                 format!("Failed to serialize Chrome Playwright adapter result: {error}")
             })?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(
+            event_stream.update_fields(|update| update.title(
                 if input.write_adapter_files {
                     "Prepared Chrome Playwright adapter"
                 } else {

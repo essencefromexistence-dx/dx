@@ -11,6 +11,7 @@ use super::agent_chrome_runner_gate_tool::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -86,8 +87,8 @@ impl AgentTool for AgentChromePlaywrightInvokeTool {
 
     const NAME: &'static str = AGENT_CHROME_PLAYWRIGHT_INVOKE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -129,7 +130,7 @@ impl AgentTool for AgentChromePlaywrightInvokeTool {
 
             if !input.execute_adapter || status != "ready_to_execute" {
                 let output = invocation.output(&input, timeout_ms, readiness, None, None, false)?;
-                event_stream.update_fields(acp::ToolCallUpdateFields::new().title(
+                event_stream.update_fields(|update| update.title(
                     if status == "ready_to_execute" {
                         "Chrome adapter invocation ready"
                     } else {
@@ -194,7 +195,7 @@ impl AgentTool for AgentChromePlaywrightInvokeTool {
             )?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Invoked Chrome Playwright adapter"),
+                |update| update.title("Invoked Chrome Playwright adapter"),
             );
 
             Ok(output)

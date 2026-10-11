@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_serializer_rlm_execution_preview};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -82,8 +83,8 @@ impl AgentTool for DxSerializerRlmExecutionPreviewTool {
 
     const NAME: &'static str = "preview_dx_serializer_rlm_reducer_execution";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Edit
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Edit
     }
 
     fn initial_title(
@@ -180,7 +181,7 @@ impl AgentTool for DxSerializerRlmExecutionPreviewTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Previewed DX serializer/RLM reducer run: {}",
                 response.preview.status
             )));

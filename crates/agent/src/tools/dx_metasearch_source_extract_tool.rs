@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_metasearch_agent_bridge};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use futures::FutureExt as _;
 use gpui::{App, AppContext, SharedString, Task};
@@ -74,8 +75,8 @@ impl AgentTool for DxMetasearchSourceExtractTool {
 
     const NAME: &'static str = "extract_dx_metasearch_source";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Fetch
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Fetch
     }
 
     fn initial_title(
@@ -156,21 +157,25 @@ impl AgentTool for DxMetasearchSourceExtractTool {
                 .or_else(|| response.request.source_id.clone())
                 .unwrap_or_else(|| response.request.url.clone());
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new()
+                |update| update
                     .title(format!(
                         "Extracted DX source: {} char(s)",
                         response.content.extracted_chars
                     ))
-                    .content(vec![acp::ToolCallContent::Content(acp::Content::new(
-                        acp::ContentBlock::ResourceLink(
-                            acp::ResourceLink::new(title, response.request.url.clone())
-                                .description(format!(
+                    // v2's `ToolCallUpdate::content` takes
+                    // `Vec<acp_v2::ToolCallContent>`, and its `Content` variant
+                    // wraps a `Box<Content>`.
+                    .content(vec![acp_v2::ToolCallContent::Content(Box::new(
+                        acp_v2::Content::new(acp_v2::ContentBlock::ResourceLink(
+                            acp_v2::ResourceLink::new(title, response.request.url.clone()).description(
+                                format!(
                                     "{} char(s), about {} token(s), kind {}",
                                     response.content.extracted_chars,
                                     response.content.estimated_tokens,
                                     response.content.kind
-                                )),
-                        ),
+                                ),
+                            ),
+                        )),
                     ))]),
             );
 

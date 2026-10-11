@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_metasearch_context_adapter};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -93,8 +94,8 @@ impl AgentTool for DxMetasearchContextAdapterTool {
 
     const NAME: &'static str = "prepare_dx_metasearch_context";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Edit
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Edit
     }
 
     fn initial_title(
@@ -165,7 +166,7 @@ impl AgentTool for DxMetasearchContextAdapterTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Prepared DX context: {} source(s), about {} token(s)",
                 response.summary.included_source_count, response.summary.estimated_tokens
             )));

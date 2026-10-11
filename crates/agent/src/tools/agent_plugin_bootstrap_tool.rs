@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -72,8 +73,8 @@ impl AgentTool for AgentPluginBootstrapTool {
 
     const NAME: &'static str = "prepare_agent_plugin_runtime";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -116,7 +117,7 @@ impl AgentTool for AgentPluginBootstrapTool {
                 .map_err(|error| format!("Failed to serialize bootstrap result: {error}"))?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title(
+                |update| update.title(
                     if result
                         .pointer("/result/applied")
                         .and_then(Value::as_bool)

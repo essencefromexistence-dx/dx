@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_catalog_agent_bridge};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use project::Project;
@@ -67,8 +68,8 @@ impl AgentTool for DxCatalogProviderSettingsRegistrationTool {
 
     const NAME: &'static str = "register_dx_catalog_provider_settings";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Edit
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Edit
     }
 
     fn initial_title(
@@ -146,7 +147,7 @@ impl AgentTool for DxCatalogProviderSettingsRegistrationTool {
             } else {
                 "Skipped DX catalog provider settings registration"
             };
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(title.to_string()));
+            event_stream.update_fields(|update| update.title(title.to_string()));
 
             Ok(output)
         })

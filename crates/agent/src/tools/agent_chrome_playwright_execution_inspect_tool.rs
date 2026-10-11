@@ -3,6 +3,7 @@ use super::agent_chrome_playwright_adapter_tool::AGENT_CHROME_PLAYWRIGHT_EXECUTI
 use super::agent_chrome_playwright_invoke_tool::AGENT_CHROME_PLAYWRIGHT_RUN_REQUEST_SCHEMA;
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -66,8 +67,8 @@ impl AgentTool for AgentChromePlaywrightExecutionInspectTool {
 
     const NAME: &'static str = AGENT_CHROME_PLAYWRIGHT_EXECUTION_INSPECT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -99,7 +100,7 @@ impl AgentTool for AgentChromePlaywrightExecutionInspectTool {
                 format!("Failed to serialize Chrome adapter execution inspection: {error}")
             })?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match status {
+            event_stream.update_fields(|update| update.title(match status {
                 "has_recent_execution_receipts" => "Chrome adapter execution receipts found",
                 "has_requests_without_receipts" => "Chrome adapter requests need receipts",
                 "empty" => "No Chrome adapter executions yet",

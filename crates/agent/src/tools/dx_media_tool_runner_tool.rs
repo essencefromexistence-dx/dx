@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_media_tool_runner};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -69,8 +70,8 @@ impl AgentTool for DxMediaToolRunnerTool {
 
     const NAME: &'static str = "execute_dx_media_tool";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -138,7 +139,7 @@ impl AgentTool for DxMediaToolRunnerTool {
                 })?);
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new()
+                |update| update
                     .title(format!("DX media tool: {}", response.execution.status)),
             );
 

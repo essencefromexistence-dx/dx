@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, ClipboardItem, Entity, SharedString, Task};
 use paths::data_dir;
@@ -109,8 +110,8 @@ impl AgentTool for AgentBrowserPayloadTool {
 
     const NAME: &'static str = AGENT_BROWSER_PAYLOAD_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -143,7 +144,7 @@ impl AgentTool for AgentBrowserPayloadTool {
             let output = serde_json::to_string_pretty(&result)
                 .map_err(|error| format!("Failed to serialize browser payload: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(if valid {
+            event_stream.update_fields(|update| update.title(if valid {
                 "Composed browser action payload"
             } else {
                 "Browser action payload needs fixes"
@@ -185,8 +186,8 @@ impl AgentTool for AgentBrowserPayloadStageTool {
 
     const NAME: &'static str = AGENT_BROWSER_PAYLOAD_STAGE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -220,7 +221,7 @@ impl AgentTool for AgentBrowserPayloadStageTool {
                 let output = serde_json::to_string_pretty(&result)
                     .map_err(|error| format!("Failed to serialize browser payload: {error}"))?;
                 event_stream.update_fields(
-                    acp::ToolCallUpdateFields::new().title("Browser payload needs fixes"),
+                    |update| update.title("Browser payload needs fixes"),
                 );
                 return Err(output);
             }
@@ -270,7 +271,7 @@ impl AgentTool for AgentBrowserPayloadStageTool {
                 .map_err(|error| format!("Failed to serialize staging result: {error}"))?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Staged browser payload"),
+                |update| update.title("Staged browser payload"),
             );
 
             Ok(output)
@@ -328,8 +329,8 @@ impl AgentTool for AgentBrowserPayloadQueueTool {
 
     const NAME: &'static str = AGENT_BROWSER_PAYLOAD_QUEUE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -366,7 +367,7 @@ impl AgentTool for AgentBrowserPayloadQueueTool {
                 let output = serde_json::to_string_pretty(&result)
                     .map_err(|error| format!("Failed to serialize browser payload: {error}"))?;
                 event_stream.update_fields(
-                    acp::ToolCallUpdateFields::new().title("Browser payload needs fixes"),
+                    |update| update.title("Browser payload needs fixes"),
                 );
                 return Err(output);
             }
@@ -439,7 +440,7 @@ impl AgentTool for AgentBrowserPayloadQueueTool {
                 .map_err(|error| format!("Failed to serialize queue result: {error}"))?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Queued browser payload"),
+                |update| update.title("Queued browser payload"),
             );
 
             Ok(output)

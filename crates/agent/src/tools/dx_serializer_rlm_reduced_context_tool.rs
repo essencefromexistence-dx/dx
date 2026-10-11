@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_serializer_rlm_reduced_context};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -78,8 +79,8 @@ impl AgentTool for DxSerializerRlmReducedContextTool {
 
     const NAME: &'static str = "write_dx_serializer_rlm_reduced_context";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Edit
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Edit
     }
 
     fn initial_title(
@@ -171,7 +172,7 @@ impl AgentTool for DxSerializerRlmReducedContextTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Wrote DX reduced context: {}",
                 response.reduction.status
             )));

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_forge_restore_target_plan};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -79,8 +80,8 @@ impl AgentTool for DxForgeRestoreTargetPlanTool {
 
     const NAME: &'static str = "plan_dx_forge_restore_target";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Edit
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Edit
     }
 
     fn initial_title(
@@ -151,7 +152,7 @@ impl AgentTool for DxForgeRestoreTargetPlanTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Planned DX Forge restore target: {}",
                 response.validation.status
             )));

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -58,8 +59,8 @@ impl AgentTool for AgentPcUseInspectTool {
 
     const NAME: &'static str = AGENT_PC_USE_INSPECT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -83,7 +84,7 @@ impl AgentTool for AgentPcUseInspectTool {
                 .map_err(|error| format!("Failed to serialize Zed window context: {error}"))?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Inspected Zed window context"),
+                |update| update.title("Inspected Zed window context"),
             );
 
             Ok(output)

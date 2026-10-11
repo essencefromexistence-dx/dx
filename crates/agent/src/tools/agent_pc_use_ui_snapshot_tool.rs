@@ -3,6 +3,7 @@ use crate::{
     ToolCallEventStream, ToolInput,
 };
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use project::Project;
@@ -64,8 +65,8 @@ impl AgentTool for AgentPcUseUiSnapshotTool {
 
     const NAME: &'static str = AGENT_PC_USE_UI_SNAPSHOT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -89,7 +90,7 @@ impl AgentTool for AgentPcUseUiSnapshotTool {
                 .map_err(|error| format!("Failed to serialize PC-use UI snapshot: {error}"))?;
 
             event_stream
-                .update_fields(acp::ToolCallUpdateFields::new().title("Inspected Zed UI snapshot"));
+                .update_fields(|update| update.title("Inspected Zed UI snapshot"));
 
             Ok(output)
         })

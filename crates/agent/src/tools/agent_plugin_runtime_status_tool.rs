@@ -64,6 +64,7 @@ use super::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -166,8 +167,8 @@ impl AgentTool for AgentPluginRuntimeStatusTool {
 
     const NAME: &'static str = AGENT_PLUGIN_RUNTIME_STATUS_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -197,7 +198,7 @@ impl AgentTool for AgentPluginRuntimeStatusTool {
                 format!("Failed to serialize agent plugin runtime status: {error}")
             })?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match status {
+            event_stream.update_fields(|update| update.title(match status {
                 "ready_for_read_only_discovery" => "Agent plugin runtime is discoverable",
                 "workspace_roots_missing" => "Agent plugin runtime is using Zed data roots",
                 "blocked_unmanaged_paths" => "Agent plugin runtime paths need review",

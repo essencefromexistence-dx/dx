@@ -36,6 +36,7 @@ use crate::{
     AGENT_PLUGIN_RUNTIME_STATUS_TOOL_NAME, AgentTool, ToolCallEventStream, ToolInput,
 };
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -93,8 +94,8 @@ impl AgentTool for AgentPluginCatalogTool {
 
     const NAME: &'static str = "list_agent_plugins";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -119,7 +120,7 @@ impl AgentTool for AgentPluginCatalogTool {
                 .map_err(|error| format!("Failed to serialize agent plugin catalog: {error}"))?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Listed agent plugin catalog"),
+                |update| update.title("Listed agent plugin catalog"),
             );
 
             Ok(catalog)

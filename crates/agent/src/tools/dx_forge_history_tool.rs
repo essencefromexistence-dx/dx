@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -63,8 +64,8 @@ impl AgentTool for DxForgeHistoryTool {
 
     const NAME: &'static str = "inspect_dx_forge_history";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -100,7 +101,7 @@ impl AgentTool for DxForgeHistoryTool {
 
             authorize.await.map_err(|error| error.to_string())?;
             let response = artifact_target.inspect(input.max_entries);
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Inspected DX Forge history: {} entries",
                 response.entries.len()
             )));

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use project::Project;
@@ -112,8 +113,8 @@ impl AgentTool for AgentPcUseTargetManifestTool {
 
     const NAME: &'static str = AGENT_PC_USE_TARGET_MANIFEST_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -137,7 +138,7 @@ impl AgentTool for AgentPcUseTargetManifestTool {
                 .map_err(|error| format!("Failed to serialize PC-use target manifest: {error}"))?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Inspected Zed PC-use targets"),
+                |update| update.title("Inspected Zed PC-use targets"),
             );
 
             Ok(output)

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_catalog_agent_bridge};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, SharedString, Task};
 use schemars::JsonSchema;
@@ -33,8 +34,8 @@ impl AgentTool for DxCatalogProviderSettingsTool {
 
     const NAME: &'static str = "inspect_dx_catalog_provider_settings";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -67,7 +68,7 @@ impl AgentTool for DxCatalogProviderSettingsTool {
             })?;
 
             event_stream.update_fields(
-                acp::ToolCallUpdateFields::new().title("Inspected DX catalog provider settings"),
+                |update| update.title("Inspected DX catalog provider settings"),
             );
 
             Ok(output)

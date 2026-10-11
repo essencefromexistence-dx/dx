@@ -8,6 +8,7 @@ use super::agent_chrome_playwright_adapter_tool::{
 };
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -64,8 +65,8 @@ impl AgentTool for AgentChromePayloadQueueInspectTool {
 
     const NAME: &'static str = AGENT_CHROME_PAYLOAD_QUEUE_INSPECT_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -94,7 +95,7 @@ impl AgentTool for AgentChromePayloadQueueInspectTool {
             let output = serde_json::to_string_pretty(&result)
                 .map_err(|error| format!("Failed to serialize Chrome queue inspection: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(match status {
+            event_stream.update_fields(|update| update.title(match status {
                 "ready_for_permissioned_runner" => "Chrome queue ready for runner gate",
                 "missing_queue" => "Chrome payload queue is empty",
                 "invalid_queue" => "Chrome payload queue needs fixes",

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -145,8 +146,8 @@ impl AgentTool for AgentChromePayloadTool {
 
     const NAME: &'static str = AGENT_CHROME_PAYLOAD_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -192,7 +193,7 @@ impl AgentTool for AgentChromePayloadTool {
             let output = serde_json::to_string_pretty(&result)
                 .map_err(|error| format!("Failed to serialize Chrome payload: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(if valid {
+            event_stream.update_fields(|update| update.title(if valid {
                 "Composed Chrome action payload"
             } else {
                 "Chrome action payload needs fixes"
@@ -253,8 +254,8 @@ impl AgentTool for AgentChromePayloadQueueTool {
 
     const NAME: &'static str = AGENT_CHROME_PAYLOAD_QUEUE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -302,7 +303,7 @@ impl AgentTool for AgentChromePayloadQueueTool {
                 let output = serde_json::to_string_pretty(&result)
                     .map_err(|error| format!("Failed to serialize Chrome payload: {error}"))?;
                 event_stream.update_fields(
-                    acp::ToolCallUpdateFields::new().title("Chrome payload needs fixes"),
+                    |update| update.title("Chrome payload needs fixes"),
                 );
                 return Err(output);
             }
@@ -376,7 +377,7 @@ impl AgentTool for AgentChromePayloadQueueTool {
                 .map_err(|error| format!("Failed to serialize Chrome queue result: {error}"))?;
 
             event_stream
-                .update_fields(acp::ToolCallUpdateFields::new().title("Queued Chrome payload"));
+                .update_fields(|update| update.title("Queued Chrome payload"));
 
             Ok(output)
         })

@@ -3,6 +3,7 @@ use crate::{
     dx_runtime_proof_import::DxRuntimeProofOperatorStatus,
 };
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -94,8 +95,8 @@ impl AgentTool for DxRuntimeProofImportTool {
 
     const NAME: &'static str = "import_dx_runtime_proof";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Edit
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Edit
     }
 
     fn initial_title(
@@ -184,7 +185,7 @@ impl AgentTool for DxRuntimeProofImportTool {
                 response.status_receipt = Some(status_receipt);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Imported DX runtime proof: {}",
                 response.validation.status
             )));

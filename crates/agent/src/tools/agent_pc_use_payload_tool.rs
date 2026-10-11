@@ -3,6 +3,7 @@ use crate::{
     ToolPermissionContext,
 };
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, ClipboardItem, Entity, SharedString, Task};
 use paths::data_dir;
@@ -108,8 +109,8 @@ impl AgentTool for AgentPcUsePayloadTool {
 
     const NAME: &'static str = AGENT_PC_USE_PAYLOAD_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Read
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Read
     }
 
     fn initial_title(
@@ -143,7 +144,7 @@ impl AgentTool for AgentPcUsePayloadTool {
             let output = serde_json::to_string_pretty(&result)
                 .map_err(|error| format!("Failed to serialize PC-use payload: {error}"))?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(if valid {
+            event_stream.update_fields(|update| update.title(if valid {
                 "Composed Zed PC-use payload"
             } else {
                 "Zed PC-use payload needs fixes"
@@ -184,8 +185,8 @@ impl AgentTool for AgentPcUsePayloadStageTool {
 
     const NAME: &'static str = AGENT_PC_USE_PAYLOAD_STAGE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -220,7 +221,7 @@ impl AgentTool for AgentPcUsePayloadStageTool {
                 let output = serde_json::to_string_pretty(&result)
                     .map_err(|error| format!("Failed to serialize PC-use payload: {error}"))?;
                 event_stream.update_fields(
-                    acp::ToolCallUpdateFields::new().title("Zed PC-use payload needs fixes"),
+                    |update| update.title("Zed PC-use payload needs fixes"),
                 );
                 return Err(output);
             }
@@ -271,7 +272,7 @@ impl AgentTool for AgentPcUsePayloadStageTool {
                 .map_err(|error| format!("Failed to serialize PC-use staging result: {error}"))?;
 
             event_stream
-                .update_fields(acp::ToolCallUpdateFields::new().title("Staged Zed PC-use payload"));
+                .update_fields(|update| update.title("Staged Zed PC-use payload"));
 
             Ok(output)
         })
@@ -327,8 +328,8 @@ impl AgentTool for AgentPcUsePayloadQueueTool {
 
     const NAME: &'static str = AGENT_PC_USE_PAYLOAD_QUEUE_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -366,7 +367,7 @@ impl AgentTool for AgentPcUsePayloadQueueTool {
                 let output = serde_json::to_string_pretty(&result)
                     .map_err(|error| format!("Failed to serialize PC-use payload: {error}"))?;
                 event_stream.update_fields(
-                    acp::ToolCallUpdateFields::new().title("Zed PC-use payload needs fixes"),
+                    |update| update.title("Zed PC-use payload needs fixes"),
                 );
                 return Err(output);
             }
@@ -440,7 +441,7 @@ impl AgentTool for AgentPcUsePayloadQueueTool {
                 .map_err(|error| format!("Failed to serialize PC-use queue result: {error}"))?;
 
             event_stream
-                .update_fields(acp::ToolCallUpdateFields::new().title("Queued Zed PC-use payload"));
+                .update_fields(|update| update.title("Queued Zed PC-use payload"));
 
             Ok(output)
         })

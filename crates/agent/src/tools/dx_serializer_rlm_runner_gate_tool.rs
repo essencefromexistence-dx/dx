@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_serializer_rlm_runner_gate};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -76,8 +77,8 @@ impl AgentTool for DxSerializerRlmRunnerGateTool {
 
     const NAME: &'static str = "gate_dx_serializer_rlm_runner";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -157,7 +158,7 @@ impl AgentTool for DxSerializerRlmRunnerGateTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Gated DX serializer/RLM runner: {}",
                 response.validation.status
             )));

@@ -1,5 +1,6 @@
 use crate::{AgentTool, ToolCallEventStream, ToolInput, dx_metasearch_agent_bridge};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use futures::FutureExt as _;
 use gpui::{App, AppContext, Entity, SharedString, Task};
@@ -87,8 +88,8 @@ impl AgentTool for DxMetasearchStatusTool {
 
     const NAME: &'static str = "inspect_dx_metasearch";
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Fetch
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Fetch
     }
 
     fn initial_title(
@@ -181,7 +182,7 @@ impl AgentTool for DxMetasearchStatusTool {
                     })?);
             }
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(format!(
+            event_stream.update_fields(|update| update.title(format!(
                 "Inspected DX metasearch: {} engine(s), status {}",
                 response.engine_summary.catalog_count, response.service.status
             )));

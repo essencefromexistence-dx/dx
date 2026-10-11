@@ -1,6 +1,7 @@
 use super::agent_chrome_payload_tool::AgentChromePayloadQueueRootMode;
 use crate::{AgentTool, ToolCallEventStream, ToolInput, ToolPermissionContext};
 use agent_client_protocol::schema::v1 as acp;
+use agent_client_protocol::schema::v2 as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;
@@ -90,8 +91,8 @@ impl AgentTool for AgentPluginAssetProvisionerTool {
 
     const NAME: &'static str = AGENT_PLUGIN_ASSET_PROVISIONER_TOOL_NAME;
 
-    fn kind() -> acp::ToolKind {
-        acp::ToolKind::Execute
+    fn kind() -> acp_v2::ToolKind {
+        acp_v2::ToolKind::Execute
     }
 
     fn initial_title(
@@ -133,7 +134,7 @@ impl AgentTool for AgentPluginAssetProvisionerTool {
                 format!("Failed to serialize asset provisioning result: {error}")
             })?;
 
-            event_stream.update_fields(acp::ToolCallUpdateFields::new().title(
+            event_stream.update_fields(|update| update.title(
                 if input.copy_dx_chrome_extension {
                     "Provisioned DX Chrome extension"
                 } else if input.write_asset_receipt {
