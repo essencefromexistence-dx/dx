@@ -298,7 +298,10 @@ pub(crate) fn render_folder_media_shelf(
     // the chevron is the whole header's affordance rather than a second control
     // fighting for the same click.
     let disclosure = Disclosure::new(
-        SharedString::from(format!("dx-explorer-media-{:016x}", stable_text_hash(&summary))),
+        SharedString::from(format!(
+            "dx-explorer-media-{:016x}",
+            stable_text_hash(&summary)
+        )),
         media_expanded,
     )
     .opened_icon(IconName::ChevronDown)
@@ -328,10 +331,29 @@ pub(crate) fn render_folder_media_shelf(
                 cx.theme().colors().editor_background,
             )
             .notify_content();
-        strip.custom_scrollbars(scrollbars, window, cx).into_any_element()
+        strip
+            .custom_scrollbars(scrollbars, window, cx)
+            .into_any_element()
     } else {
         div().into_any_element()
     };
+
+    // Collapsed: header row only, no padding or borders, so the strip is a
+    // single thin row. The full padded container below is for the expanded
+    // state only.
+    if !media_expanded {
+        return ListHeader::new("Media")
+            .start_slot(
+                h_flex()
+                    .items_center()
+                    .gap_0p5()
+                    .child(disclosure)
+                    .child(Icon::new(dx_icon(DxUiIcon::Media)).size(IconSize::Small))
+                    .into_any_element(),
+            )
+            .end_slot(header_controls)
+            .into_any_element();
+    }
 
     v_flex()
         .id(SharedString::from(format!(

@@ -30,8 +30,8 @@ use gpui::{
     FileDropEvent, FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement, KeyContext,
     ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent,
     MouseButton, MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, ParentElement,
-    PathPromptOptions, Pixels, Point, PromptLevel, Render, ScrollHandle, ScrollStrategy, Stateful, Styled,
-    Subscription, Task, UniformListDecoration, UniformListScrollHandle, WeakEntity, Window,
+    PathPromptOptions, Pixels, Point, PromptLevel, Render, ScrollHandle, ScrollStrategy, Stateful,
+    Styled, Subscription, Task, UniformListDecoration, UniformListScrollHandle, WeakEntity, Window,
     actions, anchored, deferred, div, hsla, linear_color_stop, linear_gradient, point, px, size,
     transparent_white, uniform_list,
 };
@@ -10742,6 +10742,23 @@ impl Render for ProjectPanel {
                                     cx,
                                 )
                                 .flex_grow_1()
+                                // Clicking empty space clears the selection: nothing is
+                                // under the cursor, so keeping a stale highlight
+                                // is the "hard to unselect" complaint.
+                                .on_click(cx.listener(
+                                    move |panel, event: &gpui::ClickEvent, _, cx| {
+                                        if event.is_right_click() {
+                                            return;
+                                        }
+                                        if panel.selection.is_some()
+                                            || !panel.marked_entries.is_empty()
+                                        {
+                                            panel.selection = None;
+                                            panel.marked_entries.clear();
+                                            cx.notify();
+                                        }
+                                    },
+                                ))
                                 .on_scroll_wheel({
                                     let scroll_handle = self.scroll_handle.clone();
                                     let entity_id = cx.entity().entity_id();

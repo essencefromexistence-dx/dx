@@ -80,6 +80,16 @@ const PUBLIC_API_KEY: &str = "public";
 static API_KEY_ENV_VAR: LazyLock<EnvVar> = env_var!(API_KEY_ENV_VAR_NAME);
 const OPENCODE_SESSION_HEADER_NAME: &str = "x-opencode-session";
 const RICH_MODEL_CATALOG_URL: &str = "https://models.opencode.ai/api.json";
+/// Live Go model inventory (OpenAI-compatible `/v1/models`, public, no key
+/// needed). The rich catalog above is the primary metadata source, but it is a
+/// snapshot; this endpoint is authoritative for which Go model ids exist right
+/// now (e.g. `step-5-preview-free` appears here before its catalog metadata
+/// lands). See OPENCODE.md.
+const GO_MODELS_INVENTORY_SUFFIX: &str = "/v1/models";
+/// Fallback context window for inventory-only models (ids present in the live
+/// inventory but missing from the rich catalog, so no real limits are known).
+/// Conservative mid-range; the rich catalog's real limits win whenever present.
+const GO_INVENTORY_DEFAULT_CONTEXT: u64 = 200_000;
 const MODEL_CATALOG_RESPONSE_LIMIT_BYTES: u64 = 8 * 1024 * 1024;
 const MODEL_CATALOG_FETCH_TIMEOUT: Duration = Duration::from_secs(15);
 const MODEL_CATALOG_DISK_FRESHNESS: Duration = Duration::from_secs(5 * 60);
@@ -117,12 +127,7 @@ fn is_builtin_public_free_model(model: &opencode::Model) -> bool {
     OpenCodeTier::iter()
         .filter(|tier| !matches!(tier, OpenCodeTier::Custom { .. }))
         .find(|tier| tier.id() == model.id())
-        .is_some_and(|tier| {
-            matches!(
-                tier.available_subscriptions(),
-                [OpenCodeSubscription::Free]
-            )
-        })
+        .is_some_and(|tier| matches!(tier.available_subscriptions(), [OpenCodeSubscription::Free]))
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -226,12 +231,11 @@ impl State {
     fn restart_fetch_models_task(&mut self, cx: &mut Context<Self>) {
         self.fetch_models_task = None;
         self.refresh_models_task = None;
-        let api_url = OpenCodeLanguageModelProvider::api_url(cx);
-        if self.api_key_state.key(&api_url).is_none() {
-            self.fetch_models_task = None;
-            cx.notify();
-            return;
-        }
+        // Both model sources are public endpoints (no auth headers are sent by
+        // either fetch helper), so inventory refreshes run regardless of key
+        // state. Whether anything displays is decided separately by
+        // `subscription_available` in `provided_models`; fetching is cheap,
+        // hourly, and keeps the on-disk cache warm for the moment a key lands.
         let http_client = self.http_client.clone();
         let fs = self.fs.clone();
         let cache_path = self.cache_path.clone();
@@ -262,7 +266,7 @@ impl State {
                 return;
             }
 
-            let catalog = fetch_model_catalog(http_client, executor).await;
+            let catalog = fetch_model_catalog(http_client.clone(), executor.clone()).await;
             let results = catalog_results(catalog.as_ref().map(String::as_str));
             if results.iter().all(|(_, result)| result.is_ok())
                 && let Ok(catalog) = catalog
@@ -270,12 +274,34 @@ impl State {
             {
                 log::warn!("Failed to cache OpenCode model catalog: {error:#}");
             }
+            // Live Go inventory, merged into the Go discovered set: the rich
+            // catalog is a snapshot, this endpoint is authoritative for current
+            // ids. Failures only log; the catalog results above still apply.
+            let inventory = fetch_go_inventory(http_client, executor).await;
             this.update(cx, |this, cx| {
                 apply_discovery_results(
                     &mut this.discovered_models,
                     &mut this.fetch_models_errors,
                     results,
                 );
+                match inventory {
+                    Ok(models) => {
+                        this.discovered_models
+                            .entry(OpenCodeSubscription::Go)
+                            .or_default()
+                            .extend(models);
+                        // Dedupe by id, keeping rich-catalog metadata where it
+                        // exists (real limits beat inventory defaults).
+                        let mut seen = std::collections::HashSet::new();
+                        this.discovered_models
+                            .get_mut(&OpenCodeSubscription::Go)
+                            .expect("just inserted")
+                            .retain(|model| seen.insert(model.model.id().to_string()));
+                    }
+                    Err(error) => {
+                        log::warn!("Failed to fetch OpenCode Go model inventory: {error:#}");
+                    }
+                }
                 this.fetch_models_task = None;
                 cx.notify();
             })
@@ -298,6 +324,7 @@ impl State {
                 {
                     log::warn!("Failed to cache OpenCode model catalog: {error:#}");
                 }
+                let inventory = fetch_go_inventory(http_client.clone(), executor.clone()).await;
                 if this
                     .update(cx, |this, cx| {
                         apply_discovery_results(
@@ -305,6 +332,24 @@ impl State {
                             &mut this.fetch_models_errors,
                             results,
                         );
+                        match inventory {
+                            Ok(models) => {
+                                this.discovered_models
+                                    .entry(OpenCodeSubscription::Go)
+                                    .or_default()
+                                    .extend(models);
+                                let mut seen = std::collections::HashSet::new();
+                                this.discovered_models
+                                    .get_mut(&OpenCodeSubscription::Go)
+                                    .expect("just inserted")
+                                    .retain(|model| seen.insert(model.model.id().to_string()));
+                            }
+                            Err(error) => {
+                                log::warn!(
+                                    "Failed to fetch OpenCode Go model inventory: {error:#}"
+                                );
+                            }
+                        }
                         cx.notify();
                     })
                     .is_err()
@@ -726,7 +771,6 @@ impl OpenCodeLanguageModelProvider {
         async move { Ok(future.await?.boxed()) }.boxed()
     }
 
-
     /// Ours' static [`OpenCodeTier`] materialised onto upstream's data path.
     ///
     /// This is the bridge that lets ours' Free-tier preference chain
@@ -889,20 +933,11 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
                 .map(|v| !v.trim().is_empty())
                 .unwrap_or(false);
 
-        // -- upstream's discovered-model path (live /models + the SSE event stream) --
-        let discovered_models = &self.state.read(cx).discovered_models;
-        for subscription in [OpenCodeSubscription::Zen, OpenCodeSubscription::Go] {
-            if Self::subscription_available(subscription, has_real_key, cx) {
-                if let Some(discovered) = discovered_models.get(&subscription) {
-                    for model in discovered {
-                        let key = model_id(&model.model, subscription);
-                        models.insert(key, (model.clone(), subscription));
-                    }
-                }
-            }
-        }
-
         // -- ours' static tier catalog, materialised onto upstream's `Model` --
+        // Inserted FIRST so live discovery below overwrites it on key collision.
+        // The static list is offline fallback only; the picker must reflect the
+        // fetched inventory, not a hardcoded enum that goes stale (e.g. models
+        // like step-5 that postdate the enum).
         for tier in OpenCodeTier::iter() {
             if matches!(tier, OpenCodeTier::Custom { .. }) {
                 continue;
@@ -922,6 +957,21 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
                             subscription,
                         ),
                     );
+                }
+            }
+        }
+
+        // -- upstream's discovered-model path (live /models + the SSE event stream) --
+        // Inserted SECOND so fetched inventory overwrites the static fallback
+        // above wherever both know a model id.
+        let discovered_models = &self.state.read(cx).discovered_models;
+        for subscription in [OpenCodeSubscription::Zen, OpenCodeSubscription::Go] {
+            if Self::subscription_available(subscription, has_real_key, cx) {
+                if let Some(discovered) = discovered_models.get(&subscription) {
+                    for model in discovered {
+                        let key = model_id(&model.model, subscription);
+                        models.insert(key, (model.clone(), subscription));
+                    }
                 }
             }
         }
@@ -1480,6 +1530,74 @@ async fn fetch_model_catalog(
     }
 }
 
+/// Live Go model inventory from the Zen Go endpoint (OPENCODE.md). Unlike the
+/// rich catalog snapshot, this is authoritative for current Go ids. Public
+/// endpoint: no auth headers, same timeout/limit discipline as the catalog.
+async fn fetch_go_inventory(
+    client: Arc<dyn HttpClient>,
+    executor: BackgroundExecutor,
+) -> Result<Vec<DiscoveredModel>> {
+    let url = format!("{OPENCODE_API_URL}/go{GO_MODELS_INVENTORY_SUFFIX}");
+    let fetch = fetch_catalog_resource(client.as_ref(), &url).fuse();
+    let timeout = executor.timer(MODEL_CATALOG_FETCH_TIMEOUT).fuse();
+    futures::pin_mut!(fetch, timeout);
+    let body = futures::select_biased! {
+        result = fetch => result,
+        _ = timeout => bail!("OpenCode Go model inventory request timed out"),
+    }?;
+    parse_go_inventory(&body)
+}
+
+/// Minimal OpenAI `/v1/models` list shape (`{id, object, created, owned_by}`).
+/// Entries carry no capabilities metadata, so models get the Go endpoint's
+/// protocol (OpenAI-compatible per OPENCODE.md), a fallback display name
+/// derived from the id, and conservative default limits. Rich-catalog entries
+/// for the same id keep their real metadata (see the dedupe in the fetch task).
+fn parse_go_inventory(body: &str) -> Result<Vec<DiscoveredModel>> {
+    #[derive(serde::Deserialize)]
+    struct InventoryEntry {
+        id: String,
+    }
+    #[derive(serde::Deserialize)]
+    struct Inventory {
+        data: Vec<InventoryEntry>,
+    }
+    let inventory: Inventory = serde_json::from_str(body)?;
+    Ok(inventory
+        .data
+        .into_iter()
+        .filter(|entry| !entry.id.trim().is_empty())
+        .map(|entry| {
+            let display = entry
+                .id
+                .split(['-', '_'])
+                .map(|word| {
+                    let mut chars = word.chars();
+                    match chars.next() {
+                        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+                        None => String::new(),
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            DiscoveredModel {
+                model: opencode::Model::new(
+                    entry.id,
+                    Some(display),
+                    GO_INVENTORY_DEFAULT_CONTEXT,
+                    None,
+                    ApiProtocol::OpenAiChat,
+                    None,
+                    None,
+                    false,
+                ),
+                supports_images: false,
+                supports_thinking: false,
+            }
+        })
+        .collect())
+}
+
 async fn fetch_catalog_resource(client: &dyn HttpClient, url: &str) -> Result<String> {
     // Catalogs are public; completion credentials and custom headers must not be sent here.
     let request = Request::builder().method(Method::GET).uri(url);
@@ -1590,9 +1708,7 @@ impl ConfigurationView {
             match subscription {
                 OpenCodeSubscription::Zen => opencode_settings.show_zen_models = Some(is_enabled),
                 OpenCodeSubscription::Go => opencode_settings.show_go_models = Some(is_enabled),
-                OpenCodeSubscription::Free => {
-                    opencode_settings.show_free_models = Some(is_enabled)
-                }
+                OpenCodeSubscription::Free => opencode_settings.show_free_models = Some(is_enabled),
             }
         });
     }
@@ -1779,9 +1895,9 @@ mod tests {
     async fn test_disk_cache_and_hourly_refresh(cx: &mut gpui::TestAppContext) {
         for (cached, stale, fail, initial_requests) in [
             (Some(test_catalog()), false, false, 0),
-            (Some("not json"), false, false, 1),
-            (Some(test_catalog()), true, true, 1),
-            (None, false, false, 1),
+            (Some("not json"), false, false, 2),
+            (Some(test_catalog()), true, true, 2),
+            (None, false, false, 2),
         ] {
             let fs = FakeFs::new(cx.background_executor.clone());
             let cache_path = PathBuf::from("/cache/opencode/models.json");
@@ -1801,13 +1917,22 @@ mod tests {
             let client = FakeHttpClient::create({
                 let requests = requests.clone();
                 let fail_request = fail_request.clone();
-                move |_| {
+                // The fetch task hits two endpoints: the rich catalog and the
+                // live Go inventory. Route by URL so the inventory gets a
+                // minimal list shape instead of catalog JSON it cannot parse.
+                move |request: http::Request<AsyncBody>| {
                     *requests.lock() += 1;
                     let status = if *fail_request.lock() { 503 } else { 200 };
+                    let uri = request.uri().to_string();
+                    let body = if uri.contains("/go/v1/models") {
+                        r#"{"object":"list","data":[{"id":"go-inventory-model","object":"model","created":0,"owned_by":"opencode"}]}"#.to_string()
+                    } else {
+                        test_catalog().replace("zen-model", "updated-model")
+                    };
                     async move {
-                        Ok(Response::builder().status(status).body(AsyncBody::from(
-                            test_catalog().replace("zen-model", "updated-model"),
-                        ))?)
+                        Ok(Response::builder()
+                            .status(status)
+                            .body(AsyncBody::from(body))?)
                     }
                 }
             });
@@ -1852,7 +1977,7 @@ mod tests {
             cx.background_executor
                 .advance_clock(MODEL_CATALOG_REFRESH_INTERVAL);
             cx.run_until_parked();
-            assert_eq!(*requests.lock(), initial_requests + 1);
+            assert_eq!(*requests.lock(), initial_requests + 2);
             provider.state.read_with(cx, |state, _cx| {
                 assert_eq!(
                     state.discovered_models[&OpenCodeSubscription::Zen][0]
