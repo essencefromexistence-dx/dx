@@ -528,6 +528,14 @@ impl Component for IconButton {
                                 .layer(ElevationIndex::Background)
                                 .into_any_element(),
                         ),
+                        single_example(
+                            "With Hover Color",
+                            IconButton::new("hover_color", IconName::Check)
+                                .icon_color(Color::Muted)
+                                .hover_color(Color::Default)
+                                .layer(ElevationIndex::Background)
+                                .into_any_element(),
+                        ),
                     ],
                 ),
             ])
