@@ -207,7 +207,6 @@ impl GoogleLanguageModelProvider {
         for model in &self.state.read(cx).fetched_models {
             models.insert(model.id.clone(), model.clone());
         }
-        }
 
         for available in &GoogleLanguageModelProvider::settings(cx).available_models {
             let model = available_model_to_google_model(available);
@@ -246,7 +245,6 @@ impl GoogleLanguageModelProvider {
         let preferred = pick_preferred_model(&gemini, &["pro"])
             .or_else(|| pick_preferred_model(&gemini, &["gemini-"]))?;
         self.offered_model(&preferred.id, cx)
-    }
     }
 
     /// The current configuration of `model`, if this provider still offers it.

@@ -5948,8 +5948,7 @@ impl ThreadView {
         };
         // Upstream's read-only composer affordance, preserved here because the
         // fork's own control row below does not include it. debug_selector
-        // "discard-protected-draft" is the only surface for this.
-=======
+            // "discard-protected-draft" is the only surface for this.
             // Upstream's `has_visible_conversation` predicate is applied at the
             // other three call sites upstream changed (`set_editor_is_expanded`,
             // `sync_editor_mode`, and the empty-state branch of `sync_editor_mode`),
