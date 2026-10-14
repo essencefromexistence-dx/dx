@@ -498,6 +498,50 @@ impl Model {
     }
 }
 
+#[derive(Deserialize)]
+struct ListModelsResponse {
+    data: Vec<ListModelEntry>,
+}
+
+#[derive(Deserialize)]
+struct ListModelEntry {
+    id: String,
+}
+
+/// Fetch the ids of the models available to the current API key via
+/// `GET {api_url}/models` (OpenAI List Models API).
+///
+/// See <https://platform.openai.com/docs/api-reference/models/list>.
+pub async fn list_models(
+    client: &dyn HttpClient,
+    api_url: &str,
+    api_key: &str,
+) -> Result<Vec<String>> {
+    let uri = format!("{api_url}/models");
+    let request = HttpRequest::builder()
+        .method(Method::GET)
+        .uri(uri)
+        .header("Authorization", format!("Bearer {}", api_key.trim()))
+        .header("Accept", "application/json")
+        .body(AsyncBody::default())
+        .context("failed to build OpenAI list models request")?;
+    let mut response = client.send(request).await?;
+    anyhow::ensure!(
+        response.status().is_success(),
+        "error listing OpenAI models, status: {:?}",
+        response.status(),
+    );
+    let mut body = String::new();
+    response
+        .body_mut()
+        .read_to_string(&mut body)
+        .await
+        .context("failed to read OpenAI list models response")?;
+    let parsed: ListModelsResponse =
+        serde_json::from_str(&body).context("failed to parse OpenAI list models response")?;
+    Ok(parsed.data.into_iter().map(|entry| entry.id).collect())
+}
+
 #[cfg(test)]
 mod tests {
     use language_model_core::{

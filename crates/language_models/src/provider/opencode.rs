@@ -363,19 +363,21 @@ impl State {
 
 fn catalog_results(
     catalog: Result<&str, &anyhow::Error>,
-) -> [(OpenCodeSubscription, Result<Vec<DiscoveredModel>>); 2] {
-    [OpenCodeSubscription::Zen, OpenCodeSubscription::Go].map(|subscription| {
-        let result = catalog
-            .map_err(|error| anyhow!("{error:#}"))
-            .and_then(|catalog| parse_discovered_models(catalog, subscription));
-        if let Err(error) = &result {
-            log::warn!(
-                "Failed to fetch OpenCode {} models: {error:#}",
-                subscription.display_name()
-            );
-        }
-        (subscription, result)
-    })
+) -> [(OpenCodeSubscription, Result<Vec<DiscoveredModel>>); 3] {
+    [OpenCodeSubscription::Zen, OpenCodeSubscription::Go, OpenCodeSubscription::Free].map(
+        |subscription| {
+            let result = catalog
+                .map_err(|error| anyhow!("{error:#}"))
+                .and_then(|catalog| parse_discovered_models(catalog, subscription));
+            if let Err(error) = &result {
+                log::warn!(
+                    "Failed to fetch OpenCode {} models: {error:#}",
+                    subscription.display_name()
+                );
+            }
+            (subscription, result)
+        },
+    )
 }
 
 async fn load_cached_catalog(fs: &dyn Fs, path: &Path) -> Result<Option<(String, bool)>> {
@@ -383,7 +385,9 @@ async fn load_cached_catalog(fs: &dyn Fs, path: &Path) -> Result<Option<(String,
         return Ok(None);
     };
     let catalog = fs.load(path).await?;
-    for subscription in [OpenCodeSubscription::Zen, OpenCodeSubscription::Go] {
+    for subscription in
+        [OpenCodeSubscription::Zen, OpenCodeSubscription::Go, OpenCodeSubscription::Free]
+    {
         parse_discovered_models(&catalog, subscription)?;
     }
     let is_fresh = SystemTime::now()
@@ -405,7 +409,7 @@ async fn store_cached_catalog(fs: &dyn Fs, path: PathBuf, catalog: String) -> Re
 fn apply_discovery_results(
     discovered_models: &mut HashMap<OpenCodeSubscription, Vec<DiscoveredModel>>,
     fetch_models_errors: &mut HashMap<OpenCodeSubscription, SharedString>,
-    results: [(OpenCodeSubscription, Result<Vec<DiscoveredModel>>); 2],
+    results: [(OpenCodeSubscription, Result<Vec<DiscoveredModel>>); 3],
 ) {
     for (subscription, result) in results {
         match result {
@@ -490,7 +494,9 @@ impl OpenCodeLanguageModelProvider {
         let settings = Self::settings(cx);
 
         let discovered_models = &self.state.read(cx).discovered_models;
-        for subscription in [OpenCodeSubscription::Zen, OpenCodeSubscription::Go] {
+        for subscription in
+            [OpenCodeSubscription::Zen, OpenCodeSubscription::Go, OpenCodeSubscription::Free]
+        {
             if Self::subscription_enabled(subscription, cx) {
                 if let Some(discovered) = discovered_models.get(&subscription) {
                     for model in discovered {
@@ -795,6 +801,33 @@ impl OpenCodeLanguageModelProvider {
         )
     }
 
+    /// Live-first default for the model picker header in the AI screen/panel.
+    ///
+    /// The picker list (`provided_models`) is already live-first; the default
+    /// selection must match it instead of a hardcoded [`OpenCodeTier`] that
+    /// goes stale. Prefers the live entry for the preferred tier id when the
+    /// fetched inventory contains it, else the first live model, else `None`
+    /// so callers fall back to the static tier (offline).
+    fn live_default_model(
+        &self,
+        tier: OpenCodeTier,
+        subscription: OpenCodeSubscription,
+        cx: &App,
+    ) -> Option<LanguageModel> {
+        let state = self.state.read(cx);
+        let discovered = state.discovered_models.get(&subscription)?;
+        let preferred_id = tier.to_model(subscription).id().to_string();
+        if let Some(live) = discovered
+            .iter()
+            .find(|d| d.model.id() == preferred_id)
+        {
+            return Some(language_model(live, subscription));
+        }
+        discovered
+            .first()
+            .map(|live| language_model(live, subscription))
+    }
+
     pub fn settings(cx: &App) -> &OpenCodeSettings {
         &crate::AllLanguageModelSettings::get_global(cx).opencode
     }
@@ -893,11 +926,32 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
                 .map(|v| !v.trim().is_empty())
                 .unwrap_or(false);
         if Self::subscription_available(OpenCodeSubscription::Go, has_real_key, cx) {
-            // If both Go and Zen are enabled, prefer Go since it's not pay-as-you-go
+            // If both Go and Zen are enabled, prefer Go since it's not pay-as-you-go.
+            // Live inventory first so the AI screen/panel header reflects fetched
+            // models; hardcoded tier is offline fallback only.
+            if let Some(live) = self.live_default_model(
+                OpenCodeTier::default_go(),
+                OpenCodeSubscription::Go,
+                cx,
+            ) {
+                return Some(live);
+            }
             Some(self.create_tier_model(OpenCodeTier::default_go(), OpenCodeSubscription::Go))
         } else if Self::subscription_available(OpenCodeSubscription::Zen, has_real_key, cx) {
+            if let Some(live) =
+                self.live_default_model(OpenCodeTier::default(), OpenCodeSubscription::Zen, cx)
+            {
+                return Some(live);
+            }
             Some(self.create_tier_model(OpenCodeTier::default(), OpenCodeSubscription::Zen))
         } else if Self::subscription_available(OpenCodeSubscription::Free, has_real_key, cx) {
+            if let Some(live) = self.live_default_model(
+                OpenCodeTier::default_free(),
+                OpenCodeSubscription::Free,
+                cx,
+            ) {
+                return Some(live);
+            }
             Some(self.create_tier_model(OpenCodeTier::default_free(), OpenCodeSubscription::Free))
         } else {
             None
@@ -910,11 +964,33 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
                 .map(|v| !v.trim().is_empty())
                 .unwrap_or(false);
         if Self::subscription_available(OpenCodeSubscription::Go, has_real_key, cx) {
-            // If both Go and Zen are enabled, prefer Go since it's not pay-as-you-go
+            // If both Go and Zen are enabled, prefer Go since it's not pay-as-you-go.
+            // Live inventory first; hardcoded tier is offline fallback only.
+            if let Some(live) = self.live_default_model(
+                OpenCodeTier::default_go_fast(),
+                OpenCodeSubscription::Go,
+                cx,
+            ) {
+                return Some(live);
+            }
             Some(self.create_tier_model(OpenCodeTier::default_go_fast(), OpenCodeSubscription::Go))
         } else if Self::subscription_available(OpenCodeSubscription::Zen, has_real_key, cx) {
+            if let Some(live) = self.live_default_model(
+                OpenCodeTier::default_fast(),
+                OpenCodeSubscription::Zen,
+                cx,
+            ) {
+                return Some(live);
+            }
             Some(self.create_tier_model(OpenCodeTier::default_fast(), OpenCodeSubscription::Zen))
         } else if Self::subscription_available(OpenCodeSubscription::Free, has_real_key, cx) {
+            if let Some(live) = self.live_default_model(
+                OpenCodeTier::default_free_fast(),
+                OpenCodeSubscription::Free,
+                cx,
+            ) {
+                return Some(live);
+            }
             Some(self.create_tier_model(
                 OpenCodeTier::default_free_fast(),
                 OpenCodeSubscription::Free,
@@ -965,7 +1041,9 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
         // Inserted SECOND so fetched inventory overwrites the static fallback
         // above wherever both know a model id.
         let discovered_models = &self.state.read(cx).discovered_models;
-        for subscription in [OpenCodeSubscription::Zen, OpenCodeSubscription::Go] {
+        for subscription in
+            [OpenCodeSubscription::Zen, OpenCodeSubscription::Go, OpenCodeSubscription::Free]
+        {
             if Self::subscription_available(subscription, has_real_key, cx) {
                 if let Some(discovered) = discovered_models.get(&subscription) {
                     for model in discovered {
@@ -1419,13 +1497,15 @@ fn parse_discovered_models(
     rich_catalog: &str,
     subscription: OpenCodeSubscription,
 ) -> Result<Vec<DiscoveredModel>> {
+    // Free has no dedicated catalog key (verified live: the catalog carries
+    // `opencode` and `opencode-go` only). Free models are the zero-cost
+    // (`cost.input == 0 && cost.output == 0`) entries of the `opencode` key —
+    // the same "free tag" the Zen path excludes. This keeps the picker on
+    // fetched free models instead of the stale hardcoded tier enum.
     let provider_key = match subscription {
         OpenCodeSubscription::Zen => "opencode",
         OpenCodeSubscription::Go => "opencode-go",
-        // Free models currently come from the static tier catalog, not the
-        // fetched rich catalog, so this arm is unreachable in practice; the
-        // key follows the catalog's naming convention in case that changes.
-        OpenCodeSubscription::Free => "opencode-free",
+        OpenCodeSubscription::Free => "opencode",
     };
     let rich_catalog = serde_json::from_str::<serde_json::Value>(rich_catalog)?;
     let provider = rich_catalog
@@ -1438,12 +1518,12 @@ fn parse_discovered_models(
         .models
         .into_iter()
         .filter_map(|(catalog_id, metadata)| {
+            let is_zero_cost = metadata.cost.as_ref().is_some_and(|cost| {
+                cost.input == Some(0.0) && cost.output == Some(0.0)
+            });
             if metadata.status.as_deref() == Some("deprecated")
-                || (subscription == OpenCodeSubscription::Zen
-                    && metadata
-                        .cost
-                        .as_ref()
-                        .is_some_and(|cost| cost.input == Some(0.0) && cost.output == Some(0.0)))
+                || (subscription == OpenCodeSubscription::Zen && is_zero_cost)
+                || (subscription == OpenCodeSubscription::Free && !is_zero_cost)
             {
                 compatible_candidate_count -= 1;
                 return None;
@@ -2105,6 +2185,7 @@ mod tests {
             [
                 (OpenCodeSubscription::Zen, Err(anyhow!("refresh failed"))),
                 (OpenCodeSubscription::Go, Ok(vec![new_go_model])),
+                (OpenCodeSubscription::Free, Err(anyhow!("refresh failed"))),
             ],
         );
 
@@ -2118,6 +2199,7 @@ mod tests {
         );
         assert!(errors.contains_key(&OpenCodeSubscription::Zen));
         assert!(!errors.contains_key(&OpenCodeSubscription::Go));
+        assert!(errors.contains_key(&OpenCodeSubscription::Free));
     }
 
     #[test]
@@ -2181,15 +2263,15 @@ mod tests {
 
     #[test]
     fn test_discovery_excludes_only_explicitly_free_zen_models() -> Result<()> {
-        for (cost, zen_model_count) in [
-            (serde_json::json!({"input": 0, "output": 0}), 0),
-            (serde_json::json!({"input": 0, "output": 1}), 1),
-            (serde_json::json!({"input": 1, "output": 0}), 1),
-            (serde_json::json!({"input": 1, "output": 1}), 1),
-            (serde_json::json!({"input": 0}), 1),
-            (serde_json::json!({"output": 0}), 1),
-            (serde_json::json!({}), 1),
-            (serde_json::Value::Null, 1),
+        for (cost, zen_model_count, free_model_count) in [
+            (serde_json::json!({"input": 0, "output": 0}), 0, 1),
+            (serde_json::json!({"input": 0, "output": 1}), 1, 0),
+            (serde_json::json!({"input": 1, "output": 0}), 1, 0),
+            (serde_json::json!({"input": 1, "output": 1}), 1, 0),
+            (serde_json::json!({"input": 0}), 1, 0),
+            (serde_json::json!({"output": 0}), 1, 0),
+            (serde_json::json!({}), 1, 0),
+            (serde_json::Value::Null, 1, 0),
         ] {
             let provider = serde_json::json!({
                 "npm": "@ai-sdk/openai-compatible",
@@ -2212,6 +2294,11 @@ mod tests {
             for (subscription, expected_count) in [
                 (OpenCodeSubscription::Zen, zen_model_count),
                 (OpenCodeSubscription::Go, 1),
+                // Free is the complement of Zen: only explicitly zero-cost
+                // models are kept (verified live: the catalog has no
+                // `opencode-free` key; free models are the zero-cost entries
+                // of the `opencode` key).
+                (OpenCodeSubscription::Free, free_model_count),
             ] {
                 let models = parse_discovered_models(&catalog, subscription)?;
                 assert_eq!(models.len(), expected_count, "{subscription:?}: {cost}");
@@ -2221,12 +2308,59 @@ mod tests {
     }
 
     #[test]
-    fn test_discovery_filters_deprecated_status_per_subscription() -> Result<()> {
-        for (zen_status, go_status, zen_count, go_count) in [
-            (Some("deprecated"), None, 0, 1),
-            (None, Some("deprecated"), 1, 0),
-            (Some("active"), Some("preview"), 1, 1),
-            (Some("deprecated"), Some("deprecated"), 0, 0),
+    fn test_discovery_collects_live_free_models() -> Result<()> {
+        // Live-shaped fixture: zero-cost entries are free, paid and
+        // deprecated entries are not — verified against the live catalog
+        // (`opencode` key, no `opencode-free` key exists).
+        let catalog = serde_json::json!({
+            "opencode": {
+                "npm": "@ai-sdk/openai-compatible",
+                "models": {
+                    "step-5-preview-free": {
+                        "id": "step-5-preview-free",
+                        "name": "Step 5 Preview Free",
+                        "tool_call": true,
+                        "modalities": {"output": ["text"]},
+                        "limit": {"context": 200000},
+                        "cost": {"input": 0, "output": 0},
+                    },
+                    "paid-model": {
+                        "id": "paid-model",
+                        "name": "Paid Model",
+                        "tool_call": true,
+                        "modalities": {"output": ["text"]},
+                        "limit": {"context": 200000},
+                        "cost": {"input": 2.5, "output": 15},
+                    },
+                    "legacy-free": {
+                        "id": "legacy-free",
+                        "name": "Legacy Free",
+                        "tool_call": true,
+                        "modalities": {"output": ["text"]},
+                        "limit": {"context": 200000},
+                        "cost": {"input": 0, "output": 0},
+                        "status": "deprecated",
+                    },
+                },
+            },
+            "opencode-go": {"npm": "@ai-sdk/openai-compatible", "models": {}},
+        })
+        .to_string();
+        let models = parse_discovered_models(&catalog, OpenCodeSubscription::Free)?;
+        let ids = models
+            .iter()
+            .map(|model| model.model.id().to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(ids, vec!["step-5-preview-free".to_string()]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_discovery_filters_deprecated_status_per_subscription() -> Result<()> {        for (zen_status, go_status, zen_count, go_count, free_count) in [
+            (Some("deprecated"), None, 0, 1, 0),
+            (None, Some("deprecated"), 1, 0, 0),
+            (Some("active"), Some("preview"), 1, 1, 0),
+            (Some("deprecated"), Some("deprecated"), 0, 0, 0),
         ] {
             let mut catalog = serde_json::json!({});
             for (provider_key, status) in [("opencode", zen_status), ("opencode-go", go_status)] {
@@ -2248,6 +2382,8 @@ mod tests {
             for (subscription, expected_count) in [
                 (OpenCodeSubscription::Zen, zen_count),
                 (OpenCodeSubscription::Go, go_count),
+                // Fixture models carry no `cost`, so none qualify as free.
+                (OpenCodeSubscription::Free, free_count),
             ] {
                 let models = parse_discovered_models(&catalog.to_string(), subscription)?;
                 assert_eq!(models.len(), expected_count, "{subscription:?}: {catalog}",);

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use collections::BTreeMap;
 use credentials_provider::CredentialsProvider;
 use futures::{FutureExt, StreamExt, future::BoxFuture};
 use gpui::{App, AppContext, AsyncApp, Entity, Task};
@@ -23,7 +24,7 @@ use ui::IconName;
 
 use crate::provider::api_compatible::{
     ApiCompatibleProviderConfigurationView, ApiCompatibleProviderSettings,
-    ApiCompatibleProviderState,
+    ApiCompatibleProviderState, CompatibleModelsFetch, CompatibleModelsFetchAuth,
 };
 use crate::provider::open_ai::{OpenAiResponseEventMapper, into_open_ai, into_open_ai_response};
 pub use settings::OpenAiCompatibleAvailableModel as AvailableModel;
@@ -69,6 +70,14 @@ impl OpenAiCompatibleLanguageModelProvider {
                     .openai_compatible
                     .get(id)
             },
+            http_client.clone(),
+            // Live `/models` (OpenAI-compatible standard, verified live):
+            // the picker reflects fetched ids; settings stay as fallback
+            // and per-model override.
+            Some(CompatibleModelsFetch {
+                list_suffix: "/models",
+                auth: CompatibleModelsFetchAuth::Bearer,
+            }),
             cx,
         );
 
@@ -84,6 +93,39 @@ impl OpenAiCompatibleLanguageModelProvider {
     /// Every model this provider offers, in settings order.
     fn available_models<'a>(&self, cx: &'a App) -> &'a [AvailableModel] {
         &self.state.read(cx).settings.available_models
+    }
+
+    /// Live `/models` ids as settings-shaped entries (conservative defaults:
+    /// same capabilities as a manually added model).
+    fn fetched_models(&self, cx: &App) -> Vec<AvailableModel> {
+        let mut ids = self.state.read(cx).fetched_models.clone();
+        ids.sort();
+        ids.dedup();
+        ids.into_iter()
+            .map(|name| AvailableModel {
+                name,
+                display_name: None,
+                max_tokens: 128_000,
+                max_output_tokens: None,
+                max_completion_tokens: None,
+                reasoning_effort: None,
+                capabilities: ModelCapabilities::default(),
+            })
+            .collect()
+    }
+
+    /// Fetched models first, settings entries overriding/extending by name.
+    /// The picker therefore reflects the live gateway inventory; the
+    /// hardcoded settings list is fallback and per-model override only.
+    fn combined_models(&self, cx: &App) -> BTreeMap<String, AvailableModel> {
+        let mut models = BTreeMap::default();
+        for model in self.fetched_models(cx) {
+            models.insert(model.name.clone(), model);
+        }
+        for model in self.available_models(cx) {
+            models.insert(model.name.clone(), model.clone());
+        }
+        models
     }
 
     fn language_model(&self, model: &AvailableModel) -> LanguageModel {
@@ -122,10 +164,8 @@ impl OpenAiCompatibleLanguageModelProvider {
         model: &LanguageModel,
         cx: &App,
     ) -> Result<AvailableModel, LanguageModelCompletionError> {
-        self.available_models(cx)
-            .iter()
-            .find(|available| available.name == model.id.0.as_ref())
-            .cloned()
+        self.combined_models(cx)
+            .remove(model.id.0.as_ref())
             .ok_or_else(|| unavailable_error(model))
     }
 
@@ -233,8 +273,22 @@ impl LanguageModelProvider for OpenAiCompatibleLanguageModelProvider {
     }
 
     fn default_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.available_models(cx)
+        // Live-first: the first fetched gateway model, else the first
+        // settings entry (offline fallback).
+        let combined = self.combined_models(cx);
+        let mut fetched: Vec<&String> = self
+            .state
+            .read(cx)
+            .fetched_models
+            .iter()
+            .filter(|name| combined.contains_key(*name))
+            .collect();
+        fetched.sort();
+        fetched
             .first()
+            .map(|name| name.as_str())
+            .or_else(|| combined.keys().next().map(String::as_str))
+            .and_then(|name| combined.get(name))
             .map(|model| self.language_model(model))
     }
 
@@ -243,8 +297,8 @@ impl LanguageModelProvider for OpenAiCompatibleLanguageModelProvider {
     }
 
     fn provided_models(&self, cx: &App) -> Vec<LanguageModel> {
-        self.available_models(cx)
-            .iter()
+        self.combined_models(cx)
+            .values()
             .map(|model| self.language_model(model))
             .collect()
     }
@@ -687,5 +741,181 @@ mod tests {
         disable_response_thinking_for_none_effort(&mut request, &model);
         assert!(!request.thinking_allowed);
         assert_eq!(request.thinking_effort, None);
+    }
+
+    static TEST_SETTINGS: std::sync::LazyLock<OpenAiCompatibleSettings> =
+        std::sync::LazyLock::new(|| OpenAiCompatibleSettings {
+            api_url: "https://gateway.example/v1".to_string(),
+            available_models: vec![
+                AvailableModel {
+                    name: "settings-only".to_string(),
+                    display_name: Some("Settings Only".to_string()),
+                    max_tokens: 64_000,
+                    max_output_tokens: None,
+                    max_completion_tokens: None,
+                    reasoning_effort: None,
+                    capabilities: ModelCapabilities::default(),
+                },
+                AvailableModel {
+                    name: "overlap".to_string(),
+                    display_name: Some("From Settings".to_string()),
+                    max_tokens: 32_000,
+                    max_output_tokens: None,
+                    max_completion_tokens: None,
+                    reasoning_effort: None,
+                    capabilities: ModelCapabilities::default(),
+                },
+            ],
+            custom_headers: CustomHeaders::default(),
+        });
+
+    fn resolve_test_settings<'a>(
+        _: &'a str,
+        _: &'a App,
+    ) -> Option<&'a OpenAiCompatibleSettings> {
+        Some(&TEST_SETTINGS)
+    }
+
+    struct FakeCredentialsProvider;
+
+    impl CredentialsProvider for FakeCredentialsProvider {
+        fn read_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _cx: &'a gpui::AsyncApp,
+        ) -> std::pin::Pin<
+            Box<dyn std::future::Future<Output = Result<Option<(String, Vec<u8>)>>> + 'a>,
+        > {
+            Box::pin(async { Ok(None) })
+        }
+
+        fn write_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _username: &'a str,
+            _password: &'a [u8],
+            _cx: &'a gpui::AsyncApp,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<()>> + 'a>> {
+            Box::pin(async { Ok(()) })
+        }
+
+        fn delete_credentials<'a>(
+            &'a self,
+            _url: &'a str,
+            _cx: &'a gpui::AsyncApp,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<()>> + 'a>> {
+            Box::pin(async { Ok(()) })
+        }
+    }
+
+    #[gpui::test]
+    async fn compatible_models_fetch_parses_openai_list_shape(
+        _cx: &mut gpui::TestAppContext,
+    ) {
+        use http_client::{FakeHttpClient, Response};
+
+        let client = FakeHttpClient::create(|request| async move {
+            assert_eq!(
+                request
+                    .headers()
+                    .get("authorization")
+                    .and_then(|value| value.to_str().ok()),
+                Some("Bearer test-key")
+            );
+            Ok(Response::builder()
+                .status(200)
+                .body(r#"{"data": [{"id": "b-live"}, {"id": "a-live"}]}"#.into())
+                .expect("failed to build fake list models response"))
+        });
+        let ids = crate::provider::api_compatible::fetch_compatible_models(
+            client.as_ref(),
+            "https://gateway.example/v1",
+            "test-key",
+            crate::provider::api_compatible::CompatibleModelsFetch {
+                list_suffix: "/models",
+                auth: crate::provider::api_compatible::CompatibleModelsFetchAuth::Bearer,
+            },
+        )
+        .await
+        .expect("fetch should parse the canned list response");
+        assert_eq!(ids, vec!["b-live".to_string(), "a-live".to_string()]);
+    }
+
+    #[gpui::test]
+    async fn fetched_models_merge_with_settings_and_lead_defaults(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        use http_client::{FakeHttpClient, Response};
+
+        let http_client: Arc<dyn HttpClient> = FakeHttpClient::create(|_| async move {
+            Ok(Response::builder()
+                .status(200)
+                .body(r#"{"data": [{"id": "overlap"}, {"id": "live-model"}]}"#.into())
+                .expect("failed to build fake list models response"))
+        });
+        let id: Arc<str> = "test-gateway".into();
+        let (provider, state) = cx.update(|cx| {
+            let state = State::new(
+                id.clone(),
+                Arc::new(FakeCredentialsProvider),
+                resolve_test_settings,
+                http_client.clone(),
+                Some(crate::provider::api_compatible::CompatibleModelsFetch {
+                    list_suffix: "/models",
+                    auth: crate::provider::api_compatible::CompatibleModelsFetchAuth::Bearer,
+                }),
+                cx,
+            );
+            let provider = OpenAiCompatibleLanguageModelProvider {
+                id: id.clone().into(),
+                name: id.into(),
+                http_client,
+                state: state.clone(),
+                request_limiters: ModelRateLimiters::default(),
+            };
+            (provider, state)
+        });
+
+        // Seed the live inventory directly (the HTTP fetch path is covered
+        // by compatible_models_fetch_parses_openai_list_shape above; here
+        // the merge/default/config behavior is under test).
+        state.update(cx, |state, _| {
+            state.fetched_models = vec!["overlap".to_string(), "live-model".to_string()];
+        });
+
+        let (provided_ids, default_id, overlap_name) = cx.read(|cx| {
+            let provided = provider.provided_models(cx);
+            let ids = provided
+                .iter()
+                .map(|model| model.id().0.to_string())
+                .collect::<Vec<_>>();
+            let default_id = provider
+                .default_model(cx)
+                .map(|model| model.id().0.to_string());
+            let overlap_name = provided
+                .iter()
+                .find(|model| model.id().0.as_ref() == "overlap")
+                .map(|model| model.name().0.to_string());
+            (ids, default_id, overlap_name)
+        });
+
+        // Live ids join the hardcoded settings list; settings win on collision.
+        assert_eq!(provided_ids, vec!["live-model", "overlap", "settings-only"]);
+        assert_eq!(overlap_name.as_deref(), Some("From Settings"));
+        // Default leads with the live inventory, not the settings list.
+        assert_eq!(default_id.as_deref(), Some("live-model"));
+        // A live-only model resolves for completion.
+        cx.read(|cx| {
+            assert!(provider
+                .config(
+                    &provider
+                        .provided_models(cx)
+                        .into_iter()
+                        .find(|model| model.id().0.as_ref() == "live-model")
+                        .unwrap(),
+                    cx
+                )
+                .is_ok());
+        });
     }
 }

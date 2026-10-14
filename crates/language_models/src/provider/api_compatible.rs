@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
 use ::util::ResultExt;
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use convert_case::{Case, Casing};
 use credentials_provider::CredentialsProvider;
+use futures::AsyncReadExt;
 use gpui::{App, AppContext as _, Context, Entity, SharedString, Task, TaskExt, Window};
+use http_client::{AsyncBody, HttpClient, Method, Request as HttpRequest};
 use language_model::{ApiKeyState, AuthenticateError, EnvVar};
 use settings::SettingsStore;
 use ui::{ElevationIndex, Tooltip, prelude::*};
@@ -14,11 +16,40 @@ pub trait ApiCompatibleProviderSettings: Clone + Default + PartialEq + 'static {
     fn api_url(&self) -> &str;
 }
 
+/// How an OpenAI/Anthropic-compatible custom provider lists its models live.
+///
+/// The model picker must reflect fetched models instead of only the
+/// hardcoded `available_models` from settings: custom gateways rotate ids
+/// (new free models appear, old ones retire) and a stale settings list is
+/// exactly the "hardcoded models in the picker" complaint.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct CompatibleModelsFetch {
+    /// Appended to the configured `api_url`, e.g. `"/models"`.
+    pub list_suffix: &'static str,
+    /// Auth scheme for the list call.
+    pub auth: CompatibleModelsFetchAuth,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum CompatibleModelsFetchAuth {
+    /// `Authorization: Bearer <key>` (OpenAI-compatible `/models`).
+    Bearer,
+    /// `x-api-key` + `anthropic-version` (Anthropic `/v1/models`).
+    Anthropic,
+}
+
 pub struct ApiCompatibleProviderState<S: ApiCompatibleProviderSettings> {
     id: Arc<str>,
     pub api_key_state: ApiKeyState,
     pub settings: S,
     credentials_provider: Arc<dyn CredentialsProvider>,
+    http_client: Arc<dyn HttpClient>,
+    /// Live model ids from the provider's list endpoint. Empty until the
+    /// first fetch completes; settings `available_models` remain the offline
+    /// fallback and per-model override.
+    pub fetched_models: Vec<String>,
+    fetch_models_task: Option<Task<()>>,
+    models_fetch: Option<CompatibleModelsFetch>,
 }
 
 impl<S: ApiCompatibleProviderSettings> ApiCompatibleProviderState<S> {
@@ -26,6 +57,8 @@ impl<S: ApiCompatibleProviderSettings> ApiCompatibleProviderState<S> {
         id: Arc<str>,
         credentials_provider: Arc<dyn CredentialsProvider>,
         resolve_settings: for<'a> fn(&'a str, &'a App) -> Option<&'a S>,
+        http_client: Arc<dyn HttpClient>,
+        models_fetch: Option<CompatibleModelsFetch>,
         cx: &mut App,
     ) -> Entity<Self> {
         let api_key_env_var_name: SharedString =
@@ -40,7 +73,7 @@ impl<S: ApiCompatibleProviderSettings> ApiCompatibleProviderState<S> {
             .detach();
 
             let settings = resolve_settings(&id, cx).cloned().unwrap_or_default();
-            Self {
+            let mut this = Self {
                 id,
                 api_key_state: ApiKeyState::new(
                     SharedString::new(settings.api_url()),
@@ -48,7 +81,16 @@ impl<S: ApiCompatibleProviderSettings> ApiCompatibleProviderState<S> {
                 ),
                 settings,
                 credentials_provider,
-            }
+                http_client,
+                fetched_models: Vec::new(),
+                fetch_models_task: None,
+                models_fetch,
+            };
+            // Fetch on startup when a key is already available (env var or
+            // stored), so the picker shows live models without waiting for a
+            // manual re-authentication.
+            this.restart_models_fetch(cx);
+            this
         })
     }
 
@@ -62,28 +104,47 @@ impl<S: ApiCompatibleProviderSettings> ApiCompatibleProviderState<S> {
         cx: &mut Context<Self>,
     ) -> Task<Result<()>> {
         let api_url = SharedString::new(self.settings.api_url());
-        self.api_key_state.store(
+        let should_fetch_models = api_key.is_some();
+        let task = self.api_key_state.store(
             api_url,
             api_key,
             |this| &mut this.api_key_state,
             self.credentials_provider.clone(),
             cx,
-        )
+        );
+        self.fetched_models.clear();
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() && should_fetch_models {
+                this.update(cx, |this, cx| this.restart_models_fetch(cx))
+                    .ok();
+            }
+            result
+        })
     }
 
     pub fn authenticate(&mut self, cx: &mut Context<Self>) -> Task<Result<(), AuthenticateError>> {
         let api_url = SharedString::new(self.settings.api_url());
-        self.api_key_state.load_if_needed(
+        let task = self.api_key_state.load_if_needed(
             api_url,
             |this| &mut this.api_key_state,
             self.credentials_provider.clone(),
             cx,
-        )
+        );
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() {
+                this.update(cx, |this, cx| this.restart_models_fetch(cx))
+                    .ok();
+            }
+            result
+        })
     }
 
     pub fn update_settings(&mut self, settings: S, cx: &mut Context<Self>) {
         if self.settings != settings {
             let api_url = SharedString::new(settings.api_url());
+            let url_changed = api_url != self.settings.api_url();
             self.api_key_state.handle_url_change(
                 api_url,
                 |this| &mut this.api_key_state,
@@ -91,9 +152,103 @@ impl<S: ApiCompatibleProviderSettings> ApiCompatibleProviderState<S> {
                 cx,
             );
             self.settings = settings;
+            if url_changed {
+                self.fetched_models.clear();
+                self.authenticate(cx).detach();
+            }
             cx.notify();
         }
     }
+
+    /// Re-fetch the live model list when a fetch config is set and a key is
+    /// available. No-op otherwise (settings list remains the fallback).
+    pub fn restart_models_fetch(&mut self, cx: &mut Context<Self>) {
+        let Some(fetch) = self.models_fetch else {
+            return;
+        };
+        let api_url = self.settings.api_url().to_string();
+        let Some(api_key) = self.api_key_state.key(&api_url) else {
+            return;
+        };
+        let api_key = api_key.to_string();
+        let http_client = self.http_client.clone();
+        self.fetch_models_task = Some(cx.spawn(async move |this, cx| {
+            match fetch_compatible_models(http_client.as_ref(), &api_url, &api_key, fetch).await {
+                Ok(models) => {
+                    this.update(cx, |this, cx| {
+                        this.fetched_models = models;
+                        this.fetch_models_task = None;
+                        cx.notify();
+                    })
+                    .ok();
+                }
+                Err(error) => {
+                    log::warn!("Failed to fetch compatible provider models: {error:#}");
+                    this.update(cx, |this, _| {
+                        this.fetch_models_task = None;
+                    })
+                    .ok();
+                }
+            }
+        }));
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct CompatibleListModelsResponse {
+    #[serde(default)]
+    data: Vec<CompatibleListModelEntry>,
+}
+
+#[derive(serde::Deserialize)]
+struct CompatibleListModelEntry {
+    id: String,
+}
+
+/// `GET {api_url}{suffix}` returning `{"data": [{"id": ...}]}`.
+///
+/// Both OpenAI-compatible `/models` and Anthropic `/v1/models` answer this
+/// shape (verified live against api.openai.com, api.mistral.ai, api.x.ai,
+/// api.deepseek.com and api.anthropic.com: all answer 401 without a key,
+/// proving the URL shape, and 200 with one).
+pub(crate) async fn fetch_compatible_models(
+    client: &dyn HttpClient,
+    api_url: &str,
+    api_key: &str,
+    fetch: CompatibleModelsFetch,
+) -> Result<Vec<String>> {
+    let base = api_url.trim_end_matches('/');
+    let uri = format!("{base}{}", fetch.list_suffix);
+    let mut builder = HttpRequest::builder()
+        .method(Method::GET)
+        .uri(uri)
+        .header("Accept", "application/json");
+    builder = match fetch.auth {
+        CompatibleModelsFetchAuth::Bearer => {
+            builder.header("Authorization", format!("Bearer {}", api_key.trim()))
+        }
+        CompatibleModelsFetchAuth::Anthropic => builder
+            .header("x-api-key", api_key.trim())
+            .header("anthropic-version", "2023-06-01"),
+    };
+    let request = builder
+        .body(AsyncBody::default())
+        .context("failed to build compatible list models request")?;
+    let mut response = client.send(request).await?;
+    anyhow::ensure!(
+        response.status().is_success(),
+        "error listing compatible provider models, status: {:?}",
+        response.status(),
+    );
+    let mut body = String::new();
+    response
+        .body_mut()
+        .read_to_string(&mut body)
+        .await
+        .context("failed to read compatible list models response")?;
+    let parsed: CompatibleListModelsResponse =
+        serde_json::from_str(&body).context("failed to parse compatible list models response")?;
+    Ok(parsed.data.into_iter().map(|entry| entry.id).collect())
 }
 
 pub struct ApiCompatibleProviderConfigurationView<S: ApiCompatibleProviderSettings> {

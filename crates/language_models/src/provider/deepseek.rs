@@ -1,12 +1,13 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context as AnyhowContext, Result, anyhow};
 use collections::{HashMap, IndexMap};
 use credentials_provider::CredentialsProvider;
 use deepseek::DEEPSEEK_API_URL;
 
 use futures::Stream;
-use futures::{FutureExt, StreamExt, future::BoxFuture, stream::BoxStream};
+use futures::{AsyncReadExt, FutureExt, StreamExt, future::BoxFuture, stream::BoxStream};
 use gpui::{App, AppContext, AsyncApp, Context, Entity, SharedString, Task};
-use http_client::{CustomHeaders, HttpClient};
+use http_client::{AsyncBody, CustomHeaders, HttpClient, Method, Request as HttpRequest, RequestBuilderExt};
+use serde::Deserialize;
 use language_model::{
     ApiKeyConfiguration, ApiKeyState, AuthenticateError, EnvVar, IconOrSvg, LanguageModel,
     LanguageModelClient, LanguageModelCompletionError, LanguageModelCompletionEvent,
@@ -54,6 +55,9 @@ pub struct DeepSeekLanguageModelProvider {
 pub struct State {
     api_key_state: ApiKeyState,
     credentials_provider: Arc<dyn CredentialsProvider>,
+    http_client: Arc<dyn HttpClient>,
+    fetched_models: Vec<String>,
+    fetch_models_task: Option<Task<Result<()>>>,
 }
 
 impl State {
@@ -64,24 +68,76 @@ impl State {
     fn set_api_key(&mut self, api_key: Option<String>, cx: &mut Context<Self>) -> Task<Result<()>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = DeepSeekLanguageModelProvider::api_url(cx);
-        self.api_key_state.store(
+        let should_fetch_models = api_key.is_some();
+        let task = self.api_key_state.store(
             api_url,
             api_key,
             |this| &mut this.api_key_state,
             credentials_provider,
             cx,
-        )
+        );
+        self.fetched_models.clear();
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() && should_fetch_models {
+                this.update(cx, |this, cx| this.restart_fetch_models_task(cx))
+                    .ok();
+            }
+            result
+        })
     }
 
     fn authenticate(&mut self, cx: &mut Context<Self>) -> Task<Result<(), AuthenticateError>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = DeepSeekLanguageModelProvider::api_url(cx);
-        self.api_key_state.load_if_needed(
+        let task = self.api_key_state.load_if_needed(
             api_url,
             |this| &mut this.api_key_state,
             credentials_provider,
             cx,
-        )
+        );
+
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() {
+                this.update(cx, |this, cx| this.restart_fetch_models_task(cx))
+                    .ok();
+            }
+            result
+        })
+    }
+
+    fn fetch_models(&mut self, cx: &mut Context<Self>) -> Task<Result<()>> {
+        let http_client = self.http_client.clone();
+        let api_url = DeepSeekLanguageModelProvider::api_url(cx);
+        let Some(api_key) = self.api_key_state.key(&api_url) else {
+            return Task::ready(Err(anyhow!(
+                "cannot fetch DeepSeek models without an API key"
+            )));
+        };
+        let extra_headers = DeepSeekLanguageModelProvider::settings(cx)
+            .custom_headers
+            .clone();
+
+        cx.spawn(async move |this, cx| {
+            let models = list_models(
+                http_client.as_ref(),
+                &api_url,
+                api_key.as_ref(),
+                &extra_headers,
+            )
+            .await?;
+
+            this.update(cx, |this, cx| {
+                this.fetched_models = models;
+                cx.notify();
+            })
+        })
+    }
+
+    fn restart_fetch_models_task(&mut self, cx: &mut Context<Self>) {
+        let task = self.fetch_models(cx);
+        self.fetch_models_task.replace(task);
     }
 }
 
@@ -92,21 +148,33 @@ impl DeepSeekLanguageModelProvider {
         cx: &mut App,
     ) -> Self {
         let state = cx.new(|cx| {
-            cx.observe_global::<SettingsStore>(|this: &mut State, cx| {
-                let credentials_provider = this.credentials_provider.clone();
-                let api_url = Self::api_url(cx);
-                this.api_key_state.handle_url_change(
-                    api_url,
-                    |this| &mut this.api_key_state,
-                    credentials_provider,
-                    cx,
-                );
-                cx.notify();
+            cx.observe_global::<SettingsStore>({
+                let mut last_api_url = Self::api_url(cx);
+                move |this: &mut State, cx| {
+                    let credentials_provider = this.credentials_provider.clone();
+                    let api_url = Self::api_url(cx);
+                    let url_changed = api_url != last_api_url;
+                    last_api_url = api_url.clone();
+                    this.api_key_state.handle_url_change(
+                        api_url,
+                        |this| &mut this.api_key_state,
+                        credentials_provider,
+                        cx,
+                    );
+                    if url_changed {
+                        this.fetched_models.clear();
+                        this.authenticate(cx).detach();
+                    }
+                    cx.notify();
+                }
             })
             .detach();
             State {
                 api_key_state: ApiKeyState::new(Self::api_url(cx), (*API_KEY_ENV_VAR).clone()),
                 credentials_provider,
+                http_client: http_client.clone(),
+                fetched_models: Vec::new(),
+                fetch_models_task: None,
             }
         });
 
@@ -117,15 +185,31 @@ impl DeepSeekLanguageModelProvider {
         }
     }
 
-    /// Every model this provider offers, keyed by id: the built-in models,
-    /// with settings entries added or overriding built-in ones.
+    /// Every model this provider offers, keyed by id: the fetched list, with
+    /// settings entries added or overriding fetched ones.
     fn deepseek_models(&self, cx: &App) -> IndexMap<String, deepseek::Model> {
         let mut models = IndexMap::default();
 
-        for model in [deepseek::Model::V4_1Flash, deepseek::Model::V4Pro] {
-            models.insert(model.id().to_string(), model);
+        // Models reported by DeepSeek's `/models` endpoint are the primary
+        // source. The endpoint returns only ids, so fetched entries use the
+        // same shape as a settings-defined custom model. The list will be
+        // empty until authentication has succeeded and the first fetch
+        // completes.
+        for id in &self.state.read(cx).fetched_models {
+            models.insert(
+                id.clone(),
+                deepseek::Model::Custom {
+                    name: id.clone(),
+                    display_name: None,
+                    max_tokens: 128_000,
+                    max_output_tokens: None,
+                },
+            );
         }
 
+        // User-defined `available_models` from settings can either add
+        // entirely new entries or override fields on a fetched model with
+        // the same id.
         for available_model in &Self::settings(cx).available_models {
             models.insert(
                 available_model.name.clone(),
@@ -139,6 +223,11 @@ impl DeepSeekLanguageModelProvider {
         }
 
         models
+    }
+
+    /// Describes the offered model with `id`.
+    fn offered_model(&self, id: &str, cx: &App) -> Option<LanguageModel> {
+        self.deepseek_models(cx).get(id).map(language_model)
     }
 
     /// The current configuration of `model`, if this provider still offers it.
@@ -188,15 +277,21 @@ impl LanguageModelProvider for DeepSeekLanguageModelProvider {
     }
 
     fn default_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.deepseek_models(cx)
-            .get(deepseek::Model::default().id())
-            .map(language_model)
+        let fetched = self.state.read(cx).fetched_models.clone();
+        // Prefer the chat model; otherwise fall back to any fetched model.
+        // Returning `None` until the fetch completes matches the Ollama
+        // provider's behavior.
+        let preferred = pick_preferred_model(&fetched, &["deepseek-chat", "chat"])
+            .or_else(|| fetched.iter().max().cloned())?;
+        self.offered_model(&preferred, cx)
     }
 
     fn default_fast_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.deepseek_models(cx)
-            .get(deepseek::Model::default_fast().id())
-            .map(language_model)
+        let fetched = self.state.read(cx).fetched_models.clone();
+        // Prefer a fast-tier id; otherwise fall back to any fetched model.
+        let preferred = pick_preferred_model(&fetched, &["fast", "flash", "chat"])
+            .or_else(|| fetched.iter().max().cloned())?;
+        self.offered_model(&preferred, cx)
     }
 
     fn provided_models(&self, cx: &App) -> Vec<LanguageModel> {
@@ -691,6 +786,73 @@ impl DeepSeekEventMapper {
 
         events
     }
+}
+
+#[derive(Deserialize)]
+struct ListModelsResponse {
+    data: Vec<ListModelEntry>,
+}
+
+#[derive(Deserialize)]
+struct ListModelEntry {
+    id: String,
+}
+
+/// Fetch the ids of the models available to the current API key via
+/// the DeepSeek List Models API (`GET https://api.deepseek.com/models`).
+/// Unlike completions (`{api_url}/chat/completions`, OpenAI-compatible),
+/// the list endpoint lives at the API root, so a trailing `/v1` on the
+/// configured base is stripped (verified live: root `/models` is the
+/// documented endpoint).
+async fn list_models(
+    client: &dyn HttpClient,
+    api_url: &str,
+    api_key: &str,
+    extra_headers: &CustomHeaders,
+) -> Result<Vec<String>> {
+    let base = api_url.trim_end_matches('/');
+    let base = base.strip_suffix("/v1").unwrap_or(base);
+    let uri = format!("{base}/models");
+    let request = HttpRequest::builder()
+        .method(Method::GET)
+        .uri(uri)
+        .header("Authorization", format!("Bearer {}", api_key.trim()))
+        .header("Accept", "application/json")
+        .extra_headers(extra_headers)
+        .body(AsyncBody::default())
+        .context("failed to build DeepSeek list models request")?;
+    let mut response = client.send(request).await?;
+    anyhow::ensure!(
+        response.status().is_success(),
+        "error listing DeepSeek models, status: {:?}",
+        response.status(),
+    );
+    let mut body = String::new();
+    response
+        .body_mut()
+        .read_to_string(&mut body)
+        .await
+        .context("failed to read DeepSeek list models response")?;
+    let parsed: ListModelsResponse =
+        serde_json::from_str(&body).context("failed to parse DeepSeek list models response")?;
+    Ok(parsed.data.into_iter().map(|entry| entry.id).collect())
+}
+
+/// Pick the model id from `models` that starts with the earliest matching
+/// prefix in `preferred_prefixes`. Within a single prefix bucket the
+/// lexicographically greatest id wins, which roughly corresponds to the
+/// highest version since DeepSeek ids embed version suffixes.
+fn pick_preferred_model(models: &[String], preferred_prefixes: &[&str]) -> Option<String> {
+    for prefix in preferred_prefixes {
+        let candidate = models
+            .iter()
+            .filter(|id| id.starts_with(prefix))
+            .max_by(|a, b| a.cmp(b));
+        if let Some(model) = candidate {
+            return Some(model.clone());
+        }
+    }
+    None
 }
 
 #[cfg(test)]

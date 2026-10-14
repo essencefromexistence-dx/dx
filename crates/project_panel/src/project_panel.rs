@@ -27,7 +27,7 @@ use gpui::{
     Action, Anchor, AnyElement, App, AsyncWindowContext, Bounds,
     ClipboardEntry as GpuiClipboardEntry, ClipboardItem, Context, CursorStyle, DismissEvent, Div,
     DragMoveEvent, Entity, EventEmitter, ExternalDragPayload, ExternalPaths, FileDragPaths,
-    FileDropEvent, FocusHandle, Focusable, FontWeight, Hsla, InteractiveElement, KeyContext,
+    FileDropEvent, FocusHandle, FocusOutEvent, Focusable, FontWeight, Hsla, InteractiveElement, KeyContext,
     ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent,
     MouseButton, MouseDownEvent, MouseExitEvent, MouseMoveEvent, MouseUpEvent, ParentElement,
     PathPromptOptions, Pixels, Point, PromptLevel, Render, ScrollHandle, ScrollStrategy, Stateful,
@@ -950,6 +950,8 @@ impl ProjectPanel {
         let project_panel = cx.new(|cx| {
             let focus_handle = cx.focus_handle();
             cx.on_focus(&focus_handle, window, Self::focus_in).detach();
+            cx.on_focus_out(&focus_handle, window, Self::focus_out)
+                .detach();
 
             cx.subscribe_in(
                 &git_store,
@@ -1377,6 +1379,24 @@ impl ProjectPanel {
         self.refresh_dx_explorer_storage_roots_after_interval(cx);
         if !self.focus_handle.contains_focused(window, cx) {
             cx.emit(Event::Focus);
+        }
+    }
+
+    fn focus_out(&mut self, _: FocusOutEvent, _window: &mut Window, cx: &mut Context<Self>) {
+        // Clicking outside the project panel clears the current file/folder
+        // highlight. A click inside the panel always sets `selection` /
+        // `marked_entries` first, so reaching focus-out means the user clicked
+        // something that is not another panel entry.
+        // Keep the selection while renaming or while the context menu is open:
+        // both move focus outside the panel's tracked tree but still belong
+        // to the current selection gesture.
+        if self.state.edit_state.is_some() || self.context_menu.is_some() {
+            return;
+        }
+        if self.selection.is_some() || !self.marked_entries.is_empty() {
+            self.selection = None;
+            self.marked_entries.clear();
+            cx.notify();
         }
     }
 

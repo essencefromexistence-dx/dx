@@ -178,6 +178,10 @@ impl AnthropicCompatibleLanguageModelProvider {
                     .anthropic_compatible
                     .get(id)
             },
+            http_client.clone(),
+            // Settings-only for now (Anthropic-compatible gateways vary);
+            // OpenAI-compatible custom providers already live-fetch.
+            None,
             cx,
         );
 

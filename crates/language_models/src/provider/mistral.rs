@@ -2,9 +2,11 @@ use anyhow::{Result, anyhow};
 use collections::{BTreeMap, HashMap};
 use credentials_provider::CredentialsProvider;
 
-use futures::{FutureExt, Stream, StreamExt, future::BoxFuture};
+use futures::{AsyncReadExt as _, FutureExt, Stream, StreamExt, future::BoxFuture};
 use gpui::{App, AppContext, AsyncApp, Context, Entity, Global, SharedString, Task};
-use http_client::{CustomHeaders, HttpClient};
+use http_client::{
+    AsyncBody, CustomHeaders, HttpClient, Method, Request as HttpRequest, RequestBuilderExt,
+};
 use language_model::{
     ApiKeyConfiguration, ApiKeyState, AuthenticateError, EnvVar, IconOrSvg, LanguageModel,
     LanguageModelClient, LanguageModelCompletionError, LanguageModelCompletionEvent,
@@ -15,11 +17,11 @@ use language_model::{
     ProviderSettingsView, RateLimiter, Role, StopReason, TokenUsage, env_var, unavailable_error,
 };
 pub use mistral::{MISTRAL_API_URL, StreamResponse};
+use serde::Deserialize;
 pub use settings::MistralAvailableModel as AvailableModel;
 use settings::{Settings, SettingsStore};
 use std::pin::Pin;
 use std::sync::{Arc, LazyLock};
-use strum::IntoEnumIterator;
 use ui::IconName;
 
 use language_model::util::{fix_streamed_json, parse_tool_arguments};
@@ -47,6 +49,9 @@ pub struct MistralLanguageModelProvider {
 pub struct State {
     api_key_state: ApiKeyState,
     credentials_provider: Arc<dyn CredentialsProvider>,
+    http_client: Arc<dyn HttpClient>,
+    fetched_models: Vec<String>,
+    fetch_models_task: Option<Task<Result<()>>>,
 }
 
 impl State {
@@ -57,24 +62,76 @@ impl State {
     fn set_api_key(&mut self, api_key: Option<String>, cx: &mut Context<Self>) -> Task<Result<()>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = MistralLanguageModelProvider::api_url(cx);
-        self.api_key_state.store(
+        let should_fetch_models = api_key.is_some();
+        let task = self.api_key_state.store(
             api_url,
             api_key,
             |this| &mut this.api_key_state,
             credentials_provider,
             cx,
-        )
+        );
+        self.fetched_models.clear();
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() && should_fetch_models {
+                this.update(cx, |this, cx| this.restart_fetch_models_task(cx))
+                    .ok();
+            }
+            result
+        })
     }
 
     fn authenticate(&mut self, cx: &mut Context<Self>) -> Task<Result<(), AuthenticateError>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = MistralLanguageModelProvider::api_url(cx);
-        self.api_key_state.load_if_needed(
+        let task = self.api_key_state.load_if_needed(
             api_url,
             |this| &mut this.api_key_state,
             credentials_provider,
             cx,
-        )
+        );
+
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() {
+                this.update(cx, |this, cx| this.restart_fetch_models_task(cx))
+                    .ok();
+            }
+            result
+        })
+    }
+
+    fn fetch_models(&mut self, cx: &mut Context<Self>) -> Task<Result<()>> {
+        let http_client = self.http_client.clone();
+        let api_url = MistralLanguageModelProvider::api_url(cx);
+        let Some(api_key) = self.api_key_state.key(&api_url) else {
+            return Task::ready(Err(anyhow!(
+                "cannot fetch Mistral models without an API key"
+            )));
+        };
+        let extra_headers = MistralLanguageModelProvider::settings(cx)
+            .custom_headers
+            .clone();
+
+        cx.spawn(async move |this, cx| {
+            let models = list_models(
+                http_client.as_ref(),
+                &api_url,
+                api_key.as_ref(),
+                &extra_headers,
+            )
+            .await?;
+
+            this.update(cx, |this, cx| {
+                this.fetched_models = models;
+                cx.notify();
+            })
+        })
+    }
+
+    fn restart_fetch_models_task(&mut self, cx: &mut Context<Self>) {
+        let task = self.fetch_models(cx);
+        self.fetch_models_task.replace(task);
     }
 }
 
@@ -97,21 +154,33 @@ impl MistralLanguageModelProvider {
             return this.0.clone();
         }
         let state = cx.new(|cx| {
-            cx.observe_global::<SettingsStore>(|this: &mut State, cx| {
-                let credentials_provider = this.credentials_provider.clone();
-                let api_url = Self::api_url(cx);
-                this.api_key_state.handle_url_change(
-                    api_url,
-                    |this| &mut this.api_key_state,
-                    credentials_provider,
-                    cx,
-                );
-                cx.notify();
+            cx.observe_global::<SettingsStore>({
+                let mut last_api_url = Self::api_url(cx);
+                move |this: &mut State, cx| {
+                    let credentials_provider = this.credentials_provider.clone();
+                    let api_url = Self::api_url(cx);
+                    let url_changed = api_url != last_api_url;
+                    last_api_url = api_url.clone();
+                    this.api_key_state.handle_url_change(
+                        api_url,
+                        |this| &mut this.api_key_state,
+                        credentials_provider,
+                        cx,
+                    );
+                    if url_changed {
+                        this.fetched_models.clear();
+                        this.authenticate(cx).detach();
+                    }
+                    cx.notify();
+                }
             })
             .detach();
             State {
                 api_key_state: ApiKeyState::new(Self::api_url(cx), (*API_KEY_ENV_VAR).clone()),
                 credentials_provider,
+                http_client: http_client.clone(),
+                fetched_models: Vec::new(),
+                fetch_models_task: None,
             }
         });
 
@@ -124,17 +193,23 @@ impl MistralLanguageModelProvider {
         cx.global::<GlobalMistralLanguageModelProvider>().0.clone()
     }
 
-    /// Every model this provider offers, keyed by id: the built-in models,
-    /// with settings entries added or overriding built-in ones.
+    /// Every model this provider offers, keyed by id: the fetched list, with
+    /// settings entries added or overriding fetched ones.
     fn mistral_models(&self, cx: &App) -> BTreeMap<String, mistral::Model> {
         let mut models = BTreeMap::default();
 
-        for model in mistral::Model::iter() {
-            if !matches!(model, mistral::Model::Custom { .. }) {
-                models.insert(model.id().to_string(), model);
-            }
+        // Models reported by Mistral's `/v1/models` endpoint are the primary
+        // source. The list will be empty until authentication has succeeded
+        // and the first fetch completes. The API only returns ids, so each
+        // entry becomes a `Custom` model with capabilities inferred from the
+        // known built-in ids (falling back to generic defaults).
+        for id in &self.state.read(cx).fetched_models {
+            models.insert(id.clone(), custom_model_from_id(id));
         }
 
+        // User-defined `available_models` from settings can either add
+        // entirely new entries or override fields on a fetched model with
+        // the same id.
         for model in &Self::settings(cx).available_models {
             models.insert(
                 model.name.clone(),
@@ -152,6 +227,11 @@ impl MistralLanguageModelProvider {
         }
 
         models
+    }
+
+    /// Describes the offered model with `id`.
+    fn offered_model(&self, id: &str, cx: &App) -> Option<LanguageModel> {
+        self.mistral_models(cx).get(id).map(language_model)
     }
 
     /// The current configuration of `model`, if this provider still offers it.
@@ -242,15 +322,21 @@ impl LanguageModelProvider for MistralLanguageModelProvider {
     }
 
     fn default_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.mistral_models(cx)
-            .get(mistral::Model::default().id())
-            .map(language_model)
+        let fetched = self.state.read(cx).fetched_models.clone();
+        // Prefer the largest general model we know about; otherwise any
+        // fetched model. Returning `None` until the fetch completes matches
+        // the Anthropic and Ollama providers' behavior.
+        let preferred =
+            pick_preferred_model(&fetched, &["mistral-large", "mistral-medium", "mistral-"])
+                .or_else(|| fetched.iter().max().cloned())?;
+        self.offered_model(&preferred, cx)
     }
 
     fn default_fast_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.mistral_models(cx)
-            .get(mistral::Model::default_fast().id())
-            .map(language_model)
+        let fetched = self.state.read(cx).fetched_models.clone();
+        let preferred = pick_preferred_model(&fetched, &["small", "mini", "fast"])
+            .or_else(|| fetched.iter().max().cloned())?;
+        self.offered_model(&preferred, cx)
     }
 
     fn provided_models(&self, cx: &App) -> Vec<LanguageModel> {
@@ -340,6 +426,121 @@ fn language_model(model: &mistral::Model) -> LanguageModel {
             model.max_token_count(),
         )
     }
+}
+
+/// Build a `Custom` model for a fetched id. When the id matches a known
+/// built-in id, copy that model's capabilities; otherwise use generic
+/// defaults (tools on, images on, no thinking, 128k context).
+fn custom_model_from_id(id: &str) -> mistral::Model {
+    if let Ok(known) = mistral::Model::from_id(id) {
+        return mistral::Model::Custom {
+            name: id.to_string(),
+            display_name: None,
+            max_tokens: known.max_token_count(),
+            max_output_tokens: known.max_output_tokens(),
+            max_completion_tokens: None,
+            supports_tools: Some(known.supports_tools()),
+            supports_images: Some(known.supports_images()),
+            supports_thinking: Some(known.supports_thinking()),
+        };
+    }
+
+    let (max_tokens, supports_images, supports_thinking) = if id.contains("codestral") {
+        (128_000, false, false)
+    } else if id.contains("glm") {
+        (1_048_576, false, true)
+    } else if id.contains("large")
+        || id.contains("medium")
+        || id.contains("small")
+        || id.contains("ministral")
+        || id.contains("mistral")
+    {
+        (256_000, true, id.contains("medium") || id.contains("small"))
+    } else {
+        (128_000, true, false)
+    };
+
+    mistral::Model::Custom {
+        name: id.to_string(),
+        display_name: None,
+        max_tokens,
+        max_output_tokens: None,
+        max_completion_tokens: None,
+        supports_tools: Some(true),
+        supports_images: Some(supports_images),
+        supports_thinking: Some(supports_thinking),
+    }
+}
+
+/// Pick the model whose id contains the earliest matching substring in
+/// `preferred_substrings`. Within a single bucket the lexicographically
+/// greatest id wins, which roughly corresponds to the highest version since
+/// Mistral ids embed `-latest`/dated suffixes. Unlike Anthropic's helper,
+/// matching uses `contains` because fast-model hints like `"small"` appear
+/// in the middle of ids such as `"mistral-small-latest"`.
+fn pick_preferred_model(models: &[String], preferred_substrings: &[&str]) -> Option<String> {
+    for substring in preferred_substrings {
+        let candidate = models
+            .iter()
+            .filter(|id| id.contains(substring))
+            .max_by(|a, b| a.cmp(b));
+        if let Some(id) = candidate {
+            return Some(id.clone());
+        }
+    }
+    None
+}
+
+#[derive(Deserialize)]
+struct ListModelsResponse {
+    data: Vec<ListModelEntry>,
+}
+
+#[derive(Deserialize)]
+struct ListModelEntry {
+    id: String,
+}
+
+/// Fetch the ids of the models available to the current API key via
+/// `GET {api_url}/models` (Mistral List Models API, OpenAI-compatible
+/// `{ "data": [{ "id": ... }] }` shape).
+///
+/// See <https://docs.mistral.ai/api/#tag/models>.
+async fn list_models(
+    client: &dyn HttpClient,
+    api_url: &str,
+    api_key: &str,
+    extra_headers: &CustomHeaders,
+) -> Result<Vec<String>> {
+    // `MISTRAL_API_URL` already ends in `/v1`, so `{base}/models` yields
+    // `.../v1/models`. A bare custom base without `/v1` gets `/v1/models`.
+    let base = api_url.trim_end_matches('/');
+    let uri = if base.ends_with("/v1") {
+        format!("{base}/models")
+    } else {
+        format!("{base}/v1/models")
+    };
+    let request = HttpRequest::builder()
+        .method(Method::GET)
+        .uri(uri)
+        .header("Authorization", format!("Bearer {}", api_key.trim()))
+        .header("Accept", "application/json")
+        .extra_headers(extra_headers)
+        .body(AsyncBody::default())?;
+    let mut response = client.send(request).await?;
+    if !response.status().is_success() {
+        let mut body = String::new();
+        response.body_mut().read_to_string(&mut body).await?;
+        anyhow::bail!(
+            "Failed to connect to Mistral API: {} {}",
+            response.status(),
+            body,
+        );
+    }
+    let mut body = String::new();
+    response.body_mut().read_to_string(&mut body).await?;
+    let parsed: ListModelsResponse = serde_json::from_str(&body)?;
+    Ok(parsed.data.into_iter().map(|entry| entry.id).collect())
 }
 
 pub fn into_mistral(

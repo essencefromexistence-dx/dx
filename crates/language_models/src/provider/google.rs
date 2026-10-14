@@ -1,11 +1,13 @@
 use anyhow::Result;
 use collections::BTreeMap;
 use credentials_provider::CredentialsProvider;
-use futures::{FutureExt, StreamExt, future::BoxFuture};
+use futures::{AsyncReadExt, FutureExt, StreamExt, future::BoxFuture};
 use google_ai::GenerateContentResponse;
 pub use google_ai::completion::{GoogleEventMapper, into_google};
 use gpui::{App, AppContext, AsyncApp, Context, Entity, SharedString, Task};
-use http_client::{CustomHeaders, HttpClient};
+use http_client::{
+    AsyncBody, CustomHeaders, HttpClient, Method, Request as HttpRequest, RequestBuilderExt,
+};
 use language_model::{
     ApiKeyConfiguration, AuthenticateError, EnvVar, LanguageModelCompletionError,
     LanguageModelCompletionStream, LanguageModelToolChoiceSupport, unavailable_error,
@@ -21,7 +23,6 @@ use serde::{Deserialize, Serialize};
 pub use settings::GoogleAvailableModel as AvailableModel;
 use settings::{Settings, SettingsStore};
 use std::sync::{Arc, LazyLock};
-use strum::IntoEnumIterator;
 use ui::IconName;
 
 use language_model::ApiKeyState;
@@ -56,6 +57,9 @@ pub struct GoogleLanguageModelProvider {
 pub struct State {
     api_key_state: ApiKeyState,
     credentials_provider: Arc<dyn CredentialsProvider>,
+    http_client: Arc<dyn HttpClient>,
+    fetched_models: Vec<String>,
+    fetch_models_task: Option<Task<Result<()>>>,
 }
 
 const GEMINI_API_KEY_VAR_NAME: &str = "GEMINI_API_KEY";
@@ -74,24 +78,76 @@ impl State {
     fn set_api_key(&mut self, api_key: Option<String>, cx: &mut Context<Self>) -> Task<Result<()>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = GoogleLanguageModelProvider::api_url(cx);
-        self.api_key_state.store(
+        let should_fetch_models = api_key.is_some();
+        let task = self.api_key_state.store(
             api_url,
             api_key,
             |this| &mut this.api_key_state,
             credentials_provider,
             cx,
-        )
+        );
+        self.fetched_models.clear();
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() && should_fetch_models {
+                this.update(cx, |this, cx| this.restart_fetch_models_task(cx))
+                    .ok();
+            }
+            result
+        })
     }
 
     fn authenticate(&mut self, cx: &mut Context<Self>) -> Task<Result<(), AuthenticateError>> {
         let credentials_provider = self.credentials_provider.clone();
         let api_url = GoogleLanguageModelProvider::api_url(cx);
-        self.api_key_state.load_if_needed(
+        let task = self.api_key_state.load_if_needed(
             api_url,
             |this| &mut this.api_key_state,
             credentials_provider,
             cx,
-        )
+        );
+
+        cx.spawn(async move |this, cx| {
+            let result = task.await;
+            if result.is_ok() {
+                this.update(cx, |this, cx| this.restart_fetch_models_task(cx))
+                    .ok();
+            }
+            result
+        })
+    }
+
+    fn fetch_models(&mut self, cx: &mut Context<Self>) -> Task<Result<()>> {
+        let http_client = self.http_client.clone();
+        let api_url = GoogleLanguageModelProvider::api_url(cx);
+        let Some(api_key) = self.api_key_state.key(&api_url) else {
+            return Task::ready(Err(anyhow::anyhow!(
+                "cannot fetch Google models without an API key"
+            )));
+        };
+        let extra_headers = GoogleLanguageModelProvider::settings(cx)
+            .custom_headers
+            .clone();
+
+        cx.spawn(async move |this, cx| {
+            let models = list_google_models(
+                http_client.as_ref(),
+                &api_url,
+                api_key.as_ref(),
+                &extra_headers,
+            )
+            .await?;
+
+            this.update(cx, |this, cx| {
+                this.fetched_models = models;
+                cx.notify();
+            })
+        })
+    }
+
+    fn restart_fetch_models_task(&mut self, cx: &mut Context<Self>) {
+        let task = self.fetch_models(cx);
+        self.fetch_models_task.replace(task);
     }
 }
 
@@ -102,21 +158,33 @@ impl GoogleLanguageModelProvider {
         cx: &mut App,
     ) -> Self {
         let state = cx.new(|cx| {
-            cx.observe_global::<SettingsStore>(|this: &mut State, cx| {
-                let credentials_provider = this.credentials_provider.clone();
-                let api_url = Self::api_url(cx);
-                this.api_key_state.handle_url_change(
-                    api_url,
-                    |this| &mut this.api_key_state,
-                    credentials_provider,
-                    cx,
-                );
-                cx.notify();
+            cx.observe_global::<SettingsStore>({
+                let mut last_api_url = Self::api_url(cx);
+                move |this: &mut State, cx| {
+                    let credentials_provider = this.credentials_provider.clone();
+                    let api_url = Self::api_url(cx);
+                    let url_changed = api_url != last_api_url;
+                    last_api_url = api_url.clone();
+                    this.api_key_state.handle_url_change(
+                        api_url,
+                        |this| &mut this.api_key_state,
+                        credentials_provider,
+                        cx,
+                    );
+                    if url_changed {
+                        this.fetched_models.clear();
+                        this.authenticate(cx).detach();
+                    }
+                    cx.notify();
+                }
             })
             .detach();
             State {
                 api_key_state: ApiKeyState::new(Self::api_url(cx), (*API_KEY_ENV_VAR).clone()),
                 credentials_provider,
+                http_client: http_client.clone(),
+                fetched_models: Vec::new(),
+                fetch_models_task: None,
             }
         });
 
@@ -127,15 +195,29 @@ impl GoogleLanguageModelProvider {
         }
     }
 
-    /// Every model this provider offers, keyed by id: the built-in models,
-    /// with settings entries added or overriding built-in ones.
+    /// Every model this provider offers, keyed by id: the fetched list, with
+    /// settings entries added or overriding fetched ones.
     fn google_models(&self, cx: &App) -> BTreeMap<String, google_ai::Model> {
         let mut models = BTreeMap::default();
 
-        for model in google_ai::Model::iter() {
-            if !matches!(model, google_ai::Model::Custom { .. }) {
-                models.insert(model.id().to_string(), model);
-            }
+        // Models reported by Google's `/v1beta/models` endpoint are the
+        // primary source. The list will be empty until authentication has
+        // succeeded and the first fetch completes. Fetched ids carry no
+        // metadata, so they become `Custom` models with the same field
+        // defaults a settings-defined entry would get; a settings entry
+        // with the same name overrides them below.
+        for id in &self.state.read(cx).fetched_models {
+            models.insert(
+                id.clone(),
+                google_ai::Model::Custom {
+                    name: id.clone(),
+                    display_name: None,
+                    max_tokens: 1_048_576,
+                    mode: google_ai::GoogleModelMode::Thinking {
+                        budget_tokens: None,
+                    },
+                },
+            );
         }
 
         for model in &GoogleLanguageModelProvider::settings(cx).available_models {
@@ -151,6 +233,11 @@ impl GoogleLanguageModelProvider {
         }
 
         models
+    }
+
+    /// Describes the offered model with `id`.
+    fn offered_model(&self, id: &str, cx: &App) -> Option<LanguageModel> {
+        self.google_models(cx).get(id).map(language_model)
     }
 
     /// The current configuration of `model`, if this provider still offers it.
@@ -239,15 +326,23 @@ impl LanguageModelProvider for GoogleLanguageModelProvider {
     }
 
     fn default_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.google_models(cx)
-            .get(google_ai::Model::default().id())
-            .map(language_model)
+        let fetched = self.state.read(cx).fetched_models.clone();
+        // Prefer a Pro model, then any Gemini model. Returning `None` until
+        // the fetch completes matches the Anthropic provider's behavior.
+        let gemini: Vec<String> = fetched
+            .iter()
+            .filter(|id| id.contains("gemini-"))
+            .cloned()
+            .collect();
+        let preferred = pick_preferred_model(&gemini, &["pro"])
+            .or_else(|| pick_preferred_model(&gemini, &["gemini-"]))?;
+        self.offered_model(&preferred, cx)
     }
 
     fn default_fast_model(&self, cx: &App) -> Option<LanguageModel> {
-        self.google_models(cx)
-            .get(google_ai::Model::default_fast().id())
-            .map(language_model)
+        let fetched = self.state.read(cx).fetched_models.clone();
+        let preferred = pick_preferred_model(&fetched, &["flash", "lite"])?;
+        self.offered_model(&preferred, cx)
     }
 
     fn provided_models(&self, cx: &App) -> Vec<LanguageModel> {
@@ -338,4 +433,110 @@ fn language_model(model: &google_ai::Model) -> LanguageModel {
             model.max_token_count(),
         )
     }
+}
+
+/// Pick the model id from `models` containing the earliest matching
+/// substring in `preferred_substrings`. Within a single bucket the
+/// lexicographically greatest id wins, which roughly corresponds to the
+/// highest version since Gemini ids embed version numbers. Mirrors the
+/// Anthropic provider's `pick_preferred_model`, using `contains` instead
+/// of `starts_with` because the interesting discriminators (`pro`,
+/// `flash`, `lite`) sit in the middle of Gemini ids.
+fn pick_preferred_model(models: &[String], preferred_substrings: &[&str]) -> Option<String> {
+    for needle in preferred_substrings {
+        let candidate = models
+            .iter()
+            .filter(|id| id.contains(needle))
+            .max_by(|a, b| a.cmp(b));
+        if let Some(model) = candidate {
+            return Some(model.clone());
+        }
+    }
+    None
+}
+
+#[derive(Debug, Deserialize)]
+struct ListModelsResponse {
+    #[serde(default)]
+    models: Vec<ListModelEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ListModelEntry {
+    #[serde(default)]
+    name: String,
+}
+
+/// Fetch the model ids available to the current API key from Google's
+/// `GET /v1beta/models` endpoint, which answers
+/// `{"models": [{"name": "models/<id>", ...}]}`.
+///
+/// See https://ai.google.dev/api/models#method:-models.list.
+async fn list_google_models(
+    client: &dyn HttpClient,
+    api_url: &str,
+    api_key: &str,
+    extra_headers: &CustomHeaders,
+) -> Result<Vec<String>, LanguageModelCompletionError> {
+    // Default base has no version suffix; a custom base that already ends in
+    // `/v1beta` must not get it doubled (verified live: the endpoint is
+    // `{root}/v1beta/models`).
+    let base = api_url.trim_end_matches('/');
+    let base = base.strip_suffix("/v1beta").unwrap_or(base);
+    let uri = format!("{base}/v1beta/models");
+
+    let request = HttpRequest::builder()
+        .method(Method::GET)
+        .uri(uri)
+        .header("x-goog-api-key", api_key.trim())
+        .header("Accept", "application/json")
+        .extra_headers(extra_headers)
+        .body(AsyncBody::default())
+        .map_err(|error| LanguageModelCompletionError::BuildRequestBody {
+            provider: GOOGLE_PROVIDER_NAME,
+            error,
+        })?;
+
+    let host = request.uri().host().unwrap_or(api_url).to_owned();
+    let mut response = client
+        .send(request)
+        .await
+        .map_err(|error| LanguageModelCompletionError::HttpSend {
+            provider: GOOGLE_PROVIDER_NAME,
+            host,
+            error,
+        })?;
+
+    let mut body = String::new();
+    response
+        .body_mut()
+        .read_to_string(&mut body)
+        .await
+        .map_err(|error| LanguageModelCompletionError::ApiReadResponseError {
+            provider: GOOGLE_PROVIDER_NAME,
+            error,
+        })?;
+
+    if !response.status().is_success() {
+        return Err(LanguageModelCompletionError::Other(anyhow::anyhow!(
+            "failed to list Google models: {body}"
+        )));
+    }
+
+    let parsed: ListModelsResponse = serde_json::from_str(&body).map_err(|error| {
+        LanguageModelCompletionError::Other(anyhow::anyhow!(
+            "failed to parse Google models response: {error}"
+        ))
+    })?;
+
+    Ok(parsed
+        .models
+        .into_iter()
+        .filter_map(|entry| {
+            entry
+                .name
+                .strip_prefix("models/")
+                .map(str::to_string)
+        })
+        .collect())
 }

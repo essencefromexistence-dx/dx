@@ -2020,6 +2020,15 @@ impl AgentPanel {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
+        // When the center shows the AI screen, the agent dock button must
+        // keep focusing the AI screen — not open the AI dock panel.
+        if workspace
+            .active_item(cx)
+            .is_some_and(|item| item.screen_kind(cx) == WorkspaceScreenKind::Agent)
+        {
+            crate::AgentScreen::open_or_focus(workspace, window, cx);
+            return;
+        }
         if workspace
             .panel::<Self>(cx)
             .is_some_and(|panel| panel.read(cx).enabled(cx))
@@ -2042,6 +2051,15 @@ impl AgentPanel {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
+        // Same as `toggle_focus`: an active AI screen is an AI screen, not an
+        // AI dock panel.
+        if workspace
+            .active_item(cx)
+            .is_some_and(|item| item.screen_kind(cx) == WorkspaceScreenKind::Agent)
+        {
+            crate::AgentScreen::open_or_focus(workspace, window, cx);
+            return;
+        }
         if workspace
             .panel::<Self>(cx)
             .is_some_and(|panel| panel.read(cx).enabled(cx))
@@ -2073,6 +2091,15 @@ impl AgentPanel {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
+        // Same as `toggle_focus`: an active AI screen is an AI screen, not an
+        // AI dock panel.
+        if workspace
+            .active_item(cx)
+            .is_some_and(|item| item.screen_kind(cx) == WorkspaceScreenKind::Agent)
+        {
+            crate::AgentScreen::open_or_focus(workspace, window, cx);
+            return;
+        }
         if workspace
             .panel::<Self>(cx)
             .is_some_and(|panel| panel.read(cx).enabled(cx))
