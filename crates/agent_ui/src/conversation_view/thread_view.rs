@@ -6,7 +6,8 @@ use crate::{
         preview_url_for_agent_www_tool,
     },
     conversation_view::thread_search_bar::{ThreadSearchBar, ThreadSearchBarEvent},
-    dx_agent_bridge::DxConfiguredPluginSummary,
+        dx_agent_bridge::DxConfiguredPluginSummary,
+        entry_view_state::TERMINAL_CONTENT_TOP_PADDING,
     open_abs_path_at_point, project_path_for_file_link,
     thread_metadata_store::{ThreadId, ThreadMetadataStore},
     workflow_node_icons::{
@@ -1586,6 +1587,14 @@ impl ThreadView {
         self.parent_session_id.is_some()
     }
 
+    fn has_visible_conversation(&self, cx: &App) -> bool {
+        self.generating_indicator_in_list
+            || self.thread.read(cx).entries().iter().any(|entry| {
+                !matches!(entry, AgentThreadEntry::UserMessage(message)
+                    if message.content.source_blocks().is_empty())
+            })
+    }
+
     pub(super) fn can_edit_user_message(&self, index: usize, cx: &App) -> bool {
         let thread = self.thread.read(cx);
         let Some(message) = thread
@@ -1596,6 +1605,7 @@ impl ThreadView {
             return false;
         };
         thread.can_rewind_to(message.client_id.as_ref(), cx)
+            && !message.content.source_blocks().is_empty()
             && message
                 .content
                 .source_blocks()
@@ -1814,6 +1824,15 @@ impl ThreadView {
             self.turn_fields.last_turn_duration = duration;
         }
         cx.notify();
+    }
+
+    pub(crate) fn sync_follow_agent_state(&mut self, cx: &mut Context<Self>) {
+        self.should_be_following = self
+            .workspace
+            .update(cx, |workspace, _| {
+                workspace.is_being_followed(CollaboratorId::Agent)
+            })
+            .unwrap_or_default();
     }
 
     pub(crate) fn report_activity_completion(
@@ -2440,12 +2459,7 @@ impl ThreadView {
                 match res {
                     Ok(Some(SubmissionResponse::LegacyCompleted(_))) => {
                         this.current_submission.take();
-                        this.should_be_following = this
-                            .workspace
-                            .update(cx, |workspace, _| {
-                                workspace.is_being_followed(CollaboratorId::Agent)
-                            })
-                            .unwrap_or_default();
+                        this.sync_follow_agent_state(cx);
                     }
                     Ok(Some(SubmissionResponse::Accepted(_))) => {}
                     Ok(None) => {}
@@ -3144,7 +3158,7 @@ impl ThreadView {
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.list_state.item_count() == 0 {
+        if !self.has_visible_conversation(cx) {
             return;
         }
         self.set_editor_is_expanded(!self.editor_expanded, cx);
@@ -5866,11 +5880,11 @@ impl ThreadView {
         };
 
         let max_content_width = AgentSettings::get_global(cx).max_content_width;
-        let has_messages = self.list_state.item_count() > 0;
-        let showing_www_preview = matches!(
-            self.center_surface,
-            AgentThreadCenterSurface::WwwPreview { .. }
-        );
+            let has_messages = self.list_state.item_count() > 0;
+            let showing_www_preview = matches!(
+                self.center_surface,
+                AgentThreadCenterSurface::WwwPreview { .. }
+            );
         // Default: full chatinput box.
         // Only after clicking one of the 9 icons (which opens the real webpreview tab):
         // show the compact 10-item container (back + 9 icons) in the AI bottom.
@@ -5935,7 +5949,19 @@ impl ThreadView {
         // Upstream's read-only composer affordance, preserved here because the
         // fork's own control row below does not include it. debug_selector
         // "discard-protected-draft" is the only surface for this.
-        let composer_is_read_only = self.message_editor.read(cx).editor().read(cx).read_only(cx);
+=======
+            // Upstream's `has_visible_conversation` predicate is applied at the
+            // other three call sites upstream changed (`set_editor_is_expanded`,
+            // `sync_editor_mode`, and the empty-state branch of `sync_editor_mode`),
+            // so it stays compiled and wired. This site keeps the fork's own
+            // `item_count()` signal - the same call the fork makes in
+            // `callout_border_position` and `sync_editor_mode_for_empty_state` -
+            // because it also drives the www-preview overlay below, which is this
+            // fork's own surface. Upstream's `fills_container` binding stays inert:
+            // the fork commented out its only consumers above.
+                //         let has_messages = self.has_visible_conversation(cx);
+                //         let fills_container = !has_messages || editor_expanded;
+            let composer_is_read_only = self.message_editor.read(cx).editor().read(cx).read_only(cx);
         let discard_draft_button = composer_is_read_only.then(|| {
             div()
                 .debug_selector(|| "discard-protected-draft".into())
@@ -9081,6 +9107,9 @@ impl ThreadView {
 
         let primary = match &entry {
             AgentThreadEntry::UserMessage(message) => {
+                if message.content.source_blocks().is_empty() {
+                    return Empty.into_any_element();
+                }
                 let Some(editor) = self
                     .entry_view_state
                     .read(cx)
@@ -10646,7 +10675,7 @@ impl ThreadView {
     // empty state uses ours' `AutoHeight` budget rather than upstream's `Full` mode, which
     // is the surface our fork owns.
     pub(crate) fn sync_editor_mode(&mut self, cx: &mut Context<Self>) {
-        let has_messages = self.list_state.item_count() > 0;
+        let has_messages = self.has_visible_conversation(cx);
         let v2_empty_state = !has_messages;
 
         if !has_messages {
@@ -11388,11 +11417,9 @@ impl ThreadView {
             .when(is_expanded && terminal_view.is_some(), |this| {
                 this.child(
                     div()
-                        .pt_2()
                         .border_t_1()
                         .when(tool_failed || command_failed, |card| card.border_dashed())
                         .border_color(border_color)
-                        .bg(cx.theme().colors().terminal_background)
                         .rounded_b_md()
                         .text_ui_sm(cx)
                         .h_full()
@@ -11402,7 +11429,10 @@ impl ThreadView {
                                 .content_mode(window, cx)
                                 .is_scrollable()
                             {
-                                div().h_72().child(terminal_view).into_any_element()
+                                div()
+                                    .h(rems(18. + TERMINAL_CONTENT_TOP_PADDING))
+                                    .child(terminal_view)
+                                    .into_any_element()
                             } else {
                                 terminal_view.into_any_element()
                             };
@@ -15836,11 +15866,15 @@ impl Render for ThreadView {
         // renders (settings, connection state, feature flags).
         self.sync_local_commands(cx);
 
-        let has_messages = self.list_state.item_count() > 0;
-        let showing_www_preview = matches!(
-            self.center_surface,
-            AgentThreadCenterSurface::WwwPreview { .. }
-        );
+            // The fork's www-preview surface adds `showing_www_preview` on top of
+            // the emptiness check, so this site keeps the fork's `item_count()`
+            // signal; upstream's `has_visible_conversation` is the signal used in
+            // `sync_editor_mode` and `set_editor_is_expanded`.
+            let has_messages = self.list_state.item_count() > 0;
+            let showing_www_preview = matches!(
+                self.center_surface,
+                AgentThreadCenterSurface::WwwPreview { .. }
+            );
         let list_state = self.list_state.clone();
 
         let conversation = v_flex()
@@ -16426,7 +16460,7 @@ pub(crate) fn open_link(
                             ));
                             break;
                         }
-                        let paths = if path_style.is_absolute(&path.to_string_lossy())
+                        let paths = if path_style.has_root(&path)
                             || path.starts_with("~")
                         {
                             vec![path]
@@ -16650,7 +16684,7 @@ fn file_link_parts(input: &str, path_style: PathStyle) -> Option<(&str, Option<&
     let (path, fragment) = input
         .split_once('#')
         .map_or((input, None), |(path, fragment)| (path, Some(fragment)));
-    if !path_style.is_absolute(path)
+    if !path_style.has_root(Path::new(path))
         && let Ok(url) = Url::parse(input)
         && (!url.scheme().contains('.')
             || url.path().trim_matches(':').is_empty()
@@ -16669,7 +16703,7 @@ fn file_link_candidates(
     fragment_point: Option<Point>,
     path_style: PathStyle,
 ) -> Vec<(PathBuf, Option<Point>)> {
-    if path_style.is_windows() && path_style.is_absolute(path) {
+    if path_style.is_windows() && path_style.has_root(Path::new(path)) {
         return [
             MentionUri::parse_hyperlink(path, path_style).ok(),
             MentionUri::parse_hyperlink_literal(path, path_style),

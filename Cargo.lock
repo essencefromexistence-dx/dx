@@ -7802,10 +7802,8 @@ dependencies = [
  "http_client",
  "language_model_core",
  "log",
- "schemars 1.0.4",
  "serde",
  "serde_json",
- "strum 0.28.0",
 ]
 
 [[package]]
@@ -7963,6 +7961,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui_ios"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "block2 0.6.2",
+ "futures 0.3.34",
+ "gpui",
+ "gpui_apple",
+ "log",
+ "objc2 0.6.3",
+ "objc2-core-foundation",
+ "objc2-foundation 0.3.2",
+ "objc2-quartz-core 0.3.2",
+ "objc2-ui-kit",
+ "parking_lot",
+ "raw-window-handle",
+ "slotmap",
+ "uuid",
+]
+
+[[package]]
+name = "gpui_ios_example"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "gpui_ios",
+ "gpui_platform",
+]
+
+[[package]]
 name = "gpui_linux"
 version = "0.1.0"
 dependencies = [
@@ -8066,6 +8094,7 @@ dependencies = [
  "console_error_panic_hook",
  "criterion",
  "gpui",
+ "gpui_ios",
  "gpui_linux",
  "gpui_macos",
  "gpui_web",
@@ -12614,9 +12643,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d87d638e33c06f577498cbcc50491496a3ed4246998a7fbba7ccb98b1e7eab22"
 dependencies = [
  "bitflags 2.13.1",
- "objc2 0.6.3",
- "objc2-core-foundation",
- "objc2-foundation 0.3.2",
+     "block2 0.6.2",
+     "objc2 0.6.3",
+     "objc2-core-foundation",
+     "objc2-foundation 0.3.2",
+     "objc2-quartz-core 0.3.2",
 ]
 
 [[package]]
@@ -13267,7 +13298,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dunce",
- "pretty_assertions",
  "serde",
  "tempfile",
  "tendril 0.5.1",
@@ -14820,7 +14850,8 @@ dependencies = [
  "serde_json",
  "settings",
  "smallvec",
- "sysinfo 0.39.6",
+     "sysinfo 0.39.6",
+     "svg_preview",
  "telemetry",
  "tempfile",
  "theme",
@@ -15975,7 +16006,6 @@ dependencies = [
  "util",
  "uuid",
  "watch",
- "windows 0.62.2",
  "workspace",
  "worktree",
  "zlog",
@@ -18605,6 +18635,7 @@ dependencies = [
  "gpui",
  "language",
  "multi_buffer",
+ "project",
  "ui",
  "workspace",
  "zed_actions",
@@ -23922,7 +23953,7 @@ dependencies = [
 
 [[package]]
 name = "zed"
-version = "1.25.0"
+version = "1.26.0"
 dependencies = [
  "acp_thread",
  "acp_tools",

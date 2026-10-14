@@ -27,6 +27,10 @@ use crate::message_editor::{MessageEditor, MessageEditorEvent, SharedSessionCapa
 
 const MAX_ENTRY_VIEW_TOOL_CALL_TERMINALS: usize = 64;
 const MAX_ENTRY_VIEW_TOOL_CALL_DIFFS: usize = 128;
+/// Top padding, in rems, inside agent terminals. The tool card adds it to the
+/// scrollable terminal's height so the number of visible rows doesn't change.
+pub(crate) const TERMINAL_CONTENT_TOP_PADDING: f32 = 0.5;
+
 /// Maps an entry index through the removal of `removed` (a contiguous range of
 /// entries), returning `None` if the index referred to a removed entry.
 fn reindex_after_removal(index: usize, removed: &Range<usize>) -> Option<usize> {
@@ -756,6 +760,7 @@ fn create_terminal(
             cx,
         );
 
+        view.set_content_top_padding(gpui::rems(TERMINAL_CONTENT_TOP_PADDING), cx);
         view.set_embedded_mode(Some(1000), cx);
         view
     })
@@ -862,7 +867,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_diff_sync(cx: &mut TestAppContext) {
+    async fn test_legacy_diff_sync(cx: &mut TestAppContext) {
         init_test(cx);
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
@@ -1005,14 +1010,14 @@ mod tests {
                 )
                 .unwrap()
         });
-        cx.update(|_, cx| {
-            connection.send_update(
-                session_id,
-                acp_v1::SessionUpdate::AgentMessageChunk(acp_v1::ContentChunk::new(
-                    acp_v1::ContentBlock::Text(acp_v1::TextContent::new("hello")),
-                )),
-                cx,
-            );
+        thread.update(cx, |thread, cx| {
+            thread
+                .append_message_chunk(
+                    acp_thread::MessageKind::Assistant,
+                    acp_v2::ContentChunk::new("hello".into(), "after-elicitation"),
+                    cx,
+                )
+                .expect("append current message after elicitation");
         });
 
         let view_state = cx.new(|_cx| {
