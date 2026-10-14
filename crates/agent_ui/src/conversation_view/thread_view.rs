@@ -6699,16 +6699,16 @@ impl ThreadView {
 
         for target in ["plan", "goal", "multitask"] {
             let Some(mode) = modes.iter().find(|mode| {
-                let id = mode.id.0.to_lowercase();
+                let id = mode.value.0.to_lowercase();
                 let name = mode.name.to_lowercase();
                 id == target || name == target
             }) else {
                 continue;
             };
 
-            let selected = mode.id == current_mode;
+            let selected = mode.value == current_mode;
             let label = mode.name.clone();
-            let mode_id = mode.id.clone();
+            let mode_id = mode.value.clone();
             let button_id = format!("agent-composer-mode-{target}");
             let selector = mode_selector.clone();
             shortcuts.push(
