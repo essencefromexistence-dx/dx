@@ -649,7 +649,7 @@ fn expanded_params_md(
     cx.new(|cx| Markdown::new(params_md.into(), Some(language_registry.clone()), None, cx))
 }
 
-fn request_id_chip_label(request_id: &acp::RequestId) -> SharedString {
+fn request_id_chip_label(request_id: &RequestId) -> SharedString {
     let mut label = request_id.to_string();
     let Some((truncate_at, _)) = label.char_indices().nth(MAX_REQUEST_ID_CHIP_CHARS) else {
         return label.into();
