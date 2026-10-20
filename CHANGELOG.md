@@ -7,6 +7,35 @@
 
 ---
 
+## [Landed 2026-10-21] — follow-up sync of `upstream/main` (`fae8a35482`) into `forge`
+
+> ### ✅ SYNC DONE (2026-10-21) — **0 conflicts**, committed **`5aa9b5ec58`**
+>
+> `forge` was at **`96602276db`**; `upstream/main` is **`fae8a35482`** (*Select ACP v2 for beta
+> connections*, #65892, 2026-10-20). The previous sync stopped at `e70e0250a0`, so this replays
+> **2 commits**: `fae8a35482` and `1d8a29e1e2` (*google_ai: Classify invalid API keys as
+> authentication errors*, #65885).
+>
+> **0 conflicts** — and cleanly so, not by luck: upstream touched 9 files, and the fork had changes
+> in only 2 of them (`Cargo.lock` and `crates/acp_tools/src/acp_tools.rs`), neither of which
+> collides. The other 7 — including the bulk of the change (`agent_servers/src/acp.rs` +442,
+> `acp/debug_log.rs` +170, `acp/v2.rs`, `agent_connection_store.rs`, `google_ai.rs` and the two
+> `Cargo.toml`s) — are **unchanged by the fork**, so upstream's versions apply wholesale. Both
+> commits ride on top of the ACP v2 restructure the previous sync absorbed, which is why they
+> merge without conflict.
+>
+> ✅ **`Cargo.lock` did NOT need regenerating** — both changes are *workspace-internal* dependency
+> additions (`acp_thread` on `acp_tools`, `feature_flags` on `agent_servers`), so the auto-merged
+> lock is already consistent.
+>
+> Verification: `cargo metadata --locked` → **rc 0**. Parse gate → **0 failures** across the 6
+> changed `.rs` files, all also format-clean. Tree-wide gate suite → **0** markers, **0**
+> unexplained deletions, **0** token losses in either direction, **0** item-parity failures, **0**
+> balance failures. `git ls-files --eol` → **0** `i/crlf`, **0** `i/mixed`. No compile has been run:
+> a full build needs more disk than `G:` has free.
+
+---
+
 ## [Landed 2026-10-20] — sync of `upstream/main` (`e70e0250a0`) into `forge`
 
 > ### ✅ SYNC DONE (2026-10-20) — **14 of 14 conflicted paths resolved**, committed **`58e0c651c54`**
