@@ -20,6 +20,17 @@ Full narrative: `../CHANGELOG.md` (§Session 33–35), `../TODO.md` §0.11, `../
 | `fix_inlay_sync3.py` | **Session-43 resolver** for `editor/src/inlays/inlay_hints.rs` (5 blocks). **CRLF-aware** — strips `\r` before comparing marker lines and re-emits new lines with the file's own EOL. Block 5 is a **union** (ours' 142 helper lines + upstream's 51-line `normalize_hint_biases`), so it inserts the extra `}` ours' last function needs. |
 | `fix_extui_sync3.py` | **Session-43 resolver** for `extensions_ui/src/extensions_ui.rs` (6 blocks). Takes upstream's offline pipeline for blocks 2–6, **re-attaches** ours' `MAX_FILTERED_EXTENSION_RESULTS` cap inside `update_local_search_results` (asserting exactly one `match_candidates.len()` hit), and annotates the two now-unsurfaced items with `#[allow(dead_code)]`. |
 | `nested_audit_sync3.py` | `nested_audit.py` re-pointed for session 43 (ours `b5142ba1aa`, theirs `a84689073d`, base `15dc0e9fa0`), with the file list taken from `git diff --name-only <ours>`. Result: **0 local / 0 remote losses**. |
+| `sync-2026-10-20/` | **The 2026-10-20 sync (`e70e0250a0`, commit `58e0c651c54`) in full** — its own gate suite (`gates.py`), parse gate (`parsegate.py`), spec-driven byte-exact resolver (`resolve_conflicts.py`), conflict viewers, the per-file resolution specs, and the traps that sync paid for. See `sync-2026-10-20/README.md`. |
+
+## ⚠️ The 2026-09-26 toolchain was LOST, and is rebuilt here
+
+The session-33–35 tools (`parsegate.py`, `noloss3.py`, `noloss4.py`, `braces.py`, `dangle.py`,
+`drift.py`, `refile.py`, `check_cargo.py`, `check_ws_inherit.py`, `merge-engine2.sh`) lived in
+`G:/tmp` and were **not** copied here. They are gone: `G:/tmp` was checked on 2026-10-20 and does
+not contain them. `sync-2026-10-20/` rebuilds the parts that matter — the **gate suite**, the
+**parse gate**, and a **spec-driven resolver** that records every conflict resolution as a
+reviewable JSON file instead of an ad-hoc hand edit. Rebuild the rest on demand; the traps each
+one cost are listed in `sync-2026-10-20/README.md`.
 
 ## Repairs (the three fix scripts)
 

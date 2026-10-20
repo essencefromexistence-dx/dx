@@ -1,0 +1,39 @@
+{
+  "file": "crates/gpui_windows/src/platform.rs",
+  "blocks": {
+    "1": []
+  },
+  "edits": [
+    {
+      "label": "re-home the fork's webview-focus guard into upstream's new translate_accelerator method, and route it through the fork's handle_accelerated_keydown_msg so that function stays wired",
+      "expect": 1,
+      "old": [
+        "    fn translate_accelerator(&self, msg: &MSG) -> bool {",
+        "        if msg.message != WM_KEYDOWN && msg.message != WM_SYSKEYDOWN {",
+        "            return false;",
+        "        }",
+        "",
+        "        self.window_from_hwnd(msg.hwnd)",
+        "            .is_some_and(|window| window.handle_keydown_msg(msg.wParam, msg.lParam) == Some(0))",
+        "    }"
+      ],
+      "new": [
+        "    fn translate_accelerator(&self, msg: &MSG) -> bool {",
+        "        if msg.message != WM_KEYDOWN && msg.message != WM_SYSKEYDOWN {",
+        "            return false;",
+        "        }",
+        "",
+        "        let root_window = unsafe { GetAncestor(msg.hwnd, GA_ROOT) };",
+        "        if window_has_focused_webview(msg.hwnd)",
+        "            || (!root_window.is_invalid() && window_has_focused_webview(root_window))",
+        "        {",
+        "            return false;",
+        "        }",
+        "",
+        "        self.window_from_hwnd(msg.hwnd)",
+        "            .is_some_and(|window| window.handle_accelerated_keydown_msg(msg.wParam, msg.lParam) == Some(0))",
+        "    }"
+      ]
+    }
+  ]
+}

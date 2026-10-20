@@ -1,0 +1,13 @@
+{
+  "file": "crates/editor/src/signature_help.rs",
+  "blocks": {
+    "1": [
+      "                            for signature in signature_help",
+      "                                .signatures",
+      "                                .iter_mut()",
+      "                                .take(MAX_SIGNATURE_HELP_SIGNATURES)",
+      "                            {",
+      "                                signature.label = cap_signature_label(signature.label.clone());"
+    ]
+  }
+}

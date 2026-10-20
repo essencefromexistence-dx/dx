@@ -1,0 +1,60 @@
+{
+  "file": "crates/agent_ui/src/conversation_view/thread_view.rs",
+  "blocks": {
+    "1": [
+      "    AcpThreadEvent, ContentBlock, Elicitation, ElicitationEntryId, ElicitationStatus,",
+      "    ForegroundActivity, OutputTokensUpdate, SandboxAuthorizationDetails,",
+      "    SandboxFallbackAuthorizationDetails, SandboxNotAppliedReason, SubmissionId, SubmissionResponse,",
+      "    SubmissionState, ToolCallLocation, decode_path_escapes,"
+    ],
+    "2": [],
+    "3": [
+      "        let is_generating = self.thread.read(cx).status() != ThreadStatus::Idle;",
+      "        let is_unconfirmed = self.thread.read(cx).status() == ThreadStatus::Unconfirmed;",
+      "        let is_voice_busy = self.composer_voice_state.is_busy();"
+    ]
+  },
+  "edits": [
+    {
+      "label": "re-attach upstream's 'Activity unconfirmed' composer indicator (upstream #65724) into the fork's DX composer, so upstream's capability is not dropped by the fork's composer layout winning the conflict",
+      "expect": 1,
+      "old": [
+        "                                                .justify_end()",
+        "                                                .gap_1()",
+        "                                                .children(self.render_token_usage(cx))",
+        "                                                .children(self.render_fast_mode_control(cx))",
+        "                                                .children(self.render_thinking_control(cx))",
+        "                                                .children(discard_draft_button)"
+      ],
+      "new": [
+        "                                                .justify_end()",
+        "                                                .gap_1()",
+        "                                                .when(",
+        "                                                    self.thread.read(cx).foreground_activity()",
+        "                                                        == ForegroundActivity::Unconfirmed,",
+        "                                                    |row| {",
+        "                                                        row.child(",
+        "                                                            div()",
+        "                                                                .id(\"activity-unconfirmed\")",
+        "                                                                .debug_selector(|| {",
+        "                                                                    \"activity-unconfirmed\".into()",
+        "                                                                })",
+        "                                                                .child(",
+        "                                                                    Label::new(\"Activity unconfirmed\")",
+        "                                                                        .size(LabelSize::Small)",
+        "                                                                        .color(Color::Muted),",
+        "                                                                )",
+        "                                                                .tooltip(Tooltip::text(",
+        "                                                                    \"The session is attached, but the agent has not reported its activity. You can send manually; automatic sends wait for confirmed Idle.\",",
+        "                                                                )),",
+        "                                                        )",
+        "                                                    },",
+        "                                                )",
+        "                                                .children(self.render_token_usage(cx))",
+        "                                                .children(self.render_fast_mode_control(cx))",
+        "                                                .children(self.render_thinking_control(cx))",
+        "                                                .children(discard_draft_button)"
+      ]
+    }
+  ]
+}

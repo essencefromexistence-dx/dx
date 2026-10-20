@@ -1,0 +1,10 @@
+{
+  "file": "crates/gpui/src/scene.rs",
+  "blocks": {
+    "1": [
+      "            .sort_by_key(|sprite| (sprite.order, sprite.tile.texture_id.index));",
+      "        self.liquid_glass",
+      "            .sort_by_key(|primitive| (primitive.order, primitive.tile.texture_id.index));"
+    ]
+  }
+}

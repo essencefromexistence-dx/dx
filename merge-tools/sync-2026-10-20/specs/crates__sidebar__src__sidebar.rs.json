@@ -1,0 +1,51 @@
+{
+  "file": "crates/sidebar/src/sidebar.rs",
+  "blocks": {
+    "1": [
+      "        let can_reorder_thread = !is_empty_draft && !self.has_filter_query(cx);",
+      "        let is_running = matches!("
+    ],
+    "2": [
+      "                    let contextual_action: Option<AnyElement> = if is_running {",
+      "                        Some(",
+      "                            IconButton::new(\"stop-thread\", IconName::Stop)"
+    ],
+    "3": [
+      "                    .child(self.render_gen_toolbar(cx))",
+      "                    .when(right_window_controls, |this| {",
+      "                        this",
+      "                        // Without projects, nothing flex-grows to push right-side window controls",
+      "                        // to the edge.",
+      "                        .when(no_open_projects, |this| this.justify_end())",
+      "                        .children(Self::render_right_window_controls(window, cx))",
+      "                    }),",
+      "                )",
+      "                .when(!no_open_projects, |this| {",
+      "                    this.child(v_flex().px_2().pb_2().gap_2().when(",
+      "                        matches!(self.view, SidebarView::ThreadList),",
+      "                        |this| {",
+      "                            this.child(self.render_gen_search_row(window, cx))",
+      "                                .child(self.render_space_grid(cx))",
+      "                        },",
+      "                    ))"
+    ]
+  },
+  "edits": [
+    {
+      "label": "re-attach upstream's Unconfirmed-aware stop tooltip (upstream #65724) onto the fork's stop button",
+      "expect": 1,
+      "old": [
+        "                                .tooltip(Tooltip::text(\"Stop Generation\"))"
+      ],
+      "new": [
+        "                                .tooltip(Tooltip::text(",
+        "                                    if thread.status == AgentThreadStatus::Unconfirmed {",
+        "                                        \"Request Stop (Activity Unconfirmed)\"",
+        "                                    } else {",
+        "                                        \"Stop Generation\"",
+        "                                    },",
+        "                                ))"
+      ]
+    }
+  ]
+}
