@@ -18,9 +18,16 @@ Merge `upstream/main` (zed-industries/zed) into our fork `dx-code` such that:
 
 | role | ref | commit | date |
 |---|---|---|---|
-| **ours** | `merge-20260924` == `dev` | `c701504082` | 2026-09-24 |
-| **theirs** | `upstream/main` | `baee1ca6de` | 2026-09-24 09:52 UTC |
-| **synthetic base** | `d8eb569cc5` (Zed) | `d8eb569cc5` | 2026-06-15 10:54 UTC |
+| **ours** | `forge` | `767578f395` | 2026-10-15 |
+| **theirs** | `upstream/main` | `e70e0250a0` | 2026-10-20 15:14 UTC |
+| **merge-base** | (Zed) | `3e145061d86` | 2026-10-14 19:54 UTC |
+
+> The table above records the **2026-10-20 sync** (session 44). The first merge's inputs are
+> `ours` = `merge-20260924` == `dev` @ `c701504082` (2026-09-24), `theirs` = `upstream/main` @
+> `baee1ca6de` (2026-09-24 09:52 UTC), and a **synthetic base** `d8eb569cc5` (Zed, 2026-06-15) —
+> because the fork's original root was disjoint from upstream's. Since the first upstream merge,
+> `forge` descends from upstream directly, so **the merge base is a real upstream commit** and no
+> synthetic base is needed.
 
 `dev` has **no common ancestor** with `upstream/main` (fresh root commit `8dc3418ec1`). A plain
 `git merge-tree` refuses ("unrelated histories"); the `--allow-unrelated-histories` form is

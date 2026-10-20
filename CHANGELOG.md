@@ -7,6 +7,39 @@
 
 ---
 
+## [Landed 2026-10-20] — sync of `upstream/main` (`e70e0250a0`) into `forge`
+
+> ### ✅ SYNC DONE (2026-10-20) — **14 of 14 conflicted paths resolved**, committed **`58e0c651c54`**
+>
+> `forge` was at **`767578f395`**; `upstream/main` is **`e70e0250a0`** (*Shut down ACP v2 connections
+> on teardown*, #65873, 2026-10-20 15:14 UTC); the **merge-base was `3e145061d86`** (2026-10-14), so
+> the **62 commits** of the window replayed. Measured in memory first: merged tree
+> **`9a7d30e0aed`**, **14 conflicted paths** = **12 content + 2 `docs/**` modify/delete** — and the
+> merge reproduced that exactly.
+>
+> This sync was also the one that **rebuilt the lost toolchain**. The session-33–35 gates
+> (`parsegate.py`, `noloss*.py`, `braces.py`, `check_cargo.py`, `check_ws_inherit.py`, …) lived in
+> `G:/tmp` and were **lost**; `G:/tmp` was re-checked on 2026-10-20 and does not contain them.
+> They are rebuilt in **`merge-tools/sync-2026-10-20/`** — a gate suite, a parse gate, and a
+> **spec-driven byte-exact resolver** that records every conflict resolution as a reviewable JSON
+> file rather than an ad-hoc hand edit. The traps the rebuild paid for are recorded in
+> `merge-tools/sync-2026-10-20/README.md`.
+>
+> **`Cargo.lock` WAS regenerated**, unlike session 43: `dx-media` is now pinned to
+> `rev = "caacb6134a455bea4e0eb6b58d522e96af230e4a"` in the root manifest, so cargo can resolve the
+> private git dependency. The **hand-merged union differed from cargo's resolution in exactly two
+> places** — one version-qualified dependency (`proc-macro-crate 3.4.0`) and one package ordering
+> (`generational-box` sorts after the `gdk*` family, not before it). Cargo's answer is the one in
+> the tree.
+>
+> The **2 modify/delete are `docs/**`** (*ours-deleted / upstream-modified*) — the recurring
+> decision; the policy is to **honour our deletion and record upstream's text verbatim**, done in
+> **`merge-tools/evidence/upstream_docs_sync4.diff`**.
+>
+> Full per-file Δ, the resolution map and the trap list: **`TODO.md` §0.15**, **`merge-tools/sync-2026-10-20/README.md`**.
+
+---
+
 ## [Unreleased] — next sync: `upstream/main` (`a84689073d`, 2026-10-03) into `forge`
 
 > ### ✅ SYNC DONE (2026-10-03, session 43) — **29 of 29 conflicts resolved**, committed **`b97dc82680`**
