@@ -6817,7 +6817,9 @@ impl Sidebar {
         match self.contents.entries.get(ix) {
             Some(ListEntry::Thread(thread)) => {
                 match thread.status {
-                    AgentThreadStatus::Running | AgentThreadStatus::WaitingForConfirmation => {
+                    AgentThreadStatus::Running
+                    | AgentThreadStatus::WaitingForConfirmation
+                    | AgentThreadStatus::Unconfirmed => {
                         return;
                     }
                     AgentThreadStatus::Completed | AgentThreadStatus::Error => {}
@@ -7543,7 +7545,9 @@ impl Sidebar {
         let can_reorder_thread = !is_empty_draft && !self.has_filter_query(cx);
         let is_running = matches!(
             thread.status,
-            AgentThreadStatus::Running | AgentThreadStatus::WaitingForConfirmation
+            AgentThreadStatus::Running
+                | AgentThreadStatus::WaitingForConfirmation
+                | AgentThreadStatus::Unconfirmed
         );
         let is_renaming =
             self.rename_target == Some(RenameTarget::Thread(thread.metadata.thread_id));
@@ -7757,7 +7761,13 @@ impl Sidebar {
                                 .icon_size(IconSize::Small)
                                 .icon_color(Color::Error)
                                 .style(ButtonStyle::Tinted(TintColor::Error))
-                                .tooltip(Tooltip::text("Stop Generation"))
+                                .tooltip(Tooltip::text(
+                                    if thread.status == AgentThreadStatus::Unconfirmed {
+                                        "Request Stop (Activity Unconfirmed)"
+                                    } else {
+                                        "Stop Generation"
+                                    },
+                                ))
                                 .on_click(cx.listener(move |this, _, _window, cx| {
                                     this.stop_thread(&thread_id_for_actions, cx);
                                 }))
@@ -10859,7 +10869,11 @@ impl Sidebar {
                     })
                     .child(self.render_gen_toolbar(cx))
                     .when(right_window_controls, |this| {
-                        this.children(Self::render_right_window_controls(window, cx))
+                        this
+                            // Without projects, nothing flex-grows to push right-side window controls
+                            // to the edge.
+                            .when(no_open_projects, |this| this.justify_end())
+                            .children(Self::render_right_window_controls(window, cx))
                     }),
             )
             .when(!no_open_projects, |this| {
@@ -12110,6 +12124,7 @@ fn all_thread_infos_for_workspace(
                 AgentThreadStatus::Error
             } else {
                 match thread.status() {
+                    ThreadStatus::Unconfirmed => AgentThreadStatus::Unconfirmed,
                     ThreadStatus::Generating => AgentThreadStatus::Running,
                     ThreadStatus::Idle => AgentThreadStatus::Completed,
                 }
@@ -12318,6 +12333,7 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
             let title = thread.title().unwrap_or_else(|| "(untitled)".into());
             let session_id = thread.session_id();
             let status = match thread.status() {
+                ThreadStatus::Unconfirmed => "unconfirmed",
                 ThreadStatus::Idle => "idle",
                 ThreadStatus::Generating => "generating",
             };
@@ -12352,6 +12368,7 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
                     let thread = thread_view.read(cx).thread.read(cx);
                     let title = thread.title().unwrap_or_else(|| "(untitled)".into());
                     let status = match thread.status() {
+                        ThreadStatus::Unconfirmed => "unconfirmed",
                         ThreadStatus::Idle => "idle",
                         ThreadStatus::Generating => "generating",
                     };

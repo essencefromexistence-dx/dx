@@ -13,7 +13,6 @@ use project::lsp_command::signature_help::ParameterInfo;
 use settings::Settings;
 use std::ops::Range;
 use std::time::Duration;
-use text::Rope;
 use theme_settings::ThemeSettings;
 use ui::{
     ActiveTheme, AnyElement, ButtonCommon, ButtonStyle, Clickable, FluentBuilder, IconButton,
@@ -287,10 +286,11 @@ impl Editor {
                                 .take(MAX_SIGNATURE_HELP_SIGNATURES)
                             {
                                 signature.label = cap_signature_label(signature.label.clone());
-                                let text = Rope::from(signature.label.as_ref());
                                 let highlights = language
-                                    .highlight_text(&text, 0..signature.label.len())
-                                    .into_iter()
+                                    .highlight_text(
+                                        signature.label.as_str(),
+                                        0..signature.label.len(),
+                                    )
                                     .flat_map(|(range, highlight_id)| {
                                         Some((range, *cx.theme().syntax().get(highlight_id)?))
                                     });

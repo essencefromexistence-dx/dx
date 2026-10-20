@@ -397,6 +397,7 @@ fn language_model(model: &open_router::Model) -> LanguageModel {
             name: effort.label().into(),
             value: effort.value().into(),
             is_default: Some(effort) == default_effort,
+            supports_disabling_thinking: None,
         })
         .collect();
     LanguageModel {

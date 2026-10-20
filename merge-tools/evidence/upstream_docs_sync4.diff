@@ -1,0 +1,103 @@
+diff --git a/docs/src/account/zed-hosted-models.md b/docs/src/account/zed-hosted-models.md
+index bac64b5998..a2f1e13a79 100644
+--- a/docs/src/account/zed-hosted-models.md
++++ b/docs/src/account/zed-hosted-models.md
+@@ -1,6 +1,6 @@
+ ---
+ title: Zed-Hosted Models - Zed
+-description: AI models available via Zed Pro including Claude Fable 5.1, Claude Opus 5.5, GPT-6.1 Sol, and Gemini 3. Pricing, context windows, and tool call support.
++description: AI models available via Zed Pro including Claude Fable 5.1, Claude Opus 5.5, GPT-6.1 Sol, and Gemini 4 Argon. Pricing, context windows, and tool call support.
+ ---
+ 
+ # Zed-Hosted Models
+@@ -116,6 +116,9 @@ Zed's plans offer hosted versions of major LLMs with higher rate limits than dir
+ | GPT-5 nano        | OpenAI    | Input               | $0.05                        | $0.055                  |
+ |                   | OpenAI    | Output              | $0.40                        | $0.44                   |
+ |                   | OpenAI    | Cached Input        | $0.005                       | $0.0055                 |
++| Gemini 4 Argon    | Google    | Input               | $2.00                        | $2.20                   |
++|                   | Google    | Output              | $10.00                       | $11.00                  |
++|                   | Google    | Cached Input        | $0.10                        | $0.11                   |
+ | Gemini 3.1 Pro    | Google    | Input               | $2.00                        | $2.20                   |
+ |                   | Google    | Output              | $12.00                       | $13.20                  |
+ | Gemini 3.5 Flash  | Google    | Input               | $1.50                        | $1.65                   |
+@@ -142,7 +145,7 @@ Zed no longer offers the models below:
+ 
+ Any usage of a Zed-hosted model will be billed at the Zed Price (rightmost column above). See [Plans & Pricing](./plans-and-pricing.md) for details on Zed's plans and limits for use of hosted models.
+ 
+-Because Zed-hosted Gemini models do not use Google context caching, Gemini usage is billed only as input and output tokens; there is no separate cached-input price for these models. This preserves zero-data-retention behavior for hosted Gemini requests. For background, see Google's Vertex AI documentation on [context caching](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview) and [zero data retention](https://cloud.google.com/vertex-ai/generative-ai/docs/vertex-ai-zero-data-retention).
++Gemini 4 Argon bills implicit cache hits at the cached-input rate above. Gemini 3 models do not use Google context caching and are billed only as input and output tokens, which preserves zero-data-retention behavior for those requests. For background, see Google's Vertex AI documentation on [context caching](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview) and [zero data retention](https://cloud.google.com/vertex-ai/generative-ai/docs/vertex-ai-zero-data-retention).
+ 
+ > LLMs can enter unproductive loops that require user intervention. Monitor longer-running tasks and interrupt if needed.
+ 
+@@ -181,6 +184,7 @@ A context window is the maximum span of text and code an LLM can consider at onc
+ | GPT-5.2-Codex     | OpenAI    | 272k input / 400k total   |
+ | GPT-5 mini        | OpenAI    | 272k input / 400k total   |
+ | GPT-5 nano        | OpenAI    | 272k input / 400k total   |
++| Gemini 4 Argon    | Google    | 1M                        |
+ | Gemini 3.1 Pro    | Google    | 200k                      |
+ | Gemini 3.5 Flash  | Google    | 1M                        |
+ | Gemini 3 Flash    | Google    | 1M                        |
+diff --git a/docs/src/languages/python.md b/docs/src/languages/python.md
+index 557f420750..14e5e1d47d 100644
+--- a/docs/src/languages/python.md
++++ b/docs/src/languages/python.md
+@@ -12,6 +12,7 @@ Python support is available natively in Zed.
+   - [DetachHead/basedpyright](https://github.com/DetachHead/basedpyright)
+   - [astral-sh/ruff](https://github.com/astral-sh/ruff)
+   - [astral-sh/ty](https://github.com/astral-sh/ty)
++  - [facebook/pyrefly](https://github.com/facebook/pyrefly)
+   - [microsoft/pyright](https://github.com/microsoft/pyright)
+   - [python-lsp/python-lsp-server](https://github.com/python-lsp/python-lsp-server) (PyLSP)
+ - Debug Adapter: [debugpy](https://github.com/microsoft/debugpy)
+@@ -76,7 +77,8 @@ Zed provides several Python language servers out of the box. By default, [basedp
+ 
+ Other built-in language servers are:
+ 
+-- [ty](https://docs.astral.sh/ty/)&mdash;Up-and-coming language server from Astral, built for speed.
++- [Ty](https://docs.astral.sh/ty/)&mdash;Up-and-coming language server from Astral, built for speed.
++- [Pyrefly](https://pyrefly.org)&mdash;Language server and type checker using inference for accurate navigation and type safety.
+ - [Pyright](https://github.com/microsoft/pyright)&mdash;The basis for basedpyright.
+ - [PyLSP](https://github.com/python-lsp/python-lsp-server)&mdash;A plugin-based language server that integrates with tools like `pycodestyle`, `autopep8`, and `yapf`.
+ 
+@@ -170,6 +172,41 @@ Here's an example `pyrightconfig.json` file that configures basedpyright to use
+ 
+ See [Python Language Server Configuration](https://github.com/python-lsp/python-lsp-server/blob/develop/CONFIGURATION.md) for more.
+ 
++### Pyrefly
++
++[Pyrefly](https://pyrefly.org) is a modern Python type checker and language server from Meta with powerful IDE features.
++
++#### Showing Type Errors
++
++By default, Pyrefly only displays type errors when a configuration file is present in your project. To see type errors in Zed:
++
++**Create a configuration file** (recommended): Add a `pyrefly.toml` or configure `[tool.pyrefly]` in your `pyproject.toml` at the root of your project. This is the standard way to use Pyrefly and allows you to customize its behavior.
++
++Example minimal `pyrefly.toml`:
++
++```toml
++# Check all Python files in your project
++project-includes = ["."]
++```
++
++For comprehensive configuration options, see the [Pyrefly configuration documentation](https://pyrefly.org/docs/configuration).
++
++Alternatively, add to the `lsp` section of your zed config file to tell Pyrefly to always display type errors:
++
++```json
++"lsp": {
++  "pyrefly": {
++    "initialization_options": {
++      "python": {
++        "pyrefly": {
++          "displayTypeErrors": "force-on"
++        }
++      }
++    }
++  }
++}
++```
++
+ ## Virtual Environments
+ 
+ [Virtual environments](https://docs.python.org/3/library/venv.html) are a useful tool for fixing a Python version and set of dependencies for a specific project, in a way that's isolated from other projects on the same machine. Zed has built-in support for discovering, configuring, and activating virtual environments, based on the language-agnostic concept of a [toolchain](../toolchains.md).

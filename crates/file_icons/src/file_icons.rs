@@ -70,10 +70,12 @@ impl FileIcons {
 
             // check if suffix based on first dot is in suffixes
             // e.g. consider `module.js` as suffix to angular's module file named `auth.module.js`
+            let mut first_prefix = None;
             for _ in 0..MAX_FILE_ICON_SUFFIX_SEGMENTS {
-                let Some((_, suffix)) = typ.split_once('.') else {
+                let Some((prefix, suffix)) = typ.split_once('.') else {
                     break;
                 };
+                first_prefix.get_or_insert(prefix);
                 let Some(suffix) = bounded_icon_suffix(suffix) else {
                     break;
                 };
@@ -82,6 +84,11 @@ impl FileIcons {
                     return maybe_path;
                 }
                 typ = suffix;
+            }
+            if let Some(prefix) = first_prefix.and_then(get_icon_from_suffix) {
+                // check if stem (before first dot) is in stems
+                // e.g. catch file named `Dockerfile.prod` or `Podfile.lock`
+                return Some(prefix);
             }
         }
 
@@ -314,6 +321,28 @@ mod tests {
                 default,
                 FileIcons::get_folder_indicators(FolderIndicator::Icon, false, &path, cx),
                 "the default must stay `icon` so existing users see no change"
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn test_suffix_matches_take_precedence_over_prefixes(cx: &mut gpui::TestAppContext) {
+        cx.update(|cx| {
+            theme::init(theme::LoadThemes::JustBase, cx);
+        });
+
+        cx.update(|cx| {
+            assert_eq!(
+                FileIcons::get_icon("mod.rs".as_ref(), cx),
+                Some("icons/file_icons/rust.svg".into())
+            );
+            assert_eq!(
+                FileIcons::get_icon("Dockerfile.rs".as_ref(), cx),
+                Some("icons/file_icons/rust.svg".into())
+            );
+            assert_eq!(
+                FileIcons::get_icon("go.mod".as_ref(), cx),
+                Some("icons/file_icons/go.svg".into())
             );
         });
     }

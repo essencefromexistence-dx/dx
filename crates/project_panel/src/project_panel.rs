@@ -10811,7 +10811,7 @@ impl Render for ProjectPanel {
                                         }
                                     },
                                 ))
-                                .on_scroll_wheel({
+                                .on_scroll({
                                     let scroll_handle = self.scroll_handle.clone();
                                     let entity_id = cx.entity().entity_id();
                                     move |event, window, cx| {
