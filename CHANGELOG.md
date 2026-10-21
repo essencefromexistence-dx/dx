@@ -6,6 +6,77 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-21] - a builtin model in the picker must be requestable
+
+> ### ✅ **A real production bug in the OpenCode provider: the model picker offered models that
+> every request refused.**
+>
+> `provided_models` (the picker) and `opencode_models` (the request-time lookup) were **two different
+> inventories**.
+>
+> The picker offered the **static tier catalogue** - the builtin tiers materialised onto upstream's
+> `Model`, which is the whole point of the keyless *public free mode*:
+>
+> ```rust
+> for tier in OpenCodeTier::iter() {
+>     for &subscription in tier.available_subscriptions() {
+>         if Self::subscription_available(subscription, has_real_key, cx) {
+>             let model = tier.to_model(subscription);
+>             let key = model_id(&model, subscription);
+>             models.insert(key, (DiscoveredModel { ... }, subscription));
+>         }
+>     }
+> }
+> ```
+>
+> The request path did not. `opencode_models` only ever held the *discovered* models and the
+> *user-configured* ones, and `config` resolves the requested model through it:
+>
+> ```rust
+> fn config(&self, model: &LanguageModel, cx: &App)
+>     -> Result<(DiscoveredModel, OpenCodeSubscription), LanguageModelCompletionError>
+> {
+>     self.opencode_models(cx)
+>         .remove(model.id.0.as_ref())
+>         .ok_or_else(|| unavailable_error(model))
+> }
+> ```
+>
+> So a builtin free model such as `free/x-preview-f-free` was **listed in the picker and could not be
+> requested**: the lookup missed, and every request failed with
+>
+> ```
+> ModelUnavailable { provider: "Opencode Zen", model: "free/x-preview-f-free" }
+> ```
+>
+> until a live discovery happened to populate `discovered_models` for that subscription. The fork's own
+> regression test for the public free mode, `opencode_public_free_mode_uses_public_key_for_free_request`,
+> is exactly this case - it failed with the error above.
+>
+> `opencode_models` now materialises the same static tier catalogue, inserted **first** so the live
+> discovery still overwrites it on a key collision - the same order `provided_models` already uses.
+>
+> **Two stale test expectations fixed alongside it**, both in the fork's own `dx_tests`:
+>
+> - The provider's model ids carry the subscription prefix - `model_id` →
+>   `{subscription.id_prefix()}/{model.id()}`, so `free/…`. The test-only helpers
+>   `opencode_language_model_id` / `opencode_model_registry_key` deliberately produce the **bare** ids,
+>   and the file says so at the helper: *"Test-only helpers: the non-test code paths use `model_id()`
+>   instead."* The test asserted the bare form against the provider's production ids.
+> - The expected free-model list was missing `ling-3.0-flash-fin-free`, a builtin free tier that exists
+>   in `crates/opencode/src/opencode.rs` as `OpenCodeTier::Ling3_0FlashFinFree`.
+>
+> Both fork tests also needed an **fs global**: `OpenCodeLanguageModelProvider::new` resolves the
+> filesystem through `<dyn Fs>::global(cx)`, which panics with *"no state of type fs::GlobalFs exists"*
+> when none is set, and the provider caches its model catalog on disk. Upstream's own tests in this file
+> set a `FakeFs`; the fork's `init_test` did not.
+>
+> **Proven:** `cargo test -p language_models --lib` → **134 passed, 2 failed** (was 131 passed, 5 failed).
+> The two remaining failures are in `provider::llama_cpp` and are **pre-existing** - that file was not
+> touched by the merge in any window (`git diff 767578f395 HEAD --
+> crates/language_models/src/provider/llama_cpp.rs` is empty), and the failures are stale expectations
+> against the fork's own default llama.cpp model. They are recorded as open items in `TODO.md`.
+
 
 ## [Landed 2026-10-21] — post-sync audit: the first real `cargo check`, and the two defects it found
 
