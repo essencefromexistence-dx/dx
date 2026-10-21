@@ -4220,7 +4220,7 @@ mod tests {
     /// `/v1`, the native ones at the root - or a stray `/v1` in the settings
     /// turns into `/v1/v1/models` and 404s against a real server.
     #[gpui::test]
-    async fn a_v1_suffixed_api_url_reaches_the_same_endpoints(cx: &mut TestAppContext) {
+    async fn a_v1_suffixed_api_url_reaches_the_same_endpoints(_cx: &mut TestAppContext) {
         let paths = Arc::new(Mutex::new(Vec::new()));
         let http_client = FakeHttpClient::create({
             let paths = paths.clone();
