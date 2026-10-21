@@ -26,7 +26,6 @@ use util::{path, paths::PathStyle, rel_path::rel_path};
 use workspace::{
     AppState, ItemHandle, MultiWorkspace, Pane, Workspace,
     item::{Item, ProjectItem, test::TestItem},
-    notifications::simple_message_notification::MessageNotification,
     register_project_item,
 };
 
@@ -6082,8 +6081,16 @@ async fn test_dragging_same_named_files_preserves_one_source_on_conflict(
     );
 }
 
+/// Ours' project panel **disambiguates** a move onto an existing name instead of
+/// failing: the entry lands as "… copy" (then "… copy 1", "… copy 2", …) - the
+/// behaviour ours' own copy/paste tests pin ("one copy.txt", "one copy 1.txt").
+///
+/// Upstream's variant of this test asserted the opposite - that the move fails
+/// with "A file or folder already exists there." - so it is adapted here to
+/// ours' behaviour. The source of each case is distinct, so the cases do not
+/// depend on each other.
 #[gpui::test]
-async fn test_drag_onto_existing_name_shows_clear_error(cx: &mut gpui::TestAppContext) {
+async fn test_drag_onto_existing_name_disambiguates(cx: &mut gpui::TestAppContext) {
     init_test(cx);
     cx.update(|cx| {
         let settings = *ProjectPanelSettings::get_global(cx);
@@ -6100,8 +6107,9 @@ async fn test_drag_onto_existing_name_shows_clear_error(cx: &mut gpui::TestAppCo
     fs.insert_tree(
         "/root",
         json!({
-            "a": { "1.json": "from a" },
+            "a": { "1.json": "from a", "2.json": "from a 2" },
             "1.json": "already here",
+            "2.json": "already here too",
             "x": { "y": { "file.txt": "from x" } },
             "target": {
                 "x": { "file.txt": "existing directory" },
@@ -6120,27 +6128,30 @@ async fn test_drag_onto_existing_name_shows_clear_error(cx: &mut gpui::TestAppCo
     let panel = workspace.update_in(cx, ProjectPanel::new);
     cx.run_until_parked();
 
-    for (source, active_ancestor, target, target_is_file, expected_message) in [
+    for (source, active_ancestor, target, target_is_file, expected_path, expected_contents) in [
         (
             "root/a/1.json",
             None,
             "root",
             false,
-            "Error: Failed to move `a/1.json` to `1.json`. A file or folder already exists there.",
+            "/root/1 copy.json",
+            "from a",
         ),
         (
-            "root/a/1.json",
+            "root/a/2.json",
             None,
-            "root/1.json",
+            "root/2.json",
             true,
-            "Error: Failed to move `a/1.json` to `1.json`. A file or folder already exists there.",
+            "/root/2 copy.json",
+            "from a 2",
         ),
         (
             "root/x/y",
             Some("root/x"),
             "root/target",
             false,
-            "Error: Failed to move `x` to `target/x`. A file or folder already exists there.",
+            "/root/target/x copy/y/file.txt",
+            "from x",
         ),
     ] {
         workspace.update(cx, |workspace, cx| {
@@ -6153,37 +6164,19 @@ async fn test_drag_onto_existing_name_shows_clear_error(cx: &mut gpui::TestAppCo
         }
         drag_entries_onto(&panel, &[source], target, target_is_file, cx);
 
-        workspace.read_with(cx, |workspace, cx| {
-            let notifications = workspace.notification_views();
-            assert_eq!(notifications.len(), 1);
-            let notification = notifications
-                .into_iter()
-                .next()
-                .unwrap()
-                .downcast::<MessageNotification>()
-                .unwrap_or_else(|_| panic!("expected an error MessageNotification"));
-            let expected_message = if cfg!(windows) {
-                expected_message.replace('/', "\\")
-            } else {
-                expected_message.to_string()
-            };
+        // Ours disambiguates rather than failing, so there is nothing to explain.
+        workspace.read_with(cx, |workspace, _| {
             assert_eq!(
-                notification
-                    .read(cx)
-                    .copied_text()
-                    .map(SharedString::as_ref),
-                Some(expected_message.as_str())
+                workspace.notification_views().len(),
+                0,
+                "the move should have been disambiguated, not failed"
             );
         });
-    }
-
-    for (path, contents) in [
-        (path!("/root/a/1.json"), "from a"),
-        (path!("/root/1.json"), "already here"),
-        (path!("/root/x/y/file.txt"), "from x"),
-        (path!("/root/target/x/file.txt"), "existing directory"),
-    ] {
-        assert_eq!(fs.load(Path::new(path)).await.unwrap(), contents);
+        assert_eq!(
+            fs.load(Path::new(expected_path)).await.unwrap(),
+            expected_contents,
+            "the entry should have landed on the disambiguated path"
+        );
     }
 }
 
