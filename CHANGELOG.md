@@ -6,6 +6,65 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-21] - the local llama.cpp provider could not reach the server
+
+> ### ✅ **A real production bug: the shipped `llama.cpp.api_url` had a stray `/v1`, so every
+> llama.cpp endpoint was wrong by one path segment.**
+>
+> `crates/llama_cpp/src/llama_cpp.rs` builds every endpoint by appending to the configured
+> `api_url`:
+>
+> ```rust
+> let uri = format!("{api_url}/v1/chat/completions");
+> let uri = format!("{api_url}/v1/models");
+> let uri = format!("{api_url}/props");
+> let uri = format!("{api_url}/models/sse");
+> ```
+>
+> so `api_url` has to be the **server root** - `/props` and `/models/sse` are not under `/v1`. The
+> code's own constant agrees (`LLAMA_CPP_API_URL = "http://localhost:8080"`), the settings UI uses
+> that constant as its placeholder, and **upstream's** `default.json` has
+> `"llama.cpp": { "api_url": "http://localhost:8080" }`.
+>
+> The fork's `assets/settings/default.json` had:
+>
+> ```json
+> "llama.cpp": { "api_url": "http://127.0.0.1:8080/v1", ... }
+> ```
+>
+> With that value the provider asked for
+>
+> - `http://127.0.0.1:8080/v1/v1/models`
+> - `http://127.0.0.1:8080/v1/v1/chat/completions`
+> - `http://127.0.0.1:8080/v1/props`
+> - `http://127.0.0.1:8080/v1/models/sse`
+>
+> **all four wrong**, so with the shipped defaults the local provider could not list a model, could
+> not stream a completion, and could not probe the server. The default is now
+> `http://127.0.0.1:8080` - the root, consistent with the code's constant, the UI's placeholder and
+> upstream.
+>
+> **The two failing tests that found it, now passing.** `cargo test -p language_models --lib` was
+> `131 passed, 5 failed`; it is now **136 passed, 0 failed**.
+>
+> - `provider::llama_cpp::tests::authenticate_fetches_models_after_loading_api_key` - the provider
+>   requested `/v1/v1/models`, the fake answered 404, and no model request was ever made. Fixed by
+>   the default above.
+> - `provider::llama_cpp::tests::config_uses_live_capabilities_for_a_stable_model_id` - the test
+>   took `provided_models(cx).remove(0)`, assuming its own model sorted first; the fork's default
+>   llama.cpp model (`gemma-4-E4B-it-GGUF`, "Gemma 4 E4B Local") sorts before `"m"`, so the test
+>   read the wrong model. It now looks the model up **by id**. Its `max_tokens` expectation also
+>   hardcoded the *uncapped* 262_144 while the fork's default pins `llama.cpp.context_window`
+>   (32768), which caps it; it now asserts the effective value. Neither test depends on the
+>   shipped default settings any more.
+>
+> ⚠️ **Still open, and it is a product question, not a defect:** the fork's default
+> `llama.cpp.context_window` (32768) is mapped into upstream's tri-state
+> `remote_context_window` (`crates/language_models/src/settings.rs:149`), so with the default set
+> it is **always** `Some` and every local model is reported as having 32768 tokens of context, even
+> when the server reports more. Upstream's tri-state documents `None` as *"unset - keep the model's
+> own `max_tokens`"*. Recorded in `TODO.md`.
+
 ## [Landed 2026-10-21] - a builtin model in the picker must be requestable
 
 > ### ✅ **A real production bug in the OpenCode provider: the model picker offered models that

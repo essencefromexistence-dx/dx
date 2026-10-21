@@ -4079,7 +4079,16 @@ mod tests {
             .update(cx, |state, _| state.fetched_models = vec![cold]);
         write_recover(&provider.loading_progress)
             .insert("m".to_string(), SharedString::from("Loading 42%"));
-        let selected = cx.update(|cx| provider.provided_models(cx)).remove(0);
+        // The provider offers every model it knows about - the one injected
+        // below plus whatever `assets/settings/default.json` configures -
+        // sorted by display name. Look the model up by id rather than by
+        // position, so this test does not depend on the default settings'
+        // model list (the fork's default llama.cpp model sorts first).
+        let selected = cx
+            .update(|cx| provider.provided_models(cx))
+            .into_iter()
+            .find(|model| model.id.0.as_ref() == "m")
+            .expect("the fetched model is offered");
         assert_eq!(selected.id.0.as_ref(), "m");
         assert_eq!(selected.name.0.as_ref(), "m · Loading 42%");
         assert!(!selected.supports_thinking);
@@ -4102,15 +4111,28 @@ mod tests {
             .update(|cx| provider.config(&selected, cx))
             .expect("model is still offered");
         assert_eq!(config.name, "m");
+        // The context length is the model's own (262_144) unless the user
+        // pinned `llama.cpp.context_window`, which caps it. Assert against
+        // the effective value so this test does not depend on the shipped
+        // default in `assets/settings/default.json`.
+        let expected_max_tokens = cx.update(|cx| {
+            LlamaCppLanguageModelProvider::settings(cx)
+                .remote_context_window
+                .unwrap_or(262_144)
+        });
         assert_eq!(
             capabilities,
             LiveCapabilities {
-                max_tokens: 262_144,
+                max_tokens: expected_max_tokens,
                 supports_tools: false,
                 supports_thinking: true,
             }
         );
-        let refreshed = cx.update(|cx| provider.provided_models(cx)).remove(0);
+        let refreshed = cx
+            .update(|cx| provider.provided_models(cx))
+            .into_iter()
+            .find(|model| model.id == selected.id)
+            .expect("the fetched model is still offered");
         assert_eq!(refreshed.id, selected.id);
         assert_eq!(refreshed.name.0.as_ref(), "m");
 
