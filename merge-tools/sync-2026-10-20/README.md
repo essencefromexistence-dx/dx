@@ -45,11 +45,63 @@ git -C $env:DX_CODE_REPO update-index --add --cacheinfo "644,$sha,<repo-path>"
 # 6. gates
 python gates.py <tree> <ours> <theirs> <base>
 python parsegate.py <tree> <ours> <theirs> <base>
+python stale_refs.py <tree> <ours> <theirs> <base>    # names upstream renamed
+python dangling_refs.py <tree> <ours> <theirs> <base> # items that exist on no side
+
+# 6b. COMPILE.  This is not optional and it is not the same as the gates.
+#     Extract the merged tree to a scratch directory and point CARGO_TARGET_DIR
+#     off the repo - a check needs a target/ dir, and the repo's own tree is
+#     far too big to hold one on a full disk.
+git -C $env:DX_CODE_REPO archive --format=tar <tree> crates extensions assets .cargo tooling \
+    Cargo.toml Cargo.lock rust-toolchain.toml rustfmt.toml .gitattributes | tar -x -C <scratch>
+$env:CARGO_TARGET_DIR = '<scratch-target>'
+cargo check --workspace --config net.git-fetch-with-cli=true
 
 # 7. commit
 $tree = git -C $env:DX_CODE_REPO write-tree
 git -C $env:DX_CODE_REPO commit-tree $tree -p <ours> -p upstream/main
 ```
+
+## ⚠️ The gates prove the merge did not LOSE anything. They cannot prove it did not BREAK anything.
+
+**Only a compile can do that, and the 2026-10-20 sync shipped two defects that every gate
+passed.** Read this before trusting a green gate run.
+
+The shape of both defects is the same, and it is a shape no structural gate can see:
+
+> the fork's code that referenced the old API was an **ADDITION** — a line that does not exist in
+> the merge base — so **upstream's rename could not reach it**. merge-ort applies upstream's rename
+> to every line that existed in base and leaves the fork's new line alone.
+
+The result is not a conflict, not a marker, and not a *missing* identifier: **the identifier is
+still present**, so a no-loss audit sees nothing wrong, and an item-parity sweep sees a *definition*
+that is fine. It is only wrong when the compiler looks.
+
+| found | defect | gate that missed it |
+|---|---|---|
+| `E0609` | `scroll_wheel_listeners` → upstream renamed the field to `scroll_listeners`; the fork's **new** `should_block_mouse_passthrough` used the old name | markers, no-loss, item parity, balance, deletion, parse, EOL, `cargo metadata --locked` — **all green** |
+| `E0004` | upstream added `ThreadStatus::Unconfirmed`; the fork's `match` on `ThreadStatus` did not cover it | same — **all green** |
+
+**`stale_refs.py` closes the first class** (it lists every name upstream removed or renamed and
+reports where the merged tree still uses the old one) and **`dangling_refs.py` closes the second**
+(it lists every item defined on a side but absent from the merged tree and searches the whole tree
+for it). Both were written *after* these two defects, and both now report clean.
+
+**But neither replaces the compile.** The compile is what actually knows the answer.
+
+## The compile, in practice
+
+* It needs **disk**, and the disk is the whole problem: a `check` (no codegen) is far cheaper than
+  a `build`, and it is enough. The target dir for the crates this repo touches came to **12 GB**.
+* Point `CARGO_TARGET_DIR` **off the repo** and extract the merged tree with `git archive` — do not
+  materialise it in the worktree.
+* `cargo check --workspace` covers everything; `-p <crate>` for a subset reuses the warm cache and
+  is much faster for a quick loop.
+* `--config net.git-fetch-with-cli=true` so the private `essence-dx/media` git dependency resolves
+  through the local credential manager.
+* A `check` also surfaces **deprecation warnings**, which upstream's CI would reject — the fork's
+  `disk_tree` was using upstream's pre-rename `ScrollWheelEvent` / `on_scroll_wheel`.
+
 
 ## Tools
 
@@ -60,6 +112,9 @@ git -C $env:DX_CODE_REPO commit-tree $tree -p <ours> -p upstream/main
 | `resolve_conflicts.py` | spec-driven, byte-exact conflict resolver; refuses to write if a marker survives or the spec's block count does not match |
 | `show_conflicts.py` | one conflict block with shared context before and after |
 | `analyze_conflicts.py` | per-file block inventory (block index, side sizes) |
+| `fmt.py` | rustfmt-as-arbiter: show (or install) rustfmt's proposed changes for a file in a tree |
+| `stale_refs.py` | **finds references to names upstream renamed or deleted** — the class of defect that shipped on 2026-10-20 |
+| `dangling_refs.py` | **finds references to items that exist on no side of the merge** (the complement) |
 | `specs/*.json` | the resolution record: one file per conflicted path |
 
 ## Spec format
