@@ -102,6 +102,39 @@ for it). Both were written *after* these two defects, and both now report clean.
 * A `check` also surfaces **deprecation warnings**, which upstream's CI would reject — the fork's
   `disk_tree` was using upstream's pre-rename `ScrollWheelEvent` / `on_scroll_wheel`.
 
+### ⚠️ `cargo check --workspace` has a hard platform floor on Windows
+
+`cargo check --workspace` **cannot succeed on `x86_64-pc-windows-msvc`**, and could not before the
+2026-10-20 sync either. Three crates block it, all of them third-party and all of them pulled by
+workspace members whose manifests the merge **did not touch**:
+
+| blocked crate | why | pulled by |
+|---|---|---|
+| `objc2` | "`objc2` only works on Apple platforms" | `web_preview_macos` — the **only** member with an *unconditional* `objc2-app-kit` dep. Every other Apple dep in the workspace is correctly target-gated. |
+| `core-foundation` | `cannot find 'unix' in 'os'` | same chain, via `objc2-app-kit` → `cocoa` → `core-foundation` |
+| `webrtc-sys` | native C++ build; its build script extracts a WebRTC archive and needs **disk** | `livekit_client` → `libwebrtc` → `webrtc-sys`, and therefore `title_bar`, `collab_ui`, `call` |
+
+So the runnable form on Windows is:
+
+```powershell
+cargo check --workspace --exclude web_preview_macos
+```
+
+and if the disk is tight, add the livekit chain:
+
+```powershell
+cargo check --workspace --exclude web_preview_macos --exclude title_bar `
+    --exclude livekit_client --exclude collab_ui --exclude call
+```
+
+⚠️ Excluding `title_bar` also excludes `crates/zed` (the app binary), which depends on it.
+
+`members_reaching.py` computes the exclusion set from a `cargo metadata` JSON — it is
+**target-aware**, which matters: a naive reachability walk over `cargo metadata` reports 203 of 270
+members as unbuildable, because `cargo metadata` includes target-specific dependencies that the
+host never builds.
+
+
 
 ## Tools
 
@@ -115,6 +148,7 @@ for it). Both were written *after* these two defects, and both now report clean.
 | `fmt.py` | rustfmt-as-arbiter: show (or install) rustfmt's proposed changes for a file in a tree |
 | `stale_refs.py` | **finds references to names upstream renamed or deleted** — the class of defect that shipped on 2026-10-20 |
 | `dangling_refs.py` | **finds references to items that exist on no side of the merge** (the complement) |
+| `members_reaching.py` | from a `cargo metadata` JSON, lists the workspace members that transitively reach a given package — **target-aware**, which is what makes it usable for the platform floor below |
 | `specs/*.json` | the resolution record: one file per conflicted path |
 
 ## Spec format
