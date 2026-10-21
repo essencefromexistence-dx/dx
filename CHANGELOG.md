@@ -6,6 +6,23 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-22] - third sync of `upstream/main` (`544780422a`) into `forge`
+
+> ### ✅ **Three more upstream commits, merged clean - no conflicted paths.**
+>
+> `upstream/main` `544780422a`: *Add an HTTP fallback for the Ubuntu toolchain PPA* (#65944),
+> *remote: Stop URL-encoding SSH usernames* (#64744) and *worktree: Clean up watches when symlinks
+> disappear during scanning* (#65939).
+>
+> Upstream's SSH change renames `ConnectionOptions::ssh_destination()` to
+> `ssh_destination_args()` and returns an argument list instead of a single string. The merged tree
+> uses the new name throughout - the stale-ref gate finds **no** surviving reference to the old one.
+>
+> **Gates:** markers 0; deletion audit 0 added / 0 deleted / 0 unexplained; no-loss 0 of 4 files; item
+> parity 0 files below a side; brace balance 0 files differing; the only ours-only item is the
+> renamed `ssh_destination`. Parse gate: 4 changed `.rs` files, all parse+format clean.
+
+
 ## [Landed 2026-10-22] - upstream's drag-onto-existing-name test, adapted to ours' behaviour
 
 > ### ✅ **One upstream test asserted the opposite UX to ours'. Ours wins - the test is adapted.**
