@@ -64,6 +64,65 @@
 
 ---
 
+## [Landed 2026-10-21] — sync of `upstream/main` (`d38a754e1b`) into `forge`
+
+> ### ✅ SYNC DONE — **1 of 1 conflicted path resolved**, committed **`0fd6d31f14`**
+>
+> `forge` was at **`03e92eeb23`**; `upstream/main` is **`d38a754e1b`** (*agent_servers: Support ACP v2
+> session deletion*, #65921, 2026-10-21). The previous sync stopped at `3762891a55`, so this replays
+> **4 commits**: `d38a754e1b`, `f91e908cad` (*acp_thread: Let parent threads own their subagent
+> threads*, #65918), `73a6e0ba61` (*fuzzy_nucleo: Add a tail proximity bonus*, #59224) and
+> `70277c0193` (*acp_thread: Separate agent-reported activity from prompt submission*, #65912).
+>
+> **One conflict**, in `crates/agent_ui/src/conversation_view/thread_view.rs`, and it is a nice one:
+> upstream has since **implemented the same "Activity unconfirmed" surface** the previous sync had to
+> re-attach by hand — and done it properly, as a reusable `render_activity_status_label` method that
+> also covers the new `ForegroundActivity::Unknown` state. So the fork's DX composer now calls
+> **upstream's method** (`.children(self.render_activity_status_label(cx))`) instead of carrying a
+> fork-local inline copy of the label, and upstream's method is added to the fork's file. The fork's
+> composer layout keeps the surface; the stopgap is retired in favour of upstream's implementation.
+>
+> Upstream **deleted** `AcpThread::subagent_spawned` and `Thread::subagent_spawned` (#65918) and
+> removed every caller in the same commit, so the forced supersession is clean: the merged tree has
+> **0** remaining references to that name.
+>
+> `Cargo.lock` is **unchanged** — upstream did not touch it in this window.
+>
+> Verification: the tree-wide gate suite passes (0 markers, 0 unexplained deletions, 0 token losses
+> in either direction, 0 item-parity failures, 0 balance failures); the parse gate reports 0 failures
+> across the 12 changed `.rs` files, with 2 not format-clean by exactly the same pre-existing fork
+> drift as before; the **stale-reference** and **dangling-reference** gates both report clean; and
+> of the **940** fork DX symbols, **0** lost an occurrence.
+
+---
+
+## [Landed 2026-10-21] — the audit that the `cargo check` enabled, continued
+
+> ### ✅ The **previous** sync's tree now compiles **in full** — and `--all-targets` found one more
+> pre-existing defect
+>
+> `cargo check --workspace --exclude web_preview_macos` on the `3762891a55` tree (plus the two
+> fixes above): **rc 0**, **914** crates, **0 errors, 0 warnings** — including `title_bar`,
+> `collab_ui`, `repl`, `media_panel`, `font_panel`, `shadcn_ui_panel` and `web_preview`.
+>
+> `--all-targets` (which also compiles `#[cfg(test)]` modules, benches and examples — plain
+> `cargo check` does not) then surfaced a **third** defect, and this one is **pre-existing in the
+> fork**, not merge-introduced:
+>
+> * **`E0061`** — `crates/gpui_wgpu/src/wgpu_renderer.rs:2734`. The fork's liquid-glass work added a
+>   `frame_texture: &wgpu::Texture` parameter to `WgpuRenderer::render_frame` (the surface texture
+>   the scene is rendered into, copied into the backdrop the glass effect samples) and **never
+>   updated the fork's own headless test harness**. The fork's `#[cfg(test)]` code has therefore
+>   **not compiled since that work landed** — and nobody noticed, because this repo had never had a
+>   compile at all. Fixed in **`49c40b6477`**: the harness now passes the render target's own texture,
+>   which is exactly the texture being rendered into.
+>
+> ⚠️ **The lesson, now twice confirmed:** the structural gates prove the merge did not *lose*
+> anything; only a compile proves it did not *break* anything — and only `--all-targets` covers the
+> test and bench code. **Do `cargo check --workspace --all-targets` before the next sync, not after.**
+
+---
+
 ## [Landed 2026-10-21] — sync of `upstream/main` (`3762891a55`) into `forge`
 
 > ### ✅ SYNC DONE (2026-10-21) — **3 of 3 conflicted paths resolved**, committed **`0217f9fbe0`**

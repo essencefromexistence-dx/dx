@@ -13,6 +13,7 @@ surface for stays **compiled and wired, just unsurfaced** — never silently dro
 
 | thing | value |
 |---|---|
+| **CURRENT STATE (2026-10-21, session 48)** | Branch **`forge`** @ **`49c40b6477`** — the **`d38a754e1b` sync is DONE** (**1 of 1** conflicted path resolved; **0 markers**; **0** parse failures). **0 commits behind `upstream/main` `d38a754e1b`**. ✅ `Cargo.lock` unchanged. ✅ Gates clean; **stale-ref** and **dangling-ref** gates clean; **0 of 940** fork DX symbols lost an occurrence. ✅ The **previous** tree compiles in full: `cargo check --workspace --exclude web_preview_macos` → **rc 0**, **914** crates, **0 warnings**. ⛔→✅ `--all-targets` found a **pre-existing fork** defect (`E0061` in the fork's own headless render harness) — fixed in `49c40b6477`. Detail: **`CHANGELOG.md` §Landed 2026-10-21**. |
 | **CURRENT STATE (2026-10-21, session 47)** | Branch **`forge`** @ **`d0bf341947`** — the **`3762891a55` sync is DONE** and has been **compiled**. ⛔→✅ **The sync as committed did not compile**: the first real `cargo check` this fork ever had found **2 defects** (an `E0609` on a renamed field and an `E0004` on a new enum variant), both in fork code that upstream's rename could not reach because it was an **addition**. Both are fixed (`57b7bb9bd3`, `d0bf341947`). ✅ **`cargo check` → rc 0** for `gpui`, `file_icons`, `gpui_windows`, `editor`, `agent_ui`, `project_panel`, `sidebar`, `settings_ui`, `markdown_preview` + **101** transitive crates. ✅ **0 of 940** fork DX symbols lost an occurrence. ✅ `cargo metadata --locked` → **rc 0**. ⛔ **A full `cargo build`/test run is still out of reach** — `G:` had ~9 GB free and the check target dir is 12 GB. Detail: **`CHANGELOG.md` §Landed 2026-10-21 (post-sync audit)**. |
 | **CURRENT STATE (2026-10-21, session 46)** | Branch **`forge`** @ **`0217f9fbe0`** — the **`3762891a55` sync is DONE** (**3 of 3** conflicted paths resolved; all 3 are `docs/**` modify/delete; **0 markers**; **0** parse failures). **0 commits behind `upstream/main` `3762891a55`** (it is now the merge's second parent). ✅ **`Cargo.lock` unchanged** (upstream did not touch it this window; it is the cargo-resolved lock the previous sync verified). ✅ `cargo metadata --locked` → **rc 0**. ✅ **The merge added no formatting drift** — `thread_view.rs` is still unformatted by the same 92 diff lines as before. ⛔ **No compile** — `G:` has ~13 GB free and a full build needs more. Detail: **`CHANGELOG.md` §Landed 2026-10-21**. |
 | **CURRENT STATE (2026-10-21, session 45)** | Branch **`forge`** @ **`5aa9b5ec58`** — the **`fae8a35482` follow-up sync is DONE** (**0 conflicts**; 9 files changed; **0 markers**; **0** parse failures). **0 commits behind `upstream/main` `fae8a35482`** (it is now the merge's second parent). ✅ **`Cargo.lock` needed no regeneration** (workspace-internal dep additions only). ✅ `cargo metadata --locked` → **rc 0**. ⛔ **No compile** — `G:` has ~13 GB free and a full build needs more. Detail: **`CHANGELOG.md` §Landed 2026-10-21**. |
@@ -817,11 +818,19 @@ git history: `docs/src/account/zed-hosted-models.md` (#65707) and `docs/src/lang
   blocker was never the dependency graph, it was **disk**: the check needs a `target/` directory, and
   the trick is to point `CARGO_TARGET_DIR` **off the repo** and extract the merged tree to a scratch
   directory (`git archive <tree> crates extensions assets .cargo tooling Cargo.toml Cargo.lock …`).
-  `G:` had 29 GB free once other work drained; the check target dir came to 12 GB.
   **It found 2 real defects the structural gates could not** — see `CHANGELOG.md` §Landed 2026-10-21.
+  ✅ **2026-10-21 (session 48): the whole workspace now checks — `--workspace --exclude
+  web_preview_macos` → rc 0 over 914 crates, 0 warnings — and `--all-targets` covers the
+  `#[cfg(test)]` modules, benches and examples that plain `cargo check` skips.** It found a third
+  defect, **pre-existing in the fork** (the fork's headless render harness was never updated for
+  the `frame_texture` parameter its own liquid-glass work added) — fixed in `49c40b6477`.
 * ⛔ **Still out of reach: a full `cargo build` + test run, and `cargo clippy`.** A `check` is far
-  cheaper than a build (no codegen), and it is what found the defects. A build would also need the
-  `lldb` C++ dependency and roughly twice the disk.
+  cheaper than a build (no codegen), and it is enough. A build would also need the `lldb` C++
+  dependency and roughly twice the disk.
+* ⚠️ **The `cargo check` target dir is ~25 GB** (of which **18 GB is cargo's `incremental` cache**,
+  pure build acceleration). It lives in `G:\Temp\UserTemp\opencode\target`, which the temp area
+  sweeps. Deleting `target\debug\incremental` frees 18 GB at the cost of some rebuild time — the
+  single most effective lever if the disk gets tight.
 * ⛔ The **rebuilt gate scripts cover the tree-wide gates only**. The session-33–35 scripts that were
   lost (`check_cargo.py`, `check_ws_inherit.py`, `noloss*.py`, `braces.py`) are not yet rebuilt.
   ⚠️ **The cross-file manifest invariant of `PLAN.md` §6.7 is, however, now covered** — an
