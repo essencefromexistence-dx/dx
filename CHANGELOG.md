@@ -6,6 +6,35 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-22] - upstream's drag-onto-existing-name test, adapted to ours' behaviour
+
+> ### ✅ **One upstream test asserted the opposite UX to ours'. Ours wins - the test is adapted.**
+>
+> Upstream's `test_drag_onto_existing_name_shows_clear_error` asserts that dragging an entry onto
+> an existing name **fails**, and that the failure is explained (*"Failed to move `a/1.json` to
+> `1.json`. A file or folder already exists there."*).
+>
+> Ours' project panel **disambiguates** instead: the entry lands as *"… copy"* (then *"… copy 1"*,
+> *"… copy 2"*, …) - the behaviour ours' own copy/paste tests pin (*"one copy.txt"*, *"one copy
+> 1.txt"*). Per the merge policy - our UI wins a genuine UI conflict - ours' behaviour stands, and
+> upstream's test is rewritten as `test_drag_onto_existing_name_disambiguates`: each case uses a
+> distinct source, and it asserts that the move **lands on the disambiguated path** and produces
+> **no** error notification.
+>
+> **The other four `project_panel` failures are pre-existing fork defects, not merge-induced.**
+> They were measured, not assumed: the same four fail identically on the **pre-merge** tree
+> `d020707a6c`:
+>
+> | Test | Pre-merge `d020707a6c` | After the merge |
+> |---|---|---|
+> | `test_adding_directory_via_file` | FAILED | FAILED (unchanged) |
+> | `test_dragged_selection_resolve_entry` | FAILED | FAILED (unchanged) |
+> | `test_focus_follows_mouse_into_blank_area` | FAILED | FAILED (unchanged) |
+> | `test_editing_files` | FAILED | FAILED (unchanged) |
+>
+> They are filed as an open item in `TODO.md` with that evidence.
+
+
 ## [Landed 2026-10-22] - follow-up sync of `upstream/main` (`cb593458e1`) into `forge`
 
 > ### ✅ **Four more upstream commits, merged clean - no conflicted paths.**
