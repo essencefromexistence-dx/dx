@@ -531,16 +531,16 @@ mod tests {
         AgentSettings::register(cx);
 
         let write = AgentProfileId(builtin_profiles::WRITE.into());
-        let minimal = AgentProfileId(builtin_profiles::MINIMAL.into());
+        let ask = AgentProfileId(builtin_profiles::ASK.into());
         let custom = AgentProfileId("custom".into());
 
         // Fresh defaults: the shipped built-in profiles are unmodified.
         assert!(AgentProfileSettings::is_unmodified_default(&write, cx));
-        assert!(AgentProfileSettings::is_unmodified_default(&minimal, cx));
+        assert!(AgentProfileSettings::is_unmodified_default(&ask, cx));
         // Custom (non-built-in) ids are never considered unmodified defaults.
         assert!(!AgentProfileSettings::is_unmodified_default(&custom, cx));
 
-        // The user customizes the `write` profile; `minimal` stays untouched.
+        // The user customizes the `write` profile; `ask` stays untouched.
         SettingsStore::update_global(cx, |store, cx| {
             store
                 .set_user_settings(
@@ -551,6 +551,6 @@ mod tests {
         });
 
         assert!(!AgentProfileSettings::is_unmodified_default(&write, cx));
-        assert!(AgentProfileSettings::is_unmodified_default(&minimal, cx));
+        assert!(AgentProfileSettings::is_unmodified_default(&ask, cx));
     }
 }
