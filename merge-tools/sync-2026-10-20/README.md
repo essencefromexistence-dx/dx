@@ -53,7 +53,8 @@ python dangling_refs.py <tree> <ours> <theirs> <base> # items that exist on no s
 #     off the repo - a check needs a target/ dir, and the repo's own tree is
 #     far too big to hold one on a full disk.
 git -C $env:DX_CODE_REPO archive --format=tar <tree> crates extensions assets .cargo tooling \
-    Cargo.toml Cargo.lock rust-toolchain.toml rustfmt.toml .gitattributes | tar -x -C <scratch>
+    Cargo.toml Cargo.lock rust-toolchain.toml rustfmt.toml .gitattributes LICENSE-APACHE LICENSE-GPL \
+    | tar -x -C <scratch>
 $env:CARGO_TARGET_DIR = '<scratch-target>'
 cargo check --workspace --all-targets --exclude web_preview_macos `
     --config net.git-fetch-with-cli=true
@@ -67,6 +68,11 @@ git -C $env:DX_CODE_REPO commit-tree $tree -p <ours> -p upstream/main
 modules, benches or examples — and the fork's broken headless-render harness lived in exactly such
 a module, undetected for the whole lifetime of the liquid-glass feature. Use `--all-targets`, or
 check the affected crates twice.
+
+⚠️ **The extraction must include the root `LICENSE-APACHE` and `LICENSE-GPL`.**
+`crates/edit_prediction/src/license_detection.rs` does `include_str!("../../../LICENSE-APACHE")`, and
+that path escapes `crates/` to the repository root — so an extraction that lists only `crates/`
+and friends fails with a bare "couldn't read ... The system cannot find the file specified".
 
 ## ⚠️ The gates prove the merge did not LOSE anything. They cannot prove it did not BREAK anything.
 
