@@ -100,7 +100,7 @@ use zed_actions::{
 use crate::{
     disk_tree::model::Direction,
     project_panel_settings::ProjectPanelScrollbarProxy,
-    undo::{Change, UndoManager},
+    undo::{Change, UndoManager, already_exists_error, project_path_display},
 };
 use storage::StorageSortMode;
 
@@ -3024,7 +3024,7 @@ impl ProjectPanel {
 
                 let task = panel.update(cx, |_panel, cx| {
                     repository.update(cx, |repo, cx| {
-                        repo.checkout_files("HEAD", vec![repo_path], cx)
+                        repo.checkout_files(Some("HEAD"), vec![repo_path], cx)
                     })
                 })?;
 
@@ -4731,12 +4731,12 @@ impl ProjectPanel {
         destination_entry: ProjectEntryId,
         destination_is_file: bool,
         cx: &mut Context<Self>,
-    ) -> Option<Task<Result<CreatedEntry>>> {
+    ) -> Option<(ProjectPath, Task<Result<CreatedEntry>>)> {
         if entry_to_move == destination_entry {
             return None;
         }
 
-        let (destination_worktree, rename_task) = self.project.update(cx, |project, cx| {
+        let (destination_worktree, rename) = self.project.update(cx, |project, cx| {
             let Some(source_path) = project.path_for_entry(entry_to_move, cx) else {
                 return (None, None);
             };
@@ -4768,21 +4768,22 @@ impl ProjectPanel {
                 };
                 new_path
             };
-            let rename_task = Some({
-                project.rename_entry(
-                    entry_to_move,
-                    (destination_worktree_id, new_path).into(),
-                    cx,
-                )
+            // Ours' `create_move_path` keeps the fork's disambiguation (a move onto
+            // an existing name becomes "name copy.ext"); upstream's shape carries
+            // the new path back so the caller can explain a failed move.
+            let new_project_path: ProjectPath = (destination_worktree_id, new_path).into();
+            let rename = (new_project_path.path.as_ref() != source_path.path.as_ref()).then(|| {
+                let task = project.rename_entry(entry_to_move, new_project_path.clone(), cx);
+                (new_project_path, task)
             });
 
-            (Some(destination_worktree_id), rename_task)
+            (Some(destination_worktree_id), rename)
         });
 
         if let Some(destination_worktree) = destination_worktree {
             self.expand_entry(destination_worktree, destination_entry, cx);
         }
-        rename_task
+        rename
     }
 
     fn index_for_selection(&self, selection: SelectedEntry) -> Option<(usize, usize, usize)> {
@@ -7541,14 +7542,25 @@ impl ProjectPanel {
                 .worktree_for_entry(target_entry_id, cx)
                 .map(|wt| wt.read(cx).id());
 
-            // Collect move tasks paired with their source entry ID so we can correlate
-            // results with folded selections that need refreshing.
-            let mut move_tasks: Vec<(ProjectEntryId, Task<Result<CreatedEntry>>)> = Vec::new();
+            let path_style = self.project.read(cx).path_style(cx);
+
+            let mut move_tasks: Vec<(
+                ProjectEntryId,
+                Option<(String, String)>,
+                Task<Result<CreatedEntry>>,
+            )> = Vec::new();
             for entry in entries {
-                if let Some(task) =
+                if let Some((destination, task)) =
                     self.move_worktree_entry(entry.entry_id, target_entry_id, is_file, cx)
                 {
-                    move_tasks.push((entry.entry_id, task));
+                    let names = old_paths.get(&entry.entry_id).map(|from| {
+                        let project = self.project.read(cx);
+                        (
+                            project_path_display(project, from, path_style, cx),
+                            project_path_display(project, &destination, path_style, cx),
+                        )
+                    });
+                    move_tasks.push((entry.entry_id, names, task));
                 }
             }
 
@@ -7561,9 +7573,10 @@ impl ProjectPanel {
                 cx.spawn_in(window, async move |project_panel, mut cx| {
                     let mut changes = Vec::new();
                     let mut last_moved_entry = None;
-                    for (entry_id, task) in move_tasks {
+                    for (entry_id, names, task) in move_tasks {
                         if let Some(CreatedEntry::Included(new_entry)) = task
                             .await
+                            .map_err(|err| explain_move_error(err, names.as_ref()))
                             .notify_workspace_async_err(workspace.clone(), &mut cx)
                         {
                             if let (Some(old_path), Some(worktree_id)) =
@@ -7603,9 +7616,10 @@ impl ProjectPanel {
                     // Await all move tasks and collect successful results
                     let mut move_results: Vec<(ProjectEntryId, Entry)> = Vec::new();
                     let mut operations = Vec::new();
-                    for (entry_id, task) in move_tasks {
+                    for (entry_id, names, task) in move_tasks {
                         if let Some(CreatedEntry::Included(new_entry)) = task
                             .await
+                            .map_err(|err| explain_move_error(err, names.as_ref()))
                             .notify_workspace_async_err(workspace.clone(), &mut cx)
                         {
                             if let (Some(old_path), Some(worktree_id)) =
@@ -11713,6 +11727,15 @@ fn git_status_indicator(git_status: GitSummary) -> Option<(&'static str, Color)>
         return Some(("A", Color::Created));
     }
     None
+}
+
+fn explain_move_error(err: anyhow::Error, names: Option<&(String, String)>) -> anyhow::Error {
+    match names {
+        Some((from, to)) if already_exists_error(&err) => err.context(format!(
+            "Failed to move `{from}` to `{to}`. A file or folder already exists there."
+        )),
+        _ => err,
+    }
 }
 
 #[cfg(test)]

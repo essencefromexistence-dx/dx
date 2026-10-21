@@ -6647,6 +6647,9 @@ dependencies = [
  "picker_preview",
  "pretty_assertions",
  "project",
+ "release_channel",
+ "remote",
+ "remote_server",
  "serde_json",
  "settings",
  "theme",
@@ -13061,11 +13064,14 @@ dependencies = [
 name = "opencode"
 version = "0.1.0"
 dependencies = [
+ "anthropic",
  "anyhow",
  "futures 0.3.34",
  "google_ai",
  "http_client",
  "language_model_core",
+ "log",
+ "open_ai",
  "schemars 1.0.4",
  "serde",
  "serde_json",
@@ -24114,7 +24120,7 @@ dependencies = [
 
 [[package]]
 name = "zed"
-version = "1.26.0"
+version = "1.27.0"
 dependencies = [
  "acp_thread",
  "acp_tools",
