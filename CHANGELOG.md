@@ -6,6 +6,31 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-22] - follow-up sync of `upstream/main` (`cb593458e1`) into `forge`
+
+> ### ✅ **Four more upstream commits, merged clean - no conflicted paths.**
+>
+> `upstream/main` `cb593458e1d6ed998709ac5257cb48ab147a5b12` (4 commits after `d27ad54dd6`):
+> *project: Match document filter patterns in dynamic registrations* (#65252), *Refactor
+> `ExtensionLanguageProxy` to provide only `ExtensionLanguageProxy::update_languages`* (#65381),
+> *Automate cleanup of non-responsive PRs* (#65930) and *Prevent existing tabs on move from emitting
+> `AddItem` on reordering* (#65795).
+>
+> The `lsp-types` pin moves with upstream (`f1783e63` → `82d7fc66`).
+>
+> **One supersession, honoured rather than dropped:** upstream's `ExtensionLanguageProxy` refactor
+> removes the fork's `register_language` / `remove_languages` / `is_language_registered` methods from
+> that trait, and replaces the fork's bespoke `remove_languages` implementation with upstream's
+> `update_extension_languages`. The registry's public API (`register_language`, `remove_languages`)
+> and the behaviour it drives survive.
+>
+> **Gates:** markers 0; deletion audit 0 added / 0 deleted / 0 unexplained; no-loss 0 of 16 files;
+> brace balance 0 files differing; item parity reports one count below a side - the fork's
+> `remove_languages` implementation, which upstream's `update_extension_languages` replaces.
+>
+> **Compile:** `cargo check --workspace --all-targets --locked` → **rc 0, 0 errors, 0 warnings**.
+
+
 ## [Landed 2026-10-22] - sync of `upstream/main` (`d27ad54dd6`) into `forge`
 
 > ### ✅ **17 upstream commits merged. 6 conflicted paths, all resolved; the tree compiles.**
