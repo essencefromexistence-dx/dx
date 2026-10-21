@@ -58,6 +58,15 @@
 >   (32768), which caps it; it now asserts the effective value. Neither test depends on the
 >   shipped default settings any more.
 >
+> **The same normalisation now covers every endpoint, and a user setting keeps working.**
+> The provider already unwrapped a configured `api_url` that carries a trailing `/v1` for the *native*
+> endpoints - `native_api_url` (`crates/language_models/src/provider/llama_cpp.rs`) - but the
+> OpenAI-compatible ones did not, so a user who copied the old default into their own settings would
+> still have hit `/v1/v1/models`. The unwrapping moved into the `llama_cpp` crate, where the URLs are
+> built (`base_api_url`), and the provider's `native_api_url` now calls it - one rule, every
+> endpoint. A new test, `a_v1_suffixed_api_url_reaches_the_same_endpoints`, pins it: both
+> `http://127.0.0.1:8080` and `http://127.0.0.1:8080/v1` must reach `/v1/models`.
+>
 > ⚠️ **Still open, and it is a product question, not a defect:** the fork's default
 > `llama.cpp.context_window` (32768) is mapped into upstream's tri-state
 > `remote_context_window` (`crates/language_models/src/settings.rs:149`), so with the default set

@@ -444,7 +444,7 @@ pub async fn stream_chat_completion(
     request: ChatCompletionRequest,
     extra_headers: &CustomHeaders,
 ) -> Result<BoxStream<'static, Result<ResponseStreamEvent>>> {
-    let uri = format!("{api_url}/v1/chat/completions");
+    let uri = format!("{}/v1/chat/completions", base_api_url(api_url));
     let request_builder = http::Request::builder()
         .method(Method::POST)
         .uri(uri)
@@ -492,6 +492,18 @@ pub async fn stream_chat_completion(
     }
 }
 
+/// The llama.cpp server root for a configured `api_url`.
+///
+/// The OpenAI-compatible endpoints live under `/v1` (`/v1/models`,
+/// `/v1/chat/completions`) while the native ones (`/props`, `/health`,
+/// `/models/sse`) are at the root, so a configured `api_url` that already
+/// carries a trailing `/v1` has to be unwrapped before either is built -
+/// otherwise the OpenAI-compatible paths come out as `/v1/v1/models`.
+pub fn base_api_url(api_url: &str) -> String {
+    let trimmed = api_url.trim_end_matches('/');
+    trimmed.strip_suffix("/v1").unwrap_or(trimmed).to_string()
+}
+
 /// Lists the models the server is serving via `GET /v1/models`.
 pub async fn get_models(
     client: &dyn HttpClient,
@@ -499,7 +511,7 @@ pub async fn get_models(
     api_key: Option<&str>,
     extra_headers: &CustomHeaders,
 ) -> Result<Vec<ModelEntry>> {
-    let uri = format!("{api_url}/v1/models");
+    let uri = format!("{}/v1/models", base_api_url(api_url));
     let request = HttpRequest::builder()
         .method(Method::GET)
         .uri(uri)
@@ -541,10 +553,13 @@ pub async fn get_props(
     // instance to describe. Model ids contain `/` and `:` (e.g.
     // `unsloth/Qwen3.5-2B-GGUF:Q4_1`), so the value is URL-encoded.
     let uri = match model {
-        Some(model) => Url::parse_with_params(&format!("{api_url}/props"), [("model", model)])
-            .context("invalid llama.cpp API URL")?
-            .to_string(),
-        None => format!("{api_url}/props"),
+        Some(model) => Url::parse_with_params(
+            &format!("{}/props", base_api_url(api_url)),
+            [("model", model)],
+        )
+        .context("invalid llama.cpp API URL")?
+        .to_string(),
+        None => format!("{}/props", base_api_url(api_url)),
     };
     let request = HttpRequest::builder()
         .method(Method::GET)
@@ -581,7 +596,7 @@ pub async fn stream_model_events(
     api_key: Option<&str>,
     extra_headers: &CustomHeaders,
 ) -> Result<BoxStream<'static, Result<ModelEvent>>> {
-    let uri = format!("{api_url}/models/sse");
+    let uri = format!("{}/models/sse", base_api_url(api_url));
     let request = HttpRequest::builder()
         .method(Method::GET)
         .uri(uri)

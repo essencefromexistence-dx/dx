@@ -1376,12 +1376,13 @@ fn map_llama_http_error(status: StatusCode, body: String) -> LanguageModelComple
     LanguageModelCompletionError::from_http_status(LOCAL_LLAMA_PROVIDER_NAME, status, body, None)
 }
 
+/// The llama.cpp server root for a configured `api_url`.
+///
+/// See [`llama_cpp::base_api_url`]: the configured `api_url` may be the
+/// server root or the root plus `/v1`, and every endpoint is built from the
+/// root either way.
 fn native_api_url(api_url: &str) -> String {
-    api_url
-        .trim_end_matches('/')
-        .strip_suffix("/v1")
-        .unwrap_or_else(|| api_url.trim_end_matches('/'))
-        .to_string()
+    llama_cpp::base_api_url(api_url)
 }
 
 #[derive(Serialize)]
@@ -4212,6 +4213,38 @@ mod tests {
         assert_eq!(
             &*model_request_authorizations.lock(),
             &[None, Some("Bearer loaded-key".to_string())]
+        );
+    }
+    /// A configured `api_url` may be the server root or the root plus `/v1`.
+    /// Both must reach the same endpoints - the OpenAI-compatible ones under
+    /// `/v1`, the native ones at the root - or a stray `/v1` in the settings
+    /// turns into `/v1/v1/models` and 404s against a real server.
+    #[gpui::test]
+    async fn a_v1_suffixed_api_url_reaches_the_same_endpoints(cx: &mut TestAppContext) {
+        let paths = Arc::new(Mutex::new(Vec::new()));
+        let http_client = FakeHttpClient::create({
+            let paths = paths.clone();
+            move |request| {
+                let paths = paths.clone();
+                async move {
+                    paths.lock().push(request.uri().path().to_string());
+                    Ok(http_client::Response::builder()
+                        .status(200)
+                        .body(http_client::AsyncBody::from(r#"{"data":[]}"#))?)
+                }
+            }
+        });
+
+        for api_url in ["http://127.0.0.1:8080", "http://127.0.0.1:8080/v1"] {
+            get_models(http_client.as_ref(), api_url, None, &Default::default())
+                .await
+                .unwrap();
+        }
+
+        assert_eq!(
+            &*paths.lock(),
+            &["/v1/models", "/v1/models"],
+            "both api_url forms must reach the OpenAI-compatible models endpoint"
         );
     }
 }
