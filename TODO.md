@@ -13,6 +13,7 @@ surface for stays **compiled and wired, just unsurfaced** — never silently dro
 
 | thing | value |
 |---|---|
+| **CURRENT STATE (2026-10-21, session 49)** | Branch **`forge`** @ **`3626688b0e`** — the **`d38a754e1b` sync is DONE** and the tree **compiles in full**. ✅ `cargo check --workspace --all-targets --exclude web_preview_macos` → **rc 0**, **0 errors, 0 warnings**; `cargo check -p zed --all-targets` → **rc 0** (the `dx-code` binary and its test target included). ✅ The audit found **5** defects in total — 2 introduced by the 2026-10-20 merge (`E0609` stale field rename, `E0004` new enum variant) and **3 pre-existing in the fork** (its test code had never compiled: `E0061` in the headless render harness, `E0425` on `builtin_profiles::MINIMAL`, `E0283` ×9 in the `dx-code` test target). All five fixed. ⛔ **A full `cargo build` + test run and `cargo clippy` are still out of reach** — a build needs the `lldb` C++ dependency and roughly twice the disk. Detail: **`CHANGELOG.md` §Landed 2026-10-21**. |
 | **CURRENT STATE (2026-10-21, session 48)** | Branch **`forge`** @ **`49c40b6477`** — the **`d38a754e1b` sync is DONE** (**1 of 1** conflicted path resolved; **0 markers**; **0** parse failures). **0 commits behind `upstream/main` `d38a754e1b`**. ✅ `Cargo.lock` unchanged. ✅ Gates clean; **stale-ref** and **dangling-ref** gates clean; **0 of 940** fork DX symbols lost an occurrence. ✅ The **previous** tree compiles in full: `cargo check --workspace --exclude web_preview_macos` → **rc 0**, **914** crates, **0 warnings**. ⛔→✅ `--all-targets` found a **pre-existing fork** defect (`E0061` in the fork's own headless render harness) — fixed in `49c40b6477`. Detail: **`CHANGELOG.md` §Landed 2026-10-21**. |
 | **CURRENT STATE (2026-10-21, session 47)** | Branch **`forge`** @ **`d0bf341947`** — the **`3762891a55` sync is DONE** and has been **compiled**. ⛔→✅ **The sync as committed did not compile**: the first real `cargo check` this fork ever had found **2 defects** (an `E0609` on a renamed field and an `E0004` on a new enum variant), both in fork code that upstream's rename could not reach because it was an **addition**. Both are fixed (`57b7bb9bd3`, `d0bf341947`). ✅ **`cargo check` → rc 0** for `gpui`, `file_icons`, `gpui_windows`, `editor`, `agent_ui`, `project_panel`, `sidebar`, `settings_ui`, `markdown_preview` + **101** transitive crates. ✅ **0 of 940** fork DX symbols lost an occurrence. ✅ `cargo metadata --locked` → **rc 0**. ⛔ **A full `cargo build`/test run is still out of reach** — `G:` had ~9 GB free and the check target dir is 12 GB. Detail: **`CHANGELOG.md` §Landed 2026-10-21 (post-sync audit)**. |
 | **CURRENT STATE (2026-10-21, session 46)** | Branch **`forge`** @ **`0217f9fbe0`** — the **`3762891a55` sync is DONE** (**3 of 3** conflicted paths resolved; all 3 are `docs/**` modify/delete; **0 markers**; **0** parse failures). **0 commits behind `upstream/main` `3762891a55`** (it is now the merge's second parent). ✅ **`Cargo.lock` unchanged** (upstream did not touch it this window; it is the cargo-resolved lock the previous sync verified). ✅ `cargo metadata --locked` → **rc 0**. ✅ **The merge added no formatting drift** — `thread_view.rs` is still unformatted by the same 92 diff lines as before. ⛔ **No compile** — `G:` has ~13 GB free and a full build needs more. Detail: **`CHANGELOG.md` §Landed 2026-10-21**. |
@@ -817,13 +818,16 @@ git history: `docs/src/account/zed-hosted-models.md` (#65707) and `docs/src/lang
 * ✅ **RESOLVED 2026-10-21 (session 47) — the `cargo check` IS now runnable and HAS been run.** The
   blocker was never the dependency graph, it was **disk**: the check needs a `target/` directory, and
   the trick is to point `CARGO_TARGET_DIR` **off the repo** and extract the merged tree to a scratch
-  directory (`git archive <tree> crates extensions assets .cargo tooling Cargo.toml Cargo.lock …`).
+  directory (`git archive <tree> crates extensions assets .cargo tooling Cargo.toml Cargo.lock
+  LICENSE-APACHE LICENSE-GPL …`).
   **It found 2 real defects the structural gates could not** — see `CHANGELOG.md` §Landed 2026-10-21.
   ✅ **2026-10-21 (session 48): the whole workspace now checks — `--workspace --exclude
   web_preview_macos` → rc 0 over 914 crates, 0 warnings — and `--all-targets` covers the
-  `#[cfg(test)]` modules, benches and examples that plain `cargo check` skips.** It found a third
-  defect, **pre-existing in the fork** (the fork's headless render harness was never updated for
-  the `frame_texture` parameter its own liquid-glass work added) — fixed in `49c40b6477`.
+  `#[cfg(test)]` modules, benches and examples that plain `cargo check` skips.** It found two more
+  defects, **pre-existing in the fork** (the fork's test code had never compiled) — fixed in
+  `49c40b6477`, `622ecbb273` and `1a53bd90ff`.
+  ✅ **2026-10-21 (session 49): `cargo check --workspace --all-targets` → rc 0, 0 errors, 0 warnings,
+  and `cargo check -p zed --all-targets` → rc 0 (the `dx-code` binary and its test target).**
 * ⛔ **Still out of reach: a full `cargo build` + test run, and `cargo clippy`.** A `check` is far
   cheaper than a build (no codegen), and it is enough. A build would also need the `lldb` C++
   dependency and roughly twice the disk.

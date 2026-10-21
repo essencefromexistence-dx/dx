@@ -96,30 +96,39 @@
 
 ---
 
-## [Landed 2026-10-21] — the audit that the `cargo check` enabled, continued
+## [Landed 2026-10-21] — the audit that the `cargo check` enabled, concluded
 
-> ### ✅ The **previous** sync's tree now compiles **in full** — and `--all-targets` found one more
-> pre-existing defect
+> ### ✅ **The workspace now compiles in full — libs, tests, benches, examples and the `dx-code` binary**
 >
-> `cargo check --workspace --exclude web_preview_macos` on the `3762891a55` tree (plus the two
-> fixes above): **rc 0**, **914** crates, **0 errors, 0 warnings** — including `title_bar`,
-> `collab_ui`, `repl`, `media_panel`, `font_panel`, `shadcn_ui_panel` and `web_preview`.
+> `cargo check --workspace --all-targets --exclude web_preview_macos` → **rc 0**, **0 errors,
+> **0 warnings**. `cargo check -p zed --all-targets` → **rc 0** — the `dx-code` binary and its test
+> target included.
 >
-> `--all-targets` (which also compiles `#[cfg(test)]` modules, benches and examples — plain
-> `cargo check` does not) then surfaced a **third** defect, and this one is **pre-existing in the
-> fork**, not merge-introduced:
+> Getting there took **five** defects, and the pattern is worth stating plainly:
 >
-> * **`E0061`** — `crates/gpui_wgpu/src/wgpu_renderer.rs:2734`. The fork's liquid-glass work added a
->   `frame_texture: &wgpu::Texture` parameter to `WgpuRenderer::render_frame` (the surface texture
->   the scene is rendered into, copied into the backdrop the glass effect samples) and **never
->   updated the fork's own headless test harness**. The fork's `#[cfg(test)]` code has therefore
->   **not compiled since that work landed** — and nobody noticed, because this repo had never had a
->   compile at all. Fixed in **`49c40b6477`**: the harness now passes the render target's own texture,
->   which is exactly the texture being rendered into.
+> | # | defect | whose |
+> |---|---|---|
+> | 1 | `E0609` — `scroll_wheel_listeners` → `scroll_listeners` (`gpui/src/elements/div.rs`) | **the merge's** — the fork's *new* function could not be reached by upstream's rename |
+> | 2 | `E0004` — `ThreadStatus::Unconfirmed` not covered (`agent_ui/src/agent_panel.rs`) | **the merge's** — same shape |
+> | 3 | `E0061` — the fork's headless render harness never updated for the `frame_texture` parameter its own liquid-glass work added (`gpui_wgpu/src/wgpu_renderer.rs`) | **pre-existing in the fork** |
+> | 4 | `E0425` — the fork's test still referenced `builtin_profiles::MINIMAL` after the fork renamed it to `LEGACY_MINIMAL` (`agent_settings/src/agent_profile.rs`) | **pre-existing in the fork** |
+> | 5 | `E0283` ×9 — `assert_eq!` between a `HashSet` and an un-annotated `.collect()` in the `dx-code` test target (`zed/src/zed.rs`); ambiguous because the fork's graph puts `rkyv`'s `PartialEq<ArchivedHashSet<..>>` impl in scope, where upstream's byte-identical code compiles | **pre-existing in the fork** |
 >
-> ⚠️ **The lesson, now twice confirmed:** the structural gates prove the merge did not *lose*
-> anything; only a compile proves it did not *break* anything — and only `--all-targets` covers the
-> test and bench code. **Do `cargo check --workspace --all-targets` before the next sync, not after.**
+> Defects **1** and **2** were introduced by the 2026-10-20 merge and fixed in `57b7bb9bd3` and
+> `d0bf341947`. Defects **3**, **4** and **5** were **pre-existing in the fork** — its test code had
+> never compiled — and are fixed in `49c40b6477`, `622ecbb273` and `1a53bd90ff`.
+>
+> ⚠️ **The lesson, now confirmed three times over:** the structural gates prove the merge did not
+> *lose* anything; only a compile proves it did not *break* anything; and **only `--all-targets`**
+> covers the `#[cfg(test)]` modules, benches and examples where three of the five lived.
+> **Do `cargo check --workspace --all-targets` before the next sync, not after it.**
+>
+> ⚠️ **A correction to this repo's own tooling.** `dangling_refs.py` had flagged defect **4**, and
+> the earlier triage dismissed the whole candidate list as "all moves" without checking each entry.
+> **The gate was right and the triage was wrong.** The gate now strips comments and string literals
+> (so a mention in a doc comment is not reported as a reference) and has an `all` mode that sweeps
+> every `.rs` file in the tree rather than only the merge's blast radius — which is what a
+> pre-existing break outside that radius needs.
 
 ---
 
