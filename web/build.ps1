@@ -2,23 +2,36 @@
 # static outputs to the desktop assets/web folder, replacing old outputs.
 #
 # Usage:
-#   pwsh -File web\build.ps1                       # build all + publish to G:\Dx\desktop\assets\web
+#   pwsh -File web\build.ps1                       # build all + publish to <repo>\assets\web
 #   pwsh -File web\build.ps1 -SkipBuild            # only copy existing outputs
 #   pwsh -File web\build.ps1 -Only cms             # build + publish a single project
 #   pwsh -File web\build.ps1 -Target C:\web        # custom assets root
 param(
     [switch]$SkipBuild,
-    [string]$Target = "G:\Dx\desktop\assets\web",
+    [string]$Target = "",
     [string]$Only
 )
 
 $ErrorActionPreference = "Stop"
 $webRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+# The published outputs belong in this repository's own ssets/web tree -
+# that is where web_preview::find_assets_web_root looks first
+# (<cwd>/assets/web), so publishing anywhere else produces a tree the
+# desktop never reads. Derive it from this script's location rather than
+# hardcoding a machine path: the old default, G:\Dx\desktop\assets\web,
+# does not exist on this host, so the build silently published into a
+# directory nothing read while the committed assets went stale.
+if ([string]::IsNullOrWhiteSpace($Target)) {
+    $Target = Join-Path (Split-Path -Parent $webRoot) "assets\web"
+}
+
 # tool-id-folder -> published folder name (must match web_preview::project_dir_name)
 $projects = [ordered]@{
     "3D"            = "3d"
+    "Design"        = "Design"
     "Graphics"      = "Graphics"
+    "Presentations" = "Presentations"
     "Spreadsheets"  = "Spreadsheets"
     "Video"         = "Video"
     "Whiteboard"    = "whiteboard"
@@ -34,7 +47,9 @@ $projects = [ordered]@{
 # tool-id-folder -> source build output directory (relative to project folder)
 $outputDirs = @{
     "3D"            = "out"
+    "Design"        = "out"
     "Graphics"      = "out"
+    "Presentations" = "out"
     "Spreadsheets"  = "out"
     "Video"         = "out"
     "Whiteboard"    = ".dx\www\output"

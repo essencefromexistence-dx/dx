@@ -9,11 +9,22 @@
 #   pwsh -File web\build-selected.ps1 -Target C:\web
 param(
     [switch]$SkipBuild,
-    [string]$Target = "G:\Dx\desktop\assets\web"
+    [string]$Target = ""
 )
 
 $ErrorActionPreference = "Stop"
 $webRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# The published outputs belong in this repository's own ssets/web tree -
+# that is where web_preview::find_assets_web_root looks first
+# (<cwd>/assets/web), so publishing anywhere else produces a tree the
+# desktop never reads. Derive it from this script's location rather than
+# hardcoding a machine path: the old default, G:\Dx\desktop\assets\web,
+# does not exist on this host, so the build silently published into a
+# directory nothing read while the committed assets went stale.
+if ([string]::IsNullOrWhiteSpace($Target)) {
+    $Target = Join-Path (Split-Path -Parent $webRoot) "assets\web"
+}
 
 # tool-id-folder -> published folder name (must match web_preview::project_dir_name)
 $projects = [ordered]@{
@@ -33,7 +44,7 @@ $outputDirs = @{
     "graph"      = "understand-anything-plugin\packages\dashboard\dist"
     "Train"      = "dist"
     "Metasearch" = ".dx\www\output"
-    "Router"     = "apps\web\.next"
+    "Router"     = ".next"
     "Shader"     = ".dx\www\output"
 }
 
