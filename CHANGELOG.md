@@ -7,6 +7,36 @@
 
 ---
 
+## [Landed 2026-10-21] — sync of `upstream/main` (`3762891a55`) into `forge`
+
+> ### ✅ SYNC DONE (2026-10-21) — **3 of 3 conflicted paths resolved**, committed **`0217f9fbe0`**
+>
+> `forge` was at **`230a1a6892`**; `upstream/main` is **`3762891a55`** (*Fix structured content in
+> compatible chat completion streams*, #65915, 2026-10-21). The previous sync stopped at
+> `fae8a35482`, so this replays **5 commits**: `3762891a55`, `4c7ce998ad` (*agent_ui: Attach ACP v2
+> permissions to matching tool calls*, #65909), `d7adf3e7e2` (*project_panel: Add extension sort
+> order*, #65776), `9f03ff88e4` (*Fix language injections in notebook cells*, #65893) and
+> `92447a17cc` (*Update certifi in update_top_ranking_issues script*, #65902).
+>
+> **3 conflicts, all `docs/**` modify/delete** (*ours-deleted / upstream-modified*) — the recurring
+> decision; policy is to **honour our deletion and record upstream's text verbatim**, done in
+> **`merge-tools/evidence/upstream_docs_sync5.diff`**. The 11 source files merged **without a content
+> conflict**.
+>
+> ✅ **`Cargo.lock` is UNCHANGED** — upstream did not touch it in this window, so it is exactly the
+> cargo-resolved lock the previous sync verified. `cargo metadata --locked` → **rc 0**.
+>
+> ✅ **The merge added no formatting drift**: `crates/agent_ui/src/conversation_view/thread_view.rs`
+> is still not format-clean by exactly the **same 92 diff lines** as before the merge (pre-existing
+> fork drift, unchanged by this window's upstream edits).
+>
+> Verification: `cargo metadata --locked` → **rc 0**. Parse gate → **0 failures** across the 9 changed
+> `.rs` files. Tree-wide gate suite → **0** markers, **0** unexplained deletions, **0** token losses in
+> either direction, **0** item-parity failures, **0** balance failures. `git ls-files --eol` → **0**
+> `i/crlf`, **0** `i/mixed`. No compile has been run: a full build needs more disk than `G:` has free.
+
+---
+
 ## [Landed 2026-10-21] — follow-up sync of `upstream/main` (`fae8a35482`) into `forge`
 
 > ### ✅ SYNC DONE (2026-10-21) — **0 conflicts**, committed **`5aa9b5ec58`**
