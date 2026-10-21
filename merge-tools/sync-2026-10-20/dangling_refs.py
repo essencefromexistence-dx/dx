@@ -51,12 +51,52 @@ def items(text):
     return found
 
 
+def strip_comments_and_strings(line: str) -> str:
+    """Drop `//` comments and string/char literals from one line.
+
+    A mention of an identifier inside a comment or a literal is documentation,
+    not a reference - and reporting it as a dangling reference is exactly the
+    kind of noise that makes a gate get ignored.
+    """
+    out = []
+    i, n = 0, len(line)
+    while i < n:
+        c = line[i]
+        if c == "/" and i + 1 < n and line[i + 1] == "/":
+            break
+        if c == '"':
+            i += 1
+            while i < n:
+                if line[i] == "\\":
+                    i += 2
+                    continue
+                if line[i] == '"':
+                    i += 1
+                    break
+                i += 1
+            out.append('""')
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
 def main():
     tree, ours, theirs, base = sys.argv[1:5]
     max_hits = int(sys.argv[5]) if len(sys.argv) > 5 else 6
+    # optional 6th arg: "all" widens the sweep to every .rs file in the tree.
+    # The default scope is the files the MERGE changed - that is the merge's
+    # blast radius, and the only place a merge can introduce a break. A
+    # pre-existing fork break in a file the merge did NOT touch is outside
+    # that radius, and only a compile finds it.
+    sweep_all = len(sys.argv) > 6 and sys.argv[6] == "all"
 
     changed = [ln.split("\t", 1)[1] for ln in git("diff", "--name-status", ours, tree).splitlines()]
     rs_files = [p for p in changed if p.endswith(".rs")]
+    if sweep_all:
+        rs_files = [p for p in git("ls-tree", "-r", "--name-only", tree).splitlines()
+                    if p.endswith(".rs")]
+        print(f"[dangling] sweeping ALL {len(rs_files)} .rs files in the tree")
 
     merged_items = {}
     merged_files = {}
@@ -92,7 +132,9 @@ def main():
         if not m:
             continue
         path, ln, text = m.group(1), int(m.group(2)), m.group(3)
-        for name in re.findall(r"\b(" + "|".join(re.escape(n) for n in all_names) + r")\b", text):
+        # a mention inside a comment or a string literal is NOT a reference
+        code = strip_comments_and_strings(text)
+        for name in re.findall(r"\b(" + "|".join(re.escape(n) for n in all_names) + r")\b", code):
             hits.setdefault(name, []).append((path, ln, text.strip()[:150]))
 
     print(f"[dangling] {len(suspects)} identifier(s) defined on a side but absent "
