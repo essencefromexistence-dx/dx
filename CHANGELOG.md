@@ -6,6 +6,54 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-22] - sync of `upstream/main` (`d27ad54dd6`) into `forge`
+
+> ### ✅ **17 upstream commits merged. 6 conflicted paths, all resolved; the tree compiles.**
+>
+> `upstream/main` `d27ad54dd6ac9ff1e1c1e0a63d5e2ab4c0b8e0f3` (17 commits since `d38a754e1b`) - Zed
+> v1.27.0, the objc2 migration of the macOS bindings, upstream's shared OpenCode catalogue and
+> completion dispatch, lazy tool-call diffs, lazily parsed thread markdown, and the LSP
+> document-selector work.
+>
+> **The conflicted paths, and how each was resolved** (the fork's UI wins a genuine UI conflict;
+> upstream's capability stays compiled and wired):
+>
+> | Path | Blocks | Resolution |
+> |---|---|---|
+> | `crates/agent_ui/src/conversation_view/thread_view.rs` | 1 | Both sides added a `use` in the same place - **both kept** (`subagent_card` from upstream, `voice_controls` from the fork). |
+> | `crates/agent_ui/src/entry_view_state.rs` | 2 | (1) upstream's lazy materialisation **+** the fork's terminal/diff caps - **union**. (2) upstream's `ToolCallEntry` (with `restored_view_ids`) - **upstream's**, because the code after the conflict destructures it. |
+> | `crates/file_finder/src/file_finder.rs` | 1 | The fork's **task cap** + upstream's `FoundPath::is_file` - **union**. Upstream's `is_file` is a superset of the fork's own check: the open-entry fast path, the local filesystem, *and* the remote-server case (the fork fell back to "assume it exists"). |
+> | `crates/language_models/src/provider/opencode.rs` | 4 | The imports - **union**. The Go-inventory constants - **the fork's** (the duplicated catalogue URL now comes from the crate). The completion dispatch - **upstream's shared one** (the merge already carries upstream's `stream_completion`, which calls `opencode::completion::stream_completion`, and the imports the fork's local copies needed are gone). The catalogue parser - **upstream's shared one**. |
+> | `crates/opencode/Cargo.toml` | 1 | The fork's `strum` **+** upstream's `[dev-dependencies]` - **both**. |
+> | `crates/project_panel/src/project_panel.rs` | 2 | (1) the fork's `create_move_path` - the *" copy"* disambiguation, a move onto an existing name - **inside upstream's new `rename` shape**, because upstream's caller destructures `(ProjectPath, Task)`. (2) the fork's `last_moved_entry` tracking **+** upstream's 3-tuple `move_tasks` - **union**. |
+>
+> **Two follow-on patches the analysis found, and two restorations the gates caught:**
+>
+> - `crates/opencode/src/catalog.rs` - upstream's **new** file matches `OpenCodeSubscription`
+>   exhaustively, and the fork added a third variant (`Free`), so the auto-merge left a
+>   **non-exhaustive match**. The Free arm and its zero-cost rule are the fork's semantics: the
+>   live catalogue carries `opencode` and `opencode-go` only, and Free models are the zero-cost
+>   entries of the `opencode` key - the same *"free tag"* the Zen path excludes.
+> - the provider's `current_api_key` - upstream's merged `stream_completion` calls it with one
+>   argument, but the fork's takes the config and the subscription, because the keyless *public
+>   free mode* has to know the model and the tier to choose between a stored key and the literal
+>   `public` bearer.
+> - **restored:** the fork's `create_tier_model` and `live_default_model` - the merge dropped the
+>   *definitions* while keeping the *call sites* in `default_model` / `default_fast_model`.
+> - **restored:** upstream's new `into_copy_entry` - the merge dropped it, and it is the fix for
+>   *"Keep staged changes when discarding from the unstaged section"*.
+>
+> **Supersessions honoured, not silent drops** (upstream reworked the region; the fork's
+> implementation is replaced by upstream's, the capability is not): the fork's
+> `subagent_error_message` helper (upstream's subagent card carries the error in its own state),
+> the fork's `create_editor_diff` (upstream materialises the diffs lazily), and the fork's copies
+> of the LSP message ordering and the gpui scroll anchoring (upstream reworked both).
+>
+> **Gates:** markers 0; deletion audit 3 added / 0 deleted / 0 unexplained; item parity 0 files
+> below a side; brace balance 0 files differing; the only token the no-loss gate reports is
+> `is_zero_cost`, which **moved** from the provider into the crate's `catalog.rs`.
+
+
 ## [Landed 2026-10-21] - the local-model paths keyed off "does a G: drive exist"
 
 > ### ✅ **On any Windows machine with a `G:` drive, the fork aimed its local-model paths at
