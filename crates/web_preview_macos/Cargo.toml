@@ -17,7 +17,6 @@ agent-client-protocol.workspace = true
 agent_ui.workspace = true
 base64.workspace = true
 acp_thread.workspace = true
-cocoa.workspace = true
 editor.workspace = true
 fs.workspace = true
 futures.workspace = true
@@ -27,8 +26,6 @@ http_client.workspace = true
 image.workspace = true
 markdown.workspace = true
 menu.workspace = true
-objc.workspace = true
-objc2-app-kit.workspace = true
 paths.workspace = true
 raw-window-handle = "0.6"
 serde_json.workspace = true
@@ -38,3 +35,16 @@ workspace.workspace = true
 wry = { version = "0.53", features = ["devtools"] }
 rust-embed.workspace = true
 mime_guess.workspace = true
+
+# The Apple-only dependencies must be target-gated, like every other
+# platform-specific crate in this workspace. `cocoa`, `objc` and
+# `objc2-app-kit` are used only by `macos_host`, which is itself
+# `#[cfg(target_os = "macos")]`-gated, so on every other platform these
+# crates are unreachable - and `objc2` carries a literal
+# `compile_error!("`objc2` only works on Apple platforms")`, which made
+# this one crate the only thing that could not be type-checked on a
+# Windows host.
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa.workspace = true
+objc.workspace = true
+objc2-app-kit.workspace = true
