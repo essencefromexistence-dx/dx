@@ -492,6 +492,40 @@ impl OpenCodeLanguageModelProvider {
         let mut models: BTreeMap<String, (DiscoveredModel, OpenCodeSubscription)> =
             BTreeMap::default();
         let settings = Self::settings(cx);
+        let has_real_key = self.state.read(cx).is_authenticated()
+            || std::env::var("OPENCODE_API_KEY")
+                .map(|v| !v.trim().is_empty())
+                .unwrap_or(false);
+
+        // -- ours' static tier catalog, materialised onto upstream's `Model` --
+        // The picker offers these (see `provided_models`), so the request path
+        // must be able to resolve them as well: without this, a builtin free
+        // model is listed in the model picker but every request for it fails
+        // with `ModelUnavailable`, because `config` resolves the model here.
+        // Inserted FIRST so the live discovery below overwrites it, exactly as
+        // in `provided_models`.
+        for tier in OpenCodeTier::iter() {
+            if matches!(tier, OpenCodeTier::Custom { .. }) {
+                continue;
+            }
+            for &subscription in tier.available_subscriptions() {
+                if Self::subscription_available(subscription, has_real_key, cx) {
+                    let model = tier.to_model(subscription);
+                    let key = model_id(&model, subscription);
+                    models.insert(
+                        key,
+                        (
+                            DiscoveredModel {
+                                supports_images: tier.supports_images(),
+                                supports_thinking: model_supports_thinking(&model),
+                                model,
+                            },
+                            subscription,
+                        ),
+                    );
+                }
+            }
+        }
 
         let discovered_models = &self.state.read(cx).discovered_models;
         for subscription in
@@ -2670,6 +2704,7 @@ mod tests {
 #[cfg(test)]
 mod dx_tests {
     use super::*;
+    use fs::FakeFs;
     use gpui::TestAppContext;
     use http_client::{FakeHttpClient, Response};
     use language_model::{LanguageModelRequestMessage, MessageContent, Role};
@@ -2725,6 +2760,10 @@ mod dx_tests {
         let settings_store = SettingsStore::test(cx);
         cx.set_global(settings_store);
         crate::AllLanguageModelSettings::register(cx);
+        // OpenCodeLanguageModelProvider::new resolves the filesystem through
+        // <dyn Fs>::global(cx), which panics when no fs global is set. The
+        // provider caches its model catalog on disk, so the test needs one.
+        <dyn Fs>::set_global(FakeFs::new(cx.background_executor().clone()), cx);
         OpenCodeLanguageModelProvider::new(
             FakeHttpClient::with_404_response(),
             Arc::new(FakeCredentialsProvider::new()),
@@ -2813,19 +2852,28 @@ mod dx_tests {
             (default_id, default_fast_id, provided_ids)
         });
 
-        assert_eq!(default_id.as_deref(), Some("x-preview-f-free"));
-        assert_eq!(default_fast_id.as_deref(), Some("deepseek-v4-flash-free"));
+        // The provider's model ids carry the subscription prefix
+        // (`model_id` -> `{subscription.id_prefix()}/{model.id()}`). The
+        // test-only helpers above produce the *bare* ids used for
+        // registry composition, so the expectations here must match the
+        // production form.
+        assert_eq!(default_id.as_deref(), Some("free/x-preview-f-free"));
+        assert_eq!(
+            default_fast_id.as_deref(),
+            Some("free/deepseek-v4-flash-free")
+        );
         assert_eq!(
             provided_ids,
             [
-                "big-pickle",
-                "deepseek-v4-flash-free",
-                "laguna-s-2.1-free",
-                "mimo-v2.5-free",
-                "muse-spark-1.2-contributor-free",
-                "nemotron-3-ultra-free",
-                "nemotron-3.5-lightning-free",
-                "x-preview-f-free",
+                "free/big-pickle",
+                "free/deepseek-v4-flash-free",
+                "free/laguna-s-2.1-free",
+                "free/ling-3.0-flash-fin-free",
+                "free/mimo-v2.5-free",
+                "free/muse-spark-1.2-contributor-free",
+                "free/nemotron-3-ultra-free",
+                "free/nemotron-3.5-lightning-free",
+                "free/x-preview-f-free",
             ]
         );
     }
@@ -2853,6 +2901,7 @@ mod dx_tests {
             let settings_store = SettingsStore::test(cx);
             cx.set_global(settings_store);
             crate::AllLanguageModelSettings::register(cx);
+            <dyn Fs>::set_global(FakeFs::new(cx.background_executor().clone()), cx);
             OpenCodeLanguageModelProvider::new(
                 http_client,
                 Arc::new(FakeCredentialsProvider::new()),
