@@ -7,6 +7,63 @@
 
 ---
 
+## [Landed 2026-10-21] — post-sync audit: the first real `cargo check`, and the two defects it found
+
+> ### ⛔→✅ **THE SYNC AS COMMITTED DID NOT COMPILE. Two defects, found and fixed.**
+>
+> The `3762891a55` sync (`0217f9fbe0`) passed every structural gate this repo has — markers, no-loss
+> both directions, item parity, brace balance, deletion audit, parse gate, EOL, and
+> `cargo metadata --locked` (rc 0). It **still did not compile.** The only thing that found out was
+> **the first real `cargo check` this fork has ever had** — run against the merged tree extracted to
+> a scratch directory, with `CARGO_TARGET_DIR` pointed off the repo.
+>
+> **Both defects are the same shape, and it is a shape the structural gates cannot see.** The fork's
+> code that referenced the old API was an **addition** — a line that does not exist in the merge
+> base — so **upstream's rename could not reach it**. merge-ort applied upstream's rename to every
+> line that existed in base and left the fork's new line alone. The result is not a conflict, not a
+> marker, and not a *missing* identifier: the identifier is still **present**, so a no-loss audit
+> sees nothing wrong.
+>
+> | commit | defect |
+> |---|---|
+> | `57b7bb9bd3` | **`E0609`** — `crates/gpui/src/elements/div.rs:2494`: `no field 'scroll_wheel_listeners' on type '&elements::div::Interactivity'`. Upstream renamed the field to `scroll_listeners` (#65805); the fork's **new** `Interactivity::should_block_mouse_passthrough` (the DX mouse-passthrough feature) was written against the old name. |
+> | `d0bf341947` | **`E0004`** — `crates/agent_ui/src/agent_panel.rs:9648`: `non-exhaustive patterns: acp_thread::ThreadStatus::Unconfirmed not covered`. Upstream added the `Unconfirmed` status; the fork's DX status label matched on `ThreadStatus` without it. Plus **4 deprecation warnings** in the fork's `disk_tree` (`ScrollWheelEvent`, `on_scroll_wheel` — upstream's old names, kept as deprecated aliases). |
+>
+> **Nothing was lost.** The fix for the first is upstream's own name for the field. The new arm in
+> the second uses the fork's **own** vocabulary (`sidebar.rs` already spells that state
+> `"unconfirmed"`). The deprecations are replaced with the new names, which is behaviour-preserving
+> (the old names forward to the new ones).
+>
+> **Two new gates** now exist, in `merge-tools/sync-2026-10-20/`:
+>
+> * **`stale_refs.py`** — lists every name upstream removed or renamed in the window and reports
+>   where the merged tree still refers to the old one. It confirms the `scroll_wheel_listeners`
+>   break was the **only** instance of its class.
+> * **`dangling_refs.py`** — the complement: every item defined on a side but absent from the merged
+>   tree, searched for across the whole tree. It found **0** real danglers (the 10 candidates it
+>   reports are all *moves* — `GrammarConfigToml`, `copy_extension_resources`,
+>   `populate_defaults`, `work_dirs_from_session_info` — plus common words in comments).
+>
+> **Also verified, and clean:**
+>
+> * **`cargo check` → rc 0** for `gpui`, `file_icons`, `gpui_windows`, `editor`, `agent_ui`,
+>   `project_panel`, `sidebar`, `settings_ui`, `markdown_preview` and their **101** transitive
+>   dependencies — including `acp_thread`, `agent_servers`, `workspace`, `project`, `editor`,
+>   `terminal_view`, `git_ui`, `search`, `language_models`, `agent` and `extension`.
+> * **Capability check** — of the **940** distinct `dx_*` / `Dx*` symbols in the fork, **0** lost an
+>   occurrence across the sync: no fork feature was neutered (present but unwired).
+> * **Exhaustiveness sweep** — every `match` on `ThreadStatus` / `AgentThreadStatus` in the tree was
+>   checked by hand; the only non-exhaustive one was the one the compiler found.
+> * **No upstream content under a gitignored path** — the fork ignores `/docs`, `/tools/`,
+>   `/models/`, `/inspirations/` and others; upstream has content in **none** of them, so nothing
+>   was silently dropped by `.gitignore`.
+>
+> **The lesson, recorded for the next session:** the structural gates prove the merge did not
+> *lose* anything. They cannot prove the merge did not *break* anything. Only a compile can, and
+> this repo had never had one. **Do the `cargo check` before the next sync, not after it.**
+
+---
+
 ## [Landed 2026-10-21] — sync of `upstream/main` (`3762891a55`) into `forge`
 
 > ### ✅ SYNC DONE (2026-10-21) — **3 of 3 conflicted paths resolved**, committed **`0217f9fbe0`**
