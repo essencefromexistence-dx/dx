@@ -128,6 +128,22 @@
 > `collections`, `settings_content`, `util`, `paths`, `agent_settings`, `text`, `fs` →
 > **329 tests, 0 failures.**
 >
+> **And the published previews were stale.** Comparing each published tree against its source
+> output (something no tool in the repo does) showed `assets/web/presentations` was an **older
+> Next.js build**: 74 source files vs 53 published, **29 missing** - including the whole
+> `dashboard/` and `editor/` **routes**, so the published preview could not serve either - 17 shared
+> files differing, and 8 files from the previous build. Republished; it is now byte-identical to the
+> source output. The other thirteen trees are current: seven byte-identical, `metasearch` differing
+> only in `source-build-manifest.json` (a build stamp), and `Video`/`Shader`/`Train` whose *source*
+> outputs are not built in this tree, so they keep their committed trees.
+>
+> ⚠️ **A subtlety worth recording:** the published directories are **mixed case on disk**
+> (`assets/web/Design`) but git tracks them **lower case** (`assets/web/design`). On Windows they
+> are the same directory; on a case-sensitive filesystem they are not - which is why
+> `git ls-files -- assets/web/Design` returns nothing and reads as "not tracked" when it is.
+> `web_preview::resolve_dir_case_insensitive` exists precisely for this, and `script/bundle-*` copy
+> the whole tree, so the runtime and the bundles are unaffected.
+>
 > ⚠️ **Also found, and left alone:** `assets/web/music` (53 files) has **no** source project - there
 > is no `web/Music` - and nothing in `web_preview` or the build scripts references it. It looks like
 > an orphan of a removed project. Removing committed assets is a separate decision.
