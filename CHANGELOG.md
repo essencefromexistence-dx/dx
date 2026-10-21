@@ -64,7 +64,11 @@
 > OpenAI-compatible ones did not, so a user who copied the old default into their own settings would
 > still have hit `/v1/v1/models`. The unwrapping moved into the `llama_cpp` crate, where the URLs are
 > built (`base_api_url`), and the provider's `native_api_url` now calls it - one rule, every
-> endpoint. A new test, `a_v1_suffixed_api_url_reaches_the_same_endpoints`, pins it: both
+> endpoint. **The fork already knew this idiom** - `provider/mistral.rs` answers the same
+> question explicitly (*"`MISTRAL_API_URL` already ends in `/v1`, so `{base}/models` yields
+> `.../v1/models`. A bare custom base without `/v1` gets `/v1/models`."*) - it was applied to
+> mistral and missed on llama.cpp. A new test,
+> `a_v1_suffixed_api_url_reaches_the_same_endpoints`, pins it: both
 > `http://127.0.0.1:8080` and `http://127.0.0.1:8080/v1` must reach `/v1/models`.
 >
 > ⚠️ **Still open, and it is a product question, not a defect:** the fork's default
