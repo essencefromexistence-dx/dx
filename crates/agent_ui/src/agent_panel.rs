@@ -9647,6 +9647,7 @@ impl AgentPanel {
         if let Some(thread) = self.active_agent_thread(cx) {
             match thread.read(cx).status() {
                 ThreadStatus::Generating => "Running".into(),
+                ThreadStatus::Unconfirmed => "Unconfirmed".into(),
                 ThreadStatus::Idle => "Ready".into(),
             }
         } else if self.active_terminal_id().is_some() {

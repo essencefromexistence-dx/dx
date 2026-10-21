@@ -17,7 +17,7 @@
 
 use gpui::{
     Context, MouseButton, MouseDownEvent, MouseMoveEvent, NavigationDirection, ScrollDelta,
-    ScrollWheelEvent, Window,
+    ScrollEvent, Window,
 };
 
 use crate::ProjectPanel;
@@ -187,7 +187,7 @@ pub(crate) fn on_down(
 /// Wheel: zoom, or pan with shift held.
 pub(crate) fn on_scroll(
     panel: &mut ProjectPanel,
-    event: &ScrollWheelEvent,
+    event: &ScrollEvent,
     _window: &mut Window,
     cx: &mut Context<ProjectPanel>,
 ) {

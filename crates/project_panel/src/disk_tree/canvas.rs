@@ -43,9 +43,9 @@
 use disk_tree_core::classify::Category;
 use gpui::{
     App, Bounds, ContentMask, Corners, Edges, FocusHandle, Font, FontWeight, Hsla,
-    InteractiveElement, MouseDownEvent, MouseMoveEvent, ParentElement, Pixels, Point,
-    ScrollWheelEvent, SharedString, Size, StatefulInteractiveElement, Styled, TextAlign, TextRun,
-    Window, canvas, pattern_slash, px, quad, transparent_black,
+    InteractiveElement, MouseDownEvent, MouseMoveEvent, ParentElement, Pixels, Point, ScrollEvent,
+    SharedString, Size, StatefulInteractiveElement, Styled, TextAlign, TextRun, Window, canvas,
+    pattern_slash, px, quad, transparent_black,
 };
 use std::cell::Cell;
 use std::rc::Rc;
@@ -117,7 +117,7 @@ pub(crate) fn render(
         .on_any_mouse_down(cx.listener(|panel, event: &MouseDownEvent, window, cx| {
             crate::disk_tree::mouse::on_down(panel, event, window, cx);
         }))
-        .on_scroll_wheel(cx.listener(|panel, event: &ScrollWheelEvent, window, cx| {
+        .on_scroll(cx.listener(|panel, event: &ScrollEvent, window, cx| {
             crate::disk_tree::mouse::on_scroll(panel, event, window, cx);
         }))
         .child(
