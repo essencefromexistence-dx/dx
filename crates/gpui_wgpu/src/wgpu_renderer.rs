@@ -2724,14 +2724,15 @@ impl WgpuHeadlessRenderer {
     fn render(&mut self, scene: &Scene, size: Size<DevicePixels>) -> anyhow::Result<()> {
         self.check_gpu_errors()?;
         self.ensure_render_target(size)?;
-        let view = self
-            .render_target
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("Headless render target was not created"))?
-            .view
-            .clone();
+        let (texture, view) = {
+            let target = self
+                .render_target
+                .as_ref()
+                .ok_or_else(|| anyhow::anyhow!("Headless render target was not created"))?;
+            (target.texture.clone(), target.view.clone())
+        };
         self.core
-            .render_frame(scene, &view, size, false, wgpu::Color::BLACK)?;
+            .render_frame(scene, &texture, &view, size, false, wgpu::Color::BLACK)?;
         Ok(())
     }
 
