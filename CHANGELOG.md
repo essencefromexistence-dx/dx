@@ -6,6 +6,50 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-21] - the local-model paths keyed off "does a G: drive exist"
+
+> ### ✅ **On any Windows machine with a `G:` drive, the fork aimed its local-model paths at
+> `G:/Dx/code/...`.**
+>
+> `crates/language_models/src/provider/llama_cpp.rs` had:
+>
+> ```rust
+> fn default_models_dir() -> PathBuf {
+>     if cfg!(target_os = "windows") && Path::new("G:/").exists() {
+>         PathBuf::from("G:/Dx/code/models/llama.cpp")
+>     } else {
+>         default_user_data_dir().join("models").join("llama.cpp")
+>     }
+> }
+> ```
+>
+> and the same shape for `default_cache_dir` (`G:/Dx/code/models/huggingface`) and
+> `default_tools_dir` (`G:/Dx/code/tools/llama.cpp`).
+>
+> The condition is **"this machine has a `G:` drive"**, not **"this is the machine the fork is
+> developed on"**. A `G:` drive is an ordinary thing to have - a data drive, a game drive, a mapped
+> network drive - so on any such machine the local model downloads, the Hugging Face cache and the
+> llama.cpp tools were all sent to `G:/Dx/code/...`: a tree that has nothing to do with that
+> machine, that the app would have to create inside an unrelated drive, and that a non-admin user
+> usually cannot write to. The local model feature would simply fail there.
+>
+> The special case exists for the dev machine, so it now recognises the dev machine - the checkout:
+>
+> ```rust
+> fn dev_checkout_root() -> Option<PathBuf> {
+>     let root = PathBuf::from("G:/Dx/code");
+>     (root.join(".git").exists() || root.join("Cargo.toml").exists()).then_some(root)
+> }
+> ```
+>
+> The dev machine is unaffected (the checkout is there); every other machine now gets the user data
+> directory, as the `else` branch always intended.
+>
+> This is the same class as the stale `G:\Dx\desktop\assets\web` in `web/build.ps1` - a
+> machine-specific path shipped as a default - found by the same sweep that found the `api_url` that
+> contradicted the code.
+
+
 ## [Landed 2026-10-21] - the local llama.cpp provider could not reach the server
 
 > ### ✅ **A real production bug: the shipped `llama.cpp.api_url` had a stray `/v1`, so every

@@ -2157,25 +2157,36 @@ fn is_low_spec_system() -> bool {
     system.total_memory() < LOW_SPEC_MEMORY_THRESHOLD_BYTES
 }
 
+/// The checkout the fork is developed in, when the process runs on that machine.
+///
+/// The old test was "does a `G:` drive exist", which fired on every Windows
+/// machine that happened to have one - sending the local model downloads, the
+/// Hugging Face cache and the llama.cpp tools to `G:/Dx/code/...` on a
+/// stranger's PC. The marker is the checkout itself.
+fn dev_checkout_root() -> Option<PathBuf> {
+    let root = PathBuf::from("G:/Dx/code");
+    (root.join(".git").exists() || root.join("Cargo.toml").exists()).then_some(root)
+}
+
 fn default_models_dir() -> PathBuf {
-    if cfg!(target_os = "windows") && Path::new("G:/").exists() {
-        PathBuf::from("G:/Dx/code/models/llama.cpp")
+    if let Some(root) = dev_checkout_root() {
+        root.join("models").join("llama.cpp")
     } else {
         default_user_data_dir().join("models").join("llama.cpp")
     }
 }
 
 fn default_cache_dir() -> PathBuf {
-    if cfg!(target_os = "windows") && Path::new("G:/").exists() {
-        PathBuf::from("G:/Dx/code/models/huggingface")
+    if let Some(root) = dev_checkout_root() {
+        root.join("models").join("huggingface")
     } else {
         default_user_data_dir().join("models").join("huggingface")
     }
 }
 
 fn default_tools_dir() -> PathBuf {
-    if cfg!(target_os = "windows") && Path::new("G:/").exists() {
-        PathBuf::from("G:/Dx/code/tools/llama.cpp")
+    if let Some(root) = dev_checkout_root() {
+        root.join("tools").join("llama.cpp")
     } else {
         default_user_data_dir().join("tools").join("llama.cpp")
     }
