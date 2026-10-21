@@ -96,6 +96,44 @@
 
 ---
 
+## [Landed 2026-10-21] — the fork's web publishing script, and the first green test run
+
+> ### ✅ Three **silent** web-publish defects fixed, and the fork's unit tests now actually run
+>
+> **The web publish script.** `web/build.ps1` and `web/build-selected.ps1` had three defects, all of
+> the same shape - a **silent** failure where the build "succeeds" and the desktop keeps serving
+> stale content:
+>
+> 1. **The publish target was a machine path that no longer exists.** Both scripts defaulted
+>    `-Target` to `G:\Dx\desktop\assets\web`; the fork was moved to `G:\Dx\code` and that directory
+>    does not exist here. The script *creates* the target (`New-Item -Force`), so it published into
+>    a dead tree and printed "Build complete" - while the desktop, which reads `<cwd>/assets/web`
+>    first (`web_preview::find_assets_web_root`), kept serving the **committed** assets. A fresh web
+>    build was invisible. The target is now derived from the script's own location.
+> 2. **`Design` and `Presentations` were never published at all.** `project_dir_name` maps
+>    `"design" -> "Design"` and `"presentations" -> "Presentations"`, and both published trees are
+>    committed under `assets/web/` (85 and 53 files) - but neither was in the publish map, so a
+>    rebuild never touched them, with no warning either. Both are Next.js static exports
+>    (`output: "export"`), so their source output is `out/`. `Presentations` now publishes (74
+>    files); `Design`'s export is not built in the tree, so the script now **warns** for it rather
+>    than silently skipping it - and correctly does *not* clobber the committed 85-file app with
+>    the one-file `web/Design/.dx/www/output` placeholder.
+> 3. **`build-selected.ps1` pointed Router at an output directory that has never existed** -
+>    `apps\web\.next`, which `web/build.ps1`'s own comment says has never existed. Now `.next`.
+>
+> **The first green test run.** `cargo test` had never been run in this repo. Run from a real
+> checkout (the dev-asset loader needs a `.git` directory - `util::dev_repo_root` - so a scratch
+> extraction panics with *"dev asset loading requires running from within the checkout"*, and because
+> it is a `LazyLock` that panic **poisons** the lock and takes 9 further tests down with it):
+> `collections`, `settings_content`, `util`, `paths`, `agent_settings`, `text`, `fs` →
+> **329 tests, 0 failures.**
+>
+> ⚠️ **Also found, and left alone:** `assets/web/music` (53 files) has **no** source project - there
+> is no `web/Music` - and nothing in `web_preview` or the build scripts references it. It looks like
+> an orphan of a removed project. Removing committed assets is a separate decision.
+
+---
+
 ## [Landed 2026-10-21] — the `--exclude web_preview_macos` is gone: the whole workspace checks
 
 > ### ✅ `cargo check --workspace --all-targets` → **rc 0** with **no exclusions at all**
