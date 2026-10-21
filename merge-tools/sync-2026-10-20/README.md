@@ -118,34 +118,32 @@ for it). Both were written *after* these two defects, and both now report clean.
   rebuild time, and it is the single most effective lever when the disk gets tight. The temp area
   `G:\Temp\UserTemp\opencode` is swept periodically, so do not treat it as durable.
 
-### ⚠️ `cargo check --workspace` has a hard platform floor on Windows
+### ⚠️ `cargo check --workspace` and the platform floor on Windows
 
-`cargo check --workspace` **cannot succeed on `x86_64-pc-windows-msvc`**, and could not before the
-2026-10-20 sync either. Three crates block it, all of them third-party and all of them pulled by
-workspace members whose manifests the merge **did not touch**:
+`cargo check --workspace` **could not** succeed on `x86_64-pc-windows-msvc`, and could not before
+the 2026-10-20 syncs either. Two things blocked it, and **both were in the fork, not in upstream**:
 
-| blocked crate | why | pulled by |
+| blocked | why | status |
 |---|---|---|
-| `objc2` | "`objc2` only works on Apple platforms" | `web_preview_macos` — the **only** member with an *unconditional* `objc2-app-kit` dep. Every other Apple dep in the workspace is correctly target-gated. |
-| `core-foundation` | `cannot find 'unix' in 'os'` | same chain, via `objc2-app-kit` → `cocoa` → `core-foundation` |
-| `webrtc-sys` | native C++ build; its build script extracts a WebRTC archive and needs **disk** | `livekit_client` → `libwebrtc` → `webrtc-sys`, and therefore `title_bar`, `collab_ui`, `call` |
+| `web_preview_macos` | declared `cocoa`, `objc` and `objc2-app-kit` **unconditionally** in `[dependencies]`, while every *other* Apple-only crate in the workspace puts them under `[target.'cfg(target_os = "macos")'.dependencies]`. `objc2` carries a literal `compile_error!("`objc2` only works on Apple platforms")`, which aborted the check before any of the fork's own code in that crate was looked at. | ✅ **fixed** in `2ab81e7fc6` - the three deps are now target-gated, and the crate checks on Windows as a correctly-gated stub |
+| `livekit` chain (`livekit_client` -> `libwebrtc` -> `webrtc-sys`, and therefore `title_bar`, `collab_ui`, `call`) | `webrtc-sys` is a C++ build whose script extracts a WebRTC archive and needs **disk**; it also needs a `cc` that accepts Apple flags | ⛔ **still open** - a disk and toolchain fact, not a code defect |
 
-So the runnable form on Windows is:
-
-```powershell
-cargo check --workspace --exclude web_preview_macos
-```
-
-and if the disk is tight, add the livekit chain:
+So the command is now:
 
 ```powershell
-cargo check --workspace --exclude web_preview_macos --exclude title_bar `
-    --exclude livekit_client --exclude collab_ui --exclude call
+cargo check --workspace --all-targets --config net.git-fetch-with-cli=true
 ```
 
-⚠️ Excluding `title_bar` also excludes `crates/zed` (the app binary), which depends on it.
+with no `--exclude` needed for `web_preview_macos`.
 
-`members_reaching.py` computes the exclusion set from a `cargo metadata` JSON — it is
+⚠️ **What is still NOT verified on a Windows host:** the **macOS code path** of
+`web_preview_macos` (`macos_host`, `web_preview_view`, `agent_thread_www_preview`). The crate's
+source is `#[cfg(target_os = "macos")]`-garded, so on Windows it compiles as an empty stub - the
+macOS code is not type-checked at all. A `--target aarch64-apple-darwin` check from here gets
+past the Rust side and then fails in `zstd-sys`, whose C build needs `-arch arm64` and
+`-mmacosx-version-min=10.15.7`, which the MSVC `cc` cannot accept. **That needs a macOS host.**
+
+`members_reaching.py` computes the exclusion set from a `cargo metadata` JSON - it is
 **target-aware**, which matters: a naive reachability walk over `cargo metadata` reports 203 of 270
 members as unbuildable, because `cargo metadata` includes target-specific dependencies that the
 host never builds.

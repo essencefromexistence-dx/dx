@@ -96,6 +96,44 @@
 
 ---
 
+## [Landed 2026-10-21] — the `--exclude web_preview_macos` is gone: the whole workspace checks
+
+> ### ✅ `cargo check --workspace --all-targets` → **rc 0** with **no exclusions at all**
+>
+> The documented verification command carried `--exclude web_preview_macos` because that crate was
+> the one thing that could not be type-checked on a Windows host. It now is, and the reason was a
+> **manifest inconsistency in the fork**, not a code defect and not a merge artefact:
+>
+> * The crate's **source** is thoroughly platform-guarded — 7 `#[cfg(target_os = "macos")]` gates in
+>   `lib.rs`, 71 in `web_preview_view.rs` — and the three Apple-only crates it uses (`cocoa`, `objc`,
+>   `objc2-app-kit`) are used **only** by `macos_host`, which is itself `cfg`-gated.
+> * But the **dependencies** were declared *unconditionally*, so cargo still had to build them, and
+>   `objc2` carries a literal `compile_error!("`objc2` only works on Apple platforms")` that aborted
+>   the whole workspace check before any of the fork's own code in that crate was looked at.
+> * **Every other** Apple-only crate in this workspace — `gpui_apple`, `gpui_macos`, `gpui_ios`,
+>   `client`, `time_format` — already puts its Apple dependencies under
+>   `[target.'cfg(target_os = "macos")'.dependencies]`. This one did not.
+>
+> Fixed in **`2ab81e7fc6`**: the three deps are now target-gated, restoring the workspace invariant.
+> macOS behaviour is unchanged (same three deps, same `macos_host`), and `cargo metadata --locked`
+> is unaffected (rc 0) — the lock records the union across targets, so the resolution does not move.
+>
+> **Verification:** `cargo check --workspace --all-targets` → **rc 0**, **0 errors, 0 warnings**, with
+> **no `--exclude`**. `web_preview_macos` is now in the checked set.
+>
+> ⚠️ **What is still unverified from a Windows host:** the crate's **macOS code path**. It is
+> `cfg`-gated, so on Windows it compiles as an empty stub and the macOS code is not type-checked at
+> all. A `--target aarch64-apple-darwin` check from here gets past the Rust side and then fails in
+> `zstd-sys`, whose C build needs `-arch arm64` and `-mmacosx-version-min=10.15.7`, which the MSVC
+> `cc` cannot accept. **That needs a macOS host.**
+>
+> ⛔ **The one remaining platform blocker** is the `livekit` chain (`livekit_client` → `libwebrtc` →
+> `webrtc-sys`, and therefore `title_bar`, `collab_ui`, `call`): `webrtc-sys` is a C++ build whose
+> script extracts a WebRTC archive, so it needs **disk** and an Apple-capable `cc`. It is not
+> reachable from a Windows host, and no manifest change can make it so.
+
+---
+
 ## [Landed 2026-10-21] — the audit that the `cargo check` enabled, concluded
 
 > ### ✅ **The workspace now compiles in full — libs, tests, benches, examples and the `dx-code` binary**
