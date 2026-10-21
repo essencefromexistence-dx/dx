@@ -55,12 +55,18 @@ python dangling_refs.py <tree> <ours> <theirs> <base> # items that exist on no s
 git -C $env:DX_CODE_REPO archive --format=tar <tree> crates extensions assets .cargo tooling \
     Cargo.toml Cargo.lock rust-toolchain.toml rustfmt.toml .gitattributes | tar -x -C <scratch>
 $env:CARGO_TARGET_DIR = '<scratch-target>'
-cargo check --workspace --config net.git-fetch-with-cli=true
+cargo check --workspace --all-targets --exclude web_preview_macos `
+    --config net.git-fetch-with-cli=true
 
 # 7. commit
 $tree = git -C $env:DX_CODE_REPO write-tree
 git -C $env:DX_CODE_REPO commit-tree $tree -p <ours> -p upstream/main
 ```
+
+⚠️ **`--all-targets` is not optional.** Plain `cargo check` does **not** compile `#[cfg(test)]`
+modules, benches or examples — and the fork's broken headless-render harness lived in exactly such
+a module, undetected for the whole lifetime of the liquid-glass feature. Use `--all-targets`, or
+check the affected crates twice.
 
 ## ⚠️ The gates prove the merge did not LOSE anything. They cannot prove it did not BREAK anything.
 
@@ -101,6 +107,10 @@ for it). Both were written *after* these two defects, and both now report clean.
   through the local credential manager.
 * A `check` also surfaces **deprecation warnings**, which upstream's CI would reject — the fork's
   `disk_tree` was using upstream's pre-rename `ScrollWheelEvent` / `on_scroll_wheel`.
+* The `target` dir reaches **~25 GB**, of which **~18 GB is `target\debug\incremental`** — cargo's
+  pure build-acceleration cache. Deleting just that directory frees 18 GB at the cost of some
+  rebuild time, and it is the single most effective lever when the disk gets tight. The temp area
+  `G:\Temp\UserTemp\opencode` is swept periodically, so do not treat it as durable.
 
 ### ⚠️ `cargo check --workspace` has a hard platform floor on Windows
 
