@@ -6,6 +6,50 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-22] - sync of `upstream/main` (`03efd49220`) into `forge`
+
+> ### ✅ **15 upstream commits merged. 7 conflicted paths, all resolved; the tree compiles.**
+>
+> `upstream/main` `03efd49220` (15 commits since `544780422a`): the macOS objc2 migrations continue
+> (window and appearance bindings, application and menu bindings, the per-thread main-thread marker),
+> `language_models` now logs and **records** model-fetch failures instead of discarding them, Taffy
+> 0.13 → 0.15, resolved fonts are cached, `agent_servers` routes ACP subagent associations to child
+> threads, `ui` keeps project action shortcuts inside their buttons, `xtask` forbids legacy
+> Objective-C dependencies, plus the `.agents/` gitignore, the security dependency updates and the
+> "recent commits" message-generation change.
+>
+> **The seven conflicted paths, and how each was resolved** (our UI wins a genuine UI conflict;
+> upstream's capability stays compiled and wired):
+>
+> | Path | Resolution |
+> |---|---|
+> | `Cargo.lock` | upstream's dependency lists; **cargo re-resolved** the lock afterwards (2 packages added: `cocoa`, `cocoa-foundation`). |
+> | `Cargo.toml` | the fork's `sysinfo` **"disk"** feature (`storage_roots.rs` calls `Disks::new_with_refreshed_list()`, and without the feature the crate does not compile) **+** upstream's Taffy `=0.15.0`. |
+> | `crates/gpui_macos/src/window.rs` | the fork's `gpui_point_from_view_point` helper **+** upstream's objc2 `is_drag_from_this_window` - **and** the fork's `hitTest:` override **ported to objc2** (see below). |
+> | `crates/language_models/src/provider/llama_cpp.rs` | **both** tests: the fork's `/v1` regression test **+** upstream's model-fetch-error test. |
+> | `crates/language_models/src/provider/open_router.rs` | the fork's **always fetch** (the public `/models` endpoint needs no key, so the picker shows all 300+ models) **+** upstream's error recording. |
+> | `crates/ui/src/components/button/button.rs` | upstream's `content` binding (the code after the conflict references it) **+** the fork's `dx_loading_icon` for the loading state. |
+> | `docs/src/reference/all-settings.md` | the recurring **modify/delete**: our deletion honoured, upstream's text recorded in `merge-tools/evidence/upstream_docs_sync6.diff` and `upstream_all-settings_sync6.md`. |
+>
+> **Two follow-on repairs the analysis found, neither of them in a conflict block:**
+>
+> - **The fork's `hitTest:` override was still objc1.** Upstream migrated
+>   `crates/gpui_macos/src/window.rs` to objc2 wholesale (+755/-668), but the fork's own change in
+>   that file - the mouse-passthrough `hitTest:` override, written against `&Object` / `id` / `nil` -
+>   **merged cleanly and survived verbatim**, so it no longer compiled. It is now objc2:
+>   `&AnyObject` / `-> *mut AnyObject` / `ptr::null_mut()`, with the class registration's signature
+>   following. `get_window_state(this)` and `msg_send![super(this, class!(NSView)), ...]` keep their
+>   shape - upstream's own file uses exactly those two forms.
+> - **`cocoa` and `objc` were dropped from the workspace manifest.** Upstream's objc2 migration
+>   removed them, which was correct for upstream's tree but not for the fork's: the fork's
+>   `crates/web_preview_macos` (its macOS web-preview host) is still written against objc1, so
+>   `cargo metadata` failed with *"error inheriting `cocoa` from workspace root manifest's
+>   `workspace.dependencies.cocoa`"*. Both entries are back, in their alphabetical places, and the
+>   two stacks coexist: upstream's crates are on objc2, the fork's macOS preview host is on objc1.
+>   ⚠️ **Recorded as an open item:** the fork's `web_preview_macos` should follow upstream to
+>   objc2 eventually - it is macOS-only code that cannot be compiled or verified from this host.
+
+
 ## [Landed 2026-10-22] - third sync of `upstream/main` (`544780422a`) into `forge`
 
 > ### ✅ **Three more upstream commits, merged clean - no conflicted paths.**
