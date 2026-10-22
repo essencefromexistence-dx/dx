@@ -773,21 +773,32 @@ objc2-ui-kit = { version = "0.3.2", default-features = false, features = [
 objc2-app-kit = { version = "0.3.2", default-features = false, features = [
     "NSBitmapImageRep",
     "NSAlert",
+    "NSAppearance",
     "NSApplication",
     "NSButton",
+    "NSCell",
+    "NSColor",
     "NSControl",
+    "NSCursor",
+    "NSDocumentController",
+    "NSDragging",
     "NSDraggingItem",
     "NSEvent",
     "NSGraphics",
     "NSImage",
+    "NSMenu",
+    "NSMenuItem",
     "NSOpenPanel",
     "NSPanel",
     "NSPasteboard",
     "NSResponder",
+    "NSRunningApplication",
     "NSSavePanel",
     "NSScreen",
+    "NSScroller",
     "NSTrackingArea",
     "NSView",
+    "NSVisualEffectView",
     "NSWindow",
     "NSWorkspace",
     "block2",
@@ -801,6 +812,7 @@ objc2-core-video = { version = "=0.3.2", default-features = false, features = ["
 objc2-foundation = { version = "=0.3.2", default-features = false, features = [
     "NSArray",
     "NSAttributedString",
+    "NSBundle",
     "NSCoder",
     "NSData",
     "NSDate",
@@ -946,7 +958,7 @@ sys-locale = "0.3.1"
 # to enumerate mounted volumes for the Storage root strip. Without the feature
 # that type does not exist and the crate fails to compile.
 sysinfo = { version = "0.39", default-features = false, features = ["system", "disk"] }
-taffy = { version = "=0.13.0", default-features = false }
+taffy = { version = "=0.15.0", default-features = false }
 tempfile = "3.20.0"
 tendril = "0.5"
 thiserror = "2.0.12"
@@ -1026,7 +1038,7 @@ wasm-encoder = "0.254"
 # the wasm-bindgen init function with the positional arguments deprecated in 0.2.93.
 wasm_thread = { git = "https://github.com/zed-industries/wasm_thread", rev = "0cf96c7708dfb97ccf3da50347e25edcf75d6937", version = "0.3", features = ["es_modules"] }
 wasmparser = "0.254"
-wasmtime = { version = "48", default-features = false, features = [
+wasmtime = { version = "48.0.7", default-features = false, features = [
     "anyhow",
     "async",
     "demangle",
@@ -1038,11 +1050,11 @@ wasmtime = { version = "48", default-features = false, features = [
 ] }
 wasm-bindgen = "0.2.120"
 wasm-bindgen-futures = "0.4"
-wasmtime-wasi = { version = "48", default-features = false, features = ["p2"] }
+wasmtime-wasi = { version = "48.0.7", default-features = false, features = ["p2"] }
 wax = { version = "0.7", default-features = false }
 web-sys = "0.3"
 web-time = "1.1.0"
-webpki-roots = "1.0.8"
+webpki-roots = "1.0.10"
 webrtc-sys = "0.3.23"
 # 30.0.1 lacks the Vulkan surface-drop panic fix: https://github.com/gfx-rs/wgpu/pull/10230.
 wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "3b3506ea31154edc04de64debda0e780cba2639c", default-features = false }
