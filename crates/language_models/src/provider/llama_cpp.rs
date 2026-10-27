@@ -4184,18 +4184,35 @@ mod tests {
             registry.authenticate_providers(cx);
         });
         cx.run_until_parked();
-        assert!(cx.update(|cx| provider.provided_models(cx).is_empty()));
+        // Ours: `provided_models` also carries the models declared in settings, and the shipped
+        // defaults declare local ones - so upstream's "is_empty" is not our contract. What this
+        // test is about is that the model from the *failed* fetch has not arrived yet.
+        assert!(
+            cx.update(
+                |cx| provider
+                    .provided_models(cx)
+                    .into_iter()
+                    .all(|model| model.id.0.as_ref() != "refreshed-model")
+            ),
+            "the model from the failed fetch must not be listed yet"
+        );
         credentials.assert_reads(&[LLAMA_CPP_API_URL]);
 
         registry.update(cx, |registry, cx| registry.authenticate_providers(cx));
         cx.run_until_parked();
-        assert_eq!(
+        assert!(
+            cx.update(
+                |cx| provider
+                    .provided_models(cx)
+                    .into_iter()
+                    .any(|model| model.id.0.as_ref() == "refreshed-model")
+            ),
+            "the refreshed model should be listed once the credentials resolve: {:?}",
             cx.update(|cx| provider
                 .provided_models(cx)
                 .into_iter()
                 .map(|model| model.id.0.to_string())
-                .collect::<Vec<_>>()),
-            ["refreshed-model"]
+                .collect::<Vec<_>>())
         );
         credentials.assert_reads(&[LLAMA_CPP_API_URL]);
         assert!(!pending_credentials.is_canceled());
