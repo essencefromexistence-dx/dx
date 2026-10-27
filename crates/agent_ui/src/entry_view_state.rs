@@ -67,6 +67,8 @@ pub struct EntryViewState {
     user_toggled_thinking_blocks: HashSet<(usize, usize)>,
     expanded_compactions: HashSet<usize>,
     expanded_tool_calls: HashSet<acp_v2::ToolCallId>,
+    /// Subagent cards shown for an ACP parent's outgoing session messages.
+    expanded_session_message_cards: HashSet<acp_v2::MessageId>,
 }
 
 impl EntryViewState {
@@ -89,6 +91,7 @@ impl EntryViewState {
             user_toggled_thinking_blocks: HashSet::default(),
             expanded_compactions: HashSet::default(),
             expanded_tool_calls: HashSet::default(),
+            expanded_session_message_cards: HashSet::default(),
         }
     }
 
@@ -111,6 +114,17 @@ impl EntryViewState {
     pub(crate) fn toggle_tool_call_expansion(&mut self, tool_call_id: &acp_v2::ToolCallId) {
         if !self.expanded_tool_calls.remove(tool_call_id) {
             self.expanded_tool_calls.insert(tool_call_id.clone());
+        }
+    }
+
+    pub(crate) fn is_session_message_card_expanded(&self, message_id: &acp_v2::MessageId) -> bool {
+        self.expanded_session_message_cards.contains(message_id)
+    }
+
+    pub(crate) fn toggle_session_message_card_expansion(&mut self, message_id: &acp_v2::MessageId) {
+        if !self.expanded_session_message_cards.remove(message_id) {
+            self.expanded_session_message_cards
+                .insert(message_id.clone());
         }
     }
 
@@ -566,6 +580,16 @@ impl EntryViewState {
                     );
                 }
             }
+            AgentThreadEntry::SessionMessage(_) => {
+                if !matches!(self.entries.get(index), Some(Entry::SessionMessage { .. })) {
+                    self.set_entry(
+                        index,
+                        Entry::SessionMessage {
+                            focus_handle: cx.focus_handle(),
+                        },
+                    );
+                }
+            }
             AgentThreadEntry::AssistantMessage(message) => {
                 let entry = if let Some(Entry::AssistantMessage(entry)) =
                     self.entries.get_mut(index)
@@ -637,6 +661,7 @@ impl EntryViewState {
             match entry {
                 Entry::UserMessage { .. }
                 | Entry::AssistantMessage { .. }
+                | Entry::SessionMessage { .. }
                 | Entry::Elicitation { .. }
                 | Entry::ContextCompaction => {}
                 Entry::ToolCall(ToolCallEntry { content, .. }) => {
@@ -715,6 +740,9 @@ pub enum Entry {
         synced_source_version: acp_thread::MessageContentVersion,
     },
     AssistantMessage(AssistantMessageEntry),
+    SessionMessage {
+        focus_handle: FocusHandle,
+    },
     ToolCall(ToolCallEntry),
     Elicitation {
         focus_handle: FocusHandle,
@@ -727,6 +755,7 @@ impl Entry {
         match self {
             Self::UserMessage { editor, .. } => Some(editor.read(cx).focus_handle(cx)),
             Self::AssistantMessage(message) => Some(message.focus_handle.clone()),
+            Self::SessionMessage { focus_handle } => Some(focus_handle.clone()),
             Self::ToolCall(tool_call) => Some(tool_call.focus_handle.clone()),
             Self::Elicitation { focus_handle } => Some(focus_handle.clone()),
             Self::ContextCompaction => None,
@@ -737,6 +766,7 @@ impl Entry {
         match self {
             Self::UserMessage { editor, .. } => Some(editor),
             Self::AssistantMessage(_)
+            | Self::SessionMessage { .. }
             | Self::ToolCall(_)
             | Self::Elicitation { .. }
             | Self::ContextCompaction => None,
@@ -774,6 +804,7 @@ impl Entry {
         match self {
             Self::AssistantMessage(message) => message.scroll_handle_for_chunk(chunk_ix),
             Self::UserMessage { .. }
+            | Self::SessionMessage { .. }
             | Self::ToolCall(_)
             | Self::Elicitation { .. }
             | Self::ContextCompaction => None,
@@ -793,6 +824,7 @@ impl Entry {
             Self::ToolCall(ToolCallEntry { content, .. }) => !content.is_empty(),
             Self::UserMessage { .. }
             | Self::AssistantMessage(_)
+            | Self::SessionMessage { .. }
             | Self::Elicitation { .. }
             | Self::ContextCompaction => false,
         }
@@ -810,6 +842,7 @@ impl Focusable for Entry {
         match self {
             Self::UserMessage { editor, .. } => editor.read(cx).focus_handle(cx),
             Self::AssistantMessage(message) => message.focus_handle.clone(),
+            Self::SessionMessage { focus_handle } => focus_handle.clone(),
             Self::ToolCall(tool_call) => tool_call.focus_handle.clone(),
             Self::Elicitation { focus_handle } => focus_handle.clone(),
             Self::ContextCompaction => cx.focus_handle(),

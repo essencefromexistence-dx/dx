@@ -181,6 +181,11 @@ fn v1_only_mismatch(error: &agent_client_protocol::Error) -> bool {
 }
 
 fn initialization_error(error: anyhow::Error, debug_log: &AcpDebugLog) -> anyhow::Error {
+    // `connect` classifies the agent's answer in-band, but an agent that exits right after
+    // answering surfaces as a process exit, so its answer is recovered from the debug log.
+    if error.is::<UnsupportedVersion>() || error.is::<agent_client_protocol::Error>() {
+        return error;
+    }
     match debug_log.initialization_response() {
         Some(Ok(Some(value))) => {
             if serde_json::from_value::<acp::InitializeResponse>(value).is_ok_and(|response| {
@@ -193,11 +198,8 @@ fn initialization_error(error: anyhow::Error, debug_log: &AcpDebugLog) -> anyhow
         }
         Some(Err(protocol_error)) => {
             let retry_v1 = v1_only_mismatch(&protocol_error);
-            let error = if error.is::<agent_client_protocol::Error>() {
-                error
-            } else {
-                anyhow!(protocol_error).context(format!("ACP initialization failed: {error}"))
-            };
+            let error =
+                anyhow!(protocol_error).context(format!("ACP initialization failed: {error}"));
             if retry_v1 {
                 error.context(UnsupportedVersion)
             } else {
@@ -456,8 +458,37 @@ impl ConfigOptions {
     }
 }
 
+struct ReadOnlyConfigOptions(ConfigOptions);
+
+impl acp_thread::AgentSessionConfigOptions for ReadOnlyConfigOptions {
+    fn config_options(&self) -> Vec<acp_v2::SessionConfigOption> {
+        self.0.config_options.borrow().clone()
+    }
+
+    fn is_read_only(&self) -> bool {
+        true
+    }
+
+    fn set_config_option(
+        &self,
+        _config_id: acp_v2::SessionConfigId,
+        _value: acp_v2::SessionConfigOptionValue,
+        _cx: &mut App,
+    ) -> Task<Result<Vec<acp_v2::SessionConfigOption>>> {
+        Task::ready(Err(anyhow!("Subagent configuration is read-only")))
+    }
+
+    fn watch(&self, _cx: &mut App) -> Option<watch::Receiver<()>> {
+        Some(self.0.rx.clone())
+    }
+}
+
 pub struct AcpSession {
     thread: WeakEntity<AcpThread>,
+    /// Whether a parent announced this session as its ACP subagent. This mirrors the
+    /// thread's subagent association, so the connection can refuse a subagent's
+    /// mutations even while its thread is being updated.
+    is_subagent: bool,
     suppress_abort_err: bool,
     session_modes: Option<Rc<RefCell<acp::SessionModeState>>>,
     config_options: Option<ConfigOptions>,
@@ -688,6 +719,15 @@ fn first_class_terminal_auth_task(
     })
 }
 
+fn is_disconnect_error(error: &anyhow::Error) -> bool {
+    error
+        .downcast_ref::<agent_client_protocol::Error>()
+        .is_some_and(|error| {
+            agent_client_protocol::is_incoming_transport_closed(error)
+                || agent_client_protocol::is_connection_terminated(error)
+        })
+}
+
 fn map_acp_error(err: acp::Error) -> anyhow::Error {
     let error = anyhow!(err);
     match AuthRequired::from_error(&error) {
@@ -823,9 +863,10 @@ fn apply_subagent_update(
         session_id,
         AcpSession {
             thread: subagent.downgrade(),
+            is_subagent: true,
             suppress_abort_err: false,
             session_modes: None,
-            config_options: None,
+            config_options: Some(ConfigOptions::new(Rc::new(RefCell::new(Vec::new())))),
             default_config_task: None,
             _release_subscription: release_subscription,
         },
@@ -1106,7 +1147,7 @@ mod selection_tests {
     use gpui::{TestAppContext, UpdateGlobal as _};
     use serde_json::json;
 
-    fn set_beta(enabled: bool, cx: &mut App) {
+    pub(super) fn set_beta(enabled: bool, cx: &mut App) {
         cx.update_flags(
             false,
             if enabled {
