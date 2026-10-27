@@ -271,7 +271,7 @@ impl Render for DxForgePanel {
         v_flex()
             .id("dx-forge-panel-action-root")
             .size_full()
-            .key_context(self.dispatch_context())
+            .key_context(self.dispatch_context(cx))
             .track_focus(&self.focus_handle)
             .on_mouse_down(
                 MouseButton::Left,

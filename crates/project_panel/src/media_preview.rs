@@ -504,7 +504,7 @@ fn render_media_shelf_card(
                 entry_id,
             };
 
-            if event.modifiers().secondary() {
+            if event.modifiers().secondary(cx) {
                 panel.selection = Some(selection);
                 if let Some(position) = panel
                     .marked_entries

@@ -1,11 +1,11 @@
-use gpui::{Context, KeyContext, Window};
+use gpui::{App, Context, KeyContext, Window};
 use menu::{Confirm, SelectFirst, SelectLast, SelectNext, SelectPrevious};
 
 use super::{panel::DxForgePanel, visible_rows::DxForgeRowKey};
 
 impl DxForgePanel {
-    pub(super) fn dispatch_context(&self) -> KeyContext {
-        let mut dispatch_context = KeyContext::new_with_defaults();
+    pub(super) fn dispatch_context(&self, cx: &App) -> KeyContext {
+        let mut dispatch_context = KeyContext::new_with_defaults(cx.platform_info().os);
         dispatch_context.add("DxForgePanel");
         dispatch_context.add("menu");
         dispatch_context

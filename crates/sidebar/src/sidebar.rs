@@ -3394,7 +3394,7 @@ impl Sidebar {
                         .tooltip(Tooltip::text("Open Workspace"))
                         .on_click(
                             cx.listener(move |this, event: &gpui::ClickEvent, window, cx| {
-                                if event.modifiers().secondary() {
+                                if event.modifiers().secondary(cx) {
                                     this.activate_or_open_workspace_for_group(
                                         &key_for_focus,
                                         window,
@@ -3462,7 +3462,7 @@ impl Sidebar {
             )
             .on_click(
                 cx.listener(move |this, event: &gpui::ClickEvent, window, cx| {
-                    if event.modifiers().secondary() {
+                    if event.modifiers().secondary(cx) {
                         this.activate_or_open_workspace_for_group(&key_for_focus, window, cx);
                     } else if !this.has_filter_query(cx) {
                         this.toggle_collapse(&key_for_toggle, window, cx);
@@ -3920,7 +3920,7 @@ impl Sidebar {
                                         let action = h_flex()
                                             .opacity(0.6)
                                             .children(render_modifiers(
-                                                &Modifiers::secondary_key(),
+                                                &Modifiers::secondary_key(cx),
                                                 PlatformStyle::platform(),
                                                 None,
                                                 Some(TextSize::Default.rems(cx).into()),
@@ -4260,7 +4260,7 @@ impl Sidebar {
     }
 
     fn dispatch_context(&self, window: &Window, cx: &Context<Self>) -> KeyContext {
-        let mut dispatch_context = KeyContext::new_with_defaults();
+        let mut dispatch_context = KeyContext::new_with_defaults(cx.platform_info().os);
         dispatch_context.add("ThreadsSidebar");
         dispatch_context.add("menu");
 

@@ -1792,8 +1792,8 @@ impl FileFinderDelegate {
         requested_index.min(self.matches.len().saturating_sub(1))
     }
 
-    fn key_context(&self, _window: &Window, _cx: &App) -> KeyContext {
-        let mut key_context = KeyContext::new_with_defaults();
+    fn key_context(&self, _window: &Window, cx: &App) -> KeyContext {
+        let mut key_context = KeyContext::new_with_defaults(cx.platform_info().os);
         key_context.add("FileFinder");
         key_context
     }
