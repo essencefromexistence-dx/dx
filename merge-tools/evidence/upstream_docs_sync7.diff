@@ -1,0 +1,15 @@
+diff --git a/docs/src/project-panel.md b/docs/src/project-panel.md
+index 9fbe29ee4d..f3baa468e7 100644
+--- a/docs/src/project-panel.md
++++ b/docs/src/project-panel.md
+@@ -104,8 +104,8 @@ suffix, the rename editor opens automatically so you can adjust the name.
+ 
+ ### Duplicate
+ 
+-{#action project_panel::Duplicate} ({#kb project_panel::Duplicate}) copies and
+-pastes the selected entries in one step.
++{#action project_panel::Duplicate} ({#kb project_panel::Duplicate}) duplicates
++the selected entries without changing the clipboard.
+ 
+ ### Trash and Delete
+ 

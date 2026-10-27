@@ -6,6 +6,168 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-28] - two syncs of `upstream/main`: `32558ab9d5` then `37faef81f7`
+
+> ### **84 upstream commits merged in two two-parent merges. 30 conflicted paths, all resolved; the tree compiles.**
+>
+> `upstream/main` moved twice while the first merge was being verified, so it landed in two
+> steps rather than one: `32558ab9d5` (4 commits since `03efd49220`) and then `37faef81f7`
+> (80 commits further on). Merging in that order is deliberate - the first merge's conflicts
+> become the second merge's base, so nothing had to be resolved twice.
+>
+> ### Sync 1 - `32558ab9d5` (4 commits, 5 conflicted paths)
+>
+> gpui made `Modifiers::secondary` web-platform aware (#65970), `project` stopped sending an
+> update when no worktree was removed (#65189), `project_panel` preserved clipboard contents
+> when duplicating (#60894), and `multi_buffer` fixed word diff ranges for collapsed hunks
+> (#65829).
+>
+> | Path | Resolution |
+> |---|---|
+> | `crates/agent_ui/src/agent_panel.rs` | the fork's 1 639-line DX block **+** upstream's `KeyContext::new_with_defaults(cx.platform_info().os)` - the key context now takes the OS. The call sites are in the shared tail, so they already pass `cx`. |
+> | `crates/file_finder/src/file_finder.rs` | the same API change, the same shape. |
+> | `crates/workspace/src/dock.rs` | the fork's multi-panel `visible_panels` version (the shared tail uses it) **+** `Self::dispatch_context(cx)`. |
+> | `crates/project_panel/src/project_panel.rs` | three blocks: the fork's no-`unwrap()` file-name handling with upstream's variable name; the fork's paste-selection cap with upstream's loop header; the fork's sticky-items render closure (upstream's side of that hunk was a misaligned duplicate of the indent-guide handler the merge had already placed elsewhere). |
+> | `docs/src/project-panel.md` | the recurring modify/delete: our deletion honoured, upstream's text in `merge-tools/evidence/upstream_docs_sync7.diff` and `upstream_project-panel_sync7.md`. |
+>
+> Three repairs outside the conflict blocks, all found by compiling:
+>
+> - `Modifiers::secondary` now takes the app, so the three fork call sites still on the old
+>   form were updated (`project_panel/src/media_preview.rs`,
+>   `project_panel/src/project_panel.rs`, `sidebar/src/sidebar.rs`).
+> - `KeyContext::new_with_defaults` now takes the OS. The fork's three call sites in its own
+>   DX files were updated the same way (`dx_forge_panel/row_selection.rs`, whose
+>   `dispatch_context` gained `cx: &App` with its one caller, `dx_forge_panel/panel.rs`, and
+>   `dx_launch_workspace/catalog_chrome.rs`). The fourth site is a test **fixture snapshot**
+>   (agent evals), not a compiled module, and is untouched.
+> - upstream's paste refactor moved the paste into `transfer_entries(entries, operation, ..)`,
+>   so the fork's inlined paste body was expressed in the new terms (`entries` is the set
+>   being transferred; *"is a cut"* is `matches!(operation, EntryTransferOperation::Move)`).
+>   Upstream's *unconditional* cut-to-copy conversion was dropped: the fork converts inside
+>   the transfer, only after it actually completed and only if the clipboard still holds the
+>   same cut entries - upstream's version would only have undone that.
+>
+> ### Sync 2 - `37faef81f7` (80 commits, 25 conflicted paths)
+>
+> The big one. Between them: the **complete migration of `crates/gpui_apple` from the `metal`
+> crate to `objc2-metal`**, `agent: Remove checkpoints` (#65989), the removal of the unused
+> hash-based text-layout cache (#66152), macOS 12 / SDK 26 (#65994), the tree-sitter grammar
+> refresh and the `tree-sitter-go` fork (#66185, #64562), ACP subagent cards and their
+> protocol rules, git-graph performance (#66180, #66132), focus-follows-mouse fixes
+> (#66167, #66173, #66161), the `block` dependency removal (#65942), and the removal of
+> unused workflows and scripts (#66024, #66019).
+>
+> **Eight content conflicts:**
+>
+> | Path | Resolution |
+> |---|---|
+> | `Cargo.toml` | the fork's hoisted `trash` git dependency (with its rationale comment) **+** upstream's newer `tree-sitter` rev `803c6eba`. The two edits are adjacent lines; there is no real dispute. |
+> | `crates/agent/src/agent.rs` | upstream's side - the deletion. Upstream *moved* the background provider authentication into `LanguageModelRegistry::authenticate_providers` and the merged constructor already calls it; the fork's local copy of the old function was dead code. |
+> | `crates/agent_ui/src/conversation_view/thread_view.rs` | a union: upstream's ACP subagent-card imports (`SubagentCardId`, `acp_subagent_card`) **+** the fork's `voice_controls` import. Every name on both sides is used in the merged body. |
+> | `crates/gpui/src/window.rs` | ours' import list, which is upstream's plus the fork's `LiquidGlass` / `LiquidGlassParams` (verified item-by-item, not assumed). |
+> | `crates/gpui_apple/src/metal_renderer.rs` | five blocks, each "upstream's objc2 form with the fork's liquid glass carried across" - see below. |
+> | `crates/settings_ui/src/settings_ui.rs` | upstream's wider `project` import (`DisableAiSettings`, `Worktree`, `WorktreeId`); ours was a strict subset. |
+> | `crates/title_bar/src/title_bar.rs` | (1) `use path::PathStyle;` only - upstream also imports `ArrayVec` and `WorktreePicker`, but both belonged to the worktree-picker UI the fork removed, so importing them would be unused; the new `path_style: PathStyle` parameters need `PathStyle`. (2) the fork's `let linked_name = ..` shape (the shared tail reads `linked_name`) **+** upstream's rename of `repo.path_style` to the local `path_style`. |
+> | `Cargo.lock` | seeded from upstream's lock, then **re-resolved by cargo** against the merged manifests. |
+>
+> **The liquid-glass renderer, ported to objc2-metal.** This is the one place where the two
+> sides genuinely disagreed about the same code. Upstream rewrote `crates/gpui_apple` onto
+> `objc2-metal` and removed the `metal` dependency; the fork's Liquid Glass feature (a
+> backdrop texture captured by a blit, then sampled by a second pipeline) was written against
+> the old crate. The five conflict blocks were resolved as upstream's objc2 types with the
+> fork's feature carried across, and the two fork-only functions that sat *outside* the
+> conflict blocks - `draw_liquid_glass` and `refresh_liquid_glass_backdrop`, where git had
+> nothing to compare - were rewritten by hand:
+>
+> - `&metal::RenderCommandEncoderRef` -> `&ProtocolObject<dyn MTLRenderCommandEncoder>`,
+>   `&metal::CommandBufferRef` -> `&ProtocolObject<dyn MTLCommandBuffer>`,
+>   `&metal::TextureRef` -> `&ProtocolObject<dyn MTLTexture>`;
+> - the `metal` crate's index-first setters became objc2's `setVertexBuffer_offset_atIndex`,
+>   `setVertexBytes_length_atIndex`, `setFragmentBuffer_offset_atIndex`,
+>   `setFragmentBytes_length_atIndex`, `setFragmentTexture_atIndex` and
+>   `drawPrimitives_vertexStart_vertexCount_instanceCount_baseInstance`, all inside `unsafe`
+>   with a SAFETY note (objc2 marks them unsafe; the old crate did not);
+> - `new_blit_command_encoder()` became `blitCommandEncoder()`, which returns an `Option`, so
+>   a missing encoder now reports failure instead of panicking;
+> - `copy_from_texture(..)` became
+>   `copyFromTexture_sourceSlice_sourceLevel_sourceOrigin_sourceSize_toTexture_destinationSlice_destinationLevel_destinationOrigin(..)`
+>   with `MTLOrigin` / `MTLSize` in objc2's `usize` fields;
+> - `MTLOrigin`, `MTLSize` and `MTLBlitCommandEncoder` moved from the test-only import line to
+>   the always-on one, because the liquid-glass path now needs them in normal builds.
+>
+> The `liquid_glass_vertex` / `liquid_glass_fragment` shader entry points survived the merge
+> untouched, and `MetalRenderer::new` still fails loudly if the metallib lacks them.
+>
+> **Eight more repairs, all found by compiling and running the tests:**
+>
+> 1. `crates/gpui/src/window.rs` - the conflict was resolved as "ours' list" after checking that
+>    every name upstream imports is also in ours, but the check was one-directional. Ours still
+>    imported `TaffyLayoutEngine` from the crate root (upstream moved it to `crate::taffy`, which
+>    the file already imports separately) and `SubscriberSet` (no longer used there), so the build
+>    failed with `unresolved import crate::TaffyLayoutEngine`. The list is now upstream's exactly,
+>    plus the two names the fork's Liquid Glass needs (`LiquidGlass`, `LiquidGlassParams`).
+> 2. `crates/language_models/src/provider/nara_router.rs` - the fork's own provider still declared
+>    its stream methods in the old anyhow shape. Upstream's "preserve typed chat completion stream
+>    errors" change (#66038, #65940) made them typed, so both signatures now carry
+>    `LanguageModelCompletionError` / `open_ai::RequestError` in the stream item type, matching
+>    `open_ai.rs` and `open_ai_compatible.rs`.
+> 3. `async-tungstenite` - the fork's snapshot pinned `0.34.1` while upstream pins `0.33`; the
+>    `0.34` stream does not typecheck against `jupyter-websocket-client 1.1.0`, which declares
+>    `^0.33`, and `repl` passes one straight into the other. The workspace pin is now `0.33`, as
+>    upstream has it, and the lock resolves a single version again (no crate uses a 0.34-only API).
+> 4. `crates/settings_ui/src/settings_ui.rs` - upstream's wider `project` import duplicated
+>    `Worktree` / `WorktreeId`, which the fork already imports from the `worktree` crate, so only
+>    `DisableAiSettings` was actually missing.
+> 5. `crates/settings_ui/src/settings_ui.rs` - one test call site passed three arguments to
+>    `SettingsWindow::new`, which the fork extended with its `embedded: bool` parameter (a second
+>    GPUI/DirectX surface freezes on Windows). It passes `false`, like every other test call site.
+> 6. `crates/gpui_apple/src/metal_renderer.rs` - the `gpui::LiquidGlass` import became unused once
+>    the renderer only names the `PrimitiveBatch::LiquidGlass` variant, so it is gone.
+> 7. `assets/settings/default.json` - the fork's shipped `llama.cpp.api_url` was
+>    `http://127.0.0.1:8080` while the code's own `LLAMA_CPP_API_URL` constant, that crate's tests
+>    and upstream's default all say `http://localhost:8080`. Credentials are stored against the
+>    resolved URL, so the mismatch made two `provider::llama_cpp` tests look up a key under a URL
+>    nobody had written. The shipped default is back to `http://localhost:8080` - the fix that
+>    mattered (dropping the stray `/v1`) is untouched.
+> 8. `crates/language_models/src/provider/llama_cpp.rs` - upstream's new
+>    `registry_refreshes_models_while_credentials_are_pending` asserts
+>    `provided_models(cx).is_empty()` before the credentials resolve. Ours is settings-driven
+>    (the shipped defaults declare local models), so emptiness was never our contract. The test
+>    now asserts what it is actually about - the model from the *failed* fetch is absent, and the
+>    refreshed one appears once the key resolves - and the reason is written in the test.
+>
+> **Nine modify/delete paths, triaged rather than guessed:**
+>
+> - **The nine `script/*` files upstream deleted are deleted here too.** The fork's only
+>   difference in each was a file-mode bit (`100755` -> `100644`, a Windows checkout
+>   artifact); the blob hashes were identical to the base, so there was no fork content to
+>   preserve. Their only references were the archived disabled workflow and old merge notes.
+> - **The five `docs/src/**` files upstream modified stay deleted**, per the fork's docs-tree
+>   policy; upstream's text and diff are recorded in
+>   `merge-tools/evidence/upstream_docs_sync8.{diff,md}`.
+> - **The three `.github/workflows-disabled/*.yml.disabled` stay**: the fork renamed them out
+>   of `.github/workflows/` and added its "temporarily disabled" header. GitHub never runs a
+>   workflow from that folder, so upstream's intent (they must not run) holds while the fork's
+>   deliberate, documented deactivation is preserved.
+>
+> **Findings the gates raised, and how each was closed:**
+>
+> - 60 definitions present in ours and absent from the merged tree: **all 60 also exist in the
+>   merge base**, so they are upstream's deliberate removals (the checkpoint system, the
+>   text-layout cache, `FrameRateLimit`, ...), not lost fork work.
+> - 4 definitions present only upstream: three `settings_ui` helper names the fork had already
+>   renamed before this sync (`open_settings_path`, `open_settings_in_own_window`, ...) - ours
+>   is byte-identical to the merged file there - and upstream's drag test, whose scenario the
+>   fork covers with `test_drag_onto_existing_name_disambiguates` (the fork's `create_move_path`
+>   disambiguation wins over upstream's "explain the failure" behaviour, unchanged policy).
+> - `[noloss]` flagged `copy_from_texture` / `set_fragment_bytes` in `metal_renderer.rs`: those
+>   are exactly the old `metal`-crate names the objc2 port replaces, which is the point.
+> - `[markers]` 0, `[deletion]` 7 added / 19 deleted / 0 unexplained, `[balance]` 0 files
+>   differing, `[parsegate]` 0 pre-existing and 0 merge-introduced parse failures.
+>
+> **Proof:** cargo check --workspace --all-targets --locked -> rc 0, 0 errors, 0 warnings from the merged crates. cargo test -p language_models -p ui -p language --lib -> **146 / 195 / 94 passed, 0 failed**. \cargo check -p language_models --all-targets\ -> rc 0.
+
+
 ## [Landed 2026-10-22] - sync of `upstream/main` (`03efd49220`) into `forge`
 
 > ### ✅ **15 upstream commits merged. 7 conflicted paths, all resolved; the tree compiles.**
