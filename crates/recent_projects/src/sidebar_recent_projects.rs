@@ -239,7 +239,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
                     && !self
                         .window_project_groups
                         .iter()
-                        .any(|key| key.matches(&workspace.project_group_key()))
+                        .any(|key| key.matches_identity(&workspace.project_group_key()))
             })
             .take(MAX_SIDEBAR_RECENT_PROJECT_CANDIDATES)
             .map(|(id, workspace)| {

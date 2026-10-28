@@ -12,7 +12,7 @@ use db::{
 };
 use futures::{FutureExt, future::Shared};
 use gpui::{AppContext as _, Entity, Global, Task};
-use remote::{RemoteConnectionOptions, same_remote_connection_identity};
+use remote::RemoteConnectionOptions;
 use ui::{App, Context, SharedString};
 use util::{ResultExt as _, truncate_to_byte_limit};
 use workspace::PathList;
@@ -490,10 +490,8 @@ impl TerminalThreadMetadataStore {
             .flatten()
             .filter_map(|id| self.terminals.get(id))
             .filter(move |terminal| {
-                same_remote_connection_identity(
-                    terminal.remote_connection.as_ref(),
-                    remote_connection,
-                )
+                terminal.remote_connection.as_ref().map(|o| o.identity())
+                    == remote_connection.map(|o| o.identity())
             })
     }
 
@@ -508,10 +506,8 @@ impl TerminalThreadMetadataStore {
             .flatten()
             .filter_map(|id| self.terminals.get(id))
             .filter(move |terminal| {
-                same_remote_connection_identity(
-                    terminal.remote_connection.as_ref(),
-                    remote_connection,
-                )
+                terminal.remote_connection.as_ref().map(|o| o.identity())
+                    == remote_connection.map(|o| o.identity())
             })
     }
 
@@ -523,10 +519,8 @@ impl TerminalThreadMetadataStore {
     ) -> bool {
         self.entries().any(|terminal| {
             Some(terminal.terminal_id) != terminal_id
-                && same_remote_connection_identity(
-                    terminal.remote_connection.as_ref(),
-                    remote_connection,
-                )
+                && terminal.remote_connection.as_ref().map(|o| o.identity())
+                    == remote_connection.map(|o| o.identity())
                 && terminal
                     .folder_paths()
                     .paths()
@@ -573,10 +567,8 @@ impl TerminalThreadMetadataStore {
             .flatten()
             .filter(|id| {
                 self.terminals.get(id).is_some_and(|terminal| {
-                    same_remote_connection_identity(
-                        terminal.remote_connection.as_ref(),
-                        remote_connection,
-                    )
+                    terminal.remote_connection.as_ref().map(|o| o.identity())
+                        == remote_connection.map(|o| o.identity())
                 })
             })
             .copied()
