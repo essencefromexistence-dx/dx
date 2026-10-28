@@ -6,6 +6,61 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-29] - sync of `upstream/main` (`e5bdd01cd8`) into `forge`
+
+> ### **16 upstream commits merged. 5 conflicted paths, all resolved; the tree compiles.**
+>
+> `upstream/main` `e5bdd01cd8` (16 commits since `37faef81f7`): the ACP subagent work lands
+> (`acp_thread: Link the two views of an ACP session message` #66101, `agent_ui: Show each linked
+> message to an ACP subagent as its own card` #66102, `agent: Report native subagent state like ACP
+> subagents` #66255, plus the crash fix for expanding a subagent card #66251), `path` reimplements
+> `PathStyle::join` on the standard library and `project` **removes the `PathStyle` guard for
+> repository identity paths** (#65966, #66209), gpui applies frame limits consistently (#66237),
+> `read_file` truncates long lines (#65395), npm-based registry agents survive a broken install
+> (#66235), auto-compaction repeats during long turns (#66215), and the tree bumps to v1.28.0 with
+> `agent-client-protocol` 3.6.0 / schema 1.13 (#66253, #66245).
+>
+> | Path | Resolution |
+> |---|---|
+> | `Cargo.lock` | seeded from upstream's lock, then **re-resolved by cargo** (adds `agent-client-protocol` 3.6.0, `agent-client-protocol-schema` 1.13.0, `agent-client-protocol-derive` 3.6.0, `x11-dl`). |
+> | `crates/agent_ui/src/conversation_view/thread_view.rs` | three blocks: (1) the `acp_thread` import - the fork's `AcpThreadEvent` / `ContentBlock` **plus** upstream's new `SessionMessageSide`, which moved out of `thread_view.rs` into `acp_thread` (#66101) - the fork's local copy of that enum is gone with it; (2) `subagent_card` - upstream's `AcpSubagentCard` **plus** the fork's `voice_controls` import; (3) two adjacent methods that are not alternatives, so **both** stay: the fork's `sync_response_anchor_from_scroll_position` and upstream's new `scroll_to_entry`. |
+> | `crates/sidebar/src/sidebar.rs` | (1) the `project` import keeps `Project` / `ProjectGroupKey` and **drops `repo_identity_path_if_local`**, which upstream deleted (#66209); (2) `workspace_for_group` - ours. The shared tail (a bare `}` then the `mw.workspace_for_paths(..)` fallback as the final expression) is the fork's shape, which is built on `self.active_workspace(cx)`. |
+> | `crates/title_bar/src/title_bar.rs` | four blocks: (1) the fork's `ActivePaneScreenEntry` stays and upstream's `linked_worktree_name_anchor` helper goes - upstream replaced it with `GitRepository::linked_worktree_anchor_path()`; (2) **upstream's accessor inside the fork's shape**: `let linked_name = linked_worktree_short_name(repo.linked_worktree_anchor_path(), ..)`, which still feeds the fork's `.filter(..)` that hides a worktree name equal to the project name; (3) the fork's 3-tuple `(nickname, tooltip_title, icon)` match, which already carries upstream's `Mock` arm and the feature-unification wildcard; (4) empty - the two tests upstream deleted with the helper. |
+> | `crates/workspace/src/persistence.rs` | upstream's refactor (a direct `match options` with `Cow` borrows instead of `remote_connection_identity(..)`) **plus** the fork's `#[allow(unreachable_patterns)]` and its comment on that match, which is still needed when `remote/test-support` is unified on without this crate's own `test-support`. |
+>
+> **Two repairs the compiler found, and one the gates could not:**
+>
+> - **The merge silently dropped the fork's SSH-connection nickname.** In
+>   `render_remote_project_menu`, upstream's 2-tuple `(tooltip_title, icon)` match replaced the
+>   fork's 3-tuple outside the conflict block, so only the conflicting `Mock` arm still carried
+>   the extra element - the rest of the feature (the `options.nickname` arm, the
+>   `let nickname = ..` fallback, and `Label::new(nickname)`) was gone. Restored in full around
+>   upstream's arm, and the whole function compiles again.
+> - `Project::remote_connection_options()` now returns `Option<&RemoteConnectionOptions>`
+>   (#65771 in the previous sync's batch), so the nickname arm clones instead of moving.
+> - `ProjectGroupKey::host()` now returns `Option<&RemoteConnectionOptions>`, so the two
+>   `key.host().as_ref()` sites in `sidebar.rs` dropped the extra `.as_ref()`.
+>
+> **What upstream removed on purpose, and we let go:**
+>
+> - `repo_identity_path_if_local` (#66209) - with it, the fork's `test_foreign_path_style_*`
+>   assumption that a foreign path style must not yield a name anchor. Upstream's
+>   `test_linked_worktree_anchor_path` (`project/src/git_store.rs`) and
+>   `test_linked_worktree_short_name` (integration) cover the mapping now.
+> - `session_message_location` (#66101 inlined it into `upsert_session_message_inner`), and the
+>   gpui frame-throttle tests, replaced by `frame_throttle_tracks_display_refreshes` and
+>   `frame_throttle_preserves_cadence_without_catching_up_after_stalls` (#66237).
+>
+> **Gates:** markers 0; deletion audit 4 added / 0 deleted / 0 unexplained; **no-loss 0 of 71
+> files**; item parity 0 files below a side; brace balance 0 files differing; parse gate 67
+> parse+format clean, 0 pre-existing and 0 merge-introduced parse failures, 4 files unformatted
+> on our side before the merge. All 33 "ours-only" definitions the item gate listed exist in the
+> merge base (one had to be re-checked: the first triage run compared against the *previous*
+> sync's base and flagged 8 false "lost fork work" entries).
+>
+> **Proof:** cargo check --workspace --all-targets --locked -> rc 0, 0 errors. cargo test --lib over `title_bar`, `acp_thread`, `language_models` -> **5 / 299 / 146 passed, 0 failed**; `sidebar` -> **129 passed, 29 failed**, and the same 29 fail on the pre-merge commit (a worktree at `d9ae5d63b8`) - pre-existing, filed in TODO.md.
+
+
 ## [Landed 2026-10-28] - two syncs of `upstream/main`: `32558ab9d5` then `37faef81f7`
 
 > ### **84 upstream commits merged in two two-parent merges. 30 conflicted paths, all resolved; the tree compiles.**
