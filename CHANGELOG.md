@@ -6,6 +6,53 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-29, second] - sync of `upstream/main` (`7f9a39a9c0`) into `forge`
+
+> ### **2 upstream commits merged. 1 conflicted path. The fork's llama.cpp installer ported to the new crate.**
+>
+> `upstream/main` `7f9a39a9c0` (2 commits since `e5bdd01cd8`):
+>
+> - **`http_client: Unify asset downloading logic` (#66048)** - GitHub release and asset
+>   downloading moves out of `http_client` into a new `crates/github_releases` crate.
+>   `http_client::github` and `http_client::github_download` are **deleted**;
+>   `download_server_binary` now takes a `&BackgroundExecutor` first and an `Arc<dyn HttpClient>`,
+>   and returns a `Task` instead of a future.
+> - **`Bump livekit-rust-sdks to upgrade zip to 9.1` (#66272)** - the livekit / libwebrtc /
+>   webrtc-sys pins move to `fbda05eb278b`.
+>
+> **The one conflict was `Cargo.lock`** - seeded from upstream's lock, then re-resolved by
+> cargo (adds `zip` 9.1.3, `nix` 0.31.3, `typed-path` 0.13.0, `zlib-rs` 0.5.5 and the new
+> workspace member).
+>
+> **The real work was fork code upstream could not update.** The fork's own llama.cpp server
+> installer still imported `http_client::{github, github_download}`, which no longer exist. It is
+> now on `github_releases`:
+>
+> - `latest_github_release`, `GithubReleaseAsset` and `AssetKind` come from the new crate, and the
+>   two `http_client::github::AssetKind::*` matches in `select_llama_release_asset` follow;
+> - `download_server_binary` needs a `&BackgroundExecutor`, so the executor is threaded
+>   `Context::background_executor()` / `AsyncApp::background_executor()` -> `ensure_server` ->
+>   `resolve_server_path` -> `download_llama_server`. Both call sites already sit inside a
+>   `Context`/`AsyncApp`, so nothing above them changed;
+> - `crates/language_models/Cargo.toml` gains `github_releases.workspace = true`.
+>
+> **Gates:** markers 0; deletion audit 3 added / 1 deleted / 0 unexplained; no-loss flagged only
+> the two old `http_client::github*` names in `llama_cpp.rs`, which is exactly what the port
+> replaces; item parity 0 files below a side (the two "ours-only" entries are `mod github` and
+> `mod github_download`, deleted upstream); brace balance 0 files differing; parse gate 14
+> parse+format clean, 0 merge-introduced parse failures.
+>
+> **Disk incident, recorded rather than buried.** The first `cargo check` of this merge died with
+> `os error 112` (ENOSPC) at **1.7 GB free** on `G:`, because the livekit bump forces a fresh
+> `webrtc-sys` build. The only thing removed was
+> `target/debug/incremental` - **81.1 GB of pure build-acceleration cache** inside the scratch
+> target dir, the lever this file already names - which restored **81.4 GB**. The rebuild then ran
+> with `CARGO_INCREMENTAL=0` so the cache does not immediately grow back. **No source, git object,
+> evidence file or user data was touched.**
+>
+> **Proof:** cargo check --workspace --all-targets --locked -> rc 0, 0 errors. cargo test --lib over `language_models`, `languages`, `title_bar`, `acp_thread` -> **146 / 108 / 5 / 299 passed, 0 failed**.
+
+
 ## [Landed 2026-10-29] - sync of `upstream/main` (`e5bdd01cd8`) into `forge`
 
 > ### **16 upstream commits merged. 5 conflicted paths, all resolved; the tree compiles.**
