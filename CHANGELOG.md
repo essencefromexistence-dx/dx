@@ -6,6 +6,27 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-29, fourth] - sync of `upstream/main` (`33156f0d81`) into `forge`
+
+> ### **3 upstream commits merged. No conflicts.**
+>
+> `upstream/main` moved again while the previous sync was being verified, so it was picked up in
+> the same sitting: `settings_ui: Save new project skills to the remote in remote workspaces`
+> (#66224) - skill creation writes through the worktree/FS instead of a local directory, replacing
+> the local-only `skills_dir` helper - plus the standalone-modifier flush fix (#55800) and
+> `language_model: Stream background events through async-channel` (#66290).
+>
+> **Nothing conflicted**; git merged all five changed files cleanly and `Cargo.lock` was
+> re-resolved by cargo (`async-channel` plus the settings_ui edges).
+>
+> **Gates:** markers 0; deletion audit 0 added / 0 deleted / 0 unexplained; **no-loss 0 of 5
+> files**; item parity 0 files below a side (the single "ours-only" entry is `skills_dir`, which
+> #66224 replaced with the worktree-aware write path); brace balance 0 files differing; parse gate
+> 5 files parse+format clean, 0 merge-introduced parse failures.
+>
+> **Proof:** cargo check --workspace --all-targets --locked -> rc 0, 0 errors. cargo test --lib: `gpui` **407 passed, 0 failed**; `language_models` **146 passed, 0 failed**; `settings_ui` **69 passed, 7 failed** - the **same 7** pre-existing failures filed in TODO.md (they fail identically on a worktree at the pre-merge commit da4863776c).
+
+
 ## [Landed 2026-10-29, third] - sync of `upstream/main` (`2eb2928c15`) into `forge`
 
 > ### **12 upstream commits merged. 7 conflicted paths, all resolved; the tree compiles.**
