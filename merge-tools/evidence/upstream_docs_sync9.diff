@@ -1,0 +1,105 @@
+diff --git a/docs/README.md b/docs/README.md
+index faf443bef5..dd75a2de9f 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -110,7 +110,7 @@ Replace `<version>` with the new version of `c15t` you are installing. Then upda
+ 
+ ## Postprocessor
+ 
+-A postprocessor is implemented as a sub-command of `docs_preprocessor` that wraps the built-in HTML renderer and applies post-processing to the HTML files, to add support for page-specific title and `meta` tag description values.
++A postprocessor is implemented as a sub-command of `docs-preprocessor` that wraps the built-in HTML renderer and applies post-processing to the HTML files, to add support for page-specific title and `meta` tag description values.
+ 
+ An example of the syntax can be found in `git.md`, as well as below:
+ 
+@@ -140,7 +140,7 @@ If no front matter is provided, or if one or both keys aren't provided, the `tit
+ ### Implementation details
+ 
+ Unfortunately, mdBook does not support post-processing like it does pre-processing, and only supports defining one description to put in the `meta` tag per book rather than per file.
+-So in order to apply post-processing (necessary to modify the HTML `head` tags) the global book description is set to a marker value `#description#` and the HTML renderer is replaced with a sub-command of `docs_preprocessor` that wraps the built-in HTML renderer and applies post-processing to the HTML files, replacing the marker value and the `<title>(.*)</title>` with the contents of the front matter if there is one.
++So in order to apply post-processing (necessary to modify the HTML `head` tags) the global book description is set to a marker value `#description#` and the HTML renderer is replaced with a sub-command of `docs-preprocessor` that wraps the built-in HTML renderer and applies post-processing to the HTML files, replacing the marker value and the `<title>(.*)</title>` with the contents of the front matter if there is one.
+ 
+ ### Known limitations
+ 
+diff --git a/docs/src/development/macos.md b/docs/src/development/macos.md
+index e3807ec89f..f4ee8a8bee 100644
+--- a/docs/src/development/macos.md
++++ b/docs/src/development/macos.md
+@@ -77,7 +77,7 @@ You must grant Screen Recording permission to your terminal:
+ ### Running Visual Tests
+ 
+ ```sh
+-cargo run -p zed --bin zed_visual_test_runner --features visual-tests
++cargo run -p zed --bin zed-visual-test-runner --features visual-tests
+ ```
+ 
+ ### Baseline Images
+@@ -92,7 +92,7 @@ Before making any UI changes, generate baseline images from a known-good state:
+ 
+ ```sh
+ git checkout origin/main
+-UPDATE_BASELINE=1 cargo run -p zed --bin zed_visual_test_runner --features visual-tests
++UPDATE_BASELINE=1 cargo run -p zed --bin zed-visual-test-runner --features visual-tests
+ git checkout -
+ ```
+ 
+@@ -103,7 +103,7 @@ This creates baselines that reflect the current expected UI.
+ When UI changes are intentional, update the baseline images after your changes:
+ 
+ ```sh
+-UPDATE_BASELINE=1 cargo run -p zed --bin zed_visual_test_runner --features visual-tests
++UPDATE_BASELINE=1 cargo run -p zed --bin zed-visual-test-runner --features visual-tests
+ ```
+ 
+ > **Note:** In the future, baselines may be stored externally. For now, they
+diff --git a/docs/src/remote-development.md b/docs/src/remote-development.md
+index 1d6657e531..b633a6b565 100644
+--- a/docs/src/remote-development.md
++++ b/docs/src/remote-development.md
+@@ -180,7 +180,14 @@ When opening a remote project there are three relevant settings locations:
+ - The server Zed settings (in the same place) on the remote server.
+ - The project settings (in `.zed/settings.json` or `.editorconfig` of your project)
+ 
+-Both the local Zed and the server Zed read the project settings, but they are not aware of the other's main settings file.
++Both the local Zed and the server Zed read supported project settings. Zed forwards
++your local user settings to the server, where server settings override them.
++
++Git auto-fetch runs on the server and sends updated branch information to your
++local Zed window. Enable `git.auto_fetch` in your user settings or the server's
++settings. Git settings are not read from project `.zed/settings.json` files. See
++[Auto Fetch](./reference/all-settings.md#auto-fetch) for configuration and credential
++requirements.
+ 
+ Which settings file you should use depends on the kind of setting you want to make:
+ 
+@@ -228,7 +235,7 @@ If you'd like to maintain the server binary yourself you can. You can either dow
+ 
+ ```bash
+ cargo build --release --package remote_server
+-llvm-objcopy --strip-debug target/release/remote_server
++llvm-objcopy --strip-debug target/release/remote-server
+ ```
+ 
+ Stripping debug symbols matches the packaging step in [`script/bundle-linux`](https://github.com/zed-industries/zed/blob/main/script/bundle-linux) and keeps the binary closer to the size of Zed's prebuilt downloads. Prefer `llvm-objcopy` because GNU `objcopy` may not understand newer LLVM-emitted CREL sections.
+@@ -237,7 +244,7 @@ The official Linux release builds a musl/static remote server. If you need that,
+ 
+ ```bash
+ RUSTFLAGS="-C target-feature=+crt-static" cargo build --release --package remote_server --target x86_64-unknown-linux-musl
+-llvm-objcopy --strip-debug target/x86_64-unknown-linux-musl/release/remote_server
++llvm-objcopy --strip-debug target/x86_64-unknown-linux-musl/release/remote-server
+ ```
+ 
+ If you do this, you must upload it to `~/.zed_server/zed-remote-server-{RELEASE_CHANNEL}-{VERSION}` on the server, for example `~/.zed_server/zed-remote-server-stable-0.217.3+stable.105.80433cb239e868271457ac376673a5f75bc4adb1`. The version must exactly match the version of Zed itself you are using.
+diff --git a/docs/src/worktree-trust.md b/docs/src/worktree-trust.md
+index 4c190143c5..8a4834e24b 100644
+--- a/docs/src/worktree-trust.md
++++ b/docs/src/worktree-trust.md
+@@ -27,6 +27,8 @@ This feature works locally and on SSH and WSL remote hosts. Zed tracks trust inf
+ Restricted Mode prevents:
+ 
+ - Project settings (`.zed/settings.json`) from being parsed and applied
++- Project tasks (`.zed/tasks.json`, `.vscode/tasks.json`) and debug configurations (`.zed/debug.json`, `.vscode/launch.json`) from being applied
++- Automatic task hooks from running, including hooks defined in global tasks
+ - Language servers from being installed and spawned
+ - MCP servers from being installed and spawned
+ 
+

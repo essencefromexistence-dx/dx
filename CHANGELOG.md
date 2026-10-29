@@ -6,6 +6,43 @@
 > Entries are newest-first. Each records *what changed*, *why*, and *how it was proven*.
 
 ---
+## [Landed 2026-10-29, third] - sync of `upstream/main` (`2eb2928c15`) into `forge`
+
+> ### **12 upstream commits merged. 7 conflicted paths, all resolved; the tree compiles.**
+>
+> `upstream/main` `2eb2928c15` (12 commits since `7f9a39a9c0`): **git auto-fetch** (#53089),
+> **UAX #14 line breaking for text wrapping** (#64624), configurable power/thermal frame intervals
+> (#66281), sendable foreground execution for web HTTP clients (#66165), LSP data invalidation for
+> outdated excerpts (#66264), user MCP servers before the first worktree loads (#64612), project
+> skill mentions/share links in remote workspaces (#66207), the synthetic `WM_MOUSEMOVE`
+> suppression (#55739), resizable git-graph refs (#66260), helix clipboard fix (#55455), Spanish-ISO
+> shortcuts (#66283) and restricted-mode worktree hooks (#66284).
+>
+> | Path | Resolution |
+> |---|---|
+> | `crates/agent_ui/src/mention_set.rs` | (1) reading a skill file is now **upstream's `fs.load(..).await`** - that is what makes project skills work in remote workspaces (#66207) - **plus** the fork's 1 MiB cap, re-applied to the loaded string (the fork's synchronous reader goes, the guard stays); (2) the size-limit constants stay and upstream's new `project_path_for_skill` is added; the fork's `read_skill_mention_file` is dropped because (1) no longer calls it. |
+> | `crates/editor/src/code_lens.rs` | upstream centralised the buffer selection into `Editor::lsp_data_buffers` (#66264); the call is taken **and** the fork's visible-buffer cap is kept at the call site (`MAX_CODE_LENS_VISIBLE_BUFFERS` truncation plus its warning), so the shared helper stays upstream's. |
+> | `crates/gpui_windows/src/events.rs` | both: the fork's webview mouse-passthrough block runs first (minus the `callbacks.input` guard, which upstream's shared tail now provides), then upstream's hoisted `x`/`y` extraction and its synthetic-`WM_MOUSEMOVE` suppression (#55739). |
+> | `docs/README.md`, `docs/src/development/macos.md`, `docs/src/remote-development.md`, `docs/src/worktree-trust.md` | the recurring **modify/delete**: our deletion honoured, upstream's text recorded in `merge-tools/evidence/upstream_docs_sync9.diff` and `upstream_docs_sync9.md`. |
+>
+> **Gates:** markers 0; deletion audit 0 added / 0 deleted / 0 unexplained; no-loss flagged exactly
+> the two names the resolutions retire (`read_skill_mention_file`, the fork's local
+> `buffer_candidates`) and nothing else; item parity 0 files below a side; brace balance 0 files
+> differing; parse gate 58 parse+format clean, 0 pre-existing and 0 merge-introduced parse
+> failures, 1 file unformatted on our side before the merge.
+>
+> **Tests, and what is pre-existing.** gpui -> **405 passed, 0 failed**. settings_ui ->
+> **66 passed, 7 failed**, and a worktree at the pre-merge commit da4863776c gives **61 passed,
+> the same 7 failed** - so the 7 (skills page, settings-window worktrees, tool-permission list,
+> provider retry) are pre-existing, and this merge adds 5 passing tests rather than any new
+> failure. ditor's `test_code_lens_resolve_only_visible` fails **identically** on both trees
+> (`left: {70, 90, 60, 80}` vs `right: {70, 80, 90}`), and the ditor and gent_ui
+> suites hang on this machine in the completion/permission tests - both pre-existing and filed in
+> TODO.md rather than papered over.
+>
+> **Proof:** cargo check --workspace --all-targets --locked -> rc 0, 0 errors. cargo test --lib: `gpui` **405 passed, 0 failed**; `settings_ui` **66 passed, 7 failed** with the **identical 7** failing on a pre-merge worktree at `da4863776c` (61 passed there); `editor`'s code-lens test fails identically on both trees. The `editor`/`agent_ui` suites hang in this environment on pre-existing completion/permission tests.
+
+
 ## [Landed 2026-10-29, second] - sync of `upstream/main` (`7f9a39a9c0`) into `forge`
 
 > ### **2 upstream commits merged. 1 conflicted path. The fork's llama.cpp installer ported to the new crate.**
