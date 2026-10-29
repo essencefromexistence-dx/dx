@@ -400,13 +400,14 @@ impl LocalLlamaCppLanguageModel {
             (state.runtime.clone(), state.launch_config(&self.model))
         });
         let http_client = self.http_client.clone();
+        let executor = cx.background_executor().clone();
         let future = self.request_limiter.stream(async move {
             log::info!(
                 "starting llama.cpp completion with model {}",
                 config.model.name
             );
             runtime
-                .ensure_server(config.clone(), http_client.clone())
+                .ensure_server(config.clone(), http_client.clone(), &executor)
                 .await
                 .map_err(LanguageModelCompletionError::Other)?;
             let config = effective_launch_config(http_client.as_ref(), config).await;
@@ -482,6 +483,7 @@ impl LlamaCppRuntime {
         &self,
         config: LlamaCppLaunchConfig,
         http_client: Arc<dyn HttpClient>,
+        executor: &gpui::BackgroundExecutor,
     ) -> Result<()> {
         if server_is_ready_for_model(http_client.as_ref(), &config).await {
             return Ok(());
@@ -497,7 +499,7 @@ impl LlamaCppRuntime {
         }
 
         let server_path = self
-            .resolve_server_path(&config, http_client.clone())
+            .resolve_server_path(&config, http_client.clone(), executor)
             .await
             .context("finding llama-server")?;
         let signature = config.signature(&server_path);
@@ -709,6 +711,7 @@ impl LlamaCppRuntime {
         &self,
         config: &LlamaCppLaunchConfig,
         http_client: Arc<dyn HttpClient>,
+        executor: &gpui::BackgroundExecutor,
     ) -> Result<PathBuf> {
         if let Some(path) = config.server_path.as_ref()
             && (path.exists() || path.components().count() == 1)
@@ -730,7 +733,7 @@ impl LlamaCppRuntime {
             );
         }
 
-        download_llama_server(http_client, &config.tools_dir).await
+        download_llama_server(http_client, &config.tools_dir, executor).await
     }
 }
 
@@ -1971,28 +1974,30 @@ fn find_gguf_in_dir(
 async fn download_llama_server(
     http_client: Arc<dyn HttpClient>,
     tools_dir: &Path,
+    executor: &gpui::BackgroundExecutor,
 ) -> Result<PathBuf> {
     #[cfg(target_family = "wasm")]
     {
         let _ = http_client;
         let _ = tools_dir;
+        let _ = executor;
         anyhow::bail!("automatic llama.cpp server installation is not supported on wasm");
     }
 
     #[cfg(not(target_family = "wasm"))]
     {
-        use http_client::{github, github_download};
+        use github_releases::latest_github_release;
 
         std::fs::create_dir_all(tools_dir)
             .with_context(|| format!("creating {}", tools_dir.display()))?;
         let release =
-            github::latest_github_release("ggml-org/llama.cpp", true, false, http_client.clone())
-                .await?;
+            latest_github_release("ggml-org/llama.cpp", true, false, http_client.clone()).await?;
         let (asset, asset_kind) = select_llama_release_asset(&release.assets)
             .ok_or_else(|| anyhow!("no llama.cpp release asset matched this OS"))?;
         let destination = tools_dir.join(&release.tag_name);
-        github_download::download_server_binary(
-            http_client.as_ref(),
+        github_releases::download_server_binary(
+            executor,
+            http_client.clone(),
             &asset.browser_download_url,
             asset.digest.as_deref(),
             &destination,
@@ -2006,10 +2011,10 @@ async fn download_llama_server(
 
 #[cfg(not(target_family = "wasm"))]
 fn select_llama_release_asset(
-    assets: &[http_client::github::GithubReleaseAsset],
+    assets: &[github_releases::GithubReleaseAsset],
 ) -> Option<(
-    &http_client::github::GithubReleaseAsset,
-    http_client::github::AssetKind,
+    &github_releases::GithubReleaseAsset,
+    github_releases::AssetKind,
 )> {
     fn matches(name: &str, required: &[&str], forbidden: &[&str]) -> bool {
         required.iter().all(|part| name.contains(part))
@@ -2043,9 +2048,9 @@ fn select_llama_release_asset(
         }) {
             let name = asset.name.to_lowercase();
             let kind = if name.ends_with(".tar.gz") {
-                http_client::github::AssetKind::TarGz
+                github_releases::AssetKind::TarGz
             } else {
-                http_client::github::AssetKind::Zip
+                github_releases::AssetKind::Zip
             };
             return Some((asset, kind));
         }
@@ -2228,7 +2233,9 @@ impl LocalLlamaCppConfigurationView {
         let http_client = self.http_client.clone();
 
         self.load_task = Some(cx.spawn(async move |this, cx| {
-            let result = runtime.ensure_server(config, http_client).await;
+            let result = runtime
+                .ensure_server(config, http_client, cx.background_executor())
+                .await;
             if let Err(error) = result {
                 log::error!("failed to start llama.cpp: {error:?}");
             }
