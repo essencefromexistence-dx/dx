@@ -17,7 +17,7 @@ use acp_thread::{
     line_range_suffix,
 };
 use agent::{ContextServerRegistry, SharedThread, ThreadStore};
-use agent_client_protocol::schema::v2 as acp_v2;
+use agent_client_protocol::v2::schema as acp_v2;
 use agent_servers::AgentServer;
 use agent_settings::UserAgentsMd;
 use collections::HashSet;
@@ -10152,7 +10152,7 @@ mod tests {
     };
     use acp_thread::{AgentConnection, StubAgentConnection, ThreadStatus};
     use action_log::ActionLog;
-    use agent_client_protocol::schema::v1 as acp;
+    use agent_client_protocol::v1::schema as acp;
     use anyhow::{Result, anyhow};
     use feature_flags::FeatureFlagAppExt;
     use fs::FakeFs;

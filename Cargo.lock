@@ -332,12 +332,13 @@ dependencies = [
 
 [[package]]
 name = "agent-client-protocol"
-version = "3.6.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89b41f18aeb4a6d1a463b994cb880cc562cdea7d616ea3e22f9c6f2a438fc4f6"
+checksum = "80ce60ce096020c2d0aa10445bc27b8856109e288abaf564ab517031ae819d69"
 dependencies = [
  "agent-client-protocol-derive",
  "agent-client-protocol-schema",
+ "anyhow",
  "futures 0.3.34",
  "futures-concurrency",
  "rustc-hash 2.1.1",
@@ -350,9 +351,9 @@ dependencies = [
 
 [[package]]
 name = "agent-client-protocol-derive"
-version = "3.6.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d2d255cb5d3afa4760084fbcaf87c7d214d316328546cd777d8736a8af6e368"
+checksum = "a12951a4e9a163a9384dec4e5681bd774c0fdb3871c5ed1deb7b44bc630df17a"
 dependencies = [
  "quote",
  "syn 3.0.3",
@@ -360,9 +361,9 @@ dependencies = [
 
 [[package]]
 name = "agent-client-protocol-schema"
-version = "1.13.0"
+version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7c7cee33b16d162a617d5ea7292471c542ab31b416a2c089228aa8a6d4d18fe"
+checksum = "1b2316d2cd561917bc2c16e3c64771c77e24363b56d40b58fdad091d02059992"
 dependencies = [
  "anyhow",
  "derive_more 2.1.1",
@@ -4278,6 +4279,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "crates_io_client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "derive_more",
+ "futures 0.3.34",
+ "http_client",
+ "itertools 0.14.0",
+ "parking_lot",
+ "semver",
+ "serde",
+ "serde_json",
+ "smol",
+ "thiserror 2.0.17",
+ "url",
+]
+
+[[package]]
 name = "crc"
 version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8077,6 +8098,7 @@ dependencies = [
  "objc2-core-media",
  "objc2-core-video",
  "objc2-foundation 0.3.2",
+ "objc2-quartz-core 0.3.2",
  "objc2-screen-capture-kit",
  "objc2-uniform-type-identifiers",
  "objc2-user-notifications",
@@ -10200,7 +10222,6 @@ dependencies = [
  "futures 0.3.34",
  "gpui",
  "gpui_util",
- "http_client",
  "icons",
  "image",
  "language_model_core",
@@ -12052,7 +12073,6 @@ name = "notifications"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "channel",
  "client",
  "component",
  "futures-lite 2.6.1",
@@ -14805,6 +14825,7 @@ dependencies = [
  "tracing",
  "unindent",
  "url",
+ "usvg",
  "util",
  "watch",
  "wax",
@@ -19088,10 +19109,13 @@ dependencies = [
  "gpui",
  "itertools 0.14.0",
  "language",
+ "languages",
  "menu",
+ "node_runtime",
  "picker",
  "project",
  "serde_json",
+ "settings",
  "task",
  "tree-sitter",
  "tree-sitter-json",
@@ -23976,7 +24000,7 @@ dependencies = [
 
 [[package]]
 name = "zed"
-version = "1.28.0"
+version = "1.29.0"
 dependencies = [
  "acp_thread",
  "acp_tools",

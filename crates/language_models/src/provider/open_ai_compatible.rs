@@ -10,8 +10,8 @@ use language_model::{
     LanguageModelCompletionStream, LanguageModelEffortLevel, LanguageModelId, LanguageModelName,
     LanguageModelProvider, LanguageModelProviderId, LanguageModelProviderName,
     LanguageModelProviderState, LanguageModelRequest, LanguageModelToolChoiceSupport,
-    ModelRateLimiters, ProviderSettingsView, RateLimiter, SubPageProviderSettings,
-    unavailable_error,
+    ModelRateLimiters, PromptCompactionStrategy, ProviderSettingsView, RateLimiter,
+    SubPageProviderSettings, unavailable_error,
 };
 use open_ai::{
     ResponseStreamEvent,
@@ -137,6 +137,7 @@ impl OpenAiCompatibleLanguageModelProvider {
                 any: model.capabilities.tools,
                 none: true,
             },
+            prompt_compaction_strategy: PromptCompactionStrategy::RebuildPrompt,
             supports_streaming_tools: true,
             supports_thinking: default_thinking_reasoning_effort(model).is_some(),
             supported_effort_levels: supported_thinking_effort_levels(model).into(),

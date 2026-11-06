@@ -2590,6 +2590,9 @@ pub mod test {
         pub position: DockPosition,
         pub zoomed: bool,
         pub active: bool,
+        /// Keeps track of the values provided to [`Self::set_active`], to allow
+        /// inspecting whether the panel was activated or deactivated.
+        pub activation_history: Vec<bool>,
         pub focus_handle: FocusHandle,
         pub activation_focus_handle: Option<FocusHandle>,
         pub default_size: Pixels,
@@ -2606,6 +2609,7 @@ pub mod test {
                 position,
                 zoomed: false,
                 active: false,
+                activation_history: Vec::new(),
                 focus_handle: cx.focus_handle(),
                 activation_focus_handle: None,
                 default_size: px(300.),
@@ -2726,6 +2730,7 @@ pub mod test {
 
         fn set_active(&mut self, active: bool, _window: &mut Window, _cx: &mut Context<Self>) {
             self.active = active;
+            self.activation_history.push(active);
         }
 
         fn activation_priority(&self) -> u32 {

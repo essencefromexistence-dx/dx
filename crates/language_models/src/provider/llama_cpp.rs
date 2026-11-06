@@ -11,9 +11,9 @@ use language_model::{
     LanguageModelCompletionStream, LanguageModelId, LanguageModelName, LanguageModelProvider,
     LanguageModelProviderId, LanguageModelProviderName, LanguageModelProviderState,
     LanguageModelRequest, LanguageModelToolChoice, LanguageModelToolChoiceSupport,
-    LanguageModelToolResultContent, MessageContent, ModelRateLimiters, ProviderErrorCategory,
-    ProviderSettingsView, RateLimiter, Role, StopReason, SubPageProviderSettings, TokenUsage,
-    env_var, unavailable_error,
+    LanguageModelToolResultContent, MessageContent, ModelRateLimiters, PromptCompactionStrategy,
+    ProviderErrorCategory, ProviderSettingsView, RateLimiter, Role, StopReason,
+    SubPageProviderSettings, TokenUsage, env_var, unavailable_error,
 };
 use llama_cpp::{
     LLAMA_CPP_API_URL, ModelEntry, Props, get_models, get_props, stream_chat_completion,
@@ -2833,6 +2833,7 @@ impl LlamaCppLanguageModelProvider {
             None => LanguageModelName::from(display_name.to_string()),
         };
         LanguageModel {
+            prompt_compaction_strategy: PromptCompactionStrategy::PreserveRequestPrefix,
             supports_tools: capabilities.supports_tools,
             tool_choice_support: LanguageModelToolChoiceSupport {
                 auto: capabilities.supports_tools,

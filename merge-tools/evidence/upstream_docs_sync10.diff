@@ -1,0 +1,206 @@
+diff --git a/docs/.prettierignore b/docs/.prettierignore
+index c742ed4b685..a52439689a8 100644
+--- a/docs/.prettierignore
++++ b/docs/.prettierignore
+@@ -1,5 +1,2 @@
+ # Handlebars partials are not supported by Prettier.
+ *.hbs
+-
+-# Automatically generated
+-theme/c15t@*.js
+diff --git a/docs/README.md b/docs/README.md
+index dd75a2de9f5..13298ecdcc0 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -88,19 +88,7 @@ You can see how the actions and keybindings are templated in `crates/docs_prepro
+ 
+ ## Consent Banner
+ 
+-We pre-bundle the `c15t` package because the docs pipeline does not include a JS bundler. If you need to update `c15t` and rebuild the bundle, use:
+-
+-```
+-mkdir c15t-bundle && cd c15t-bundle
+-npm init -y
+-npm install c15t@<version> esbuild
+-echo "import { getOrCreateConsentRuntime } from 'c15t'; window.c15t = { getOrCreateConsentRuntime };" > entry.js
+-npx esbuild entry.js --bundle --format=iife --minify --outfile=c15t@<version>.js
+-cp c15t@<version>.js ../theme/c15t@<version>.js
+-cd .. && rm -rf c15t-bundle
+-```
+-
+-Replace `<version>` with the new version of `c15t` you are installing. Then update `book.toml` to reference the new bundle filename.
++The consent banner is the markup in `theme/index.hbs`, driven by `theme/analytics.js`. That script loads `c15t.js` from our Inth backend (`DOCS_CONSENT_IO_INSTANCE`) with c15t's stock UI turned off. Inth serves the c15t version our hosted backend runs, so there is no bundle to update in this repo. The banner only appears when `DOCS_CONSENT_IO_INSTANCE` is set.
+ 
+ ### References
+ 
+diff --git a/docs/book.toml b/docs/book.toml
+index 60698da1cde..93e191894b0 100644
+--- a/docs/book.toml
++++ b/docs/book.toml
+@@ -25,7 +25,7 @@ default-title = "Zed Code Editor Documentation"
+ no-section-label = true
+ preferred-dark-theme = "dark"
+ additional-css = ["theme/page-toc.css", "theme/plugins.css", "theme/highlight.css", "theme/consent-banner.css"]
+-additional-js  = ["redirects/legacy-fragment-redirects.js", "theme/page-toc.js", "theme/plugins.js", "theme/c15t@2.0.0-rc.3.js", "theme/analytics.js"]
++additional-js  = ["redirects/legacy-fragment-redirects.js", "theme/page-toc.js", "theme/plugins.js", "theme/analytics.js"]
+ 
+ [output.zed-html.print]
+ enable = false
+diff --git a/docs/src/debugger.md b/docs/src/debugger.md
+index 4c7c21e5e38..f58b30f4aa1 100644
+--- a/docs/src/debugger.md
++++ b/docs/src/debugger.md
+@@ -173,9 +173,14 @@ This ensures the debugger doesn't disrupt your workflow when stepping through co
+ 
+ ## Settings
+ 
++In the Settings Editor, open **Panels → Debugger Panel** to configure the panel's
++dock position, default width, and default height.
++
+ The settings for the debugger are grouped under the `debugger` key in `settings.json`:
+ 
+ - `dock`: Determines the position of the debug panel in the UI.
++- `default_width`: Default width in pixels when docked to the left or right (default: `300`).
++- `default_height`: Default height in pixels when docked to the bottom (default: `300`).
+ - `stepping_granularity`: Determines the stepping granularity.
+ - `save_breakpoints`: Whether the breakpoints should be reused across Zed sessions.
+ - `button`: Whether to show the debug button in the status bar.
+diff --git a/docs/src/git.md b/docs/src/git.md
+index c1c1d08479b..d986ecf41d6 100644
+--- a/docs/src/git.md
++++ b/docs/src/git.md
+@@ -203,6 +203,7 @@ Git worktrees let you keep multiple checkouts of the same repository on disk at
+ This is useful when you want to work on more than one branch or task without stashing, rebuilding, or disturbing the files in your main checkout.
+ 
+ Open the worktree picker from the title bar, next to the project picker, or by running {#action git::Worktree}.
++Search by worktree name or checked-out branch name to find an existing worktree.
+ From the picker, you can:
+ 
+ - Create a new linked worktree either from the current branch or default branch
+diff --git a/docs/theme/analytics.js b/docs/theme/analytics.js
+index 84d9705bfea..2b44f370896 100644
+--- a/docs/theme/analytics.js
++++ b/docs/theme/analytics.js
+@@ -7,11 +7,15 @@ const consentInstance = document.querySelector(
+ 
+ document.addEventListener("DOMContentLoaded", () => {
+   if (!consentInstance || consentInstance.length === 0) return;
+-  const { getOrCreateConsentRuntime } = window.c15t;
+ 
+-  const { consentStore } = getOrCreateConsentRuntime({
+-    mode: "c15t",
+-    backendURL: consentInstance,
++  // Calls queue on this array until the c15t script tag replaces it with the
++  // API object, so the banner works before and after the tag has loaded.
++  window.c15t = window.c15t || [];
++  const c15t = (...call) => window.c15t.push(call);
++
++  // The banner is the markup in index.hbs, so c15t's stock UI stays off.
++  c15t("config", {
++    ui: false,
+     consentCategories: ["necessary", "measurement", "marketing"],
+     storageConfig: {
+       crossSubdomain: true,
+@@ -31,63 +35,61 @@ document.addEventListener("DOMContentLoaded", () => {
+     ],
+   });
+ 
+-  let previousActiveUI = consentStore.getState().activeUI;
+   const banner = document.getElementById("c15t-banner");
+   const configureSection = document.getElementById("c15t-configure-section");
+   const configureBtn = document.getElementById("c15t-configure-btn");
++  const configureIcon = configureBtn.innerHTML;
+   const measurementToggle = document.getElementById("c15t-toggle-measurement");
+   const marketingToggle = document.getElementById("c15t-toggle-marketing");
++  let isConfiguring = false;
+ 
+-  const toggleConfigureMode = () => {
+-    const currentConsents = consentStore.getState().consents;
+-    measurementToggle.checked = currentConsents
+-      ? (currentConsents.measurement ?? false)
+-      : false;
+-    marketingToggle.checked = currentConsents
+-      ? (currentConsents.marketing ?? false)
+-      : false;
+-    configureSection.style.display = "flex";
+-    configureBtn.innerHTML = "Save";
+-    configureBtn.className = "c15t-button secondary";
+-    configureBtn.title = "";
+-  };
+-
+-  consentStore.subscribe((state) => {
+-    const hideBanner =
+-      state.activeUI === "none" ||
+-      (state.activeUI === "banner" && state.model === "opt-out");
+-    banner.style.display = hideBanner ? "none" : "block";
++  // c15t reports which surface is due: "banner", "dialog" (our configure
++  // view) or "none".
++  c15t("on", "ui", (surface) => {
++    const { promptRequirement } = window.c15t.getSnapshot();
++    isConfiguring = surface === "dialog";
++    banner.style.display =
++      surface === "none" ||
++      (surface === "banner" && promptRequirement.kind === "none")
++        ? "none"
++        : "block";
+ 
+-    if (state.activeUI === "dialog" && previousActiveUI !== "dialog") {
+-      toggleConfigureMode();
+-    }
+-
+-    previousActiveUI = state.activeUI;
++    measurementToggle.checked = window.c15t.has("measurement");
++    marketingToggle.checked = window.c15t.has("marketing");
++    configureSection.style.display = isConfiguring ? "flex" : "none";
++    configureBtn.innerHTML = isConfiguring ? "Save" : configureIcon;
++    configureBtn.className = isConfiguring
++      ? "c15t-button secondary"
++      : "c15t-button icon";
++    configureBtn.title = isConfiguring ? "" : "Configure";
+   });
+ 
+   configureBtn.addEventListener("click", () => {
+-    if (consentStore.getState().activeUI === "dialog") {
+-      consentStore
+-        .getState()
+-        .setConsent("measurement", measurementToggle.checked);
+-      consentStore.getState().setConsent("marketing", marketingToggle.checked);
+-      consentStore.getState().saveConsents("custom");
++    if (isConfiguring) {
++      c15t("save", {
++        measurement: measurementToggle.checked,
++        marketing: marketingToggle.checked,
++      });
+     } else {
+-      consentStore.getState().setActiveUI("dialog");
++      c15t("openDialog");
+     }
+   });
+ 
+-  document.getElementById("c15t-accept").addEventListener("click", () => {
+-    consentStore.getState().saveConsents("all");
+-  });
++  document
++    .getElementById("c15t-accept")
++    .addEventListener("click", () => c15t("acceptAll"));
+ 
+-  document.getElementById("c15t-decline").addEventListener("click", () => {
+-    consentStore.getState().saveConsents("necessary");
+-  });
++  document
++    .getElementById("c15t-decline")
++    .addEventListener("click", () => c15t("rejectAll"));
+ 
+   document
+     .getElementById("c15t-manage-consent-btn")
+-    .addEventListener("click", () => {
+-      consentStore.getState().setActiveUI("dialog");
+-    });
++    .addEventListener("click", () => c15t("openDialog"));
++
++  // Inth serves this file with our backend URL already configured.
++  const script = document.createElement("script");
++  script.src = `${consentInstance.replace(/\/+$/, "")}/c15t.js`;
++  script.defer = true;
++  document.head.appendChild(script);
+ });
