@@ -2,7 +2,7 @@ use crate::{
     AgentTool, PC_USE_FUTURE_UI_TARGET_PREFIXES, ToolCallEventStream, ToolInput,
     ToolPermissionContext,
 };
-use agent_client_protocol::schema::v2 as acp_v2;
+use agent_client_protocol::v2::schema as acp_v2;
 use anyhow::Result;
 use gpui::{App, ClipboardItem, Entity, SharedString, Task};
 use paths::data_dir;

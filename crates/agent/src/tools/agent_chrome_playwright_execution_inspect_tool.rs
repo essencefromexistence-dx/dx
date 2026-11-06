@@ -2,7 +2,7 @@ use super::agent_chrome_payload_tool::AgentChromePayloadQueueRootMode;
 use super::agent_chrome_playwright_adapter_tool::AGENT_CHROME_PLAYWRIGHT_EXECUTION_RECEIPT_SCHEMA;
 use super::agent_chrome_playwright_invoke_tool::AGENT_CHROME_PLAYWRIGHT_RUN_REQUEST_SCHEMA;
 use crate::{AgentTool, ToolCallEventStream, ToolInput};
-use agent_client_protocol::schema::v2 as acp_v2;
+use agent_client_protocol::v2::schema as acp_v2;
 use anyhow::Result;
 use gpui::{App, Entity, SharedString, Task};
 use paths::data_dir;

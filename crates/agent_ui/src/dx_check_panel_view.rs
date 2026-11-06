@@ -28,7 +28,7 @@ use crate::dx_check_panel_view::view_rows::{
 // acp_thread, which uses `v2 as acp_v2`).
 // v2: `AgentPanel::insert_content_blocks` (and the thread's draft storage) are
 // on the v2 schema, so the prompt block has to be a v2 ContentBlock.
-use agent_client_protocol::schema::v2 as acp_v1;
+use agent_client_protocol::v2::schema as acp_v1;
 
 mod tabs;
 mod view_rows;
