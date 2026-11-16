@@ -140,14 +140,6 @@ impl<E> HoverAnimationElement<E> {
     }
 }
 
-impl<E: IntoElement + 'static> IntoElement for HoverAnimationElement<E> {
-    type Element = HoverAnimationElement<E>;
-
-    fn into_element(self) -> Self::Element {
-        self
-    }
-}
-
 struct HoverAnimationState {
     target_hovered: bool,
     progress: f32,
@@ -253,37 +245,12 @@ impl<E: IntoElement + 'static> Element for HoverAnimationElement<E> {
 }
 
 /// An extension trait for adding common animations to animatable components.
-pub trait CommonAnimationExt: AnimationExt {
-    /// Render this component as rotating over the given duration.
+pub trait CommonAnimationExt: Transformable + Sized {
+    /// Render this component as rotating, one full turn every `period` seconds.
     ///
-    /// NOTE: This method uses the location of the caller to generate an ID for this state.
-    ///       If this is not sufficient to identify your state (e.g. you're rendering a list item),
-    ///       you can provide a custom ElementID using the `use_keyed_rotate_animation` method.
-    #[track_caller]
-    fn with_rotate_animation(self, duration: u64) -> AnimationElement<Self>
-    where
-        Self: Transformable + Sized,
-    {
-        self.with_keyed_rotate_animation(
-            ElementId::CodeLocation(*std::panic::Location::caller()),
-            duration,
-        )
-    }
-
-    /// Render this component as rotating with the given element ID over the given duration.
-    fn with_keyed_rotate_animation(
-        self,
-        id: impl Into<ElementId>,
-        duration: u64,
-    ) -> AnimationElement<Self>
-    where
-        Self: Transformable + Sized,
-    {
-        self.with_animation(
-            id,
-            Animation::new(Duration::from_secs(duration)).repeat_synced(),
-            |component, delta| component.transform(Transformation::rotate(percentage(delta))),
-        )
+    /// The view isn't re-rendered to advance the rotation. All spinners share one phase.
+    fn with_rotate_animation(self, period: u64) -> Self {
+        self.animate_rotation(Duration::from_secs(period))
     }
 
     /// Animate this component between its default and hover transforms.
@@ -330,4 +297,4 @@ pub trait CommonAnimationExt: AnimationExt {
     }
 }
 
-impl<T: AnimationExt> CommonAnimationExt for T {}
+impl<T: Transformable> CommonAnimationExt for T {}

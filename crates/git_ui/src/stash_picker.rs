@@ -1,3 +1,4 @@
+use crate::git_timestamp::format_git_timestamp;
 use fuzzy::StringMatchCandidate;
 
 use git::stash::{GitStash, StashEntry};
@@ -8,15 +9,16 @@ use gpui::{
 };
 use picker::{Picker, PickerDelegate};
 use project::git_store::{Repository, RepositoryEvent};
+use settings::Settings;
 use std::sync::Arc;
-use time::{OffsetDateTime, UtcOffset};
+use time::OffsetDateTime;
 use time_format;
 use ui::{HighlightedLabel, KeyBinding, ListItem, ListItemSpacing, Tooltip, prelude::*};
 use util::ResultExt;
 use workspace::notifications::DetachAndPromptErr;
 use workspace::{ModalView, Workspace};
 
-use crate::commit_view::CommitView;
+use crate::commit_view::{CommitView, CommitViewOptions};
 use crate::stash_picker;
 
 actions!(
@@ -246,8 +248,6 @@ impl Render for StashList {
 struct StashEntryMatch {
     entry: StashEntry,
     positions: Vec<usize>,
-    formatted_timestamp: String,
-    formatted_absolute_timestamp: String,
 }
 
 pub struct StashListDelegate {
@@ -259,7 +259,6 @@ pub struct StashListDelegate {
     last_query: String,
     modifiers: Modifiers,
     focus_handle: FocusHandle,
-    timezone: UtcOffset,
     show_footer: bool,
 }
 
@@ -270,8 +269,6 @@ impl StashListDelegate {
         _window: &mut Window,
         cx: &mut Context<StashList>,
     ) -> Self {
-        let timezone = UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC);
-
         Self {
             matches: vec![],
             repo,
@@ -281,7 +278,6 @@ impl StashListDelegate {
             last_query: Default::default(),
             modifiers: Default::default(),
             focus_handle: cx.focus_handle(),
-            timezone,
             show_footer: false,
         }
     }
@@ -292,28 +288,6 @@ impl StashListDelegate {
 
     fn bounded_format_message(ix: usize, message: &String) -> String {
         bounded_stash_label(&Self::format_message(ix, message))
-    }
-
-    fn format_timestamp(timestamp: i64, timezone: UtcOffset) -> String {
-        let timestamp =
-            OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or(OffsetDateTime::now_utc());
-        time_format::format_localized_timestamp(
-            timestamp,
-            OffsetDateTime::now_utc(),
-            timezone,
-            time_format::TimestampFormat::Relative,
-        )
-    }
-
-    fn format_absolute_timestamp(timestamp: i64, timezone: UtcOffset) -> String {
-        let timestamp =
-            OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or(OffsetDateTime::now_utc());
-        time_format::format_localized_timestamp(
-            timestamp,
-            OffsetDateTime::now_utc(),
-            timezone,
-            time_format::TimestampFormat::EnhancedAbsolute,
-        )
     }
 
     fn clamp_selected_index(&self, ix: usize) -> usize {
@@ -356,8 +330,10 @@ impl StashListDelegate {
             stash_sha,
             repo.downgrade(),
             self.workspace.clone(),
-            Some(stash_index),
-            None,
+            CommitViewOptions {
+                stash: Some(stash_index),
+                ..Default::default()
+            },
             window,
             cx,
         );
@@ -434,24 +410,14 @@ impl PickerDelegate for StashListDelegate {
             return Task::ready(());
         };
 
-        let timezone = self.timezone;
-
         cx.spawn_in(window, async move |picker, cx| {
             let matches: Vec<StashEntryMatch> = if query.is_empty() {
                 all_stash_entries
                     .into_iter()
                     .take(MAX_STASH_PICKER_MATCHES)
-                    .map(|entry| {
-                        let formatted_timestamp = Self::format_timestamp(entry.timestamp, timezone);
-                        let formatted_absolute_timestamp =
-                            Self::format_absolute_timestamp(entry.timestamp, timezone);
-
-                        StashEntryMatch {
-                            entry,
-                            positions: Vec::new(),
-                            formatted_timestamp,
-                            formatted_absolute_timestamp,
-                        }
+                    .map(|entry| StashEntryMatch {
+                        entry,
+                        positions: Vec::new(),
                     })
                     .collect()
             } else {
@@ -479,15 +445,9 @@ impl PickerDelegate for StashListDelegate {
                 .into_iter()
                 .filter_map(|candidate| {
                     let entry = all_stash_entries.get(candidate.candidate_id).cloned()?;
-                    let formatted_timestamp = Self::format_timestamp(entry.timestamp, timezone);
-                    let formatted_absolute_timestamp =
-                        Self::format_absolute_timestamp(entry.timestamp, timezone);
-
                     Some(StashEntryMatch {
                         entry,
                         positions: candidate.positions,
-                        formatted_timestamp,
-                        formatted_absolute_timestamp,
                     })
                 })
                 .collect()
@@ -535,6 +495,8 @@ impl PickerDelegate for StashListDelegate {
         let Some(entry_match) = self.matches.get(ix) else {
             return None;
         };
+        let timestamp = OffsetDateTime::from_unix_timestamp(entry_match.entry.timestamp)
+            .unwrap_or_else(|_| OffsetDateTime::now_utc());
 
         let stash_message =
             Self::bounded_format_message(entry_match.entry.index, &entry_match.entry.message);
@@ -565,9 +527,16 @@ impl PickerDelegate for StashListDelegate {
                     .size(LabelSize::Small),
             )
             .child(
-                Label::new(entry_match.formatted_timestamp.clone())
-                    .color(Color::Muted)
-                    .size(LabelSize::Small),
+                Label::new(crate::git_timestamp::format_git_date(
+                    timestamp,
+                    project::project_settings::ProjectSettings::get_global(cx)
+                        .git
+                        .stash_picker
+                        .date_style,
+                    cx,
+                ))
+                .color(Color::Muted)
+                .size(LabelSize::Small),
             );
 
         let view_button = {
@@ -633,16 +602,17 @@ impl PickerDelegate for StashListDelegate {
                                         entry_match.entry.index,
                                         &entry_match.entry.message,
                                     );
-                                    let absolute_timestamp =
-                                        entry_match.formatted_absolute_timestamp.clone();
-
-                                    Tooltip::element(move |_, _| {
+                                    Tooltip::element(move |_, cx| {
                                         v_flex()
                                             .child(Label::new(stash_message.clone()))
                                             .child(
-                                                Label::new(absolute_timestamp.clone())
-                                                    .size(LabelSize::Small)
-                                                    .color(Color::Muted),
+                                                Label::new(format_git_timestamp(
+                                                    timestamp,
+                                                    time_format::TimestampFormat::EnhancedAbsolute,
+                                                    cx,
+                                                ))
+                                                .size(LabelSize::Small)
+                                                .color(Color::Muted),
                                             )
                                             .into_any_element()
                                     })

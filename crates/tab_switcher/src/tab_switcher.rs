@@ -484,9 +484,10 @@ impl TabSwitcherDelegate {
             fuzzy_nucleo::match_strings(
                 &candidates,
                 &query,
-                fuzzy_nucleo::Case::Smart,
-                fuzzy_nucleo::LengthPenalty::On,
-                MAX_ALL_PANE_FUZZY_MATCHES,
+                fuzzy_nucleo::StringMatchOptions {
+                    max_results: fuzzy_nucleo::MaxResults::limit::<MAX_ALL_PANE_FUZZY_MATCHES>(),
+                    ..Default::default()
+                },
             )
             .into_iter()
             .filter_map(|m| all_items.get(m.candidate_id).cloned())

@@ -1530,7 +1530,7 @@ impl LocalWorktree {
                                 repository_dir_abs_path: Some(
                                     new_repo.repository_dir_abs_path.clone(),
                                 ),
-                                common_dir_abs_path: Some(new_repo.common_dir_abs_path.clone()),
+                                common_dir_abs_path: Some(new_repo.common_dir_abs_path),
                             });
                             new_repos.next();
                         }
@@ -1554,7 +1554,7 @@ impl LocalWorktree {
                                 changes.push(UpdatedGitRepository {
                                     work_directory_id: new_entry_id,
                                     old_work_directory_abs_path: Some(
-                                        old_repo.work_directory_abs_path.clone(),
+                                        old_repo.work_directory_abs_path,
                                     ),
                                     new_work_directory_abs_path: Some(
                                         new_repo.work_directory_abs_path.clone(),
@@ -1563,7 +1563,7 @@ impl LocalWorktree {
                                     repository_dir_abs_path: Some(
                                         new_repo.repository_dir_abs_path.clone(),
                                     ),
-                                    common_dir_abs_path: Some(new_repo.common_dir_abs_path.clone()),
+                                    common_dir_abs_path: Some(new_repo.common_dir_abs_path),
                                 });
                             }
                             new_repos.next();
@@ -1572,9 +1572,7 @@ impl LocalWorktree {
                         Ordering::Greater => {
                             changes.push(UpdatedGitRepository {
                                 work_directory_id: old_entry_id,
-                                old_work_directory_abs_path: Some(
-                                    old_repo.work_directory_abs_path.clone(),
-                                ),
+                                old_work_directory_abs_path: Some(old_repo.work_directory_abs_path),
                                 new_work_directory_abs_path: None,
                                 dot_git_abs_path: None,
                                 repository_dir_abs_path: None,
@@ -1591,7 +1589,7 @@ impl LocalWorktree {
                         new_work_directory_abs_path: Some(repo.work_directory_abs_path.clone()),
                         dot_git_abs_path: Some(repo.dot_git_abs_path.clone()),
                         repository_dir_abs_path: Some(repo.repository_dir_abs_path.clone()),
-                        common_dir_abs_path: Some(repo.common_dir_abs_path.clone()),
+                        common_dir_abs_path: Some(repo.common_dir_abs_path),
                     });
                     new_repos.next();
                 }
@@ -1602,7 +1600,7 @@ impl LocalWorktree {
                         new_work_directory_abs_path: None,
                         dot_git_abs_path: Some(repo.dot_git_abs_path.clone()),
                         repository_dir_abs_path: Some(repo.repository_dir_abs_path.clone()),
-                        common_dir_abs_path: Some(repo.common_dir_abs_path.clone()),
+                        common_dir_abs_path: Some(repo.common_dir_abs_path),
                     });
                     old_repos.next();
                 }
@@ -3337,6 +3335,15 @@ impl BackgroundScannerState {
             return Some(removed_entry.id);
         }
 
+        let existing_entry = self.snapshot.entry_for_path(path);
+
+        // An excluded symlink can share this inode without representing a rename
+        if let Some(entry) = existing_entry
+            && entry.inode == inode
+        {
+            return Some(entry.id);
+        }
+
         // If an entry with the same inode was removed from the worktree during this scan,
         // then it *might* represent the same file or directory. But the OS might also have
         // re-used the inode for a completely different file or directory.
@@ -3348,7 +3355,7 @@ impl BackgroundScannerState {
             (removed_entry.mtime == Some(mtime) || *removed_entry.path == *path)
                 .then_some(removed_entry.id)
         } else {
-            Some(self.snapshot.entry_for_path(path)?.id)
+            Some(existing_entry?.id)
         }
     }
 
@@ -3530,10 +3537,10 @@ impl BackgroundScannerState {
                 }
             }
 
-            if let Err(ix) = removed_ids.binary_search(&entry.id) {
-                removed_ids.insert(ix, entry.id);
-            }
+            removed_ids.push(entry.id);
         }
+        removed_ids.sort_unstable();
+        removed_ids.dedup();
 
         self.snapshot
             .entries_by_id

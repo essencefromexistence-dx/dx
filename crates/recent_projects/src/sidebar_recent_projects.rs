@@ -1,6 +1,8 @@
 use std::{path::PathBuf, sync::Arc};
 
-use fuzzy_nucleo::{StringMatch, StringMatchCandidate, match_strings};
+use fuzzy_nucleo::{
+    MaxResults, StringMatch, StringMatchCandidate, StringMatchOptions, match_strings,
+};
 use gpui::{
     Action, AnyElement, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
     Subscription, Task, TaskExt, WeakEntity, Window,
@@ -222,7 +224,6 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
         cx: &mut Context<Picker<Self>>,
     ) -> Task<()> {
         let query = query.trim_start();
-        let case = fuzzy_nucleo::Case::smart_if_uppercase_in(query);
         let is_empty_query = query.is_empty();
 
         let current_workspace_id = self
@@ -268,9 +269,10 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
             match_strings(
                 &candidates,
                 query,
-                case,
-                fuzzy_nucleo::LengthPenalty::On,
-                MAX_SIDEBAR_RECENT_PROJECT_MATCHES,
+                StringMatchOptions {
+                    max_results: MaxResults::limit::<MAX_SIDEBAR_RECENT_PROJECT_MATCHES>(),
+                    ..Default::default()
+                },
             )
         };
 
@@ -369,18 +371,22 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
         let mut match_labels: Vec<_> = rendered_paths
             .iter()
             .map(|path| {
-                let (label, path_match) =
-                    highlights_for_path(path.as_ref(), &hit.positions, path_start_offset);
+                let (label, path_match) = highlights_for_path(
+                    path.as_ref(),
+                    workspace.effective_path_style(),
+                    &hit.positions,
+                    path_start_offset,
+                );
                 path_start_offset += path_match.text.len();
                 label
             })
             .collect();
         if paths_truncated {
-            match_labels.push(Some(HighlightedMatch {
+            match_labels.push(HighlightedMatch {
                 text: SIDEBAR_RECENT_PROJECT_TRUNCATED_PATH_LABEL.to_string(),
                 highlight_positions: Vec::new(),
                 color: Color::Default,
-            }));
+            });
         }
 
         let prefix = match &workspace.location {
@@ -392,7 +398,7 @@ impl PickerDelegate for SidebarRecentProjectsDelegate {
 
         let highlighted_match = HighlightedMatchWithPaths {
             prefix,
-            match_label: HighlightedMatch::join(match_labels.into_iter().flatten(), ", "),
+            match_label: HighlightedMatch::join(match_labels.into_iter(), ", "),
             paths: Vec::new(),
             active: false,
         };

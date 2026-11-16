@@ -1,15 +1,14 @@
-use anyhow::Context as _;
 use editor::Editor;
 use fuzzy_nucleo::StringMatchCandidate;
 
 use collections::{HashMap, HashSet};
 use git::repository::{Branch, delete_branch_flag};
-use git::{GitHostingProviderRegistry, parse_git_remote_url};
+use git::{GitHostingProviderRegistry, normalize_branch_name, parse_git_remote_url};
 use gpui::http_client::Url;
 use gpui::{
     Action, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Global,
     InteractiveElement, IntoElement, Modifiers, ModifiersChangedEvent, ParentElement, PromptLevel,
-    Render, SharedString, Styled, Subscription, Task, TaskExt, WeakEntity, Window, actions, rems,
+    Render, SharedString, Styled, Subscription, Task, WeakEntity, Window, actions, rems,
 };
 use picker::{Picker, PickerDelegate, PickerEditorPosition};
 use project::git_store::{Repository, RepositoryEvent};
@@ -23,7 +22,7 @@ use ui::{
     ListItemSpacing, ListSubHeader, PopoverMenu, PopoverMenuHandle, Severity, Tooltip, prelude::*,
 };
 use ui_input::ErasedEditor;
-use util::ResultExt;
+use util::{ResultExt, maybe};
 use workspace::notifications::DetachAndPromptErr;
 use workspace::{ModalView, Workspace};
 
@@ -220,6 +219,8 @@ pub struct BranchList {
     pub picker: Entity<Picker<BranchListDelegate>>,
     picker_focus_handle: FocusHandle,
     _subscriptions: Vec<Subscription>,
+    _load_default_branch: Option<Task<()>>,
+    _load_remote_provider_icons: Option<Task<()>>,
     embedded: bool,
 }
 
@@ -380,45 +381,46 @@ impl BranchList {
             ));
         }
 
-        // Fetch default branch asynchronously since it requires a git operation
-        cx.spawn_in(window, async move |this, cx| {
-            let default_branch = default_branch_request
-                .context("No active repository")?
+        let load_default_branch = default_branch_request.map(|default_branch_request| {
+            cx.spawn(async move |this, cx| {
+                let default_branch = default_branch_request
+                    .await
+                    .ok()
+                    .and_then(Result::ok)
+                    .flatten();
+                this.update(cx, |this, cx| {
+                    this.picker.update(cx, |picker, _| {
+                        picker.delegate.default_branch = default_branch;
+                    });
+                })
+                .log_err();
+            })
+        });
+
+        let load_remote_provider_icons = remote_urls_request.map(|remote_urls_request| {
+            cx.spawn(async move |this, cx| {
+                maybe!(async move {
+                    let remote_urls = remote_urls_request.await??;
+                    let remote_provider_icons =
+                        cx.update(|cx| remote_provider_icons(&remote_urls, cx));
+                    this.update(cx, |this, cx| {
+                        this.picker.update(cx, |picker, cx| {
+                            picker.delegate.remote_provider_icons = remote_provider_icons;
+                            cx.notify();
+                        });
+                    })
+                })
                 .await
-                .map(Result::ok)
-                .ok()
-                .flatten()
-                .flatten();
-
-            let _ = this.update_in(cx, |this, _window, cx| {
-                this.picker.update(cx, |picker, _cx| {
-                    picker.delegate.default_branch = default_branch;
-                });
-            });
-
-            anyhow::Ok(())
-        })
-        .detach_and_log_err(cx);
-
-        cx.spawn(async move |this, cx| {
-            let remote_urls = remote_urls_request
-                .context("No active repository")?
-                .await??;
-            let remote_provider_icons = cx.update(|cx| remote_provider_icons(&remote_urls, cx));
-            this.update(cx, |this, cx| {
-                this.picker.update(cx, |picker, cx| {
-                    picker.delegate.remote_provider_icons = remote_provider_icons;
-                    cx.notify();
-                });
-            })?;
-            anyhow::Ok(())
-        })
-        .detach_and_log_err(cx);
+                .log_err();
+            })
+        });
 
         Self {
             picker,
             picker_focus_handle,
             _subscriptions: subscriptions,
+            _load_default_branch: load_default_branch,
+            _load_remote_provider_icons: load_remote_provider_icons,
             embedded,
         }
     }
@@ -953,13 +955,6 @@ impl Render for DeleteBranchTooltip {
 
 fn branch_matches_ref(branch: &Branch, branch_ref: &SharedString) -> bool {
     branch.ref_name.as_ref() == branch_ref.as_ref() || branch.name() == branch_ref.as_ref()
-}
-
-// Git branch names can't contain whitespace, so we replace spaces with dashes,
-// but we need to first trim because a branch name can't start or end with a
-// dash.
-fn normalize_branch_name(query: &str) -> String {
-    query.trim().replace(' ', "-")
 }
 
 fn branch_remote_name(branch: &Branch) -> Option<&str> {
@@ -1578,10 +1573,10 @@ impl PickerDelegate for BranchListDelegate {
                 let mut matches: Vec<Entry> = fuzzy_nucleo::match_strings_async(
                     &candidates,
                     &query,
-                    fuzzy_nucleo::Case::Smart,
-                    fuzzy_nucleo::LengthPenalty::On,
-                    MAX_BRANCH_PICKER_MATCHES,
-                    &Default::default(),
+                    fuzzy_nucleo::StringMatchOptions {
+                        max_results: fuzzy_nucleo::MaxResults::limit::<MAX_BRANCH_PICKER_MATCHES>(),
+                        ..Default::default()
+                    },
                     cx.background_executor().clone(),
                 )
                 .await
@@ -1769,19 +1764,15 @@ impl PickerDelegate for BranchListDelegate {
                     let subject = commit.subject.clone();
                     let commit_time = OffsetDateTime::from_unix_timestamp(commit.commit_timestamp)
                         .unwrap_or_else(|_| OffsetDateTime::now_utc());
-                    let local_offset =
-                        time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
-                    let formatted_time = time_format::format_localized_timestamp(
+                    let formatted_time = crate::git_timestamp::format_git_date(
                         commit_time,
-                        OffsetDateTime::now_utc(),
-                        local_offset,
-                        time_format::TimestampFormat::Relative,
+                        ProjectSettings::get_global(cx).git.branch_picker.date_style,
+                        cx,
                     );
-                    let absolute_time = time_format::format_localized_timestamp(
+                    let absolute_time = crate::git_timestamp::format_git_timestamp(
                         commit_time,
-                        OffsetDateTime::now_utc(),
-                        local_offset,
                         time_format::TimestampFormat::EnhancedAbsolute,
+                        cx,
                     );
                     let author = commit.author_name.clone();
                     (
@@ -2487,6 +2478,8 @@ mod tests {
                         picker,
                         picker_focus_handle,
                         _subscriptions: vec![_subscription],
+                        _load_default_branch: None,
+                        _load_remote_provider_icons: None,
                         embedded: false,
                     }
                 })
@@ -3380,13 +3373,6 @@ mod tests {
             &format!("refs/heads/{NEW_BRANCH}"),
             "branch ref_name should not have duplicate refs/heads/ prefix"
         );
-    }
-
-    #[test]
-    fn test_normalize_branch_name() {
-        assert_eq!(normalize_branch_name(" branch-name "), "branch-name");
-        assert_eq!(normalize_branch_name("branch name"), "branch-name");
-        assert_eq!(normalize_branch_name("  branch  name  "), "branch--name");
     }
 
     #[gpui::test]

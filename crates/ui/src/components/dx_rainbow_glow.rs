@@ -267,14 +267,6 @@ impl Element for DxRainbowGlow {
     }
 }
 
-impl IntoElement for DxRainbowGlow {
-    type Element = Self;
-
-    fn into_element(self) -> Self::Element {
-        self
-    }
-}
-
 fn dx_rainbow_hsla(phase: f32, alpha: f32) -> Hsla {
     let phase = normalize_phase(phase);
     let scaled_phase = phase * DX_RAINBOW_STOP_LAST_INDEX as f32;

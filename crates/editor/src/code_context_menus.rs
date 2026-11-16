@@ -1602,7 +1602,8 @@ impl CompletionsMenu {
             .and_then(|q| q.chars().next())
             .and_then(|c| c.to_lowercase().next());
 
-        matches.sort_unstable_by_key(|string_match| {
+        // The key allocates, so build it once per match.
+        matches.sort_by_cached_key(|string_match| {
             let score = string_match.score;
             let sort_score = Reverse(OrderedFloat(score));
             let Some(completion) = completions.get(string_match.candidate_id) else {

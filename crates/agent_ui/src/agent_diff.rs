@@ -560,7 +560,7 @@ fn reject_edits_in_ranges(
             }
 
             ranges_by_buffer
-                .entry(buffer.clone())
+                .entry(buffer)
                 .or_insert_with(Vec::new)
                 .push(hunk.buffer_range.clone());
         }

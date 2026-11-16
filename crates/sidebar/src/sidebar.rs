@@ -3650,7 +3650,6 @@ impl Sidebar {
                             {
                                 let this = this.clone();
                                 let key = key.clone();
-                                let workspace = workspace.clone();
                                 move |window, cx| {
                                     this.update(cx, |sidebar, cx| {
                                         sidebar.set_group_expanded(&key, true, cx);
@@ -4007,13 +4006,12 @@ impl Sidebar {
                                 let activate_weak_menu = weak_menu.clone();
                                 let close_weak_menu = weak_menu.clone();
                                 let activate_workspace = workspace.clone();
-                                let close_workspace = workspace.clone();
 
                                 menu = menu.custom_entry(
                                     move |_window, _cx| {
                                         let close_multi_workspace = close_multi_workspace.clone();
                                         let close_weak_menu = close_weak_menu.clone();
-                                        let close_workspace = close_workspace.clone();
+                                        let close_workspace = workspace.clone();
                                         let row_group_name = SharedString::from(format!(
                                             "workspace-menu-row-{workspace_index}"
                                         ));
@@ -7328,9 +7326,9 @@ impl Sidebar {
         if let Some(thread_switcher) = &self.thread_switcher {
             thread_switcher.update(cx, |switcher, cx| {
                 if select_last {
-                    switcher.select_last(cx);
+                    switcher.select_previous(&SelectPrevious, window, cx);
                 } else {
-                    switcher.cycle_selection(cx);
+                    switcher.select_next(&SelectNext, window, cx);
                 }
             });
             return;
@@ -12063,9 +12061,9 @@ fn all_thread_infos_for_workspace(
         .conversation_views()
         .into_iter()
         .filter_map(|conversation_view| {
-            let has_pending_tool_call = conversation_view
+            let is_waiting_for_input = conversation_view
                 .read(cx)
-                .root_thread_has_pending_tool_call(cx);
+                .root_thread_is_waiting_for_input(cx);
             let conversation_thread_id = conversation_view.read(cx).parent_id();
             let thread_view = conversation_view.read(cx).root_thread_view()?;
             let thread_view_ref = thread_view.read(cx);
@@ -12082,7 +12080,7 @@ fn all_thread_infos_for_workspace(
             let session_id = thread.session_id().clone();
             let is_background = agent_panel.is_retained_thread(&conversation_thread_id);
 
-            let status = if has_pending_tool_call {
+            let status = if is_waiting_for_input {
                 AgentThreadStatus::WaitingForConfirmation
             } else if thread.had_error() {
                 AgentThreadStatus::Error
@@ -12309,7 +12307,7 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
                 .is_some_and(|conversation_view| {
                     conversation_view
                         .read(cx)
-                        .root_thread_has_pending_tool_call(cx)
+                        .root_thread_is_waiting_for_input(cx)
                 })
             {
                 write!(output, ", awaiting confirmation").ok();
@@ -12341,7 +12339,7 @@ fn dump_single_workspace(workspace: &Workspace, output: &mut String, cx: &gpui::
                     write!(output, " [{status}, {entry_count} entries").ok();
                     if conversation_view
                         .read(cx)
-                        .root_thread_has_pending_tool_call(cx)
+                        .root_thread_is_waiting_for_input(cx)
                     {
                         write!(output, ", awaiting confirmation").ok();
                     }
