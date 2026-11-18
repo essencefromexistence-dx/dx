@@ -5407,7 +5407,7 @@ dependencies = [
 [[package]]
 name = "dx-media"
 version = "1.0.0"
-source = "git+https://github.com/essence-dx/media?rev=caacb6134a455bea4e0eb6b58d522e96af230e4a#caacb6134a455bea4e0eb6b58d522e96af230e4a"
+source = "git+https://github.com/essencefromexistence-dx/media?rev=caacb6134a455bea4e0eb6b58d522e96af230e4a#caacb6134a455bea4e0eb6b58d522e96af230e4a"
 dependencies = [
  "anyhow",
  "async-trait",

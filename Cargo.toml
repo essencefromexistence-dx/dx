@@ -294,7 +294,7 @@ edition = "2024"
 #
 # Workspace member crates
 #
-# Pinned to the last revision of essence-dx/media whose manifest is self-contained.
+# Pinned to the last revision of essencefromexistence-dx/media whose manifest is self-contained.
 # Newer revisions (including HEAD 0c0deb89) declare `serializer = { path = "../serializer",
 # package = "dx-serializer" }` -- a SIBLING path dependency that cannot resolve inside a cargo
 # git checkout (it resolves to <checkouts>/media-<hash>/serializer, which does not exist), so
@@ -303,7 +303,7 @@ edition = "2024"
 # crates/media_panel/src/dx_media_bridge.rs exists at this revision: DxMedia::new,
 # search_query, SearchQuery::{new,count,page,mode,media_type}, SearchMode::Quality,
 # DownloadUrlKind, MediaAsset, MediaType, SearchResult.
-dx_media = { package = "dx-media", git = "https://github.com/essence-dx/media", rev = "caacb6134a455bea4e0eb6b58d522e96af230e4a", default-features = false }
+dx_media = { package = "dx-media", git = "https://github.com/essencefromexistence-dx/media", rev = "caacb6134a455bea4e0eb6b58d522e96af230e4a", default-features = false }
 acp_thread = { path = "crates/acp_thread" }
 acp_tools = { path = "crates/acp_tools" }
 action_log = { path = "crates/action_log" }
