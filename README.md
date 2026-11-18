@@ -1,32 +1,32 @@
 <div align="center">
 
-<img src="assets/icons/dx_web_tools/www-dark-transparent.svg" alt="Dx Code" width="120"/>
+<img src="assets/icons/dx_web_tools/www-dark-transparent.svg" alt="Dx" width="120"/>
 
 <br/>
 
-# 🚀 Dx Code — the DX code editor
+# Dx: Enhanced Development Experience
 
-**An AI-native code editor built on Zed, with DX web workspaces, agent panels and local-model providers.**
+**One company. One toolchain. Every surface of the development workflow.**
 
-[![Repo](https://img.shields.io/badge/github-essencefromexistence--dx%2Fdx-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/essencefromexistence-dx/dx)
+[![Organization](https://img.shields.io/badge/github-essencefromexistence--dx-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/essencefromexistence-dx)
+[![Repositories](https://img.shields.io/badge/repositories-32-5c4ee5?style=for-the-badge)](https://github.com/essencefromexistence-dx?tab=repositories)
+[![Editor binary](https://img.shields.io/badge/editor-dx--code-0A66C2?style=for-the-badge)](crates/zed/Cargo.toml)
 [![Rust](https://img.shields.io/badge/rust-1.98.1-DEA584?style=for-the-badge&logo=rust&logoColor=white)](rust-toolchain.toml)
-[![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue?style=for-the-badge)](LICENSE-GPL)
-[![Upstream](https://img.shields.io/badge/upstream-zed%201.30.0-404040?style=for-the-badge)](https://github.com/zed-industries/zed)
 
 <br/>
 
 <table>
   <tr>
-    <td align="center"><a href="#-what-it-is">💠 What it is</a></td>
-    <td align="center"><a href="#-what-is-inside">🧩 Inside</a></td>
-    <td align="center"><a href="#-web-workspaces">🌐 Web workspaces</a></td>
-    <td align="center"><a href="#-ai-agents-and-models">🤖 AI, agents &amp; models</a></td>
+    <td align="center"><a href="#-the-dx-toolchain">🧰 The toolchain</a></td>
+    <td align="center"><a href="#-dx-code">💻 Dx Code</a></td>
+    <td align="center"><a href="#-all-dx-tools">📦 All DX tools</a></td>
+    <td align="center"><a href="#-how-the-tools-fit-together">🔗 How they fit</a></td>
   </tr>
   <tr>
     <td align="center"><a href="#-quick-start">⚡ Quick start</a></td>
-    <td align="center"><a href="#-repository-map">🗺️ Repository map</a></td>
-    <td align="center"><a href="#-upstream-relationship">🔁 Upstream</a></td>
-    <td align="center"><a href="#-documentation">📖 Docs</a></td>
+    <td align="center"><a href="#-repository-map">🗺️ This repository</a></td>
+    <td align="center"><a href="#-documentation">📖 Documentation</a></td>
+    <td align="center"><a href="#-license-and-lineage">⚖️ License &amp; lineage</a></td>
   </tr>
 </table>
 
@@ -34,129 +34,174 @@
 
 <br/>
 
-<a id="what-it-is"></a>
+<a id="the-dx-toolchain"></a>
 
 <div align="center">
 
-## 💠 What it is
+## 🧰 The Dx toolchain
 
 </div>
 
-Dx Code is a fork of the [Zed](https://github.com/zed-industries/zed) editor. It keeps
-Zed's GPUI rendering, workspace model and editor workflows, and adds the DX surface:
-an AI screen, a web-preview pane that serves the bundled DX web projects, DX panels
-(media, search, check, skills, plugins, forge) and first-class local model providers.
+Dx is a family of developer tools. This repository is the public face of that
+family and ships **Dx Code**, the company's AI-native code editor. The other
+tools live in their own repositories under the
+[essencefromexistence-dx](https://github.com/essencefromexistence-dx)
+organization, and the `dx` CLI is the entry point that installs, updates and
+routes to them.
 
-The shipped binary is **`dx-code`** (`crates/zed/Cargo.toml:58`). Configuration and
-debug artefacts live under **`.dx/code`** rather than Zed's paths
-(`crates/paths/src/paths.rs:533`).
+| Layer | What belongs to it |
+| --- | --- |
+| Entry point | `dx` CLI — installs and launches the toolchain from one registry |
+| Editor | `dx-code` — Dx Code, this repository |
+| Terminal | `dx-tui` — terminal AI coding agent |
+| Developer tools | check, DCP, driven, forge, grimoire, serializer, style, token, tree, script, i18n, icon, www |
+| Intelligence | codebase, daemon, dx-typesafe, harness, forkness, hackin, bot / flow |
+| Media & communication | media, metasearch, video-player, browser, hello, extensions |
+| Platform | os, website |
+
+> Each tool is independently versioned and published. Binary names and install
+> paths are declared in `TOOL_REGISTRY` in `cli/src/update_registry.rs` in the
+> hub; the tables below use that registry plus the repository's own description
+> as the source of truth.
+
+<br/>
+
+<a id="dx-code"></a>
+
+<div align="center">
+
+## 💻 Dx Code
+
+</div>
+
+**Dx Code** is the flagship editor: an AI-native development surface with a
+GPUI-rendered workspace, agent panels, a web-preview pane that serves the
+bundled Dx web projects, DX-specific panels (media, search, check, skills,
+plugins, forge) and local model providers.
 
 | Fact | Value | Source |
 | --- | --- | --- |
 | Binary | `dx-code` | `crates/zed/Cargo.toml:58` |
-| Base version | Zed `1.30.0` | `crates/zed/Cargo.toml:5` |
 | Toolchain | Rust `1.98.1` | `rust-toolchain.toml` |
 | Workspace | 263 top-level crates | `crates/` |
 | Authored web projects | 14 under `web/` | `web/` |
 | Published web bundles | 15 under `assets/web/` | `assets/web/` |
-| License | GPL-3.0-or-later (Zed lineage) | `LICENSE-GPL`, `LICENSE-APACHE` |
+| Local config | `.dx/code` | `crates/paths/src/paths.rs:533` |
 
-> These are repository facts, not release claims. No build, runtime or performance
-> result is asserted here — see [Documentation](#-documentation) for how to check
-> the tree yourself.
+<div align="center">
+
+<img src="assets/icons/dx_web_tools/design-dark-transparent.svg" width="34" alt="Design"/>
+<img src="assets/icons/dx_web_tools/3d-dark-transparent.svg" width="34" alt="3D"/>
+<img src="assets/icons/dx_web_tools/video-dark-transparent.svg" width="34" alt="Video"/>
+<img src="assets/icons/dx_web_tools/music-dark-transparent.svg" width="34" alt="Music"/>
+<img src="assets/icons/dx_web_tools/presentations-dark-transparent.svg" width="34" alt="Presentations"/>
+<img src="assets/icons/dx_web_tools/spreadsheets-dark-transparent.svg" width="34" alt="Spreadsheets"/>
+<img src="assets/icons/dx_web_tools/graphics-dark-transparent.svg" width="34" alt="Graphics"/>
+<img src="assets/icons/dx_web_tools/whiteboard-dark-transparent.svg" width="34" alt="Whiteboard"/>
+<img src="assets/icons/dx_web_tools/shader-dark-transparent.svg" width="34" alt="Shader"/>
+<img src="assets/icons/dx_web_tools/metasearch-dark-transparent.svg" width="34" alt="Metasearch"/>
+<img src="assets/icons/dx_web_tools/router-dark-transparent.svg" width="34" alt="Router"/>
+<img src="assets/icons/dx_web_tools/cms-dark-transparent.svg" width="34" alt="Cms"/>
+
+</div>
+
+The AI screen's launcher opens the bundled web workspaces in the preview pane.
+Authored sources live in `web/`; the static bundles that the editor serves live
+in `assets/web/`.
+
+| `web/` source | `assets/web/` bundle | `web/` source | `assets/web/` bundle |
+| --- | --- | --- | --- |
+| `3D` | `3d` | `Presentations` | `Presentations` |
+| `Cms` | `cms` | `Router` | `router` |
+| `Design` | `Design` | `Shader` | `shader` |
+| `Graph` | `graph` | `Spreadsheets` | `Spreadsheets` |
+| `Graphics` | `Graphics` | `Train` | `Train` |
+| `Media` | `media` | `Video` | `Video` |
+| `Metasearch` | `metasearch` | `Whiteboard` | `whiteboard` |
 
 <br/>
 
-<a id="what-is-inside"></a>
+<a id="all-dx-tools"></a>
 
 <div align="center">
 
-## 🧩 What is inside
+## 📦 All DX tools
 
 </div>
 
-<table>
-  <tr><th align="left">Area</th><th align="left">What the tree contains</th><th align="left">Where</th></tr>
-  <tr><td align="left" nowrap>🧑‍💻 <b>Editor core</b></td><td align="left">GPUI, workspace, editor, project panel, terminal, settings</td><td align="left"><code>crates/gpui*</code>, <code>crates/editor</code>, <code>crates/workspace</code></td></tr>
-  <tr><td align="left" nowrap>🤖 <b>AI screen &amp; agents</b></td><td align="left">Agent profiles, ACP agent options, provider picker, chat surface</td><td align="left"><code>crates/agent*</code>, <code>crates/acp_thread</code></td></tr>
-  <tr><td align="left" nowrap>🌐 <b>Web preview</b></td><td align="left">Hosts the bundled static web projects behind DX-local URLs</td><td align="left"><code>crates/web_preview*</code>, <code>assets/web/</code></td></tr>
-  <tr><td align="left" nowrap>📦 <b>DX panels</b></td><td align="left">Media, metasearch, check, skills, plugins, forge surfaces</td><td align="left"><code>crates/media_panel</code>, <code>crates/metasearch*</code></td></tr>
-  <tr><td align="left" nowrap>🧠 <b>Local providers</b></td><td align="left">llama.cpp, Mistral and Ollama model providers</td><td align="left"><code>crates/llama_cpp</code>, <code>crates/mistral</code>, <code>crates/ollama</code></td></tr>
-  <tr><td align="left" nowrap>🎨 <b>DX icons</b></td><td align="left">Icon set used by the web-tool launchers and panels</td><td align="left"><code>assets/icons/dx_web_tools/</code></td></tr>
-</table>
+### Entry point and developer surfaces
+
+| Tool | Repository | Binary / route | What it does |
+| --- | --- | --- | --- |
+| **Dx CLI** | [`cli`](https://github.com/essencefromexistence-dx/cli) | `dx` / `dx-cli` | Mission control for the terminal: installs and updates the registered tools, drives media and file browsing, and carries the Codex-grade TUI experiments. It is the hub entry point for the whole toolchain. |
+| **Dx Code** | [`dx`](https://github.com/essencefromexistence-dx/dx) | `dx-code` | This repository — the AI-native editor with the bundled web workspaces, agent screens, DX panels and local model providers. |
+| **Dx TUI** | [`tui`](https://github.com/essencefromexistence-dx/tui) | `dx-tui` (hidden `dx tui`) | A full-screen terminal AI coding agent. Reads codebases, edits files, runs commands and manages tasks without leaving the shell. |
+| **Codebase** | [`codebase`](https://github.com/essencefromexistence-dx/codebase) | `dx-codebase` | Local code intelligence for developers and agents. Connects code, docs and infrastructure into a persistent graph with CBM Lens, MCP tools, agent integrations and change-aware test selection. |
+| **Website** | [`website`](https://github.com/essencefromexistence-dx/website) | `dx site` (hidden) | The official Dx website and component registry: UI components meant to be customized and extended inside Dx projects. |
+
+### Engineering and build tools
+
+| Tool | Repository | Binary / route | What it does |
+| --- | --- | --- | --- |
+| **Check** | [`check`](https://github.com/essencefromexistence-dx/check) | `dx-check` / `dx check` | Project-health engine. Lint, format, structure, web performance, E2E readiness and launch scoring are collected into one machine-readable receipt. |
+| **DCP** | [`dcp`](https://github.com/essencefromexistence-dx/dcp) | `dx-dcp` / `dx dcp` | Development Context Protocol — a binary-first replacement for MCP as the context transport between tools and agents. |
+| **Driven** | [`driven`](https://github.com/essencefromexistence-dx/driven) | `dx-driven` / `dx driven` | Professional AI-assisted development orchestrator with a binary-first architecture for repeatable agent workflows. |
+| **Forge** | [`forge`](https://github.com/essencefromexistence-dx/forge) | `dx-forge` / `dx forge`, `dx add` | Fast version control for massive media assets — tracks large binary collections that ordinary source control handles badly. |
+| **Grimoire** | [`grimoire`](https://github.com/essencefromexistence-dx/grimoire) | `dx-grimoire` / `dx grimoire` | Reverse engineering from the terminal or an agent. One CLI and MCP server for binaries, applications and runtime behavior. |
+| **Serializer** | [`serializer`](https://github.com/essencefromexistence-dx/serializer) | `dx-serializer` / `dx serializer` | Token-efficient serialization for LLM context windows, with high-performance binary encoding. |
+| **Style** | [`style`](https://github.com/essencefromexistence-dx/style) | `dx-style` / `dx style` | Binary-first CSS engine using zero-copy parsing and DX Serializer output. |
+| **Token** | [`token`](https://github.com/essencefromexistence-dx/token) | `dx-token` / `dx token` | Counts tokens across files and folders with multiple tokenizers and a rainbow TUI output. |
+| **Tree** | [`tree`](https://github.com/essencefromexistence-dx/tree) | `dx-tree` / `dx tree` | Fast cross-platform directory-tree visualizer for inspecting large project trees. |
+| **Script** | [`script`](https://github.com/essencefromexistence-dx/script) | `dx-script` / `dx script` | Command runner for the DX ecosystem — the shared way to invoke DX workflows consistently. |
+| **i18n** | [`i18n`](https://github.com/essencefromexistence-dx/i18n) | `dx-i18n` / `dx i18n` | Multi-provider translation engine with Google, DeepL and other translation APIs, plus TTS/STT workflows. |
+| **Icon** | [`icon`](https://github.com/essencefromexistence-dx/icon) | `dx-icon` / `dx icon` | Icon search backed by FST indexes and semantic search — the catalog behind DX icon panels. |
+| **www** | [`www`](https://github.com/essencefromexistence-dx/www) | `dx-www`; `dx www`, `dx new`, `dx dev`, `dx run`, `dx graph`, `dx deploy` | Rust-owned web framework and server runtime for React and Next-familiar `tsx` apps. |
+| **Skilltune** | registry entry only | `dx-skilltune` / `dx skilltune` | Declared in `TOOL_REGISTRY`; no repository is currently listed under the organization. |
+
+### Intelligence, agents and research
+
+| Tool | Repository | Binary / route | What it does |
+| --- | --- | --- | --- |
+| **Daemon** | [`daemon`](https://github.com/essencefromexistence-dx/daemon) | `dx-daemon` (staged) | Local-first, cross-platform DX Memory daemon with Screenpipe capture — keeps context available to other DX tools without a hosted account. |
+| **dx-typesafe / decisions** | [`dx-typesafe`](https://github.com/essencefromexistence-dx/dx-typesafe) | `dx-decisions` / `dx decisions` | A local zero-text-generation decision engine mirroring the Jev (TypeSafe `/v1/systemone`) contract — Noul / Choice / Score — built in C++20 with ONNX Runtime, no network and no token generation. |
+| **Harness** | [`harness`](https://github.com/essencefromexistence-dx/harness) | CLI tool | The DX agent harness: the grok-build engine made headless, with a CLI that tests it. |
+| **Forkness** | [`forkness`](https://github.com/essencefromexistence-dx/forkness) | `dx-forkness` / `dx forkness` | A Rust port of Google's `harness2` recursive agent-harnessing research framework, with the upstream method retained as the specification. |
+| **Hackin** | [`hackin`](https://github.com/essencefromexistence-dx/hackin) | `dx-hackin` (local) | A Rust port of the Strix autonomous AI penetration-testing engine. Runs locally. |
+| **Friday (bot)** | [`bot`](https://github.com/essencefromexistence-dx/bot), [`flow`](https://github.com/essencefromexistence-dx/flow) | `dx-bot` (fails closed) | Local-first AI workspace: assistant chat, research, agent planning, canvas, voice dictation and grammar checking across desktop, web and mobile. Private by default, no accounts. |
+| **Extensions** | [`extensions`](https://github.com/essencefromexistence-dx/extensions) | none | Extensions, plugins and integrations for the DX ecosystem, including the Cline-derived editor extension line. |
+
+### Media, web and communication
+
+| Tool | Repository | Binary / route | What it does |
+| --- | --- | --- | --- |
+| **Media** | [`media`](https://github.com/essencefromexistence-dx/media) | `dx-media` / `dx media` | Universal digital asset acquisition: one command fetches any media from anywhere into a consistent local representation. |
+| **Metasearch** | [`metasearch`](https://github.com/essencefromexistence-dx/metasearch) | `dx-metasearch` / `dx metasearch` | Fast, privacy-respecting metasearch engine in Rust, inspired by SearXNG. |
+| **Video player** | [`video-player`](https://github.com/essencefromexistence-dx/video-player) | `dx-video-player` (staged) | Reliable local media playback, including terminal-rendered video. |
+| **Browser** | [`browser`](https://github.com/essencefromexistence-dx/browser) | app | Essence Browser — a Zen Browser desktop line migrating from Gecko to Chromium through an adapter layer and dual-boot shell. Work in progress. |
+| **Hello** | [`hello`](https://github.com/essencefromexistence-dx/hello) | app (not in registry) | User-hosted calls: sealed rooms, a zero-decode relay, a downlink tree, host migration and Hello Ports so a call survives the internet. |
+| **OS** | [`os`](https://github.com/essencefromexistence-dx/os) | `dx-os` / `dx os` | System monitor with DX branding for Linux, macOS and Windows. |
 
 <br/>
 
-<a id="web-workspaces"></a>
+<a id="how-the-tools-fit-together"></a>
 
 <div align="center">
 
-## 🌐 Web workspaces
+## 🔗 How the tools fit together
 
 </div>
 
-The AI screen's bottom launcher opens the bundled projects in the web-preview pane.
-Each project has an authored source tree under `web/` and a published static bundle
-under `assets/web/` (plus `music`, which ships as a bundle).
+| Mechanism | Where it is defined | What it guarantees |
+| --- | --- | --- |
+| Installer contract | `TOOL_REGISTRY` in `cli/src/update_registry.rs` | Maps a short tool name to its repository, binary name and install path |
+| Install layout | Windows `%LOCALAPPDATA%\dx\bin` | One `dx-<tool>` executable per registered tool |
+| Release assets | `dx-<tool>-<rust-target-triple>[.exe]` | The same artifact naming across the published targets |
+| Routing | `dx` manifest at the hub root | Maps short names to local folders for development work |
+| Achievements | `docs/<tool>.md` in the hub | One verified page per folder, not a claim about the whole company |
 
-<div align="center">
-
-<img src="assets/icons/dx_web_tools/3d-dark-transparent.svg" width="36" alt="3D"/>
-<img src="assets/icons/dx_web_tools/cms-dark-transparent.svg" width="36" alt="Cms"/>
-<img src="assets/icons/dx_web_tools/design-dark-transparent.svg" width="36" alt="Design"/>
-<img src="assets/icons/dx_web_tools/graph-dark-transparent.svg" width="36" alt="Graph"/>
-<img src="assets/icons/dx_web_tools/graphics-dark-transparent.svg" width="36" alt="Graphics"/>
-<img src="assets/icons/dx_web_tools/media-dark-transparent.svg" width="36" alt="Media"/>
-<img src="assets/icons/dx_web_tools/metasearch-dark-transparent.svg" width="36" alt="Metasearch"/>
-<img src="assets/icons/dx_web_tools/presentations-dark-transparent.svg" width="36" alt="Presentations"/>
-<img src="assets/icons/dx_web_tools/router-dark-transparent.svg" width="36" alt="Router"/>
-<img src="assets/icons/dx_web_tools/shader-dark-transparent.svg" width="36" alt="Shader"/>
-<img src="assets/icons/dx_web_tools/spreadsheets-dark-transparent.svg" width="36" alt="Spreadsheets"/>
-<img src="assets/icons/dx_web_tools/train-dark-transparent.svg" width="36" alt="Train"/>
-<img src="assets/icons/dx_web_tools/video-dark-transparent.svg" width="36" alt="Video"/>
-<img src="assets/icons/dx_web_tools/whiteboard-dark-transparent.svg" width="36" alt="Whiteboard"/>
-
-</div>
-
-<table>
-  <tr><th align="left">Source (<code>web/</code>)</th><th align="left">Published bundle (<code>assets/web/</code>)</th></tr>
-  <tr><td align="left"><code>3D</code></td><td align="left"><code>3d</code></td></tr>
-  <tr><td align="left"><code>Cms</code></td><td align="left"><code>cms</code></td></tr>
-  <tr><td align="left"><code>Design</code></td><td align="left"><code>Design</code></td></tr>
-  <tr><td align="left"><code>Graph</code></td><td align="left"><code>graph</code></td></tr>
-  <tr><td align="left"><code>Graphics</code></td><td align="left"><code>Graphics</code></td></tr>
-  <tr><td align="left"><code>Media</code></td><td align="left"><code>media</code></td></tr>
-  <tr><td align="left"><code>Metasearch</code></td><td align="left"><code>metasearch</code></td></tr>
-  <tr><td align="left"><code>Presentations</code></td><td align="left"><code>Presentations</code></td></tr>
-  <tr><td align="left"><code>Router</code></td><td align="left"><code>router</code></td></tr>
-  <tr><td align="left"><code>Shader</code></td><td align="left"><code>shader</code></td></tr>
-  <tr><td align="left"><code>Spreadsheets</code></td><td align="left"><code>Spreadsheets</code></td></tr>
-  <tr><td align="left"><code>Train</code></td><td align="left"><code>Train</code></td></tr>
-  <tr><td align="left"><code>Video</code></td><td align="left"><code>Video</code></td></tr>
-  <tr><td align="left"><code>Whiteboard</code></td><td align="left"><code>whiteboard</code></td></tr>
-</table>
-
-<br/>
-
-<a id="ai-agents-and-models"></a>
-
-<div align="center">
-
-## 🤖 AI, agents and models
-
-</div>
-
-| Capability | Notes |
-| --- | --- |
-| Agent profiles | Agent / Search / Media / Ask surfaces in the AI screen (`AI_PROFILES.md`) |
-| ACP agents | Claude, Codex, Cursor, GitHub Copilot and OpenCode options in the agent dropdown |
-| Local model providers | `llama_cpp`, `mistral`, `ollama` crates |
-| OpenCode Go model | Endpoint, headers and env are documented in [`OPENCODE.md`](OPENCODE.md) |
-| Check → AI | Check-panel diagnostics can be handed to the AI panel |
-| Media → Metasearch | Media panel is wired to the metasearch workflow |
-
-Provider endpoints and credentials stay caller-owned. See [`OPENCODE.md`](OPENCODE.md)
-for the exact request shape used by the OpenCode Go model.
+A tool can be staged (present in the registry but not yet published), hidden
+(routed only through `dx`), or app-only (no registered binary). The tables above
+keep those distinctions instead of treating every repository as a shipped CLI.
 
 <br/>
 
@@ -164,17 +209,17 @@ for the exact request shape used by the OpenCode Go model.
 
 <div align="center">
 
-## ⚡ Quick start
+## ⚡ Quick start — Dx Code
 
 </div>
 
-The tree pins Rust **1.98.1** in `rust-toolchain.toml`. From the repository root:
+The Dx Code tree pins Rust **1.98.1** in `rust-toolchain.toml`.
 
 ```powershell
 # Show the available build recipes
 just --list
 
-# Recommended local loop: build the dx-code binary, launch it, copy it to G:\Dx\bin
+# Build the editor, launch it, and copy the binary to G:\Dx\bin
 just run
 
 # Build without launching
@@ -184,13 +229,14 @@ just build
 cargo build --locked -p zed --bin dx-code
 ```
 
-> The `just` recipes guard the build with a free-space check (18 GB for a fresh
-> build, 4 GB incremental) and pin Cargo output to `G:\Dx\code\target`. On the
-> Windows GNU toolchain, `WebView2Loader.dll` must sit next to `dx-code`; the
-> recipes copy it from the cached `webview2-com-sys` build output when possible.
+> The `just` recipes check free space before Cargo starts (18 GB for a fresh
+> build, 4 GB incremental) and pin output to `G:\Dx\code\target`. On the Windows
+> GNU toolchain, `WebView2Loader.dll` must sit next to `dx-code`; the recipes
+> copy it from the cached `webview2-com-sys` output where possible. Dx Code
+> writes its own state under `.dx/code`.
 
-Built binaries are placed in `G:\Dx\bin\` by `just run`. The editor writes its
-DX-specific state under `.dx/code`.
+For the rest of the toolchain, install or update through the `dx` CLI — it reads
+the same registry that produced the tables above.
 
 <br/>
 
@@ -198,47 +244,22 @@ DX-specific state under `.dx/code`.
 
 <div align="center">
 
-## 🗺️ Repository map
+## 🗺️ This repository
 
 </div>
 
 | Path | Purpose |
 | --- | --- |
 | `crates/` | Rust workspace — 263 top-level crates (editor, GPUI, agents, providers) |
-| `web/` | 14 authored web projects (Next.js and DX www framework projects) |
-| `assets/` | Published static web bundles, icons and licenses |
-| `assets/icons/dx_web_tools/` | DX web-tool icon set used by the AI-screen launcher |
-| `docs/src/` | Upstream Zed documentation carried with the fork |
-| `merge-tools/` | Upstream-sync evidence and tooling |
+| `web/` | 14 authored web projects hosted by the editor's preview pane |
+| `assets/` | Published static bundles, icons and license notices |
+| `assets/icons/dx_web_tools/` | Icon set used by the AI-screen launcher |
+| `docs/src/` | Editor documentation carried with the workspace |
+| `merge-tools/` | Upstream-sync tooling and evidence |
 | `script/`, `tooling/`, `ci/`, `nix/`, `.github/` | Build, verification and CI helpers |
-| `justfile`, `.cargo/` | Local build recipes and Cargo target/linker config |
+| `justfile`, `.cargo/` | Local build recipes and Cargo target/linker configuration |
 | `Cargo.toml`, `Cargo.lock` | Workspace manifest and pinned lockfile |
-| `CHANGELOG.md`, `TODO.md` | Merge/sync history and open work |
-
-<br/>
-
-<a id="upstream-relationship"></a>
-
-<div align="center">
-
-## 🔁 Upstream relationship
-
-</div>
-
-This repository tracks [`zed-industries/zed`](https://github.com/zed-industries/zed)
-through the `upstream` remote. The last integrated upstream tip is recorded in the
-merge commits; `CHANGELOG.md` and `TODO.md` keep the per-sync conflict resolutions
-and the open items.
-
-| Remote | URL | Role |
-| --- | --- | --- |
-| `origin` | `https://github.com/essencefromexistence-dx/dx.git` | this fork |
-| `upstream` | `https://github.com/zed-industries/zed.git` | Zed source |
-
-When working on upstream syncs, keep the fork's DX surface intact and resolve
-conflicts in the repo that owns the file. Historical merge notes such as
-`MERGE.md` and `MERGE-CONFLICTS-20260924.md` document earlier syncs — they are
-records, not current status.
+| `CHANGELOG.md`, `TODO.md` | Sync history and open work |
 
 <br/>
 
@@ -255,23 +276,29 @@ records, not current status.
   <tr><td nowrap><b><a href="OPENCODE.md">OPENCODE.md</a></b></td><td>OpenCode Go model endpoint, headers and environment</td></tr>
   <tr><td nowrap><b><a href="AI_PROFILES.md">AI_PROFILES.md</a></b></td><td>AI screen profile notes</td></tr>
   <tr><td nowrap><b><a href="DX_DESKTOP.md">DX_DESKTOP.md</a></b></td><td>Historical desktop/web-preview analysis</td></tr>
-  <tr><td nowrap><b><a href="docs/src/ai/sandboxing.md">Sandboxing</a></b></td><td>Upstream Zed sandboxing notes</td></tr>
-  <tr><td nowrap><b><a href="docs/src/development/ui-checklist.md">UI checklist</a></b></td><td>Upstream UI review checklist</td></tr>
-  <tr><td nowrap><b><a href="docs/src/extensions/publishing/overview.md">Extension publishing</a></b></td><td>Upstream extension publishing overview</td></tr>
-  <tr><td nowrap><b><a href="CHANGELOG.md">CHANGELOG.md</a></b></td><td>Sync and change history</td></tr>
-  <tr><td nowrap><b><a href="TODO.md">TODO.md</a></b></td><td>Open work, with evidence and done-when</td></tr>
-  <tr><td nowrap><b><a href="justfile">justfile</a></b></td><td>Authoritative local build/launch recipes</td></tr>
+  <tr><td nowrap><b><a href="docs/src/ai/sandboxing.md">Sandboxing</a></b></td><td>Editor sandboxing notes carried with the workspace</td></tr>
+  <tr><td nowrap><b><a href="docs/src/development/ui-checklist.md">UI checklist</a></b></td><td>UI review checklist</td></tr>
+  <tr><td nowrap><b><a href="CHANGELOG.md">CHANGELOG.md</a></b></td><td>Sync and change history for this repository</td></tr>
+  <tr><td nowrap><b><a href="TODO.md">TODO.md</a></b></td><td>Open work with evidence and done-when</td></tr>
+  <tr><td nowrap><b><a href="justfile">justfile</a></b></td><td>Authoritative local build and launch recipes</td></tr>
 </table>
 
 <br/>
 
+<a id="license-and-lineage"></a>
+
 <div align="center">
 
-## 📄 License
+## ⚖️ License and lineage
 
-Zed-lineage code is licensed **GPL-3.0-or-later** (`LICENSE-GPL`); additional
-license notices are in `LICENSE-APACHE` and `legal/`.
+</div>
 
-**[⬆ Back to top](#-dx-code--the-dx-code-editor)**
+The editor sources in this repository derive from the Zed workspace and are
+licensed **GPL-3.0-or-later**; see [`LICENSE-GPL`](LICENSE-GPL),
+[`LICENSE-APACHE`](LICENSE-APACHE) and `legal/`. The upstream relationship is
+tracked through the `upstream` remote and recorded in `CHANGELOG.md` and
+`TODO.md`. Other DX tools carry their own licensing in their own repositories.
+
+**[⬆ Back to top](#dx-enhanced-development-experience)**
 
 </div>
