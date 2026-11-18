@@ -130,6 +130,11 @@ float4 distance_from_clip_rect_transformed(float2 unit_vertex, Bounds bounds, Bo
     return distance_from_clip_rect_impl(transformed, clip_bounds);
 }
 
+float4 distance_from_clip_rect(float2 unit_vertex, Bounds bounds, Bounds clip_bounds) {
+    float2 position = unit_vertex * bounds.size + bounds.origin;
+    return distance_from_clip_rect_impl(position, clip_bounds);
+}
+
 struct ClippedVertex {
     float2 position;
     // The corner as a fraction of the original bounds.
