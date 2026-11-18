@@ -4,7 +4,7 @@
 
 | Aspect | `G:\Dx\desktop` | `G:\Dx\hexxed\desktop` |
 |--------|---------------|----------------------|
-| Remote | `dx` → `essence-dx/checkpoint-desktop.git`<br>`upstream` → `zed-industries/zed.git` | `origin` → `essence-dx/code.git` |
+| Remote | `dx` → `essence-dx/checkpoint-desktop.git`<br>`upstream` → `zed-industries/zed.git` | `origin` → `essence-dx/code.git` (renamed to `essence-dx/dx.git` on 2026-11-19; GitHub redirects the old URL) |
 | Git history | Independent (no shared ancestor with hexxed) | Independent (no shared ancestor with desktop) |
 | Local branches | `main` (3 commits), `zed` (~25 commits), `codex/pre-unrelated-merge-*` (2 commits) | `main` (31 commits) |
 | Remote branches | `dx/main`, `upstream/*` (1600+) | `origin/main`, `origin/fix-ai-providers-*`, `origin/summary-*` |

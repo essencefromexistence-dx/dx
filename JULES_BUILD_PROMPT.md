@@ -1,8 +1,8 @@
 # Jules build prompt - dx-code, Linux + Windows (+ why not macOS)
 
-> Feed this to Jules verbatim. The repo is `essence-dx/code`, branch `forge`.
+> Feed this to Jules verbatim. The repo is `essence-dx/dx`, branch `main`.
 > ```powershell
-> jules new --repo essence-dx/code "<paste the TASK text below>"
+> jules new --repo essence-dx/dx "<paste the TASK text below>"
 > ```
 
 ---
@@ -10,7 +10,7 @@
 ## TASK FOR JULES
 
 Build the `dx-code` release binaries for Linux and Windows from the
-`essence-dx/code` repository (branch `forge`, HEAD `10964fab8a`), upload each
+`essence-dx/dx` repository (branch `main`, HEAD `5de1bc6d75`), upload each
 produced artifact to catbox.moe, and report the download URLs.
 
 `aarch64-apple-darwin` **cannot** be produced here - see the Targets table. A
@@ -130,7 +130,7 @@ exact API response text rather than retrying silently.
 
 ### 7. Known hazards to respect
 
-- `essence-dx/code` is **private**. Catbox anonymous uploads are **publicly
+- `essence-dx/dx` is **private**. Catbox anonymous uploads are **publicly
   downloadable** by anyone with the URL - treat every uploaded binary as public
   and say so in the report.
 - `aws-lc-sys`, `libgit2-sys` and friends compile C/C++ and need a working
