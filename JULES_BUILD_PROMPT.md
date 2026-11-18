@@ -1,8 +1,8 @@
 # Jules build prompt - dx-code, Linux + Windows (+ why not macOS)
 
-> Feed this to Jules verbatim. The repo is `essence-dx/dx`, branch `main`.
+> Feed this to Jules verbatim. The repo is `essencefromexistence-dx/dx`, branch `main`.
 > ```powershell
-> jules new --repo essence-dx/dx "<paste the TASK text below>"
+> jules new --repo essencefromexistence-dx/dx "<paste the TASK text below>"
 > ```
 
 ---
@@ -10,7 +10,7 @@
 ## TASK FOR JULES
 
 Build the `dx-code` release binaries for Linux and Windows from the
-`essence-dx/dx` repository (branch `main`, HEAD `5de1bc6d75`), upload each
+`essencefromexistence-dx/dx` repository (branch `main`, HEAD `5de1bc6d75`), upload each
 produced artifact to catbox.moe, and report the download URLs.
 
 `aarch64-apple-darwin` **cannot** be produced here - see the Targets table. A
@@ -23,7 +23,7 @@ produced a binary and which did not.
   `rust-toolchain.toml`; do not use a newer toolchain even if it is the default.
 - `cargo metadata --locked --format-version 1 > /dev/null` must exit **0**.
   If it fails, the likely cause is the `dx-media` git dependency
-  (`Cargo.toml:303`: `git = "https://github.com/essence-dx/media"`,
+  (`Cargo.toml:303`: `git = "https://github.com/essencefromexistence-dx/media"`,
   `rev = "caacb6134a455bea4e0eb6b58d522e96af230e4a"`), which is consumed by
   `crates/media_panel` and therefore by `zed`. **STOP and report the exact
   error text**; do not edit `Cargo.toml` or `Cargo.lock` to work around it.
@@ -130,7 +130,7 @@ exact API response text rather than retrying silently.
 
 ### 7. Known hazards to respect
 
-- `essence-dx/dx` is **private**. Catbox anonymous uploads are **publicly
+- `essencefromexistence-dx/dx` is **private**. Catbox anonymous uploads are **publicly
   downloadable** by anyone with the URL - treat every uploaded binary as public
   and say so in the report.
 - `aws-lc-sys`, `libgit2-sys` and friends compile C/C++ and need a working

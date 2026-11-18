@@ -285,7 +285,7 @@ edition = "2024"
 #
 # Workspace member crates
 #
-dx_media = { package = "dx-media", git = "https://github.com/essence-dx/media", default-features = false }
+dx_media = { package = "dx-media", git = "https://github.com/essencefromexistence-dx/media", default-features = false }
 acp_thread = { path = "crates/acp_thread" }
 acp_tools = { path = "crates/acp_tools" }
 action_log = { path = "crates/action_log" }

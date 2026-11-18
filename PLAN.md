@@ -215,7 +215,7 @@ with a report at `/tmp/mf2_report.tsv` (cols: `rc`, `residual_hunks`, `ours_chan
 > Records: `CHANGELOG.md` §Session 41 + §Session 43 · `TODO.md` §0.13 + §0.14.
 >
 > ⚠️ **Two items remain open:** (1) **`Cargo.lock` was not regenerated** — `cargo generate-lockfile` cannot resolve
-> the `dx-media` git dependency because `https://github.com/essence-dx/media` is currently unfetchable (150 s
+> the `dx-media` git dependency because `https://github.com/essencefromexistence-dx/media` is currently unfetchable (150 s
 > timeout); ours' lock was kept so the fork's pins survive, and regeneration is still required for upstream's new
 > deps. (2) ✅ **Pushed to `origin` 2026-10-03 (`33bbb8fe13..863084a9ea`).**
 >

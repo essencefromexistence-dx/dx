@@ -999,7 +999,7 @@
 > **29 conflicted paths** = **16 content + 13 modify/delete** — and the merge reproduced that exactly.
 >
 > ⚠️ **`Cargo.lock` was NOT regenerated** — the one unfinished item. `cargo generate-lockfile` cannot resolve the
-> `dx-media` git dependency because `https://github.com/essence-dx/media` is currently unfetchable (150 s timeout;
+> `dx-media` git dependency because `https://github.com/essencefromexistence-dx/media` is currently unfetchable (150 s timeout;
 > cargo's git db for it is empty). Ours' lock was kept so the fork's pins survive; regeneration is still required
 > for upstream's new deps. Full record: **§Session 43**.
 >
@@ -1806,7 +1806,7 @@ merge and any compile verification. This session found the **exact** cause and f
 
 #### Root cause — an unresolvable **path** dependency, not a missing crate
 
-`essence-dx/media`'s newer revisions — **including HEAD `0c0deb89`**, which is what a rev-less `git = …` dependency
+`essencefromexistence-dx/media`'s newer revisions — **including HEAD `0c0deb89`**, which is what a rev-less `git = …` dependency
 resolves to — declare at their `Cargo.toml:134`:
 
 ```toml
@@ -1826,7 +1826,7 @@ git dep does not.
 #### The fix — `Cargo.toml:288`, one line, reversible
 
 ```toml
-dx_media = { package = "dx-media", git = "https://github.com/essence-dx/media",
+dx_media = { package = "dx-media", git = "https://github.com/essencefromexistence-dx/media",
              rev = "caacb6134a455bea4e0eb6b58d522e96af230e4a", default-features = false }
 ```
 
@@ -1854,7 +1854,7 @@ plus a comment recording *why* the pin exists, so nobody un-pins it by accident.
 A **path dependency** (`path = "G:/Dx/media"`) also resolves — media's own `../serializer` then lands on the real
 `G:/Dx/serializer` — and it would carry media's **newest** code. It was rejected because **a path dep is not portable**:
 it breaks CI and any machine without the `G:/Dx` sibling layout. ⚠️ **The correct way to get media's newer code is to fix
-`essence-dx/media` itself** — make `dx-serializer` a git or registry dependency, or make it optional. That repo's
+`essencefromexistence-dx/media` itself** — make `dx-serializer` a git or registry dependency, or make it optional. That repo's
 manifest is the actual defect.
 
 #### What this does and does not change
@@ -1906,12 +1906,12 @@ Attempting T0 (`cargo check`) produced:
 
 ```
 error: no matching package named `dx-serializer` found
-location searched: Git repository https://github.com/essence-dx/media
-required by package `dx-media v1.0.0 (https://github.com/essence-dx/media#0c0deb89)`
+location searched: Git repository https://github.com/essencefromexistence-dx/media
+required by package `dx-media v1.0.0 (https://github.com/essencefromexistence-dx/media#0c0deb89)`
     ... which satisfies git dependency `dx_media` of package `media_panel v0.1.0 (crates/media_panel)`
 ```
 
-Root `Cargo.toml:288` declares `dx_media = { package = "dx-media", git = "https://github.com/essence-dx/media", … }`, and
+Root `Cargo.toml:288` declares `dx_media = { package = "dx-media", git = "https://github.com/essencefromexistence-dx/media", … }`, and
 **only** `crates/media_panel/Cargo.toml` uses it. `dx-media` in that repo requires **`dx-serializer`, which the repo does
 not contain** — so resolution fails before any compilation can start.
 

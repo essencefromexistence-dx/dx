@@ -109,7 +109,7 @@ for it). Both were written *after* these two defects, and both now report clean.
   materialise it in the worktree.
 * `cargo check --workspace` covers everything; `-p <crate>` for a subset reuses the warm cache and
   is much faster for a quick loop.
-* `--config net.git-fetch-with-cli=true` so the private `essence-dx/media` git dependency resolves
+* `--config net.git-fetch-with-cli=true` so the private `essencefromexistence-dx/media` git dependency resolves
   through the local credential manager.
 * A `check` also surfaces **deprecation warnings**, which upstream's CI would reject — the fork's
   `disk_tree` was using upstream's pre-rename `ScrollWheelEvent` / `on_scroll_wheel`.
