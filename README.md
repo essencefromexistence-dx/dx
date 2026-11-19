@@ -275,7 +275,6 @@ the same registry that produced the tables above.
   <tr><th align="left">Document</th><th align="left">What it covers</th></tr>
   <tr><td nowrap><b><a href="OPENCODE.md">OPENCODE.md</a></b></td><td>OpenCode Go model endpoint, headers and environment</td></tr>
   <tr><td nowrap><b><a href="AI_PROFILES.md">AI_PROFILES.md</a></b></td><td>AI screen profile notes</td></tr>
-  <tr><td nowrap><b><a href="DX_DESKTOP.md">DX_DESKTOP.md</a></b></td><td>Historical desktop/web-preview analysis</td></tr>
   <tr><td nowrap><b><a href="docs/src/ai/sandboxing.md">Sandboxing</a></b></td><td>Editor sandboxing notes carried with the workspace</td></tr>
   <tr><td nowrap><b><a href="docs/src/development/ui-checklist.md">UI checklist</a></b></td><td>UI review checklist</td></tr>
   <tr><td nowrap><b><a href="CHANGELOG.md">CHANGELOG.md</a></b></td><td>Sync and change history for this repository</td></tr>

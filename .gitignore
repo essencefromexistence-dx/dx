@@ -62,6 +62,10 @@ crates/docs_preprocessor/actions.json
 /models/
 /tools/
 
+# Parked notes kept on disk but not in version control.
+# Anchored at the repo root so every descendant is ignored.
+/trash/
+
 # Local inspiration/reference material.
 # NOTE: this replaces the earlier per-child entries (/inspirations/21st-magic-mcp/,
 # /inspirations/magicui/, /inspirations/shadcn-ui/), which ignored only those three
