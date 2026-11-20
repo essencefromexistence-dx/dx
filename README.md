@@ -53,11 +53,9 @@ routes to them.
 | --- | --- |
 | Entry point | `dx` CLI — installs and launches the toolchain from one registry |
 | Editor | `dx-code` — Dx Code, this repository |
-| Terminal | `dx-tui` — terminal AI coding agent |
 | Developer tools | check, DCP, driven, forge, grimoire, serializer, style, token, tree, script, i18n, icon, www |
-| Intelligence | codebase, daemon, dx-typesafe, harness, forkness, hackin, bot / flow |
-| Media & communication | media, metasearch, video-player, browser, hello, extensions |
-| Platform | os, website |
+| Media | media, metasearch, video-player |
+| Platform | os |
 
 > Each tool is independently versioned and published. Binary names and install
 > paths are declared in `TOOL_REGISTRY` in `cli/src/update_registry.rs` in the
@@ -131,9 +129,6 @@ The static bundles that the editor serves live in `assets/web/`.
 | --- | --- | --- | --- |
 | **Dx CLI** | [`cli`](https://github.com/essencefromexistence-dx/cli) | `dx` / `dx-cli` | Mission control for the terminal: installs and updates the registered tools, drives media and file browsing, and carries the Codex-grade TUI experiments. It is the hub entry point for the whole toolchain. |
 | **Dx Code** | [`dx`](https://github.com/essencefromexistence-dx/dx) | `dx-code` | This repository — the AI-native editor with the bundled web workspaces, agent screens, DX panels and local model providers. |
-| **Dx TUI** | [`tui`](https://github.com/essencefromexistence-dx/tui) | `dx-tui` (hidden `dx tui`) | A full-screen terminal AI coding agent. Reads codebases, edits files, runs commands and manages tasks without leaving the shell. |
-| **Codebase** | [`codebase`](https://github.com/essencefromexistence-dx/codebase) | `dx-codebase` | Local code intelligence for developers and agents. Connects code, docs and infrastructure into a persistent graph with CBM Lens, MCP tools, agent integrations and change-aware test selection. |
-| **Website** | [`website`](https://github.com/essencefromexistence-dx/website) | `dx site` (hidden) | The official Dx website and component registry: UI components meant to be customized and extended inside Dx projects. |
 
 ### Engineering and build tools
 
@@ -154,18 +149,6 @@ The static bundles that the editor serves live in `assets/web/`.
 | **www** | [`www`](https://github.com/essencefromexistence-dx/www) | `dx-www`; `dx www`, `dx new`, `dx dev`, `dx run`, `dx graph`, `dx deploy` | Rust-owned web framework and server runtime for React and Next-familiar `tsx` apps. |
 | **Skilltune** | registry entry only | `dx-skilltune` / `dx skilltune` | Declared in `TOOL_REGISTRY`; no repository is currently listed under the organization. |
 
-### Intelligence, agents and research
-
-| Tool | Repository | Binary / route | What it does |
-| --- | --- | --- | --- |
-| **Daemon** | [`daemon`](https://github.com/essencefromexistence-dx/daemon) | `dx-daemon` (staged) | Local-first, cross-platform DX Memory daemon with Screenpipe capture — keeps context available to other DX tools without a hosted account. |
-| **dx-typesafe / decisions** | [`dx-typesafe`](https://github.com/essencefromexistence-dx/dx-typesafe) | `dx-decisions` / `dx decisions` | A local zero-text-generation decision engine mirroring the Jev (TypeSafe `/v1/systemone`) contract — Noul / Choice / Score — built in C++20 with ONNX Runtime, no network and no token generation. |
-| **Harness** | [`harness`](https://github.com/essencefromexistence-dx/harness) | CLI tool | The DX agent harness: the grok-build engine made headless, with a CLI that tests it. |
-| **Forkness** | [`forkness`](https://github.com/essencefromexistence-dx/forkness) | `dx-forkness` / `dx forkness` | A Rust port of Google's `harness2` recursive agent-harnessing research framework, with the upstream method retained as the specification. |
-| **Hackin** | [`hackin`](https://github.com/essencefromexistence-dx/hackin) | `dx-hackin` (local) | A Rust port of the Strix autonomous AI penetration-testing engine. Runs locally. |
-| **Friday (bot)** | [`bot`](https://github.com/essencefromexistence-dx/bot), [`flow`](https://github.com/essencefromexistence-dx/flow) | `dx-bot` (fails closed) | Local-first AI workspace: assistant chat, research, agent planning, canvas, voice dictation and grammar checking across desktop, web and mobile. Private by default, no accounts. |
-| **Extensions** | [`extensions`](https://github.com/essencefromexistence-dx/extensions) | none | Extensions, plugins and integrations for the DX ecosystem, including the Cline-derived editor extension line. |
-
 ### Media, web and communication
 
 | Tool | Repository | Binary / route | What it does |
@@ -173,8 +156,6 @@ The static bundles that the editor serves live in `assets/web/`.
 | **Media** | [`media`](https://github.com/essencefromexistence-dx/media) | `dx-media` / `dx media` | Universal digital asset acquisition: one command fetches any media from anywhere into a consistent local representation. |
 | **Metasearch** | [`metasearch`](https://github.com/essencefromexistence-dx/metasearch) | `dx-metasearch` / `dx metasearch` | Fast, privacy-respecting metasearch engine in Rust, inspired by SearXNG. |
 | **Video player** | [`video-player`](https://github.com/essencefromexistence-dx/video-player) | `dx-video-player` (staged) | Reliable local media playback, including terminal-rendered video. |
-| **Browser** | [`browser`](https://github.com/essencefromexistence-dx/browser) | app | Essence Browser — a Zen Browser desktop line migrating from Gecko to Chromium through an adapter layer and dual-boot shell. Work in progress. |
-| **Hello** | [`hello`](https://github.com/essencefromexistence-dx/hello) | app (not in registry) | User-hosted calls: sealed rooms, a zero-decode relay, a downlink tree, host migration and Hello Ports so a call survives the internet. |
 | **OS** | [`os`](https://github.com/essencefromexistence-dx/os) | `dx-os` / `dx os` | System monitor with DX branding for Linux, macOS and Windows. |
 
 <br/>
@@ -220,16 +201,7 @@ just run
 
 # Build without launching
 just build
-
-# Direct Cargo equivalent used by the recipes
-cargo build --locked -p zed --bin dx-code
 ```
-
-> The `just` recipes check free space before Cargo starts (18 GB for a fresh
-> build, 4 GB incremental) and pin output to `G:\Dx\code\target`. On the Windows
-> GNU toolchain, `WebView2Loader.dll` must sit next to `dx-code`; the recipes
-> copy it from the cached `webview2-com-sys` output where possible. Dx Code
-> writes its own state under `.dx/code`.
 
 For the rest of the toolchain, install or update through the `dx` CLI — it reads
 the same registry that produced the tables above.
@@ -246,7 +218,6 @@ the same registry that produced the tables above.
 
 | Path | Purpose |
 | --- | --- |
-| `crates/` | Rust workspace - 263 top-level crates (editor, GPUI, agents, providers) |
 | `assets/` | Published static bundles, icons and license notices |
 | `assets/icons/dx_web_tools/` | Icon set used by the AI-screen launcher |
 | `script/`, `tooling/`, `ci/`, `nix/`, `.github/` | Build, verification and CI helpers |
