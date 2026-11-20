@@ -90,6 +90,9 @@ crates/docs_preprocessor/actions.json
 /TODO.md
 /AI_PROFILES.md
 
+# Temporary exclusion.
+/crates/
+
 # NixOS integration test state
 .nixos-test-history
 /extensions/dx-icon
