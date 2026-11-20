@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icons/dx_web_tools/www-dark-transparent.svg" alt="Dx" width="120"/>
+<img src="assets/icons/dx-icon.svg" alt="Dx" width="120"/>
 
 <br/>
 

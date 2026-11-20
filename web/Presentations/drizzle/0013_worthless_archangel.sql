@@ -1,1 +1,0 @@
-ALTER TABLE `deck_share` ADD `allow_downloads` integer DEFAULT true NOT NULL;

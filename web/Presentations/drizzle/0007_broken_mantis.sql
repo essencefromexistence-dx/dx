@@ -1,1 +1,0 @@
-ALTER TABLE `deck` ADD `master` text DEFAULT '{}' NOT NULL;

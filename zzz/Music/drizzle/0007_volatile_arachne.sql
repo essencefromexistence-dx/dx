@@ -1,1 +1,0 @@
-ALTER TABLE `songs` ADD `rights_metadata` text DEFAULT '{}' NOT NULL;

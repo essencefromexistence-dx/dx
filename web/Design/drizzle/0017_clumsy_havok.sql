@@ -1,2 +1,0 @@
-ALTER TABLE `design_template` ADD `is_brand_template` integer DEFAULT false NOT NULL;--> statement-breakpoint
-CREATE INDEX `design_template_user_brand_idx` ON `design_template` (`user_id`,`is_brand_template`);

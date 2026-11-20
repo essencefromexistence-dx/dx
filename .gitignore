@@ -74,6 +74,15 @@ crates/docs_preprocessor/actions.json
 # automatically and no per-child entry has to be added again.
 /inspirations/
 
+# Non-code folders parked out of version control. They stay on disk for local
+# reference, but they are not part of the published dx codebase.
+/web/
+/zzz/
+/merge-tools/
+/.factory/
+/.wezel/
+# .agents/ is already ignored by the `.agents` rule above.
+
 # NixOS integration test state
 .nixos-test-history
 /extensions/dx-icon

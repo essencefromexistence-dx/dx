@@ -1,6 +1,0 @@
-.env*
-.next
-.next-dev.*.log
-node_modules
-src-tauri/target
-tsconfig.tsbuildinfo
