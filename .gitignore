@@ -81,7 +81,14 @@ crates/docs_preprocessor/actions.json
 /merge-tools/
 /.factory/
 /.wezel/
+/.cloudflare/
 # .agents/ is already ignored by the `.agents` rule above.
+
+# Local workspace notes excluded from the published codebase.
+/OPENCODE.md
+/PROBLEM.md
+/TODO.md
+/AI_PROFILES.md
 
 # NixOS integration test state
 .nixos-test-history

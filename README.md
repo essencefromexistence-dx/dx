@@ -84,7 +84,6 @@ plugins, forge) and local model providers.
 | Binary | `dx-code` | `crates/zed/Cargo.toml:58` |
 | Toolchain | Rust `1.98.1` | `rust-toolchain.toml` |
 | Workspace | 263 top-level crates | `crates/` |
-| Authored web projects | 14 under `web/` | `web/` |
 | Published web bundles | 15 under `assets/web/` | `assets/web/` |
 | Local config | `.dx/code` | `crates/paths/src/paths.rs:533` |
 
@@ -106,18 +105,15 @@ plugins, forge) and local model providers.
 </div>
 
 The AI screen's launcher opens the bundled web workspaces in the preview pane.
-Authored sources live in `web/`; the static bundles that the editor serves live
-in `assets/web/`.
+The static bundles that the editor serves live in `assets/web/`.
 
-| `web/` source | `assets/web/` bundle | `web/` source | `assets/web/` bundle |
-| --- | --- | --- | --- |
-| `3D` | `3d` | `Presentations` | `Presentations` |
-| `Cms` | `cms` | `Router` | `router` |
-| `Design` | `Design` | `Shader` | `shader` |
-| `Graph` | `graph` | `Spreadsheets` | `Spreadsheets` |
-| `Graphics` | `Graphics` | `Train` | `Train` |
-| `Media` | `media` | `Video` | `Video` |
-| `Metasearch` | `metasearch` | `Whiteboard` | `whiteboard` |
+| Bundle | Bundle | Bundle |
+| --- | --- | --- |
+| `3d` | `Presentations` | `router` |
+| `cms` | `shader` | `Design` |
+| `graph` | `Spreadsheets` | `Graphics` |
+| `media` | `Train` | `metasearch` |
+| `music` | `Video` | `whiteboard` |
 
 <br/>
 
@@ -250,16 +246,13 @@ the same registry that produced the tables above.
 
 | Path | Purpose |
 | --- | --- |
-| `crates/` | Rust workspace — 263 top-level crates (editor, GPUI, agents, providers) |
-| `web/` | 14 authored web projects hosted by the editor's preview pane |
+| `crates/` | Rust workspace - 263 top-level crates (editor, GPUI, agents, providers) |
 | `assets/` | Published static bundles, icons and license notices |
 | `assets/icons/dx_web_tools/` | Icon set used by the AI-screen launcher |
-| `docs/src/` | Editor documentation carried with the workspace |
-| `merge-tools/` | Upstream-sync tooling and evidence |
 | `script/`, `tooling/`, `ci/`, `nix/`, `.github/` | Build, verification and CI helpers |
 | `justfile`, `.cargo/` | Local build recipes and Cargo target/linker configuration |
 | `Cargo.toml`, `Cargo.lock` | Workspace manifest and pinned lockfile |
-| `CHANGELOG.md`, `TODO.md` | Sync history and open work |
+| `CHANGELOG.md` | Sync history |
 
 <br/>
 
@@ -273,12 +266,7 @@ the same registry that produced the tables above.
 
 <table>
   <tr><th align="left">Document</th><th align="left">What it covers</th></tr>
-  <tr><td nowrap><b><a href="OPENCODE.md">OPENCODE.md</a></b></td><td>OpenCode Go model endpoint, headers and environment</td></tr>
-  <tr><td nowrap><b><a href="AI_PROFILES.md">AI_PROFILES.md</a></b></td><td>AI screen profile notes</td></tr>
-  <tr><td nowrap><b><a href="docs/src/ai/sandboxing.md">Sandboxing</a></b></td><td>Editor sandboxing notes carried with the workspace</td></tr>
-  <tr><td nowrap><b><a href="docs/src/development/ui-checklist.md">UI checklist</a></b></td><td>UI review checklist</td></tr>
   <tr><td nowrap><b><a href="CHANGELOG.md">CHANGELOG.md</a></b></td><td>Sync and change history for this repository</td></tr>
-  <tr><td nowrap><b><a href="TODO.md">TODO.md</a></b></td><td>Open work with evidence and done-when</td></tr>
   <tr><td nowrap><b><a href="justfile">justfile</a></b></td><td>Authoritative local build and launch recipes</td></tr>
 </table>
 
@@ -295,8 +283,8 @@ the same registry that produced the tables above.
 The editor sources in this repository derive from the Zed workspace and are
 licensed **GPL-3.0-or-later**; see [`LICENSE-GPL`](LICENSE-GPL),
 [`LICENSE-APACHE`](LICENSE-APACHE) and `legal/`. The upstream relationship is
-tracked through the `upstream` remote and recorded in `CHANGELOG.md` and
-`TODO.md`. Other DX tools carry their own licensing in their own repositories.
+tracked through the `upstream` remote and recorded in `CHANGELOG.md`. Other DX
+tools carry their own licensing in their own repositories.
 
 **[⬆ Back to top](#dx-enhanced-development-experience)**
 
