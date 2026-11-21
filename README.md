@@ -34,6 +34,19 @@
 
 <br/>
 
+## 🚀 Dx is live on Product Hunt
+
+Congrats on your launch! 🎉 Here is how you can help Dx get featured on the
+Product Hunt homepage:
+
+| Action | What it does | Link |
+| --- | --- | --- |
+| **Add Shoutouts** | Share what tools you used to build this launch | [Add shoutouts →](https://www.producthunt.com/posts/dx) |
+| **Invite your co-Makers** | Get everyone who worked on this launch involved | [Maker invite →](https://www.producthunt.com/posts/dx/maker-invite?code=AM3YzN) |
+| **Place an embed on your site** | Your community can help your launch succeed | [Drive support →](https://www.producthunt.com/posts/dx?utm_source=dx-readme&utm_medium=badge&utm_campaign=launch) |
+
+<a href="https://www.producthunt.com/posts/dx?utm_source=dx-readme&utm_medium=badge&utm_campaign=launch"><img alt="Dx - Pure-Rust AI TUI | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1324576&theme=dark"></a>
+
 <a id="the-dx-toolchain"></a>
 
 <div align="center">
