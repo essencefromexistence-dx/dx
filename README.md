@@ -12,7 +12,7 @@
 [![Repositories](https://img.shields.io/badge/repositories-32-5c4ee5?style=for-the-badge)](https://github.com/essencefromexistence-dx?tab=repositories)
 [![Editor binary](https://img.shields.io/badge/editor-dx--code-0A66C2?style=for-the-badge)](crates/zed/Cargo.toml)
 [![Rust](https://img.shields.io/badge/rust-1.98.1-DEA584?style=for-the-badge&logo=rust&logoColor=white)](rust-toolchain.toml)
-[![Product Hunt](https://img.shields.io/badge/Product%20Hunt-Dx-DA552F?style=for-the-badge&logo=producthunt&logoColor=white)](https://www.producthunt.com/posts/dx)
+[![See on Product Hunt](https://img.shields.io/badge/See%20on%20Product%20Hunt-Dx-DA552F?style=for-the-badge&logo=producthunt&logoColor=white)](https://www.producthunt.com/posts/dx)
 
 <br/>
 
