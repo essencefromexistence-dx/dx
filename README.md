@@ -18,7 +18,6 @@
 
 <table>
   <tr>
-    <td align="center"><a href="#-the-dx-toolchain">🧰 The toolchain</a></td>
     <td align="center"><a href="#-dx-browser">🌐 Dx Browser</a></td>
     <td align="center"><a href="#-all-dx-tools">📦 All DX tools</a></td>
     <td align="center"><a href="#-how-the-tools-fit-together">🔗 How they fit</a></td>
@@ -32,36 +31,6 @@
 </table>
 
 </div>
-
-<br/>
-
-<a id="the-dx-toolchain"></a>
-
-<div align="center">
-
-## 🧰 The Dx toolchain
-
-</div>
-
-Dx is a family of developer tools. This repository is the public face of that
-family and ships **Dx Code**, the company's AI-native code editor. The other
-tools live in their own repositories under the
-[essencefromexistence-dx](https://github.com/essencefromexistence-dx)
-organization, and the `dx` CLI is the entry point that installs, updates and
-routes to them.
-
-| Layer | What belongs to it |
-| --- | --- |
-| Entry point | `dx` CLI — installs and launches the toolchain from one registry |
-| Editor | `dx-code` — Dx Code, this repository |
-| Developer tools | check, DCP, driven, forge, grimoire, serializer, style, token, tree, script, i18n, icon, www |
-| Media | media, metasearch, video-player |
-| Platform | os |
-
-> Each tool is independently versioned and published. Binary names and install
-> paths are declared in `TOOL_REGISTRY` in `cli/src/update_registry.rs` in the
-> hub; the tables below use that registry plus the repository's own description
-> as the source of truth.
 
 <br/>
 
