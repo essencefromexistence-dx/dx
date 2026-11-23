@@ -68,7 +68,7 @@ Its home is
 | Tool | Repository | Binary / route | What it does |
 | --- | --- | --- | --- |
 | **Dx Browser** | [`browser`](https://github.com/essencefromexistence-dx/browser) | `dx-browser` (source build: `dx-shell`) | Ladybird-based browser built on an independent engine written from scratch — "Welcome to a truly calmer internet." |
-| **Dx Tui** | [`tui`](https://github.com/essencefromexistence-dx/tui) | `dx-tui` | Full-screen terminal AI coding agent that reads codebases, edits files, runs commands and manages tasks. |
+| **Dx CLI** | [`cli`](https://github.com/essencefromexistence-dx/cli) | `dx` / `dx-cli` | Root command center for the DX workspace: one `dx` command discovers and launches the registered tools (DX-WWW, Forge, Serializer, Check and the ecosystem website) and opens the DX Ratatui shell. |
 | **Dx Code** | [`dx`](https://github.com/essencefromexistence-dx/dx) | `dx-code` | This repository — the AI-native editor with agent screens, DX panels and local model providers. |
 
 ### Engineering and build tools
