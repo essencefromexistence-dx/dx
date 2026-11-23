@@ -67,8 +67,9 @@ Its home is
 
 | Tool | Repository | Binary / route | What it does |
 | --- | --- | --- | --- |
-| **Dx CLI** | [`cli`](https://github.com/essencefromexistence-dx/cli) | `dx` / `dx-cli` | Mission control for the terminal: installs and updates the registered tools, drives media and file browsing, and carries the Codex-grade TUI experiments. It is the hub entry point for the whole toolchain. |
-| **Dx Code** | [`dx`](https://github.com/essencefromexistence-dx/dx) | `dx-code` | This repository — the AI-native editor with the bundled web workspaces, agent screens, DX panels and local model providers. |
+| **Dx Browser** | [`browser`](https://github.com/essencefromexistence-dx/browser) | `dx-browser` (source build: `dx-shell`) | Ladybird-based browser built on an independent engine written from scratch — "Welcome to a truly calmer internet." |
+| **Dx Tui** | [`tui`](https://github.com/essencefromexistence-dx/tui) | `dx-tui` | Full-screen terminal AI coding agent that reads codebases, edits files, runs commands and manages tasks. |
+| **Dx Code** | [`dx`](https://github.com/essencefromexistence-dx/dx) | `dx-code` | This repository — the AI-native editor with agent screens, DX panels and local model providers. |
 
 ### Engineering and build tools
 
