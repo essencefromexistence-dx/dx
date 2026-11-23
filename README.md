@@ -73,17 +73,16 @@ routes to them.
 
 </div>
 
-**Dx Browser** is the Dx family's web browser. It lives in its own repository —
-[**essencefromexistence-dx/browser**](https://github.com/essencefromexistence-dx/browser) —
-with the tagline "Welcome to a truly calmer internet."
+**Dx Browser** is the Dx family's Ladybird-based web browser — "Welcome to a
+truly calmer internet." Ladybird is an independent engine built from scratch,
+not a fork of Blink, WebKit or Gecko ([ladybird.org](https://ladybird.org)).
 
-| Link | Where it goes |
-| --- | --- |
-| Repository | [essencefromexistence-dx/browser](https://github.com/essencefromexistence-dx/browser) |
-| README | [Project README](https://github.com/essencefromexistence-dx/browser#readme) |
-| Releases | [Releases](https://github.com/essencefromexistence-dx/browser/releases) |
-| Issues | [Issues](https://github.com/essencefromexistence-dx/browser/issues) |
-| Discussions | [Discussions](https://github.com/essencefromexistence-dx/browser/discussions) |
+Its home is
+[**essencefromexistence-dx/browser**](https://github.com/essencefromexistence-dx/browser):
+[README](https://github.com/essencefromexistence-dx/browser#readme) ·
+[Releases](https://github.com/essencefromexistence-dx/browser/releases) ·
+[Issues](https://github.com/essencefromexistence-dx/browser/issues) ·
+[Discussions](https://github.com/essencefromexistence-dx/browser/discussions).
 
 <br/>
 
