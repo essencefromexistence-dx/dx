@@ -19,6 +19,7 @@
 <table>
   <tr>
     <td align="center"><a href="#-the-dx-toolchain">🧰 The toolchain</a></td>
+    <td align="center"><a href="#-dx-browser">🌐 Dx Browser</a></td>
     <td align="center"><a href="#-all-dx-tools">📦 All DX tools</a></td>
     <td align="center"><a href="#-how-the-tools-fit-together">🔗 How they fit</a></td>
   </tr>
@@ -61,6 +62,28 @@ routes to them.
 > paths are declared in `TOOL_REGISTRY` in `cli/src/update_registry.rs` in the
 > hub; the tables below use that registry plus the repository's own description
 > as the source of truth.
+
+<br/>
+
+<a id="dx-browser"></a>
+
+<div align="center">
+
+## 🌐 Dx Browser
+
+</div>
+
+**Dx Browser** is the Dx family's web browser. It lives in its own repository —
+[**essencefromexistence-dx/browser**](https://github.com/essencefromexistence-dx/browser) —
+with the tagline "Welcome to a truly calmer internet."
+
+| Link | Where it goes |
+| --- | --- |
+| Repository | [essencefromexistence-dx/browser](https://github.com/essencefromexistence-dx/browser) |
+| README | [Project README](https://github.com/essencefromexistence-dx/browser#readme) |
+| Releases | [Releases](https://github.com/essencefromexistence-dx/browser/releases) |
+| Issues | [Issues](https://github.com/essencefromexistence-dx/browser/issues) |
+| Discussions | [Discussions](https://github.com/essencefromexistence-dx/browser/discussions) |
 
 <br/>
 
