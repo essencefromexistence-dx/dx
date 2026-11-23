@@ -19,7 +19,6 @@
 <table>
   <tr>
     <td align="center"><a href="#-the-dx-toolchain">🧰 The toolchain</a></td>
-    <td align="center"><a href="#-dx-code">💻 Dx Code</a></td>
     <td align="center"><a href="#-all-dx-tools">📦 All DX tools</a></td>
     <td align="center"><a href="#-how-the-tools-fit-together">🔗 How they fit</a></td>
   </tr>
@@ -62,57 +61,6 @@ routes to them.
 > paths are declared in `TOOL_REGISTRY` in `cli/src/update_registry.rs` in the
 > hub; the tables below use that registry plus the repository's own description
 > as the source of truth.
-
-<br/>
-
-<a id="dx-code"></a>
-
-<div align="center">
-
-## 💻 Dx Code
-
-</div>
-
-**Dx Code** is the flagship editor: an AI-native development surface with a
-GPUI-rendered workspace, agent panels, a web-preview pane that serves the
-bundled Dx web projects, DX-specific panels (media, search, check, skills,
-plugins, forge) and local model providers.
-
-| Fact | Value | Source |
-| --- | --- | --- |
-| Binary | `dx-code` | `crates/zed/Cargo.toml:58` |
-| Toolchain | Rust `1.98.1` | `rust-toolchain.toml` |
-| Workspace | 263 top-level crates | `crates/` |
-| Published web bundles | 15 under `assets/web/` | `assets/web/` |
-| Local config | `.dx/code` | `crates/paths/src/paths.rs:533` |
-
-<div align="center">
-
-<img src="assets/icons/dx_web_tools/design-dark-transparent.svg" width="34" alt="Design"/>
-<img src="assets/icons/dx_web_tools/3d-dark-transparent.svg" width="34" alt="3D"/>
-<img src="assets/icons/dx_web_tools/video-dark-transparent.svg" width="34" alt="Video"/>
-<img src="assets/icons/dx_web_tools/music-dark-transparent.svg" width="34" alt="Music"/>
-<img src="assets/icons/dx_web_tools/presentations-dark-transparent.svg" width="34" alt="Presentations"/>
-<img src="assets/icons/dx_web_tools/spreadsheets-dark-transparent.svg" width="34" alt="Spreadsheets"/>
-<img src="assets/icons/dx_web_tools/graphics-dark-transparent.svg" width="34" alt="Graphics"/>
-<img src="assets/icons/dx_web_tools/whiteboard-dark-transparent.svg" width="34" alt="Whiteboard"/>
-<img src="assets/icons/dx_web_tools/shader-dark-transparent.svg" width="34" alt="Shader"/>
-<img src="assets/icons/dx_web_tools/metasearch-dark-transparent.svg" width="34" alt="Metasearch"/>
-<img src="assets/icons/dx_web_tools/router-dark-transparent.svg" width="34" alt="Router"/>
-<img src="assets/icons/dx_web_tools/cms-dark-transparent.svg" width="34" alt="Cms"/>
-
-</div>
-
-The AI screen's launcher opens the bundled web workspaces in the preview pane.
-The static bundles that the editor serves live in `assets/web/`.
-
-| Bundle | Bundle | Bundle |
-| --- | --- | --- |
-| `3d` | `Presentations` | `router` |
-| `cms` | `shader` | `Design` |
-| `graph` | `Spreadsheets` | `Graphics` |
-| `media` | `Train` | `metasearch` |
-| `music` | `Video` | `whiteboard` |
 
 <br/>
 
@@ -220,7 +168,6 @@ the same registry that produced the tables above.
 | Path | Purpose |
 | --- | --- |
 | `assets/` | Published static bundles, icons and license notices |
-| `assets/icons/dx_web_tools/` | Icon set used by the AI-screen launcher |
 | `script/`, `tooling/`, `ci/`, `nix/`, `.github/` | Build, verification and CI helpers |
 | `justfile`, `.cargo/` | Local build recipes and Cargo target/linker configuration |
 | `Cargo.toml`, `Cargo.lock` | Workspace manifest and pinned lockfile |
